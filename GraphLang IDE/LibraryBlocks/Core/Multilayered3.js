@@ -617,7 +617,46 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
   },
 
   symbolPicture: " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJcAAABvCAIAAABuPMVaAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAU9SURBVHhe7dxdSJtXHMfx43TYYXls2tVAexHZkBW8UITIlGFQczlLbsqEFIvraBGZsK0hGy70IuaiRigyhDLIkGw4mIOFZXe1pZapLAETB4WCE1/YbNXZbimIr93O8zxnvmx2NjH1Oc/f3+eiPefkpRdfzvOcoE3O6uoqA5N7SfwNZoaKFKAiBahIASpSIO8Z1ePxiJHE8vPzOzo6xMQ48u7FRCIhRrJaWVkRI6PJuxedTmdzc7Pb7RZz+bS1tSmKgr0I2YGKFKAiBahIASpSgIoUoCIFh6Vi7JqiXIuJCYvF4mK0q51PNoHDUrHSm0p5K7VhLKg4B7URGbiiUmDCivGgskm/7qkrwa3L5fbr4Wy/W3H3z24uqhvRz5i/fvM5fGXT1pswNt3fJFblv7qarSKvUp8M3U9pBnwBZ5Df4ewOH/MPiltdbDDA2L3pOW0yNxyJulw1p7SJqtLDX8WY75Z+gdWitg+It2v3O5v69ReywMWp98Uy/1fc34plOZmt4m9TUTHieJKUx64OHO3Mf1vbMfFBf3soxCJ3Z/lk7u730YazNVb1gd3wJzPfgLhfavfO8DnxZFeoSX1nTn3z6MS0PpGT2Sram0Ku6MUz/77QVdb59P03N51seL3GVhqNDPPZ9FSkwVX9zIj8ycxVbBOznUptz3yZfEx3X7SeC2vXuVs+FnButTxd3BDh+49vPsaz8ajq7uFbbcfllCwTnm50dn411VsOqhlP1bhc0ciX4QjTsvE7ZWAweNv//1vKaitnkSmpr5XPx2wV1eOoeubUxXindod2W7PWnG2IBvxRkc1W7PL7A8xXJ+552/CHWFI//WjHou7Nk8vOs66JmO6+6Bn/gon7oqI474XG/zmbWKtdDfzwKbKpUfnMIU4o22m93y1R1OOoemQt52NdPRtIef6bXX74jY3M4Tc2IJtQkQJUpAAVKUBFClCRAlSkQPbPiw6HQ8zl09nZKcnnRakrTkxMiIms3G636SuOjo6K0QswPz8vRnIrKioSo2yrqKgQo73st2Jra6uYQLaNjIyI0V5wuqEgO3vxs0+v6yuwf/GZRDgc5oPn34tZq1gSyNMXYT/WLS9/8/awkRU/YmX6OmTmDEs1W341vuLvOfn6Q5CBt/5ayKwiTjcUoCIFqEgBKlKAihSgIgWoSAEqUoCKFKAiBZlXnJycHBoaWl5eXltbE0tgkEwq8n4X3rtQV1fX3dv9OPfx4uJiR9D431o4zNKuOD4+7nrHdSfnzsIPCzM/z8yOzT786eFU9ZR4GIyQdkXvVe+iffFB74PVcvHDkI3TG08+eKKPwRDpVYzH44mRxKOPH4k5yCG9islkMq80b/21dTEHOaRXcWlpaePohpiANNKraLPZcn/JFROQRnoVa2trn/75tODrAjEHOaRXsbCw8MqHVyxey5GbR8SSJncGG9RI6VXkWlpaLl+6fKL5RNGlooLeAr4vj31y7GTjSfEwGCHtipzX6+3r62t8pbHk8xLLVYvlO8t593nxGBghk4pcVVVVV1fXjes3rIr1+NHjdvsu3ysDBybDiiAVVKQAFSlARQpQkQJUpAAVKUBFClCRAlSkABUpQEUKUJECVKQAFSlARQpQkQJUpAAVKUBFClCRAlSkABUpQEUKUJECVKQgm99V/CPD/7nZrzctfxj5jdNvxF/VF2GfvrLeNKZiWRm+9z2bxsbG+J8HXRFehIOrGAqFxASyraenR4z2sq+KIAl80qAAFSlARQpQkQJUpAAVKUBFClCRAlSkABUpQEUKUNH8GPsb2yUWwgx2MBEAAAAASUVORK5CYII=",
-  
+
+    /*
+     *  TODO this will return blocks inside layers in order to be transcripted as separate function in result ode
+     *      ALREADY DONE THERE BUT NEEDS TO BE VALIDATED
+     */
+    getSubNodesWithDiagramInside: function(alreadyTraversedBlocksArray = new draw2d.util.ArrayList()){
+        let subnodesWithDiagramInside = new draw2d.util.ArrayList();
+
+        this.layers.each(function(layerIndex, layerObj){
+
+            layerObj.getAssignedFigures().each(function(childIndex, childObj){
+
+                /*
+                 *    Check for nodes with schematic inside (user defined nodes with diagram)
+                 *        directly add to list to be transcripted
+                 */
+                if (childObj.jsonDocument !== undefined && childObj.jsonDocument.length > 0){
+                    subnodesWithDiagramInside.push(childObj);
+                }
+
+                /*
+                 *    Check if there are some composition nodes with diagram inside and trigger their function to obtain other blocks which needs to be transcripted
+                 *        this is for loops and multilayered nodes
+                 */
+                if (typeof childObj.getSubNodesWithDiagramInside == "function"){
+                    let nodeObjChildrenWithDiagram = childObj.getSubNodesWithDiagramInside(alreadyTraversedBlocksArray);
+                    nodeObjChildrenWithDiagram.each(function(subnodeIndex, subnodeObj){
+                        if (!alreadyTraversedBlocksArray.contains(subnodeObj.NAME) && subnodeObj.jsonDocument !== undefined && subnodeObj.jsonDocument.length > 0){
+                            subnodesWithDiagramInside.push(subnodeObj);
+                        }
+                    });
+                }
+
+            });
+
+        });
+
+        return subnodesWithDiagramInside;
+    },
+
   /*****************************************************************************************************************************************************
    *    TRANSLATE TO C/C++ functions
    *****************************************************************************************************************************************************/ 

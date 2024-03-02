@@ -189,13 +189,32 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                 if (nodeObj.translateToCppCodeDeclaration && (!nodeObj.userData.isTerminal || (nodeObj.userData.isTerminal && translateTerminalsDeclaration))) cCode += nodeObj.translateToCppCodeDeclaration();
                 if (nodeObj.translateToCppCode) cCode += nodeObj.translateToCppCode();
 
-                /*
-                 *    Translate node schematic into separate function
+
+                /*************************************************************************************************************************************************
+                 *  TRANSCRIPT NODES WITH DIAGRAM INSIDE (user created blocks which has no C/C++ method to transcript but are composed from other GraphLang nodes)
                  */
-                if (!translateToCppCodeSubnodeArray.contains(nodeObj.NAME) && nodeObj.jsonDocument !== undefined && nodeObj.jsonDocument.length > 0){
-                    translateToCppCodeSubnodeArray.push(nodeObj.NAME);
-                    GraphLang.Utils.translateToCppCodeSubNode(nodeObj);
-                }
+
+                    /*
+                     *    Translate canvas most top nodes with diagram inside into separate function
+                     */
+                    if (!translateToCppCodeSubnodeArray.contains(nodeObj.NAME) && nodeObj.jsonDocument !== undefined && nodeObj.jsonDocument.length > 0){
+                        translateToCppCodeSubnodeArray.push(nodeObj.NAME);
+                        GraphLang.Utils.translateToCppCodeSubNode(nodeObj);
+                    }
+
+                    /*
+                     *      Translate blocks nested in loops or multilayered nodes, they MUST HAVE DEFINED METHOD .getSubNodesWithDiagramInside()
+                     */
+                    if (typeof nodeObj.getSubNodesWithDiagramInside == "function"){
+                        let nodeObjChildrenWithDiagram = nodeObj.getSubNodesWithDiagramInside(translateToCppCodeSubnodeArray);
+                        nodeObjChildrenWithDiagram.each(function(subnodeIndex, subnodeObj){
+                            if (!translateToCppCodeSubnodeArray.contains(subnodeObj.NAME) && subnodeObj.jsonDocument !== undefined && subnodeObj.jsonDocument.length > 0){
+                                translateToCppCodeSubnodeArray.push(subnodeObj.NAME);
+                                GraphLang.Utils.translateToCppCodeSubNode(subnodeObj);
+                            }
+                        });
+                    }
+
 
                 /*
                  *    Translate POST code, like ending while or for loop

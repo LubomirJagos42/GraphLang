@@ -193,8 +193,8 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
     },
 
     translateToCppCodeFunctionName: function(){
-        //cCode = this.NAME.replaceAll('.', '_');
-        cCode = this.NAME;
+        cCode = this.NAME.replaceAll('.', '__');
+        //cCode = this.NAME;
         return cCode;
     },
 

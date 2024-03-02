@@ -245,6 +245,39 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
  
   symbolPicture: " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFYAAABSCAIAAABBpbS2AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAGSSURBVHhe7dw/SwJxHMdxUfyHwyG4hSL0QBxtaxAdBIXWpp5A2z2Lc2lxcQ7aFHKwVdpuiWaDzClL6iP+Og4hiuuG++X7zXdSvOP74tBz0NT64IMAAggUBBBAoCD4BcFg8G71+P6b2eSbfiBYrVbt9kO1uqzVNjZOKvURnWAymbRa3aOvms3T0Wj0bFXz+Ut0As/ztHa5fJHP32Yyj7ncneNc6hHXdc3hbSg6wXQ61bal0pVeH55i8VqPD4dDc4bEF52g1zurVM7DywfjOG6jcWLOkPiiE9Trx4XCTXjzYLLZe10Ivu+bkyS7iASLxUJLatXw5sGk00s9O5vNzEmSHVcB7wV/IeATYduh3xfsGo/HB313GLT7jtDpPJmjWlU8BKrf33S7r+aoVgUBBBAoCCCAQEEAAQQKAgggUBBAAIGCAAIIFAQQQKAggAACBQEEECgIIIBAQQABBAoCCCBQEEAAgYIAAggUBBBAoCCAAAIVJ8Hez8EtmngI9v4OwLqJgeDfBwEEECgIIIBAQQDBev0J+WznB2v5Ek4AAAAASUVORK5CYII=",
 
+  /*
+   *    TODO this function must be RECURSIVE DUE THERE COULD BE OTHER LOOP OR MULTILAYERED NODES INSIDE LAYER
+   *        ALREADY DONE THERE BUT NEEDS TO BE VALIDATED
+   */
+  getSubNodesWithDiagramInside: function(alreadyTraversedBlocksArray = new draw2d.util.ArrayList()){
+      let subnodesWithDiagramInside = new draw2d.util.ArrayList();
+      this.getAssignedFigures().each(function(childIndex, childObj){
+
+          /*
+           *    Check for nodes with schematic inside (user defined nodes with diagram)
+           *        directly add to list to be transcripted
+           */
+          if (childObj.jsonDocument !== undefined && childObj.jsonDocument.length > 0 && !alreadyTraversedBlocksArray.contains(childObj.NAME)){
+              subnodesWithDiagramInside.push(childObj);
+          }
+
+          /*
+           *    Check if there are some composition nodes with diagram inside and trigger their function to obtain other blocks which needs to be transcripted
+           *        this is for loops and multilayered nodes
+           */
+          if (typeof childObj.getSubNodesWithDiagramInside == "function"){
+              let nodeObjChildrenWithDiagram = childObj.getSubNodesWithDiagramInside(alreadyTraversedBlocksArray);
+              nodeObjChildrenWithDiagram.each(function(subnodeIndex, subnodeObj){
+                  if (!alreadyTraversedBlocksArray.contains(subnodeObj.NAME) && subnodeObj.jsonDocument !== undefined && subnodeObj.jsonDocument.length > 0){
+                      subnodesWithDiagramInside.push(subnodeObj);
+                  }
+              });
+          }
+
+      });
+      return subnodesWithDiagramInside;
+  },
+
   /*****************************************************************************************************************************************************
    *    TRANSLATE TO C/C++ functions
    *****************************************************************************************************************************************************/ 
