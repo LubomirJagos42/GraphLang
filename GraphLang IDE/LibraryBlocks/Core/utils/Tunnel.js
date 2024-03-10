@@ -179,14 +179,30 @@ GraphLang.Shapes.Basic.Tunnel = draw2d.shape.node.Between.extend({
              *      3. to tunnel, then recursively asking previous wire
              */
             
-            if (wireSource.getParent().NAME.toLowerCase().search('clusterdatatype') > 0){
+            if (wireSource.getParent().NAME.toLowerCase().search('clusterdatatype') >= 0){
                 return wireSource.getParent().getDatatype();
-            }else if (wireSource.getParent().NAME.toLowerCase().search('tunnel') == -1 &&
+            }
+
+            else if (
+                wireSource.getParent().NAME.toLowerCase().search('bundle') >= 0 &&
+                wireSource.getParent().getConnectedCluster
+            ){
+                let connectedCluster = wireSource.getParent().getConnectedCluster();
+                if (connectedCluster) {
+                    return connectedCluster.getDatatype();
+                }else{
+                    return "undefined";
+                }
+            }
+
+            else if (
+                wireSource.getParent().NAME.toLowerCase().search('tunnel') == -1 &&
                 wireSource.userData &&
                 wireSource.userData.datatype
             ){
                 return wireSource.userData.datatype;
             }else{
+                //THIS IS MAYBE USELESS DUE getDatatype() above but left it here to have something
                 return wireSource.getParent().getDatatype();
             }
         }

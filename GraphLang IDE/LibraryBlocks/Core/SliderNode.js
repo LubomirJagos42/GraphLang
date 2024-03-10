@@ -147,7 +147,8 @@ GraphLang.Shapes.Basic.SliderNode = draw2d.shape.widget.Slider.extend({
   
   translateToCppCodeAsParam:function(){
     cCode = "";
-    cCode += this.getDatatype() + " " + this.getVariableName() + ' = ' + this.getValue() ;
+    //cCode += this.getDatatype() + " " + this.getVariableName() + ' = ' + this.getValue();
+    cCode += this.getDatatype() + " " + this.getVariableName();     //no default value
     return cCode;
   }
 

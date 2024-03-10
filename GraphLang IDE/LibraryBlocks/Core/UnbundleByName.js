@@ -43,7 +43,7 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
       this.updateBasicContextMenu();
     },
     
-    getConnectedCluster: function(){
+    __old_getConnectedCluster: function(){
         let connections = this.portClusterType.getConnections();
         let clusterObj = null;
 
@@ -80,7 +80,43 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
         }
         return clusterObj;    
     },
-    
+
+    getConnectedCluster: function(){
+        let connections = this.portClusterType.getConnections();
+        let clusterObj = null;
+        let thisId = this.getId();
+
+        if (connections.getSize() > 0){
+            let connectedNode = connections.first().getSource().getParent();
+            let clusterName = null;
+
+            /*
+             *    There are two options:
+             *        - there is cluster connected to cluster input or some tunnel which has function getDatatype()
+             *          and this function should have just nodes which represent some datatype or tunnels
+             *        - it's connected to some Unbundle, UnbundleByName which output is cluster
+             */
+            if (connectedNode.getDatatype){
+                clusterName = connectedNode.getDatatype();
+            }else if (connectedNode.getConnectedClusterDatatype){
+                clusterName = connectedNode.getConnectedClusterDatatype();
+            }
+
+            if (clusterName){
+                this.getCanvas().getFigures().each(function(figureIndex, figureObj){
+                    if (
+                        figureObj.NAME.toLowerCase().search('clusterdatatype') >= 0 &&
+                        figureObj.getDatatype &&
+                        figureObj.getDatatype() == clusterName
+                    ){
+                        clusterObj = figureObj;
+                    }
+                });
+            }
+        }
+        return clusterObj;
+    },
+
     getContextMenu: function(){
       /*
        *    Adding connected cluster items labels into context menu which appears
@@ -201,13 +237,19 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
       outputPort.setName("output_" + label.id);
 
       var unbundlerObj = this;
-      outputPort.getDatatype = function(){
-          //var connectedCluster = this.getParent().getParent().getParent().getConnectedCluster();  //this will not run if structure of unbundler will change, but that's will not happen
-          var connectedCluster = unbundlerObj.getConnectedCluster();
+      outputPort.getDatatype = function(){                                                  //THIS ONE IS USED ON TOP CANVAS TO LLOK FOR PORT
+          var connectedCluster = unbundlerObj.getConnectedCluster();                        //this must be called as anonym function to get connected cluster at time of validation
           var currentItemLabel = this.getParent().getText();
           var itemClusterObj = connectedCluster.getItemByLabel(currentItemLabel);
           return itemClusterObj.getDatatype();
       }
+      label.getDatatype = function(){                                                       //THIS ONE IS USED INSIDE LOOP, YEAH IT'S NON CONSISTENT BUT THAT'S CURRENT STATE AT LEAST IT'S RUNNING SOMEHOW
+          var connectedCluster = unbundlerObj.getConnectedCluster();                        //this must be called as anonym function to get connected cluster at time of validation
+          var currentItemLabel = this.getText();
+          var itemClusterObj = connectedCluster.getItemByLabel(currentItemLabel);
+          return itemClusterObj.getDatatype();
+      }
+
       outputPort.getTopParentNode = function(){
           return unbundlerObj;
       }
@@ -331,7 +373,7 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
       let inputWire = this.portClusterType.getConnections().first();
       this.items.getChildren().each(function(itemIndex, itemObj){
         itemObj.getOutputPort(0).getConnections().each(function(connectionIndex, connectionObj){
-            cCode +=  'wire_' + connectionObj.getId() + ' = wire_' + inputWire.getId() + '->' + itemObj.getText() + ";\n";
+            cCode +=  'wire_' + connectionObj.getId() + ' = wire_' + inputWire.getId() + '.' + itemObj.getText() + ";\n";
         });
       });        
 

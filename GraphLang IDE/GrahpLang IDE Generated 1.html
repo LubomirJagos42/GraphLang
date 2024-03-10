@@ -121,6 +121,7 @@
 	<script src="./LibraryBlocks/Core/FeedbackNode.js"></script>
 	<script src="./LibraryBlocks/Core/ForLoop.js"></script>
 	<script src="./LibraryBlocks/Core/Multilayered3.js"></script>
+	<script src="./LibraryBlocks/Core/PointerDatatypeNode.js"></script>
 	<script src="./LibraryBlocks/Core/Return.js"></script>
 	<script src="./LibraryBlocks/Core/Sequence.js"></script>
 	<script src="./LibraryBlocks/Core/SliderNode.js"></script>
@@ -255,7 +256,7 @@ document.addEventListener("DOMContentLoaded",function () {
 });
 
 /**
- *  After page is loaded add pciture to each menu node item.
+ *  After page is loaded add picture to each menu node item.
  */
 $(document).ready(function(){
       $('#navigation div').each(function () {
@@ -291,6 +292,45 @@ function displayJSON(canvas){
     });
     return jsonStr;
 }
+
+    let global_allUserDefinedNodesList = [
+'GraphLang.ArduinoLib.Node.Add'
+,'GraphLang.ArduinoLib.Node.analogWrite'
+,'GraphLang.ArduinoLib.Node.digitalRead'
+,'GraphLang.ArduinoLib.Node.digitalWrite'
+,'GraphLang.ArduinoLib.Node.Divide'
+,'GraphLang.ArduinoLib.Node.Not'
+,'GraphLang.ArduinoLib.Node.pinMode'
+,'GraphLang.ArduinoLib.Node.Serial.begin'
+,'GraphLang.ArduinoLib.Node.Serial.println'
+,'GraphLang.ArduinoLib.Node.Subtract'
+,'GraphLang.ArduinoLib.Node.ternarOperator'
+,'GraphLang.ArduinoLib.Node.toStr'
+,'GraphLang.ArduinoLib.Node.waitUntilNextMs'
+,'Arduino.File.fclose'
+,'Arduino.File.fileSize'
+,'Arduino.File.fopen'
+,'Arduino.File.fread'
+,'Arduino.File.fwrite'
+,'GraphLang.ArduinoLib.String.replace'
+,'GraphLang.ArduinoLib.String.replace2'
+,'ConvertDatatype'
+,'GraphLang.ArduinoLib.Node.Math.Abs'
+,'GraphLang.PythonQtGuiLib.UiExec'
+,'GraphLang.PythonQtGuiLib.UiLoad'
+,'GraphLang.PythonQtGuiLib.UiShow'
+,'ConsoleLog'
+,'ConsoleLog2'
+,'Convolution'
+,'GraphLangTestShape'
+,'GraphLangTestShape2'
+,'GraphLangTestShape3'
+,'GraphLangTestShape'
+,'SubNodes.Block_1'
+,'SubNodes.TopBlock_1'
+,'UserDefinedExample'
+];
+
 
 </script>
 
@@ -349,6 +389,7 @@ function displayJSON(canvas){
 			<div data-shape="GraphLang.Shapes.Basic.FeedbackNode" data-label="FeedbackNode" class="palette_node_element draw2d_droppable">FeedbackNode</div>
 			<div data-shape="GraphLang.Shapes.Basic.Loop2.ForLoop" data-label="ForLoop" class="palette_node_element draw2d_droppable">ForLoop</div>
 			<div data-shape="GraphLang.Shapes.Basic.Loop2.Multilayered3" data-label="Multilayered3" class="palette_node_element draw2d_droppable">Multilayered3</div>
+			<div data-shape="GraphLang.Shapes.Basic.PointerDatatypeNode" data-label="PointerDatatypeNode" class="palette_node_element draw2d_droppable">PointerDatatypeNode</div>
 			<div data-shape="GraphLang.Shapes.Basic.Return" data-label="Return" class="palette_node_element draw2d_droppable">Return</div>
 			<div data-shape="GraphLang.Shapes.Basic.Loop2.Sequence" data-label="Sequence" class="palette_node_element draw2d_droppable">Sequence</div>
 			<div data-shape="GraphLang.Shapes.Basic.SliderNode" data-label="SliderNode" class="palette_node_element draw2d_droppable">SliderNode</div>

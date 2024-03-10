@@ -265,11 +265,16 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
     var constDatatype = this.getDatatype();
 
     //create param definition using also default value, if there is string use quotes
-    if (this.getDatatype().toLowerCase().search("string") == -1){ 
+    /*
+    if (this.getDatatype().toLowerCase().search("string") == -1){
         cCode += constDatatype + " " + this.getVariableName() + ' = ' + this.getText();
     }else{
         cCode += constDatatype + " " + this.getVariableName() + ' = "' + this.getText() + '"';
     }
+    */
+
+    //no default values
+    cCode += constDatatype + " " + this.getVariableName();
 
     return cCode;
   },

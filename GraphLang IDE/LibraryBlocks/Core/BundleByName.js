@@ -7,6 +7,7 @@ GraphLang.Shapes.Basic.BundleByName = draw2d.shape.layout.FlexGridLayout.extend(
     NAME: "GraphLang.Shapes.Basic.BundleByName",
 
     init : function(attr){
+      _thisClusterObj = this;               //use this variable to reference to this
 
       this._super($.extend({
         bgColor:"#dbddde",
@@ -38,7 +39,7 @@ GraphLang.Shapes.Basic.BundleByName = draw2d.shape.layout.FlexGridLayout.extend(
       this.portClusterType.setName("clusterType");
       this.portClusterType.setMaxFanOut(20);
 	  this.portClusterType.userData = {datatype: "cluster"};
-      
+
       //create vertical list and push it into unbundler object
       this.items = new draw2d.shape.layout.VerticalLayout();
       this.add(this.items, {row: 0, col:0});
@@ -76,15 +77,19 @@ GraphLang.Shapes.Basic.BundleByName = draw2d.shape.layout.FlexGridLayout.extend(
           
           if (clusterName){
               this.getCanvas().getFigures().each(function(figureIndex, figureObj){
-                  if (figureObj.getDatatype && figureObj.getDatatype() == clusterName){
+                  if (
+                      figureObj.NAME.toLowerCase().search('clusterdatatype') >= 0 &&
+                      figureObj.getDatatype &&
+                      figureObj.getDatatype() == clusterName
+                  ){
                       clusterObj = figureObj;
                   }
-              }); 
+              });
           }
         }
         return clusterObj;    
     },
-    
+
     getConnectedClusterDatatype: function(){
         return this.getConnectedCluster().getDatatype();
     },

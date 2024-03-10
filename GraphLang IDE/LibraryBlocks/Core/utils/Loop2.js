@@ -398,7 +398,7 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
      */
     this.getChildren().each(function(childIndex, childObj){
         if (childObj.NAME.toLowerCase().search("righttunnel") > -1){
-            allConnections.addAll(childObj.getInputPort(0).getConnections());	//adding conenction into list of top most connections on canvas
+            allConnections.addAll(childObj.getInputPort(0).getConnections());	//adding connection into list of top most connections on canvas
         }
     });
 
@@ -406,12 +406,13 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
      *  Generate wires declaration.
      */
   	allConnections.each(function(connectionindex, connectionObj){
-        let datatypeStr = connectionObj.getSource().userData.datatype;
+        let datatypeStr = "";
+        let datatypeStr_orig = connectionObj.getSource().userData.datatype;
         //if (connectionObj.getSource().getDatatype) datatypeStr = connectionObj.getSource().getDatatype();    //use getDatatype function if available
         try {
-            datatypeStr = connectionObj.getSource().getDatatype();    //use getDatatype function if available
+            datatypeStr = connectionObj.getSource().getParent().getDatatype();    //use getDatatype function if available
         }catch(e){
-
+            datatypeStr = datatypeStr_orig;
         }
 
         cCode += datatypeStr + " wire_" + connectionObj.getId() + ";\n";

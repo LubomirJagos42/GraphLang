@@ -188,7 +188,7 @@ document.addEventListener("DOMContentLoaded",function () {
 });
 
 /**
- *  After page is loaded add pciture to each menu node item.
+ *  After page is loaded add picture to each menu node item.
  */
 $(document).ready(function(){
       $('#navigation div').each(function () {
@@ -224,6 +224,8 @@ function displayJSON(canvas){
     });
     return jsonStr;
 }
+
+    /* here insert all user defined nodes list */
 
 </script>
 
@@ -383,11 +385,25 @@ if __name__ == "__main__":
     print('============== html node menu ===============')
     print(htmlNodeMenuItem)
 
+    #
+    #   HERE CREATE ALL USER DEFINED JAVASCRIPT LIST WHICH IS HELPER FOR GraphLang TO CREATE CONTEXT MENU FOR POINTERS
+    #
+    userDefinedNodesList = []
+    for item in objectsNamesList:
+        if item[3] == "GraphLang.UserDefinedNode":
+            userDefinedNodesList.append(f"'{item[2]}'\n")
+    userDefinedNodesJavaScriptArrayDefinitionStr = ""
+    userDefinedNodesJavaScriptArrayDefinitionStr += "let global_allUserDefinedNodesList = [\n"
+    userDefinedNodesJavaScriptArrayDefinitionStr += ",".join(userDefinedNodesList)
+    userDefinedNodesJavaScriptArrayDefinitionStr += "];\n"
+
     outputStr = htmlTemplate.replace('<!-- user defined nodes place to insert -->', '<!-- user defined nodes place to insert -->'+"\n"+jsScriptIncludeStatement)
     outputStr = outputStr.replace('//library tree variables init place to insert', '//library tree variables init place to insert'+"\n"+ "".join(createVariableIniStatement))
     outputStr = outputStr.replace('<!-- user defined nodes menu place to insert -->', '<!-- user defined nodes menu place to insert -->'+"\n"+ "".join(htmlNodeMenuItem))
+    outputStr = outputStr.replace('/* here insert all user defined nodes list */', userDefinedNodesJavaScriptArrayDefinitionStr)
 
     #print(outputStr)
     with open("GrahpLang IDE Generated 1.html", "w") as fileOutput:
          fileOutput.write(outputStr)
 
+    print('Webpage generate COMPLETE.')

@@ -1998,3 +1998,58 @@ GraphLang.Utils.getUniqueNodeLabel = function(canvas, nodeLabel = "nodeLabel"){
     }
     return nodeLabel;
 }
+
+/**
+ * This will scan all user defined nodes and return array, cluster, ... names, all names what is possible to use for pointers.
+ * @returns {*}
+ */
+GraphLang.Utils.getAllDatatypesForPointers = function(){
+    let allDatatypesForPointersList = new draw2d.util.ArrayList();
+    let uniqueDatatypes = new draw2d.util.ArrayList();  //store just datatypes due they are unique
+
+    //these are default types already defined in context menu for pointers
+    uniqueDatatypes.add("int*");
+    uniqueDatatypes.add("uint*");
+    uniqueDatatypes.add("float*");
+    uniqueDatatypes.add("double*");
+    uniqueDatatypes.add("bool*");
+    uniqueDatatypes.add("String*");
+
+    for (let nodeName of global_allUserDefinedNodesList){
+        let nodeObj = eval(`new ${nodeName}()`);
+        for (let index in nodeObj.jsonDocument){
+            if (
+                nodeObj.jsonDocument[index].type &&
+                (nodeObj.jsonDocument[index].type.toLowerCase().search("clusterdatatype") > -1 ||
+                    nodeObj.jsonDocument[index].type.toLowerCase().search("arraynode") > -1)
+            ){
+                //check if datatype already stored in list
+                if (!uniqueDatatypes.contains(nodeObj.jsonDocument[index].userData.datatype)){
+                    let pointerInfo = {};
+                    pointerInfo.nodeOwner = nodeName;
+                    pointerInfo.datatype = nodeObj.jsonDocument[index].userData.datatype;
+
+                    if (pointerInfo.datatype.startsWith("clusterDatatype")){
+                        pointerInfo.displayName =   pointerInfo.nodeOwner +
+                                                    " -> " +
+                                                    pointerInfo.datatype.substring(
+                                                        pointerInfo.datatype.indexOf(
+                                                            "_",
+                                                            pointerInfo.datatype.indexOf("_")+1 //this will skip first _ and will search for 2nd
+                                                        )+1
+                                                    );  //skip clusterDatatype_ at the beginning o cluster datatype name
+                    }else{
+                        pointerInfo.displayName = pointerInfo.datatype;
+                    }
+
+                    allDatatypesForPointersList.push(pointerInfo);
+
+                    uniqueDatatypes.push(nodeObj.jsonDocument[index].userData.datatype);    //add to datatype control list
+                }
+            }
+        }
+    }
+
+    return allDatatypesForPointersList.unique();
+}
+

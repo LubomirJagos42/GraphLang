@@ -108,7 +108,12 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
              */
             if (lineObj.getSource().getDatatype) {
                 sourceDatatype = lineObj.getSource().getDatatype();
-            }else{
+            }
+            else if (lineObj.getSource().getParent().getConnectedCluster){
+                //this is case when wires are connected to bundlers, unbundlers and so
+                sourceDatatype = lineObj.getSource().getParent().getConnectedCluster().getDatatype();
+            }
+            else{
                 sourceDatatype = lineObj.getSource().getUserData().datatype;
             }
 
