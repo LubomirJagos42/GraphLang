@@ -7,6 +7,7 @@ translateToCppCodeFunctionsArray = new draw2d.util.ArrayList();
 translateToCppCodeImportArray = new draw2d.util.ArrayList();
 translateToCppCodeTypeDefinitionArray = new draw2d.util.ArrayList();
 translateToCppCodeSubnodeArray = new draw2d.util.ArrayList();
+translateToCppCodeSubnodeInputTerminalsDefaultValuesArray = new draw2d.util.ArrayList();
 translateSubnodeCanvasArray = new draw2d.util.ArrayList();
 
 GraphLang.Utils.getCppCodeImport = function(){
@@ -186,39 +187,72 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                  */
                 if (nodeObj.translateToCppCodeTypeDefinition) translateToCppCodeTypeDefinitionArray.push(nodeObj.translateToCppCodeTypeDefinition());
 
+
+                /*************************************************************************************************************************************************
+                 *  TRANSCRIPT NODES WITH DIAGRAM INSIDE (user created blocks which has no C/C++ method to transcript but are composed from other GraphLang nodes)
+                 */
+
+                /*
+                 *    Translate canvas most top nodes with diagram inside into separate function
+                 */
+                if (!translateToCppCodeSubnodeArray.contains(nodeObj.NAME) && nodeObj.jsonDocument !== undefined && nodeObj.jsonDocument.length > 0){
+                    translateToCppCodeSubnodeArray.push(nodeObj.NAME);
+                    GraphLang.Utils.translateToCppCodeSubNode(nodeObj);
+                }
+
+                /*
+                 *      Translate blocks nested in loops or multilayered nodes, they MUST HAVE DEFINED METHOD .getSubNodesWithDiagramInside()
+                 */
+                if (typeof nodeObj.getSubNodesWithDiagramInside == "function"){
+                    let nodeObjChildrenWithDiagram = nodeObj.getSubNodesWithDiagramInside(translateToCppCodeSubnodeArray);
+                    nodeObjChildrenWithDiagram.each(function(subnodeIndex, subnodeObj){
+                        if (!translateToCppCodeSubnodeArray.contains(subnodeObj.NAME) && subnodeObj.jsonDocument !== undefined && subnodeObj.jsonDocument.length > 0){
+                            translateToCppCodeSubnodeArray.push(subnodeObj.NAME);
+                            GraphLang.Utils.translateToCppCodeSubNode(subnodeObj);
+                        }
+                    });
+                }
+
+
+                /*************************************************************************************************************************************************
+                 *  TRANSCRIPT NODES
+                 *      - this should be after user defined blocks are transcripted to have efault terminals values stored in array
+                 *      - here is block transcripted to C/C++ code line
+                 */
+
                 /*
                  *    C++ code translation, getting node C++ declaration and code
                  *        node must NOT BE TERMINAL or
                  *        can be terminal but translateTerminalDeclaration == true    (transcripting top canvas)
                  */
                 if (nodeObj.translateToCppCodeDeclaration && (!nodeObj.userData.isTerminal || (nodeObj.userData.isTerminal && translateTerminalsDeclaration))) cCode += nodeObj.translateToCppCodeDeclaration();
+
+                /*
+                 *  TODO here must be default values for not connected node terminals, ie:
+                 *      datatype figure_ID_port_Name = value;
+                 *  or:
+                 *      datatype figure_ID_port_Name;
+                 */
+                if (nodeObj.jsonDocument !== undefined && nodeObj.jsonDocument.length > 0){
+                    nodeObj.getInputPorts().each(function(portIndex, portObj){
+                        if (portObj.getConnections().getSize() == 0){
+                            console.log(`getting default port value: translateToCppCodeSubnodeInputTerminalsDefaultValuesArray["${nodeObj.NAME}"]["${portObj.getName()}"]`);
+                            let defaultPortValues = translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[`${nodeObj.NAME}`][portObj.getName()];
+                            if (defaultPortValues.variableValue){
+                                cCode += `${defaultPortValues.datatype} node_${nodeObj.getId()}_inputPort_${defaultPortValues.variableName} = ${defaultPortValues.variableValue};\n`;
+                            }else{
+                                cCode += `${defaultPortValues.datatype} node_${nodeObj.getId()}_inputPort_${defaultPortValues.variableName};\n`;
+                            }
+                        }
+                    });
+                }
+
+                /*
+                 *  C/C++ code line generated
+                 */
                 if (nodeObj.translateToCppCode) cCode += nodeObj.translateToCppCode();
 
 
-                /*************************************************************************************************************************************************
-                 *  TRANSCRIPT NODES WITH DIAGRAM INSIDE (user created blocks which has no C/C++ method to transcript but are composed from other GraphLang nodes)
-                 */
-
-                    /*
-                     *    Translate canvas most top nodes with diagram inside into separate function
-                     */
-                    if (!translateToCppCodeSubnodeArray.contains(nodeObj.NAME) && nodeObj.jsonDocument !== undefined && nodeObj.jsonDocument.length > 0){
-                        translateToCppCodeSubnodeArray.push(nodeObj.NAME);
-                        GraphLang.Utils.translateToCppCodeSubNode(nodeObj);
-                    }
-
-                    /*
-                     *      Translate blocks nested in loops or multilayered nodes, they MUST HAVE DEFINED METHOD .getSubNodesWithDiagramInside()
-                     */
-                    if (typeof nodeObj.getSubNodesWithDiagramInside == "function"){
-                        let nodeObjChildrenWithDiagram = nodeObj.getSubNodesWithDiagramInside(translateToCppCodeSubnodeArray);
-                        nodeObjChildrenWithDiagram.each(function(subnodeIndex, subnodeObj){
-                            if (!translateToCppCodeSubnodeArray.contains(subnodeObj.NAME) && subnodeObj.jsonDocument !== undefined && subnodeObj.jsonDocument.length > 0){
-                                translateToCppCodeSubnodeArray.push(subnodeObj.NAME);
-                                GraphLang.Utils.translateToCppCodeSubNode(subnodeObj);
-                            }
-                        });
-                    }
 
 
                 /*
@@ -293,6 +327,18 @@ GraphLang.Utils.translateToCppCodeSubNode = function(nodeObj){
             if (paramsCounterInput > 0) cCodeParamsInput += ', ';
             cCodeParamsInput += figureObj.translateToCppCodeAsParam();
             paramsCounterInput++;
+
+            /*
+             *  push input terminal into array for case it's not connected and value must be assigned
+             *  assuming all terminal nodes has unique name
+             */
+            if (translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[nodeObj.NAME] == undefined) translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[nodeObj.NAME] = {}
+            translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[nodeObj.NAME][figureObj.getUserData().nodeLabel] = {
+                datatype: figureObj.getDatatype(),
+                variableName: `${figureObj.getUserData().nodeLabel}`,
+                variableValue: figureObj.getVariableValueAsStr ? figureObj.getVariableValueAsStr() : ""
+            };
+            console.log(`added subnode port: translateToCppCodeSubnodeInputTerminalsDefaultValuesArray["${nodeObj.NAME}"]["${figureObj.getUserData().nodeLabel}"]`);
         }
 
         /*

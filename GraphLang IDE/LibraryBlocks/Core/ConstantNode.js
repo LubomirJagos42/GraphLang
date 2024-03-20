@@ -205,6 +205,14 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
       return variableName   
   },
 
+  getVariableValueAsStr: function(){
+      let variableValueStr = this.getText();
+      if (this.getDatatype().toLowerCase().search("string") > -1) {
+          variableValueStr += "\"" + this.getText() + "\"";
+      }
+      return variableValueStr;
+  },
+
   getDatatype: function(){
     let cCode = "";
     //cCode += this.getOutputPort(0).userData.datatype;     //datatype from port
@@ -248,13 +256,9 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
      *  retrun variable declaration, if terminal translation is forbidden using GLOBAL FLAG translateTerminalsDeclaration then no declaration is created
      */
     if (!this.userData.isTerminal || (this.userData.isTerminal && translateTerminalsDeclaration)) {
-        if (constDatatype.toLowerCase().search("string") > -1) {
-            cCode += constDatatype + " " + this.getVariableName() + " = \"" + this.getText() + "\";\n";
-        } else {
-            cCode += constDatatype + " " + this.getVariableName() + " = " + this.getText() + ";\n";
-        }
+        cCode += constDatatype + " " + this.getVariableName() + " = " + this.getVariableValueAsStr() + ";\n";
     }else{
-        cCode += `/*${this.getVariableName()} is set as terminal so no declaration here */\n`;
+        cCode += `/* ${this.getVariableName()} is set as terminal so no declaration here */\n`;
     }
 
     return cCode;

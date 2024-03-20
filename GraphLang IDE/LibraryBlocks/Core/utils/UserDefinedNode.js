@@ -58,7 +58,7 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
                    port.setConnectionDirection(31);
                    port.setBackgroundColor("#37B1DE");
                    port.setMaxFanOut(20);
-                   port.setName(nodePortObj.getName());                   
+                   port.setName(nodePortObj.getName());
                    outputPortIndex++;
                 });
                 node.getOutputPorts().each(function(nodePortIndex, nodePortObj){
@@ -67,7 +67,7 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
                    port.setConnectionDirection(3);
                    port.setBackgroundColor("#37B1DE");
                    port.setMaxFanOut(20);
-                   port.setName(nodePortObj.getName());                   
+                   port.setName(nodePortObj.getName());
                    inputPortIndex++;
                 });
             }
@@ -208,6 +208,7 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
 
         let paramsCounter = 0;
         let paramsStr = "";
+        let portOwnerNode = this;
         this.getInputPorts().each(function(portIndex, portObj){
             /*
              *  Write as input param connected wire JUST FIRST to parameter string
@@ -217,7 +218,8 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
             if (connections.getSize() > 0){
                 paramsStr += 'wire_' + connections.first().getId();
             }else{
-                paramsStr += 'null';
+                //paramsStr += 'null';      //WRONG, there should be some default value, this is just too simple to be running properly
+                paramsStr += `node_${portOwnerNode.getId()}_inputPort_${portObj.getName()}`;      //default parameter defined before this method call, look for subnode translate where this name is psuhed into array
             }
 
             paramsCounter++;
