@@ -243,6 +243,12 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
           var itemClusterObj = connectedCluster.getItemByLabel(currentItemLabel);
           return itemClusterObj.getDatatype();
       }
+      outputPort.getExecutionOrder = function(){
+          //get executionOrder from UnbundlerByName object
+          //    hierarchy is UnbundlerByName object > Vertical layout > Label object > output port
+          let executionOrder = this.getParent().getParent().getParent().getUserData().executionOrder;
+          return executionOrder;
+      }
       label.getDatatype = function(){                                                       //THIS ONE IS USED INSIDE LOOP, YEAH IT'S NON CONSISTENT BUT THAT'S CURRENT STATE AT LEAST IT'S RUNNING SOMEHOW
           var connectedCluster = unbundlerObj.getConnectedCluster();                        //this must be called as anonym function to get connected cluster at time of validation
           var currentItemLabel = this.getText();
@@ -345,7 +351,15 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
 
       $.each(memento.bundleItems, $.proxy(function(i,bundleItem){
         this.addEntity(bundleItem.name);
-        this.items.getChildren().last().getOutputPort(0).setName(bundleItem.inputPortName);                
+        this.items.getChildren().last().getOutputPort(0).setName(bundleItem.inputPortName);
+
+        this.items.getChildren().last().getOutputPort(0).getExecutionOrder = function(){
+          //get executionOrder from UnbundlerByName object
+          //    hierarchy is UnbundlerByName object > Vertical layout > Label object > output port
+          let executionOrder = this.getParent().getParent().getParent().getUserData().executionOrder;
+          return executionOrder;
+        }
+
       },this));
       this.updateAllItemsOncontext();
    },

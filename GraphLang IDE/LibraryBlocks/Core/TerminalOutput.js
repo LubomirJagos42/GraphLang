@@ -16,6 +16,7 @@ GraphLang.Shapes.Basic.TerminalOutput = draw2d.shape.basic.Label.extend({
 
     //INIT USER DATA
     this.userData = {};
+    this.userData.isTerminal = true;
 
     /*****************************************************************************
      *  OUTPUT PORT
@@ -80,6 +81,16 @@ GraphLang.Shapes.Basic.TerminalOutput = draw2d.shape.basic.Label.extend({
    */
   translateToCppCodeAsParam:function(){
     cCode = this.getDatatype() + " &" + this.getText();
+    return cCode;
+  },
+
+  /**
+   * Get terminal output variable declaration
+   * Output as: datatype terminalName
+   */
+  translateToCppCodeDeclaration:function() {
+    cCode = "";
+    cCode += this.getDatatype() + " " + this.getText() + ';\n';
     return cCode;
   },
 

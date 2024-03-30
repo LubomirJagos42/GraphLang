@@ -141,26 +141,27 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     var forLoopIteratorVariable = 'forLoopIterator_' + this.getId();
 
     cCode += this.getTunnelsDeclarationCppCode();
-    cCode += this.getWiresInsideLoopDeclarationCppCode().replaceAll("\n", "\n\t");
-    cCode += "for (int " + forLoopIteratorVariable + " = 0; " + forLoopIteratorVariable + " < " + iterationCount + "; " + forLoopIteratorVariable+ "++){\n\t";
-    cCode += "\t\t" + this.getLeftTunnelsWiresAssignementCppCode().replaceAll("\n", "\n\t");
+    cCode += this.getWiresInsideLoopDeclarationCppCode();
+    cCode += "\n";
+    cCode += "for (int " + forLoopIteratorVariable + " = 0; " + forLoopIteratorVariable + " < " + iterationCount + "; " + forLoopIteratorVariable+ "++){\n";
+    cCode += "\t" + this.getLeftTunnelsWiresAssignementCppCode().replaceAll("\n", "\n\t");
 
     this.getOutputPort("iterationTerminalOutput").getConnections().each(function(wireIndex, wireObj){
-      cCode += "\t\twire_" + wireObj.getId() + " = " + forLoopIteratorVariable + ";\n";
+      cCode += "\twire_" + wireObj.getId() + " = " + forLoopIteratorVariable + ";\n";
     });
 
     /*  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      *          RECURSION CALL
      *  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      */
-    cCode += "\t/*code inside FOR LOOP */\n\n";
+    cCode += "/*code inside FOR LOOP */\n\n";
     this.getAssignedFigures().each(function(figIndex, figObj){
-      if (figObj.translateToCppCodeDeclaration && figObj.NAME.toLowerCase().search("feedbacknode") == -1) cCode += "\t" + figObj.translateToCppCodeDeclaration().replaceAll("\n", "\n\t\t");
+      if (figObj.translateToCppCodeDeclaration && figObj.NAME.toLowerCase().search("feedbacknode") == -1) cCode += "\t" + figObj.translateToCppCodeDeclaration().replaceAll("\n", "\n\t");
 
       if (figObj.translateToCppCode){
-        cCode += figObj.translateToCppCode().replaceAll("\n", "\n\t\t");
+        cCode += figObj.translateToCppCode().replaceAll("\n", "\n\t");
       }else if (figObj.translateToCppCode2){
-        cCode += figObj.translateToCppCode2().replaceAll("\n", "\n\t\t");
+        cCode += figObj.translateToCppCode2().replaceAll("\n", "\n\t");
       }
 
       /* in case of post C/C++ code run it */
@@ -169,13 +170,13 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     });
 
     return cCode;
-
   },
 
   translateToCppCodePost: function(){
     var cCode = "";
-    cCode += this.getRightTunnelsAssignementOutputCppCode();    //first assign values to output wires
-    cCode += "\n} /* END FOR LOOP */" + "\n";                     //then finish loop
+    cCode += this.getRightTunnelsAssignementOutputCppCode().replaceAll("\n", "\n\t");    //first assign values to output wires
+    cCode += "\n";  //this is here dure tafter last \n in right tunnels assignement there is indentation so this will put there empty line
+    cCode += "} //END FOR LOOP\n";
 
     return cCode;
   }

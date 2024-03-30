@@ -41,11 +41,6 @@ GraphLang.Utils.getCppCodeTypeDefinition = function(){
 GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDeclaration = true){
     let cCode = "";
 
-    /*
-     *      SET GLOBAL FLAG TO CREATE TERMINALS DECLARATIONs
-     */
-    translateTerminalsDeclaration = true;
-
     //TO BE SURE RECALCULATE NODES OWNERSHIP BY loopsRecalculateAbroadFigures
     GraphLang.Utils.loopsRecalculateAbroadFigures(canvas);
 
@@ -381,7 +376,7 @@ GraphLang.Utils.translateToCppCodeSubNode = function(nodeObj){
     /*
      *  Here is calling same parent C/C++ code transcription function on 2nd canvas
      */
-    cCode += GraphLang.Utils.translateCanvasToCppCode(subnodeCanvas, translateTerminalsDeclaration = false).replaceAll('\n','\n\t');
+    cCode += GraphLang.Utils.translateCanvasToCppCode(subnodeCanvas, false).replaceAll('\n','\n\t');
 
     cCode += "\n";  //to not have separate last curly bracket by tabulator
     cCode += '}' + "\n";
@@ -437,11 +432,12 @@ typedef int int32;
 typedef int undefined;
 typedef unsigned int uint;
 typedef float numeric;
-#define HIGH true
-#define LOW false
     `;
 
     _disabled_template_cCode += `
+#define HIGH true
+#define LOW false
+
 using namespace std;
 
 /**** MOCKING CLASSES **************************/

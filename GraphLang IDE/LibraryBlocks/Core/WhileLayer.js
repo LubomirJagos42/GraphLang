@@ -147,7 +147,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
 
     cCode += this.getTunnelsDeclarationCppCode();
 
-    cCode += "\t" + this.getWiresInsideLoopDeclarationCppCode().replaceAll("\n", "\n\t");
+    cCode += this.getWiresInsideLoopDeclarationCppCode();
     cCode += "\n";
 
     cCode += "do{\n";
@@ -179,8 +179,9 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
       endCondition = "wire_" + stopTerminal.getConnections().get(0).getId();
     }
 
-    cCode += this.getRightTunnelsAssignementOutputCppCode();
-    cCode += "\n}while(!" + endCondition + "); /* END WHILE LOOP */" + "\n";
+    cCode += this.getRightTunnelsAssignementOutputCppCode().replaceAll("\n", "\n\t");
+    cCode += "\n";  //there is replace of \n to \n\t so this will prevent to have last closing while loop intended
+    cCode += "}while(!" + endCondition + "); //END WHILE LOOP\n";
 
     return cCode;
   },

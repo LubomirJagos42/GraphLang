@@ -5,6 +5,9 @@
 GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
   NAME: "GraphLang.Shapes.Basic.ConstantNode",
 
+  contextMenuItems: {},
+  pointerDatatypesList: ["int","uint","float","double","bool","String"],
+
   /**
    *  @method init
    *  @description Constant initialization, create port, assign default datatype to constant and assign events to constant what has happen when user
@@ -55,6 +58,9 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
     /*****************************************************************************
      *  RIGHT CLICK CONTEXT MENU
      *****************************************************************************/
+    this.off("contextmenu");
+    this.updateContextMenuItems();
+
     this.on("contextmenu", function(emitter, event){
         $.contextMenu({
             selector: 'body',
@@ -131,24 +137,30 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
             },this),
             x:event.x,
             y:event.y,
-            items:
-            {
-                "int": {name: "int"},
-                "uint":    {name: "uint"},
-                "float":    {name: "float"},
-                "double": {name: "double"},
-                "bool": {name: "bool"},
-                "String": {name: "String"},
-                "sep1":   "---------",
-                "showNodeLabel": {name: "Show node label"},
-                "sep2":   "---------",
-                "setTerminal": {name: "Set as terminal"},
-                "unsetTerminal": {name: "Unset terminal"}
-            }
+            items: emitter.contextMenuItems,
         });
     });
 
   },
+
+    updateContextMenuItems: function(){
+        /*
+         *  Add choices into cotext menu
+         */
+        this.contextMenuItems["showNodeLabel"] = {name: "Show node label"};
+        this.contextMenuItems["sep1"] = "---------";
+        this.contextMenuItems["setTerminal"] = {name: "Set as terminal"};
+        this.contextMenuItems["unsetTerminal"] = {name: "Unset terminal"};
+        this.contextMenuItems["sep2"] = "---------";
+
+        for (item of this.pointerDatatypesList){
+            this.contextMenuItems[item] = {name: item};
+        }
+
+        let _contextMenuItems = this.contextMenuItems;
+        // TODO scan files and add clusters datatypes
+    },
+
 
  /*
   *   Set label colors if item in menu was choosed, if there was terminal setting choosed, do nothing
@@ -206,9 +218,11 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
   },
 
   getVariableValueAsStr: function(){
-      let variableValueStr = this.getText();
+      let variableValueStr = "";
       if (this.getDatatype().toLowerCase().search("string") > -1) {
           variableValueStr += "\"" + this.getText() + "\"";
+      }else{
+          variableValueStr = this.getText();
       }
       return variableValueStr;
   },

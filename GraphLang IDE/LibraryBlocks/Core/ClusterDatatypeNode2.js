@@ -467,9 +467,9 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
     cCode += "typedef struct " + this.getDatatype() + " {\n";       //dereferencing datatype
     allFigures.each(function(figureIndex, figureObj){
       if (figureObj.translateToCppCodeDeclaration){
-        cCode += figureObj.translateToCppCodeDeclaration();
+        cCode += "\t" + figureObj.translateToCppCodeDeclaration();
       }else if (figureObj.getDatatype){
-        cCode += figureObj.getDatatype() + " " + figureObj.userData.nodeLabel + ";\n";
+        cCode += "\t" + figureObj.getDatatype() + " " + figureObj.userData.nodeLabel + ";\n";
       }
     });
 

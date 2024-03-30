@@ -984,7 +984,14 @@ GraphLang.Utils.executionOrder = function executionOrder(canvas){
 
           //CHECK STATE OF CONNECTED OUTPUTS BEFORE THIS PORT
           portObj.getConnections().each(function(wireIndex, wireObj){
-            if (wireObj.getSource() && wireObj.getSource().getUserData().executionOrder < 0) inPortPrepared = false;
+              if (wireObj.getSource() && wireObj.getSource().getExecutionOrder){
+                  //if there is function on output port which provides execution order use it
+                  if (wireObj.getSource().getExecutionOrder() < 0){
+                      inPortPrepared = false;
+                  }
+              }else if (wireObj.getSource() && wireObj.getSource().getUserData().executionOrder < 0){
+                  inPortPrepared = false;
+              }
           });
 
           //CHECK FOR CONTENT INSIDE LOOP IF WAIT FOR INPUT TUNNELS
@@ -1957,6 +1964,7 @@ GraphLang.Utils.saveSchematic2 = function(canvas, filename, type) {
         url = URL.createObjectURL(file);
         a.href = url;
         a.download = filename;
+        if (type == "text/javascript") a.download += ".js"; //add javasript extension to filename
 
         document.body.appendChild(a);
         a.click();
@@ -2001,6 +2009,10 @@ GraphLang.Utils.getUniqueNodeLabel = function(canvas, nodeLabel = "nodeLabel"){
 
 /**
  * This will scan all user defined nodes and return array, cluster, ... names, all names what is possible to use for pointers.
+ *
+ * TODO now it's traversing through all user defined nodes JSON and not canvas of current opened node so there should be added scan
+ * through canvas
+ *
  * @returns {*}
  */
 GraphLang.Utils.getAllDatatypesForPointers = function(){
