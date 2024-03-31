@@ -10,6 +10,9 @@ translateToCppCodeSubnodeArray = new draw2d.util.ArrayList();
 translateToCppCodeSubnodeInputTerminalsDefaultValuesArray = new draw2d.util.ArrayList();
 translateSubnodeCanvasArray = new draw2d.util.ArrayList();
 
+typeDefinitionUsedList =  new draw2d.util.ArrayList();
+typeDefinitionNeededList =  new draw2d.util.ArrayList();
+
 GraphLang.Utils.getCppCodeImport = function(){
     var cCode = "";
     translateToCppCodeImportArray.unique();                               //remove duplicities
@@ -38,7 +41,7 @@ GraphLang.Utils.getCppCodeTypeDefinition = function(){
  * @returns {String} C/C++ code as string
  * @description Copy diagram as C/C++ code into clipboard, uses inside translateToCppCode2() function.
  */
-GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDeclaration = true){
+GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDeclaration = true, nodeName = ""){
     let cCode = "";
 
     //TO BE SURE RECALCULATE NODES OWNERSHIP BY loopsRecalculateAbroadFigures
@@ -178,9 +181,15 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                 if (nodeObj.translateToCppCodeImport) translateToCppCodeImportArray.push(nodeObj.translateToCppCodeImport());
 
                 /*
-                 *    Getting type definition, ie. for clusters
+                 *    Getting TYPE DEFINITION, ie. for clusters
                  */
-                if (nodeObj.translateToCppCodeTypeDefinition) translateToCppCodeTypeDefinitionArray.push(nodeObj.translateToCppCodeTypeDefinition());
+                if (nodeObj.translateToCppCodeTypeDefinition){
+                    translateToCppCodeTypeDefinitionArray.push(nodeObj.translateToCppCodeTypeDefinition());
+
+                    if (nodeObj.getDatatype && nodeObj.getDatatype().startsWith("clusterDatatype_")) {
+                        typeDefinitionUsedList.push(`${nodeName} -> ${nodeObj.getNodeLabelText()}`);
+                    }
+                }
 
 
                 /*************************************************************************************************************************************************
@@ -376,7 +385,7 @@ GraphLang.Utils.translateToCppCodeSubNode = function(nodeObj){
     /*
      *  Here is calling same parent C/C++ code transcription function on 2nd canvas
      */
-    cCode += GraphLang.Utils.translateCanvasToCppCode(subnodeCanvas, false).replaceAll('\n','\n\t');
+    cCode += GraphLang.Utils.translateCanvasToCppCode(subnodeCanvas, false, nodeObj.NAME).replaceAll('\n','\n\t');
 
     cCode += "\n";  //to not have separate last curly bracket by tabulator
     cCode += '}' + "\n";
@@ -413,6 +422,9 @@ GraphLang.Utils.getCppCode3 = function(canvas, showCode = true){
     translateToCppCodeFunctionsArray.clear();       //translated subnodes functions bodies
     translateToCppCodeSubnodeArray.clear();         //already translated subnodes function names
     translateSubnodeCanvasArray.clear();
+    typeDefinitionUsedList.clear();
+    typeDefinitionNeededList.clear();
+
 
     /******************************************************************************
      * Translate canvas to C/C++ code

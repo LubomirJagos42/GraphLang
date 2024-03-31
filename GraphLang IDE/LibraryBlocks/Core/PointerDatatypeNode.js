@@ -21,6 +21,8 @@ GraphLang.Shapes.Basic.PointerDatatypeNode = GraphLang.Shapes.Basic.ConstantNode
         this.updateContextMenuItems();
 
         this.on("contextmenu", function(emitter, event){
+            emitter.updateContextMenuItems();
+
             $.contextMenu({
                 selector: 'body',
                 events:
@@ -102,13 +104,32 @@ GraphLang.Shapes.Basic.PointerDatatypeNode = GraphLang.Shapes.Basic.ConstantNode
          *  TODO: add getting cluster and arrays from current file.
          */
         let _contextMenuItems = this.contextMenuItems;
+        let uniqueDatatypes = new draw2d.util.ArrayList();  //store just datatypes due they are unique
         GraphLang.Utils.getAllDatatypesForPointers().each(function(datatypeIndex, pointerInfo){
             /*
              *  This will save pointer to array or cluster under key clusterName* with some human readable displayName to have
              *  good names for user which will display in context menu.
              */
-            _contextMenuItems[pointerInfo.datatype + "*"] = {name: pointerInfo.displayName};
+            _contextMenuItems[pointerInfo.datatype + "*"] = {name: pointerInfo.displayName + "*"};
+            uniqueDatatypes.add(pointerInfo.datatype);
         });
+
+        /*
+         *  Scan current canvas paper.
+         */
+        if (this.getCanvas()) {
+            this.getCanvas().getFigures().each(function (nodeIndex, nodeObj) {
+                if (
+                    nodeObj.getDatatype &&
+                    nodeObj.getDatatype().startsWith("clusterDatatype_") &&
+                    !uniqueDatatypes.contains(nodeObj.getDatatype())
+                ) {
+                    uniqueDatatypes.add(nodeObj.getDatatype());
+                    _contextMenuItems[nodeObj.getDatatype() + "*"] = {name: "THIS CANVAS -> " + nodeObj.getNodeLabelText() + "*"};
+                }
+            });
+        }
+
     },
 
     /*****************************************************************************************************************************************************

@@ -2065,3 +2065,59 @@ GraphLang.Utils.getAllDatatypesForPointers = function(){
     return allDatatypesForPointersList.unique();
 }
 
+/**
+ * This will scan all user defined nodes and return cluster datatypes for constant node and classic datatypes.
+ *
+ * TODO now it's traversing through all user defined nodes JSON and not canvas of current opened node so there should be added scan
+ * through canvas
+ *
+ * @returns {*}
+ */
+GraphLang.Utils.getAllDatatypesForConstant = function(){
+    let allDatatypesForConstantList = new draw2d.util.ArrayList();
+    let uniqueDatatypes = new draw2d.util.ArrayList();  //store just datatypes due they are unique
+
+    //these are default types already defined in context menu for pointers
+    uniqueDatatypes.add("int");
+    uniqueDatatypes.add("uint");
+    uniqueDatatypes.add("float");
+    uniqueDatatypes.add("double");
+    uniqueDatatypes.add("bool");
+    uniqueDatatypes.add("String");
+
+    for (let nodeName of global_allUserDefinedNodesList){
+        let nodeObj = eval(`new ${nodeName}()`);
+        for (let index in nodeObj.jsonDocument){
+            if (
+                nodeObj.jsonDocument[index].type &&
+                (nodeObj.jsonDocument[index].type.toLowerCase().search("clusterdatatype") > -1)
+            ){
+                //check if datatype already stored in list
+                if (!uniqueDatatypes.contains(nodeObj.jsonDocument[index].userData.datatype)){
+                    let datatypeInfo = {};
+                    datatypeInfo.nodeOwner = nodeName;
+                    datatypeInfo.datatype = nodeObj.jsonDocument[index].userData.datatype;
+
+                    if (datatypeInfo.datatype.startsWith("clusterDatatype")){
+                        datatypeInfo.displayName =   datatypeInfo.nodeOwner +
+                            " -> " +
+                            datatypeInfo.datatype.substring(
+                                datatypeInfo.datatype.indexOf(
+                                    "_",
+                                    datatypeInfo.datatype.indexOf("_")+1 //this will skip first _ and will search for 2nd
+                                )+1
+                            );  //skip clusterDatatype_ at the beginning o cluster datatype name
+                    }else{
+                        datatypeInfo.displayName = datatypeInfo.datatype;
+                    }
+
+                    allDatatypesForConstantList.push(datatypeInfo);
+
+                    uniqueDatatypes.push(nodeObj.jsonDocument[index].userData.datatype);    //add to datatype control list
+                }
+            }
+        }
+    }
+
+    return allDatatypesForConstantList.unique();
+}

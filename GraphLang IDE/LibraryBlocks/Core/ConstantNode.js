@@ -62,6 +62,8 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
     this.updateContextMenuItems();
 
     this.on("contextmenu", function(emitter, event){
+        emitter.updateContextMenuItems();   //scan all user defined nodes and update menu
+
         $.contextMenu({
             selector: 'body',
             events:
@@ -73,30 +75,6 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
             callback: $.proxy(function(key, options)
             {
                switch(key){
-               case "int":
-                   emitter.changeDatatype(key);
-                   emitter.setText("0");                                                //<-- default value
-                   break;
-               case "uint":
-                   emitter.changeDatatype(key);
-                   emitter.setText("0");                                                //<-- default value
-                   break;
-               case "float":
-                   emitter.changeDatatype(key);
-                   emitter.setText("0.0");                                                //<-- default value
-                   break;
-               case "double":
-                   emitter.changeDatatype(key);
-                   emitter.setText("0.0");                                                //<-- default value
-                   break;
-               case "bool":
-                   emitter.changeDatatype(key);
-                   emitter.setText("false");                                                //<-- after change set default value as text to false
-                   break;
-               case "String":
-                   emitter.changeDatatype(key);
-                   emitter.setText("defaultString");                                                //<-- default value
-                   break;
                case "showNodeLabel":
                     if (emitter.userData.nodeLabel != null) labelText = emitter.userData.nodeLabel;
                     else{
@@ -128,9 +106,33 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
                    emitter.setColor("#AA4A4C"); //stroke color
                    emitter.userData.isTerminal = false;
                    break;
+               case "int":
+                   emitter.changeDatatype(key);
+                   emitter.setText("0");                                                //<-- default value
+                   break;
+               case "uint":
+                   emitter.changeDatatype(key);
+                   emitter.setText("0");                                                //<-- default value
+                   break;
+               case "float":
+                   emitter.changeDatatype(key);
+                   emitter.setText("0.0");                                                //<-- default value
+                   break;
+               case "double":
+                   emitter.changeDatatype(key);
+                   emitter.setText("0.0");                                                //<-- default value
+                   break;
+               case "bool":
+                   emitter.changeDatatype(key);
+                   emitter.setText("false");                                                //<-- after change set default value as text to false
+                   break;
+               case "String":
+                   emitter.changeDatatype(key);
+                   emitter.setText("defaultString");                                                //<-- default value
+                   break;
                default:
-                   //emitter.setBackgroundColor(colorObj.getByNameBackgroundColor("unknown"));
-                   //emitter.getOutputPort(0).userData.datatype = "unknown";
+                   emitter.setText(options.items[key].name);
+                   emitter.changeDatatype(key);
                    break;
                }
 
@@ -157,8 +159,31 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
             this.contextMenuItems[item] = {name: item};
         }
 
+        /*
+         *  Scan all user defined nodes in whoe files even if they are not used
+         */
         let _contextMenuItems = this.contextMenuItems;
-        // TODO scan files and add clusters datatypes
+        let uniqueDatatypes = new draw2d.util.ArrayList();  //store just datatypes due they are unique
+        GraphLang.Utils.getAllDatatypesForConstant().each(function(datatypeIndex, datatypeInfo){
+            _contextMenuItems[datatypeInfo.datatype] = {name: datatypeInfo.displayName};
+            uniqueDatatypes.add(datatypeInfo.datatype);
+        });
+
+        /*
+         *  Scan current canvas paper.
+         */
+        if (this.getCanvas()) {
+            this.getCanvas().getFigures().each(function (nodeIndex, nodeObj) {
+                if (
+                    nodeObj.getDatatype &&
+                    nodeObj.getDatatype().startsWith("clusterDatatype_") &&
+                    !uniqueDatatypes.contains(nodeObj.getDatatype())
+                ) {
+                    uniqueDatatypes.add(nodeObj.getDatatype());
+                    _contextMenuItems[nodeObj.getDatatype()] = {name: "THIS CANVAS -> " + nodeObj.getNodeLabelText()};
+                }
+            });
+        }
     },
 
 
