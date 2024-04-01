@@ -1565,35 +1565,39 @@ GraphLang.Utils.setTunnelColorByWire = function(canvas){
  *  @description Rewrite in output code all IDs to normal numbers to make output code more readible
  *  @returns {String} Translated code with rewiritten ID to something more readible - normal numbers, so code is shorter and nicer looking.
  */
-GraphLang.Utils.rewriteIDtoNumbers = function(canvas, cCode){
-  var allId = new draw2d.util.ArrayList();
-  var allIdNoHyphen = new draw2d.util.ArrayList();
+GraphLang.Utils.rewriteIDtoNumbers = function(canvas, cCode, additionalIdList = null, additionalIdNoHyphenList = null){
+  var allIdList = new draw2d.util.ArrayList();
+  var allIdNoHyphenList = new draw2d.util.ArrayList();
   canvas.getFigures().each(function(figureIndex, figureObj){
-      allId.push(figureObj.getId());
-      allIdNoHyphen.push(figureObj.getId().replaceAll("-",""));
+      allIdList.push(figureObj.getId());
+      allIdNoHyphenList.push(figureObj.getId().replaceAll("-",""));
       if (figureObj.NAME.toLowerCase().search("loop") > -1){
         figureObj.getChildren().each(function(childIndex, childObj){
           if (childObj.NAME.toLowerCase().search("tunnel") > -1){
-            allId.push(childObj.getId());
+            allIdList.push(childObj.getId());
           }
         });
       }
   });
 
   canvas.getLines().each(function(connectionIndex, connectionObj){
-    allId.push(connectionObj.getId());
+    allIdList.push(connectionObj.getId());
   });
+
+  //add aditional IDs into list
+  if (additionalIdList) allIdList.addAll(additionalIdList);
+  if (additionalIdNoHyphenList) allIdNoHyphenList.addAll(additionalIdNoHyphenList);
 
   //replace IDs with their order for more human readible code
   var counter = 0;
-  allId.each(function(IdIndex, IdObj){
+  allIdList.each(function(IdIndex, IdObj){
     var regExpression = new RegExp(IdObj, 'g');
     cCode = cCode.replace(regExpression, counter++);    //this replace id with number
   });
 
   //replace IDs without hyphen - this is mainly for clusters
   var counter = 0;
-  allIdNoHyphen.each(function(IdIndex, IdObj){
+  allIdNoHyphenList.each(function(IdIndex, IdObj){
       var regExpression = new RegExp(IdObj, 'g');
       cCode = cCode.replace(regExpression, counter++);    //this replace id with number
   });
@@ -2048,7 +2052,7 @@ GraphLang.Utils.getAllDatatypesForPointers = function(){
                                                         pointerInfo.datatype.indexOf(
                                                             "_",
                                                             pointerInfo.datatype.indexOf("_")+1 //this will skip first _ and will search for 2nd
-                                                        )+1
+                                                        ) + 1
                                                     );  //skip clusterDatatype_ at the beginning o cluster datatype name
                     }else{
                         pointerInfo.displayName = pointerInfo.datatype;
@@ -2105,7 +2109,7 @@ GraphLang.Utils.getAllDatatypesForConstant = function(){
                                 datatypeInfo.datatype.indexOf(
                                     "_",
                                     datatypeInfo.datatype.indexOf("_")+1 //this will skip first _ and will search for 2nd
-                                )+1
+                                ) + 1
                             );  //skip clusterDatatype_ at the beginning o cluster datatype name
                     }else{
                         datatypeInfo.displayName = datatypeInfo.datatype;

@@ -12,6 +12,10 @@ translateSubnodeCanvasArray = new draw2d.util.ArrayList();
 
 typeDefinitionUsedList =  new draw2d.util.ArrayList();
 typeDefinitionNeededList =  new draw2d.util.ArrayList();
+translateClusterTypeDefinitionCanvasArray = new draw2d.util.ArrayList();
+
+translateToCppCodeAdditionalId = new draw2d.util.ArrayList();
+translateToCppCodeAdditionalIdNoHyphen = new draw2d.util.ArrayList();
 
 GraphLang.Utils.getCppCodeImport = function(){
     var cCode = "";
@@ -182,6 +186,9 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
 
                 /*
                  *    Getting TYPE DEFINITION, ie. for clusters
+                 *      typeDefinitionUsedList   - stores already translated type definition nodes ie. cluster used in project
+                 *      typeDefinitionNeededList - stores typedefinition needed to be additionaly added due they are not used in project and need to be scanned from files
+                 *
                  */
                 if (nodeObj.translateToCppCodeTypeDefinition){
                     translateToCppCodeTypeDefinitionArray.push(nodeObj.translateToCppCodeTypeDefinition());
@@ -189,6 +196,14 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                     if (nodeObj.getDatatype && nodeObj.getDatatype().startsWith("clusterDatatype_")) {
                         typeDefinitionUsedList.push(`${nodeName} -> ${nodeObj.getNodeLabelText()}`);
                     }
+                }
+                if (
+                    (nodeObj.NAME.toLowerCase().search("constantnode") > -1 ||
+                    nodeObj.NAME.toLowerCase().search("pointerdatatypenode") > -1) &&
+                    nodeObj.getDatatype().toLowerCase().search("clusterdatatype") > -1 &&
+                    !typeDefinitionUsedList.contains(nodeObj.getText())
+                ){
+                    typeDefinitionNeededList.add(nodeObj.getText());
                 }
 
 
@@ -267,6 +282,16 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
         });
     }
 
+    /*
+     *  Obtain additionaly used type definitions
+     */
+    typeDefinitionNeededList.each(function(definitionIndex, definitionStr){
+        let definition = definitionStr.split("->");
+        let className = definition[0].trim();
+        let clusterName = definition[1].trim();
+        GraphLang.Utils.translateToCppCodeClusterTypeDefinitionFromNode(className, clusterName);
+    });
+
     /* erase flag for for loops at the end of this operation, to be able run again correctly, otherwise
     there will be orphans flags that loops were translated and it will make mess when multiple times
     executed this function without initializing ports */
@@ -279,10 +304,54 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
     /******************************************************************************
      * REWRITE IDs to HUMAN READABLE NUMBERS (starts from 1,2,...,N)
      *******************************************************************************/
-    cCode = this.rewriteIDtoNumbers(canvas, cCode);
+    cCode = this.rewriteIDtoNumbers(canvas, cCode, translateToCppCodeAdditionalId, translateToCppCodeAdditionalIdNoHyphen);
 
     return cCode;
 },
+
+/**
+ * @method translateToCppCodeClusterTypeDefinitionFromNode
+ * @param {Strin} className - class in which cluster is defined
+ * @returns {String} clusterName - cluster which typedefinition should be obtained
+ * @description Load node schematic in auxiliary canvas and run translate process for cluster typedefinition.
+ */
+GraphLang.Utils.translateToCppCodeClusterTypeDefinitionFromNode = function(className, clusterName){
+    /*
+     *  Create canvas
+     */
+    var divClusterTypeDefinitionCanvasId = 'clusterTypeDefinitionCanvas_'+translateClusterTypeDefinitionCanvasArray.getSize();
+    $('#clusterTypeDefinitionCanvasContainer').append("<div id=\"" + divClusterTypeDefinitionCanvasId + "\" style=\"width: 1500px; height: 600px;\"></div>");
+    var clusterTypeDefinitionCanvas = new draw2d.Canvas(divClusterTypeDefinitionCanvasId);
+    translateSubnodeCanvasArray.push([divClusterTypeDefinitionCanvasId, clusterTypeDefinitionCanvas])
+
+    /*
+     *  Translate cluster code definition
+     */
+    let classObj = eval(`new ${className}()`);
+    GraphLang.Utils.displayContents2(classObj.jsonDocument, clusterTypeDefinitionCanvas);
+    clusterTypeDefinitionCanvas.getFigures().each(function(figureIndex, figureObj){
+        if (
+            figureObj.getDatatype &&
+            figureObj.getDatatype().startsWith("clusterDatatype_") &&
+            figureObj.getNodeLabelText() == clusterName
+        ){
+            console.log(figureObj.translateToCppCodeTypeDefinition());
+            translateToCppCodeTypeDefinitionArray.push(figureObj.translateToCppCodeTypeDefinition());
+            translateToCppCodeAdditionalIdNoHyphen.add(figureObj.getId().replaceAll('-', ''));    //add cluster ID into aditional IDs list, remove '-' due they are not used in clusters datatype name
+            translateToCppCodeAdditionalId.add(figureObj.getId());    //add cluster ID into aditional IDs list
+
+            //TODO here must be traversing through elements and if there is some constant which is also from some seaparte file find it and transle
+        }
+    });
+
+    /*
+     *  Destroy auxiliary canvas
+     */
+    translateSubnodeCanvasArray.each(function(canvasIndex, canvasObjArray){
+        $("canvas").remove("#"+canvasObjArray[0]);
+        canvasObjArray[1].destroy();
+    });
+}
 
 /**
  * @method translateToCppCodeSubNode
@@ -393,7 +462,7 @@ GraphLang.Utils.translateToCppCodeSubNode = function(nodeObj){
     /******************************************************************************
      * REWRITE IDs to HUMAN READABLE NUMBERS (starts from 1,2,...,N)
      *******************************************************************************/
-    cCode = this.rewriteIDtoNumbers(subnodeCanvas, cCode);
+    cCode = this.rewriteIDtoNumbers(subnodeCanvas, cCode, translateToCppCodeAdditionalId, translateToCppCodeAdditionalIdNoHyphen);
 
     //don't return any code, these functions are pushed into array and print after template is created
     //return cCode;
@@ -424,7 +493,9 @@ GraphLang.Utils.getCppCode3 = function(canvas, showCode = true){
     translateSubnodeCanvasArray.clear();
     typeDefinitionUsedList.clear();
     typeDefinitionNeededList.clear();
-
+    translateClusterTypeDefinitionCanvasArray.clear();
+    translateToCppCodeAdditionalId.clear();
+    translateToCppCodeAdditionalIdNoHyphen.clear();
 
     /******************************************************************************
      * Translate canvas to C/C++ code
@@ -546,7 +617,7 @@ SerialClass Serial;
     /******************************************************************************
      * REWRITE IDs to HUMAN READABLE NUMBERS (starts from 1,2,...,N)
      *******************************************************************************/
-    cCode = this.rewriteIDtoNumbers(canvas, cCode);
+    cCode = this.rewriteIDtoNumbers(canvas, cCode, translateToCppCodeAdditionalId, translateToCppCodeAdditionalIdNoHyphen);
 
     var copyElement = document.createElement('textarea');
     copyElement.innerHTML = cCode;

@@ -180,7 +180,7 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
    * @returns {string}
    */
   getDatatype: function(){
-    return "clusterDatatype_" + this.getId().replaceAll("-", "") + "_" + this.nodeLabel.getText();
+    return "clusterDatatype_" + this.getId().replaceAll("-", "") + "_" + this.getUserData().nodeLabel;
   },
 
   getNodeLabelText: function(){

@@ -6,7 +6,7 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
   NAME: "GraphLang.Shapes.Basic.ConstantNode",
 
   contextMenuItems: {},
-  pointerDatatypesList: ["int","uint","float","double","bool","String"],
+  constantDatatypesList: ["int","uint","float","double","bool","String"],
 
   /**
    *  @method init
@@ -155,7 +155,7 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
         this.contextMenuItems["unsetTerminal"] = {name: "Unset terminal"};
         this.contextMenuItems["sep2"] = "---------";
 
-        for (item of this.pointerDatatypesList){
+        for (item of this.constantDatatypesList){
             this.contextMenuItems[item] = {name: item};
         }
 
