@@ -2125,3 +2125,137 @@ GraphLang.Utils.getAllDatatypesForConstant = function(){
 
     return allDatatypesForConstantList.unique();
 }
+
+/**
+ *  @method validateCanvas
+ *  @param {Object} canvasObj - Canvas which will be checked
+ *  @param {String} canvasOwnerName - if provided this is name of owner node, ie. this canvas is diagram of some node
+ *  @param {[]} clusterDefinitionArray - array of defined cluster for nodes which are manipulating with clusters to know about cluster variables names and datatype
+ *  @description Check canvas for errors like multiple wires for input port, wrong datatypes, ...
+ */
+GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clusterDefinitionArray = null) {
+    let errorList = new draw2d.util.ArrayList();
+
+    /*
+     *  FIGURES CHECK
+     */
+    canvasObj.getFigures().each(function(figureIndex, figureObj){
+        if (figureObj.validateSelf){
+            //if there is validation function use it
+            errorList.addAll(figureObj.validateSelf(canvasOwnerName, clusterDefinitionArray));
+        }else{
+            //PORT CHECK
+            let inputPortList = figureObj.getInputPorts();
+            let outputPortList =figureObj.getOutputPorts();
+            figureObj.getPorts().each(function(portIndex, portObj){
+                //default value for port
+                let allowMultipleConnections = outputPortList.contains(portObj);
+                let connectionMandatory = false;
+
+                if (portObj.getUserData() && portObj.getUserData().allowMultipleConnections) allowMultipleConnections = portObj.getUserData().allowMultipleConnections;
+                if (portObj.getUserData() && portObj.getUserData().connectionMandatory) connectionMandatory = portObj.getUserData().connectionMandatory;
+
+                if (connectionMandatory && portObj.getConnections().getSize() == 0){
+                    //add error into list for not connected port
+                    errorList.add({
+                        canvasOwnerName: canvasOwnerName,
+                        figureName: figureObj.NAME,
+                        figureId: figureObj.getId(),
+                        portName: portObj.getName(),
+                        message: "MANDATORY_CONNECTION_FOR_PORT_REQUIRED"
+                    });
+                    console.log(errorList.last());
+
+                    //mark port as faulty, change it's color or stroke or something
+                    portObj.setStroke(2);
+                    portObj.setColor("#FF0000");
+                    portObj.setDashArray("-");
+                }
+
+                if (allowMultipleConnections == false && portObj.getConnections().getSize() > 1){
+                    //add error into list for more than 1 connected wire
+                    errorList.add({
+                        canvasOwnerName: canvasOwnerName,
+                        figureName: figureObj.NAME,
+                        figureId: figureObj.getId(),
+                        portName: portObj.getName(),
+                        message: "MULTIPLE_CONNECTIONS_FOR_PORT_NOT_ALLOWED"
+                    });
+                    console.log(errorList.last());
+
+                    //mark port as faulty, change it's color or stroke or something
+                    portObj.setStroke(2);
+                    portObj.setColor("#FF9500");
+                    portObj.setDashArray(".");
+                }
+
+            });
+        }
+    });
+
+    /*
+     *  WIRES CHECK
+     */
+    canvasObj.getLines().each(function(lineIndex, lineObj){
+        let sourcePort = lineObj.getSource();
+        let targetPort = lineObj.getTarget();
+
+        let sourcePortDatatype = "undefined";
+        if (sourcePort.getUserData() && sourcePort.getUserData().datatype) sourcePortDatatype = sourcePort.getUserData().datatype;
+        if (sourcePort.getDatatype) sourcePortDatatype = sourcePort.getDatatype();
+
+        let targetPortDatatype = "undefined";
+        if (targetPort.getUserData() && targetPort.getUserData().datatype) targetPortDatatype = targetPort.getUserData().datatype;
+        if (targetPort.getDatatype) targetPortDatatype = targetPort.getDatatype();
+
+        if (
+            (
+                sourcePortDatatype != "polymorphic" ||
+                targetPortDatatype != "polymorphic"
+            ) &&
+            (
+                sourcePortDatatype == "undefined" ||
+                targetPortDatatype == "undefined"
+            )
+        ){
+            errorList.add({
+                canvasOwnerName: canvasOwnerName,
+                connectionId: lineObj.getId(),
+                connectionSource: lineObj.getSource(),
+                connectionSourceDatatype: sourcePortDatatype,
+                connectionTargetDatatype: targetPortDatatype,
+                connectionTarget: lineObj.getTarget(),
+                message: "CONNECTION_UNDEFINED_DATATYPE"
+            });
+            console.log(errorList.last());
+
+            //mark line as faulty, change it's color or stroke or something
+            lineObj.setDashArray("-");
+            lineObj.setColor("#888888");
+        }else{
+            if (sourcePortDatatype != targetPortDatatype){
+                errorList.add({
+                    canvasOwnerName: canvasOwnerName,
+                    connectionId: lineObj.getId(),
+                    connectionSource: lineObj.getSource(),
+                    connectionSourceDatatype: sourcePortDatatype,
+                    connectionTargetDatatype: targetPortDatatype,
+                    connectionTarget: lineObj.getTarget(),
+                    message: "CONNECTION_DIFFERENT_DATATYPE"
+                });
+                console.log(errorList.last());
+
+                //mark line as faulty, change it's color or stroke or something
+                lineObj.setDashArray("-");
+                lineObj.setColor("#888888");
+            }
+        }
+    });
+
+    return errorList;
+}
+
+
+
+
+

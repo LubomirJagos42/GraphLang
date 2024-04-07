@@ -233,6 +233,32 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
 
     return allLabels;
   },
+
+  /**
+   * @method getItemNamesDatatypesIndexes
+   * @returns {*[]} array of names, indexes, datatypes of each items, useful for validation bundler, unbundler nodes
+   */
+  getItemNamesDatatypesIndexes: function(){
+    this.getAssignedFigures(true);                                                  //first recalculate all nodes inside cluster
+
+    let itemNamesDatatypes = [];
+    this.getAssignedFigures().each(function(figureIndex, figureObj){
+      if (!figureObj.getDatatype) return;                                         //continue just for figures which have datatype function
+      if (figureObj.userData && figureObj.userData.nodeLabel){
+        itemNamesDatatypes[figureObj.userData.nodeLabel] = {
+          index: figureObj.userData.clusterItemIndex,
+          datatype: figureObj.getDatatype()
+        };
+      }else if (figureObj.NAME.toLowerCase().search("clusterdatatype") > -1){
+        itemNamesDatatypes[figureObj.getName()] = {
+          index: figureObj.userData.clusterItemIndex,
+          datatype: figureObj.getDatatype()
+        };
+      }
+    });
+
+    return itemNamesDatatypes;
+  },
   
   isItemNameUnique: function(name){
     let itemNames = this.getAllItemsLabels();

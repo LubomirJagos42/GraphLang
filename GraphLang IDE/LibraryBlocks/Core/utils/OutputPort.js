@@ -15,7 +15,40 @@ draw2d.OutputPort = draw2d.OutputPort.extend({
     if (!this.userData) this.userData = {}
     this.userData.allowMultipleConnections = true;
     this.userData.connectionMandatory = false;
+
+    /*
+     *  General context menu for nodes output ports
+     */
+    this.on("contextmenu", function(emitter, event){
+      $.contextMenu({
+        selector: 'body',
+        events:
+            {
+              hide:function(){ $.contextMenu( 'destroy' ); }
+            },
+
+        //these functions are run after user click on some context menu option
+        callback: $.proxy(function(key, options)
+        {
+          switch(key){
+            case "createTerminal":
+              alert("Function not implemented yet.");
+              break;
+            default:
+              break;
+          }
+
+        },this),
+        x:event.x,
+        y:event.y,
+        items: {
+          "createTerminal": {name: "Create Terminal"},
+        },
+      });
+    });
+
   },
+
 });
 
 /**

@@ -13,9 +13,12 @@ translateSubnodeCanvasArray = new draw2d.util.ArrayList();
 typeDefinitionUsedList =  new draw2d.util.ArrayList();
 typeDefinitionNeededList =  new draw2d.util.ArrayList();
 translateClusterTypeDefinitionCanvasArray = new draw2d.util.ArrayList();
+translateClusterTypeDefinitionItems = [];          //this stores array[custer_datatype_name] = map of item labels: datatype
 
 translateToCppCodeAdditionalId = new draw2d.util.ArrayList();
 translateToCppCodeAdditionalIdNoHyphen = new draw2d.util.ArrayList();
+
+translateToCppCodeErrorList = new draw2d.util.ArrayList();
 
 GraphLang.Utils.getCppCodeImport = function(){
     var cCode = "";
@@ -42,6 +45,8 @@ GraphLang.Utils.getCppCodeTypeDefinition = function(){
 /**
  * @method translateCanvasToCppCode
  * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
+ * @param {boolean} translateTerminalsDeclaration - if set to false input/output terminals for outside world declaration are not written in C/C++, this is for translate subnodes
+ * @param {String} nodeName - name of current node which schematic is being translated into code, this is set when subnode diagram is translated into code
  * @returns {String} C/C++ code as string
  * @description Copy diagram as C/C++ code into clipboard, uses inside translateToCppCode2() function.
  */
@@ -62,10 +67,6 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
     // added by LuboJ. this CAN CAUSE SOME ERRORS IT WASN'T HERE UNTIL RECENTLY when I saw that there is not port initialization and execution order done in this task.
     this.initAllPortToDefault(canvas);
     this.executionOrder(canvas);
-
-    /*
-     *    Now just ticking with clock and run nodes setup to run at that step by execution order.
-     */
 
     /*********************************************************************************************************
      *  WIRES DECLARATION
@@ -301,6 +302,21 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
         }
     });
 
+
+
+
+    /*********************************************************************************************************
+     * CANVAS SCHEMATIC VALIDATION
+     * TODO this should be done as first thing, but now it's here due there is no luster definition array
+     * filling at the beginning but should be placed there now for validation it's placed here
+     *********************************************************************************************************/
+    translateToCppCodeErrorList.addAll(
+        GraphLang.Utils.validateCanvas(canvas, nodeName, translateClusterTypeDefinitionItems)
+    );
+
+
+
+
     /******************************************************************************
      * REWRITE IDs to HUMAN READABLE NUMBERS (starts from 1,2,...,N)
      *******************************************************************************/
@@ -340,7 +356,9 @@ GraphLang.Utils.translateToCppCodeClusterTypeDefinitionFromNode = function(class
             translateToCppCodeAdditionalIdNoHyphen.add(figureObj.getId().replaceAll('-', ''));    //add cluster ID into aditional IDs list, remove '-' due they are not used in clusters datatype name
             translateToCppCodeAdditionalId.add(figureObj.getId());    //add cluster ID into aditional IDs list
 
-            //TODO here must be traversing through elements and if there is some constant which is also from some seaparte file find it and transle
+            translateClusterTypeDefinitionItems[figureObj.getDatatype()] = figureObj.getItemNamesDatatypesIndexes();
+
+            //TODO here must be traversing through elements and if there is some constant which is also from some seaparte file find it and translate
         }
     });
 
@@ -494,8 +512,10 @@ GraphLang.Utils.getCppCode3 = function(canvas, showCode = true){
     typeDefinitionUsedList.clear();
     typeDefinitionNeededList.clear();
     translateClusterTypeDefinitionCanvasArray.clear();
+    translateClusterTypeDefinitionItems = [];
     translateToCppCodeAdditionalId.clear();
     translateToCppCodeAdditionalIdNoHyphen.clear();
+    translateToCppCodeErrorList.clear();
 
     /******************************************************************************
      * Translate canvas to C/C++ code

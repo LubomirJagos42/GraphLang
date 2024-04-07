@@ -18,6 +18,8 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
         rows: "grow"
       },attr));
 
+      let nodeObjectReference = this;
+
       //don't save ports into file
       this.persistPorts = false;
 
@@ -29,6 +31,7 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
       this.portClusterType.setBackgroundColor(colorObj.getByName("cluster"));
       this.portClusterType.setName("clusterInput");
       this.portClusterType.setMaxFanOut(20);
+      this.portClusterType.getDatatype = this.getDatatype;
 
       //create vertical list and push it into unbundler object
       this.items = new draw2d.shape.layout.VerticalLayout();
@@ -115,6 +118,37 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
             }
         }
         return clusterObj;
+    },
+
+    //TODO, check if could be done simpler
+    getDatatype: function(){
+        let connectedCluster = null;
+        let clusterPort = null;
+        if (this.NAME.search(".UnbundleByName") > -1){
+            connectedCluster = this.getConnectedCluster();
+            clusterPort = this.portClusterType;
+        }
+        else if (this.NAME.search("InputPort") > -1){
+            connectedCluster = this.getParent().getConnectedCluster();
+            clusterPort = this;
+        }
+
+        if (connectedCluster == null){
+            let connections = clusterPort.getConnections();
+            if (connections.getSize() > 0) {
+                let connectedNode = connections.first().getSource().getParent();
+
+                if (connectedNode.getDatatype) {
+                    return connectedNode.getDatatype();
+                } else if (connectedNode.getConnectedClusterDatatype) {
+                    return connectedNode.getConnectedClusterDatatype();
+                }
+            }else{
+                return "undefined";
+            }
+        }else{
+            return connectedCluster.getDatatype();
+        }
     },
 
     getContextMenu: function(){
@@ -361,6 +395,9 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
         }
 
       },this));
+
+      this.getOutputPort("clusterInput").getDatatype = this.getDatatype;     //set function for datatype obtaining during load from file
+
       this.updateAllItemsOncontext();
    },
    
@@ -376,6 +413,31 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
         inputPorts.addAll(childObj.getInputPorts());
      });
      return inputPorts;
+   },
+
+   validateSelf: function(canvasOwnerName, clusterDefinitionArray){
+       let errorList = new draw2d.util.ArrayList();
+
+       console.log(`${this.NAME} > validateSelf()`);
+
+       let connectedClusterDatatype = this.getDatatype();
+
+       if (connectedClusterDatatype == null){
+           errorList.add({
+               canvasOwnerName: canvasOwnerName,
+               figureId: this.getId(),
+               figureName: this.NAME,
+               message: "CLUSTER_TYPEDEFINITION_PORT_NOT_CONNECTED"
+           });
+       }
+
+       for (const k of Object.keys(clusterDefinitionArray)){
+           console.log(`\t${k}`);
+       }
+
+       //TODO need to be implemented properly
+
+       return errorList;
    },
 
    symbolPicture: " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFEAAABSCAIAAACjea/PAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAMcSURBVHhe7ZtNTxNBGIB3Z7vdWqgV00aqByAao1BjwkXCQW4e0INyIRoP4EFjYkT8DSQaf4Im3okn/EA9GwMcwBiNB75SgcAaGyisodvufDjQgRXpFvDU8Z0nk9mZ2ffwPpn9ymxGLxaLGjCQOEJCOcNAOcNAOcNgX+9njLFoVT2hUEi0gtnD2XGclZUVz/NEv+oxTbOuri4Wi4l+OSo5r66uZrNZZISQYWiMidFqRtcpIZTgRCIRj8fF4C4CnSmlmUxGNwyEDDEkCZQSRkhjYyNC5Z9Wgc+wfD7Pa+mEOaWcS/mXJdCZzzO/VERHOvhFzvMPQL2fYaCcYaCcYaCcYaCcYaCcYaCcYaCcYaCcYaCcYQDRucz69uDg4JuXr6enpsyQmW4933n5SjqdFuckgWAvmUgE/c3Y4ZzL5e7evjMxMdHKUik95ul0FuW+Fe2e3t6e3lsiSAYO4Hzz+o2lzzNX8ekjeoTxc5rG66/0xwv8pe9B/7WuLhFX9VR29u/noaGhkbGxTu9kjWZiRjEl3mZ9Rk9eQqeeP31WYZVcLnzn92/fndOPHdYswhh3JhojW3UrOrGeXx8dGRGhkuM7z07PHNUOYUZKxdtq8EIZTYYP2/aSCJUc37mmttZlGGuUF8ILv7B5e6suasSyIiJUcnznC+1t89avjYnduJP9SeZlka0tF5zmlhYRKjm+c3d394K7/InZm5PM/qxHzcX2tvampiYRKjm+c0NDw8DAwAeW+cjm1phbmuo5lntlTq3H0P2H/SJOfv7+DhseHn7y6PH3hfl4OFqkJI8LHRc77vX1JZNJESEDB/gm2WZ8fHxyctItFM42N6dSx8WoPPyLM8dxnJ/ZrBEyRV8q9vsdBgflDAPlDAPlDAPlDAPlDAPlDAPlDAPlDAPlDAPlvBNpdxrtkXmgczgclvfnK8+c5y86uwh0tiwrGo1SIs2O2G14zjxznr/o7yJwfZuDMbZtmwcgZFAZ9oiije1zhM9wfX19hU3BlZxLOI7jui6TwVnX9UgkErSUv83ezv8f6l0FA+UMA+UMA+UMAU37DYH+ibyG5Ac4AAAAAElFTkSuQmCC",

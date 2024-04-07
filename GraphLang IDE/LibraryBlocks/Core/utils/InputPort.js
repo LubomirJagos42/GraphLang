@@ -15,6 +15,38 @@ draw2d.InputPort = draw2d.InputPort.extend({
     if (!this.userData) this.userData = {}
     this.userData.allowMultipleConnections = false;
     this.userData.connectionMandatory = false;
+
+    /*
+     *  General context menu for nodes input ports
+     */
+    this.on("contextmenu", function(emitter, event){
+      $.contextMenu({
+        selector: 'body',
+        events:
+            {
+              hide:function(){ $.contextMenu( 'destroy' ); }
+            },
+
+        //these functions are run after user click on some context menu option
+        callback: $.proxy(function(key, options)
+        {
+          switch(key){
+            case "createConstant":
+              alert("Function not implemented yet.");
+              break;
+            default:
+              break;
+          }
+
+        },this),
+        x:event.x,
+        y:event.y,
+        items: {
+          "createConstant": {name: "Create constant"},
+        },
+      });
+    });
+
   },
 });
 
