@@ -2231,7 +2231,7 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
 
             //mark line as faulty, change it's color or stroke or something
             lineObj.setDashArray("-");
-            lineObj.setColor("#888888");
+            lineObj.setColor("#FF0000");
         }else{
             if (sourcePortDatatype != targetPortDatatype){
                 errorList.add({
@@ -2247,7 +2247,7 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
 
                 //mark line as faulty, change it's color or stroke or something
                 lineObj.setDashArray("-");
-                lineObj.setColor("#888888");
+                lineObj.setColor("#FF0000");
             }
         }
     });

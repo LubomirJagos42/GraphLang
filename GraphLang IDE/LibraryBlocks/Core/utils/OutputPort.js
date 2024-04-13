@@ -6,8 +6,10 @@ draw2d.OutputPort = draw2d.OutputPort.extend({
   NAME: "draw2d.OutputPort",
   
   init:function(attr, setter, getter){
-    this._super( $.extend({radius: 4},attr), setter, getter);
-    //this.setColor("#00FF00");
+    this._super( $.extend({
+      radius: 4
+    },attr), setter, getter);
+    this.setStroke(3);  //set thicker stroke line for output ports
 
     /*
      *  Basic userData definitions

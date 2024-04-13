@@ -33,7 +33,7 @@ GraphLang.ArduinoLib.Node.analogWrite = GraphLang.UserDefinedNode.extend({
 
      // in2
      port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(1.0415651409345552, 59.94008082105504));
-     port.setConnectionDirection(2);
+     port.setConnectionDirection(3);
      port.setBackgroundColor("#37B1DE");
      port.setName("in2");
      port.setMaxFanOut(20);

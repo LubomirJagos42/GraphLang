@@ -6,8 +6,9 @@ draw2d.InputPort = draw2d.InputPort.extend({
   NAME: "draw2d.InputPort",
   
   init:function(attr, setter, getter){
-    this._super( $.extend({radius: 4},attr), setter, getter);
-    //this.setColor("#00FF00");
+    this._super( $.extend({
+      radius: 4
+    },attr), setter, getter);
 
     /*
      *  Basic userData definitions
