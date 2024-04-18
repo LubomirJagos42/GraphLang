@@ -94,18 +94,23 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
             let clusterName = null;
 
             /*
-             *    There are two options:
+             *    There are three options:
              *        - there is cluster connected to cluster input or some tunnel which has function getDatatype()
              *          and this function should have just nodes which represent some datatype or tunnels
              *        - it's connected to some Unbundle, UnbundleByName which output is cluster
+             *        - it's connected to constant which datatype is cluster (cluster can be located in other block)
              */
             if (connectedNode.getDatatype){
                 clusterName = connectedNode.getDatatype();
             }else if (connectedNode.getConnectedClusterDatatype){
                 clusterName = connectedNode.getConnectedClusterDatatype();
             }
+            console.log(`node: ${this.NAME}, id: ${this.getId()} searching for cluster definition of "${clusterName}"`);
 
             if (clusterName){
+                /*
+                 *  1. Looking for cluster on current canvas
+                 */
                 this.getCanvas().getFigures().each(function(figureIndex, figureObj){
                     if (
                         figureObj.NAME.toLowerCase().search('clusterdatatype') >= 0 &&
@@ -115,6 +120,12 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
                         clusterObj = figureObj;
                     }
                 });
+
+                /*
+                 *  2. Looking for cluster in user defined nodes
+                 */
+                if (clusterObj == null) clusterObj = GraphLang.Utils.getClusterDatatypeDefinitionFromUserDefinedNode(clusterName);
+
             }
         }
         return clusterObj;
@@ -157,70 +168,71 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
        *    after right click on bundle by name item.
        */
       let contextMenu = {};
-      let clusterObj = this.getConnectedCluster();
-      if (clusterObj){
-        clusterObj.getAllItemsLabels().each(function(itemIndex, itemObj){
-            contextMenu[itemObj] = {name: itemObj};
-        });
-        contextMenu["separator1"] = "--------------------";
-      }
 
       /*
        *    Default context menu items to add and delete item.
        */
       contextMenu["add after this"] = {name: "Add After This"};
       contextMenu["delete"] = {name: "Delete This Item"};
-      
+
+      let clusterObj = this.getConnectedCluster();
+      if (clusterObj){
+        contextMenu["separator1"] = "--------------------";
+        clusterObj.getAllItemsLabels().each(function(itemIndex, itemObj){
+            contextMenu[itemObj] = {name: itemObj};
+        });
+      }else{
+        console.error(`node: ${this.NAME}, id:${this.getId()} connected cluster is null`);
+      }
+
       return contextMenu;
     },
 
     updateAllItemsOncontext: function(){
-      /*
-       *    Setting to show context menu when right click on each item in cluster, items
-       *    are get from vertical layout which grouped them together
-       */
-      this.items.getChildren().each(function(itemIndex, itemObj){
-        itemObj.on("contextmenu", function(emitter, event){
-            $.contextMenu({
-                selector: 'body',
-                events:
-                {
-                    hide:function(){ $.contextMenu( 'destroy' ); }
-                },
+       /*
+        *    Setting to show context menu when right click on each item in cluster, items
+        *    are get from vertical layout which grouped them together
+        */
+       this.items.getChildren().each(function(itemIndex, itemObj){
+          itemObj.on("contextmenu", function(emitter, event){
+               $.contextMenu({
+                   selector: 'body',
+                   events:
+                   {
+                       hide:function(){ $.contextMenu( 'destroy' ); }
+                   },
 
-                //these functions are run after user click on some context menu option
-                callback: $.proxy(function(key, options)
-                {
-                   switch(key){
-                   case "add after this":
-                        insertAtIndex = emitter.getParent().getParent().items.getChildren().indexOf(emitter) + 1;
-                        emitter.getParent().getParent().addEntity("null", insertAtIndex);
-                      break;
-                   case "delete":
-                      emitter.getParent().getParent().removeEntity(itemObj);	//POSSIBLE TO ADD INDEX AFTER WHICH IT HAS TO ADD ITEM
-                      break;
-                   default:
-                      let itemObj = emitter.getParent().getParent().getConnectedCluster().getItemByLabel(key);
-                      if (itemObj){
-                        var colorObj = new GraphLang.Utils.Color();
-                        emitter.setText(key);
-                        portObj = emitter.getOutputPort(0)
-                        portObj.userData.datatype = itemObj.getDatatype();
-                        portObj.useGradient = false;
-                        portObj.setBackgroundColor(colorObj.getByName(itemObj.getDatatype()));
-                      }else{
-                        emitter.setText("not found");
-                      }
-                      break;
-                   }
-
-                },this),
-                x:event.x,
-                y:event.y,
-                items: emitter.getParent().getParent().getContextMenu()
-            });
-        });
-      });
+                   //these functions are run after user click on some context menu option
+                   callback: $.proxy(function(key, options){
+                       switch(key){
+                           case "add after this":
+                               insertAtIndex = emitter.getParent().getParent().items.getChildren().indexOf(emitter) + 1;
+                               emitter.getParent().getParent().addEntity("null", insertAtIndex);
+                               break;
+                           case "delete":
+                               emitter.getParent().getParent().removeEntity(emitter);	//POSSIBLE TO ADD INDEX AFTER WHICH IT HAS TO ADD ITEM
+                               break;
+                           default:
+                               let itemObj = emitter.getParent().getParent().getConnectedCluster().getItemByLabel(key);
+                               if (itemObj){
+                                   var colorObj = new GraphLang.Utils.Color();
+                                   emitter.setText(key);
+                                   portObj = emitter.getOutputPort(0)
+                                   portObj.userData.datatype = itemObj.getDatatype();
+                                   portObj.useGradient = false;
+                                   portObj.setBackgroundColor(colorObj.getByName(itemObj.getDatatype()));
+                               }else{
+                                   emitter.setText("not found");
+                               }
+                               break;
+                       }
+                   },this),
+                   x:event.x,
+                   y:event.y,
+                   items: emitter.getParent().getParent().getContextMenu()
+               });
+         });
+       });
 	},
 
     updateBasicContextMenu: function(){
@@ -275,7 +287,9 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
           var connectedCluster = unbundlerObj.getConnectedCluster();                        //this must be called as anonym function to get connected cluster at time of validation
           var currentItemLabel = this.getParent().getText();
           var itemClusterObj = connectedCluster.getItemByLabel(currentItemLabel);
-          return itemClusterObj.getDatatype();
+
+          if (itemClusterObj) return itemClusterObj.getDatatype();
+          else return "undefined";
       }
       outputPort.getExecutionOrder = function(){
           //get executionOrder from UnbundlerByName object
@@ -416,12 +430,16 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
    },
 
    validateSelf: function(canvasOwnerName, clusterDefinitionArray){
+       let unbundlerObj = this;
        let errorList = new draw2d.util.ArrayList();
 
        console.log(`${this.NAME} > validateSelf()`);
 
        let connectedClusterDatatype = this.getDatatype();
 
+       /*
+        *   Check if unbundler cluster port is connected, this is MOST BASIC check.
+        */
        if (connectedClusterDatatype == null){
            errorList.add({
                canvasOwnerName: canvasOwnerName,
@@ -431,11 +449,36 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
            });
        }
 
+       /*
+        *   This is just for debugging principles printing info of all availbale cluster datatypes into console for developer.
+        */
+       let message = ""
+       message += `${this.NAME} > validateSelf() entered with clusters list:\n`;
        for (const k of Object.keys(clusterDefinitionArray)){
-           console.log(`\t${k}`);
+            message += `\t${k}\n`;
        }
+       console.log(message);
 
-       //TODO need to be implemented properly
+       /*
+        *   This will obtain reference to cluster object on helper canvas and check each item in ubnudler if it's real cluster item by label.
+        *   If item in unbundler is not in cluster it will be marked somehow to be visible to user.
+        */
+       let clusterObj = GraphLang.Utils.getClusterDatatypeDefinitionFromUserDefinedNode(connectedClusterDatatype);
+       this.items.getChildren().each(function(itemIndex, itemObj){
+           let isUnbundleItemInCluster = clusterObj.getItemByLabel(itemObj.getText());
+           if (!isUnbundleItemInCluster){
+               itemObj.setBackgroundColor('#FF0000');
+               errorList.add({
+                   canvasOwnerName: canvasOwnerName,
+                   figureId: unbundlerObj.getId(),
+                   figureName: unbundlerObj.NAME,
+                   message: "UNBUNDLE_ITEM_NOT_EXISTS"
+               });
+               console.error(errorList.last());
+           }else{
+               itemObj.setBackgroundColor(null);    //everything OK set backround transparent
+           }
+       });
 
        return errorList;
    },

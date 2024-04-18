@@ -2070,10 +2070,9 @@ GraphLang.Utils.getAllDatatypesForPointers = function(){
 }
 
 /**
- * This will scan all user defined nodes and return cluster datatypes for constant node and classic datatypes.
- *
- * TODO now it's traversing through all user defined nodes JSON and not canvas of current opened node so there should be added scan
- * through canvas
+ * @method getAllDatatypesForConstant
+ * @description This will scan all user defined nodes and return cluster datatypes for constant node and classic datatypes.
+ *    TODO now it's traversing through all user defined nodes JSON and not canvas of current opened node so there should be added scan through canvas
  *
  * @returns {*}
  */
@@ -2127,6 +2126,41 @@ GraphLang.Utils.getAllDatatypesForConstant = function(){
 }
 
 /**
+ * @method getClusterDatatypeDefinitionFromUserDefinedNode
+ * @description This will scan all user defined nodes and return cluster datatypes for constant node and classic datatypes.
+ *    This is using 2nd helper canvas to load schematic with cluster definition if found and return it's reference to be alive and have all functions
+ *    which are available when node is loaded on canvas.
+ * @returns {name: string, displayName: string}
+ */
+GraphLang.Utils.getClusterDatatypeDefinitionFromUserDefinedNode = function(clusterName){
+    let clusterObj = null;
+
+    for (let nodeName of global_allUserDefinedNodesList){
+        let nodeObj = eval(`new ${nodeName}()`);
+        for (let index in nodeObj.jsonDocument){
+            if (
+                nodeObj.jsonDocument[index].type &&
+                (nodeObj.jsonDocument[index].type.toLowerCase().search("clusterdatatype") > -1)
+            ){
+                //check if datatype already stored in list
+                if (clusterName == nodeObj.jsonDocument[index].userData.datatype){
+                    clusterNodeId = nodeObj.jsonDocument[index].id;
+
+                    //console.log(`${clusterName} found in UserDefinedNode ${nodeName}`);
+                    GraphLang.Utils.displayContents2(nodeObj.jsonDocument, appCanvas2);     //load whole user defined node to 2nd helper canvas
+                    //console.log(`appCanvas2 looking for ${clusterNodeId}`);
+
+                    clusterObj = appCanvas2.getFigure(clusterNodeId);
+                    if (clusterObj) clusterObj.addItemsLabels();            //add item labels, this will add item labels even in case they are not defined in userData, to ensure they are there
+                }
+            }
+        }
+    }
+
+    return clusterObj;
+}
+
+/**
  *  @method validateCanvas
  *  @param {Object} canvasObj - Canvas which will be checked
  *  @param {String} canvasOwnerName - if provided this is name of owner node, ie. this canvas is diagram of some node
@@ -2164,7 +2198,7 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
                         portName: portObj.getName(),
                         message: "MANDATORY_CONNECTION_FOR_PORT_REQUIRED"
                     });
-                    console.log(errorList.last());
+                    console.error(errorList.last());
 
                     //mark port as faulty, change it's color or stroke or something
                     portObj.setStroke(2);
@@ -2181,7 +2215,7 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
                         portName: portObj.getName(),
                         message: "MULTIPLE_CONNECTIONS_FOR_PORT_NOT_ALLOWED"
                     });
-                    console.log(errorList.last());
+                    console.error(errorList.last());
 
                     //mark port as faulty, change it's color or stroke or something
                     portObj.setStroke(2);
@@ -2210,7 +2244,7 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
 
         if (
             (
-                sourcePortDatatype != "polymorphic" ||
+                sourcePortDatatype != "polymorphic" &&
                 targetPortDatatype != "polymorphic"
             ) &&
             (
@@ -2227,13 +2261,19 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
                 connectionTarget: lineObj.getTarget(),
                 message: "CONNECTION_UNDEFINED_DATATYPE"
             });
-            console.log(errorList.last());
+            console.error(errorList.last());
 
             //mark line as faulty, change it's color or stroke or something
             lineObj.setDashArray("-");
             lineObj.setColor("#FF0000");
         }else{
-            if (sourcePortDatatype != targetPortDatatype){
+            if (
+                (
+                    sourcePortDatatype != "polymorphic" &&
+                    targetPortDatatype != "polymorphic"
+                ) &&
+                sourcePortDatatype != targetPortDatatype
+            ){
                 errorList.add({
                     canvasOwnerName: canvasOwnerName,
                     connectionId: lineObj.getId(),
@@ -2243,7 +2283,7 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
                     connectionTarget: lineObj.getTarget(),
                     message: "CONNECTION_DIFFERENT_DATATYPE"
                 });
-                console.log(errorList.last());
+                console.error(errorList.last());
 
                 //mark line as faulty, change it's color or stroke or something
                 lineObj.setDashArray("-");

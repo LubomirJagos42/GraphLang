@@ -20,6 +20,7 @@ GraphLang.ArduinoLib.Node.Add = GraphLang.UserDefinedNode.extend({
 
      if (!port.userData) port.userData = {}
      port.userData.datatype = "int";
+     port.userData.connectionMandatory = true;
 
      // in2
      port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(27.108986736728813, 55.769230769230774));
@@ -30,6 +31,7 @@ GraphLang.ArduinoLib.Node.Add = GraphLang.UserDefinedNode.extend({
 
      if (!port.userData) port.userData = {}
      port.userData.datatype = "int";
+     port.userData.connectionMandatory = true;
 
      // out1
      port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(89.50650501725174, 41.66666666666667));
@@ -40,6 +42,7 @@ GraphLang.ArduinoLib.Node.Add = GraphLang.UserDefinedNode.extend({
 
      if (!port.userData) port.userData = {}
      port.userData.datatype = "int";
+     port.userData.connectionMandatory = true;
 
      this.persistPorts=false;
    },

@@ -30,7 +30,7 @@ GraphLang.Shapes.Basic.TerminalOutput = draw2d.shape.basic.Label.extend({
     port.setName("out1");
     port.setMaxFanOut(20);
     port.userData = {};
-    port.userData.datatype = "undefined";
+    port.userData.datatype = "polymorphic";
 
     /*****************************************************************************
      *  DEFAULT DATATYPE of this constant

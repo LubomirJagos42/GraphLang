@@ -510,7 +510,8 @@ jsonDocument: [
     "angle": 0,
     "userData": {
       "datatype": "String",
-      "isTerminal": false
+      "isTerminal": false,
+      "nodeLabel": "item_1"
     },
     "cssClass": "GraphLang_Shapes_Basic_ConstantNode",
     "composite": "5faebde8-533c-4fec-995d-8b211c8a3856",
@@ -538,7 +539,8 @@ jsonDocument: [
     "angle": 0,
     "userData": {
       "datatype": "int",
-      "isTerminal": false
+      "isTerminal": false,
+      "nodeLabel": "item_0"
     },
     "cssClass": "GraphLang_Shapes_Basic_ConstantNode",
     "composite": "5faebde8-533c-4fec-995d-8b211c8a3856",
