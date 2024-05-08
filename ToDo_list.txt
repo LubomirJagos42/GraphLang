@@ -1,0 +1,19 @@
+This is list features what to do due I always forget on what to work
+====================================================================
+- graph validation add compatible datatypes when input and output port are polymorphic
+    - ie. Add node where both input are polymorphic and output also therefore there must be some resolve how to solve what datatype should be output
+    - possible solution is to put function into output port getDatatype() due C/C++ code generator is first looking for this function on output port
+- python code generator
+    - this would be heavily copied from C/C++ code generator when finished
+- general weak typed language generator class
+- list of errors click on item and focus on graph somewhere
+- 2D array node
+- figure methods isCluster(), isArray(), ... instead of detect these things from NAME property
+    - easiest is to extend Figure object and add this methods to detect it from userData
+- put getDatatype() method into InputPort, OutputPort to have it there
+    - it will look into userData.datatype variable, parent node or somewhere else
+- translate polymorphic datatype into right C/C++ code datatype in C/C++
+
+Finished features
+=================
+

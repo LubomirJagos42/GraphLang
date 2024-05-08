@@ -19,7 +19,7 @@ GraphLang.ArduinoLib.Node.Add = GraphLang.UserDefinedNode.extend({
      port.setMaxFanOut(20);
 
      if (!port.userData) port.userData = {}
-     port.userData.datatype = "int";
+     port.userData.datatype = "polymorphic";
      port.userData.connectionMandatory = true;
 
      // in2
@@ -30,7 +30,7 @@ GraphLang.ArduinoLib.Node.Add = GraphLang.UserDefinedNode.extend({
      port.setMaxFanOut(20);
 
      if (!port.userData) port.userData = {}
-     port.userData.datatype = "int";
+     port.userData.datatype = "polymorphic";
      port.userData.connectionMandatory = true;
 
      // out1
@@ -41,7 +41,7 @@ GraphLang.ArduinoLib.Node.Add = GraphLang.UserDefinedNode.extend({
      port.setMaxFanOut(20);
 
      if (!port.userData) port.userData = {}
-     port.userData.datatype = "int";
+     port.userData.datatype = "float";
      port.userData.connectionMandatory = true;
 
      this.persistPorts=false;
