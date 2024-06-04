@@ -1,25 +1,24 @@
 /**
- *  @class draw2d.OutputPort
+ *  @class draw2d.InputPort
  *  @description Overriding some parameters of original draw2d input port. Size, color, ...
  */
-draw2d.OutputPort = draw2d.OutputPort.extend({
-  NAME: "draw2d.OutputPort",
+draw2d.InputPort = draw2d.InputPort.extend({
+  NAME: "draw2d.InputPort",
   
   init:function(attr, setter, getter){
     this._super( $.extend({
       radius: 4
     },attr), setter, getter);
-    this.setStroke(3);  //set thicker stroke line for output ports
 
     /*
      *  Basic userData definitions
      */
     if (!this.userData) this.userData = {}
-    this.userData.allowMultipleConnections = true;
+    this.userData.allowMultipleConnections = false;
     this.userData.connectionMandatory = false;
 
     /*
-     *  General context menu for nodes output ports
+     *  General context menu for nodes input ports
      */
     this.on("contextmenu", function(emitter, event){
       $.contextMenu({
@@ -33,7 +32,7 @@ draw2d.OutputPort = draw2d.OutputPort.extend({
         callback: $.proxy(function(key, options)
         {
           switch(key){
-            case "createTerminal":
+            case "createConstant":
               alert("Function not implemented yet.");
               break;
             default:
@@ -44,22 +43,10 @@ draw2d.OutputPort = draw2d.OutputPort.extend({
         x:event.x,
         y:event.y,
         items: {
-          "createTerminal": {name: "Create Terminal"},
+          "createConstant": {name: "Create constant"},
         },
       });
     });
 
   },
-
-});
-
-/**
- *  @class GraphLang.OutputPort
- *  @description Custom GraphLang output port as extension of draw2d.OutputPort
- */
-GraphLang.OutputPort = draw2d.OutputPort.extend({
-  NAME: "GraphLang.OutputPort",
-  constructor(obj){
-    obj && Object.assign(this, obj);
-  }
 });

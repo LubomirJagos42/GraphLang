@@ -52,6 +52,8 @@
 	Convolution = {};
 	ConsoleLog2 = {};
 	ConsoleLog = {};
+	shape = {};
+	shape.composite = {};
 	ConvertDatatype = {};
 	Arduino = {};
 	Arduino.File = {};
@@ -118,11 +120,11 @@
 	<script src="./LibraryBlocks/Core/ArrayNode.js"></script>
 	<script src="./LibraryBlocks/Core/BundleByName.js"></script>
 	<script src="./LibraryBlocks/Core/Bundle.js"></script>
-	<script src="./LibraryBlocks/Core/utils/Loop2.js"></script>
+	<script src="./LibraryBlocks/Core/utils/Jailhouse_extended.js"></script>
 	<script src="./LibraryBlocks/Core/ConstantNode.js"></script>
 	<script src="./LibraryBlocks/Core/ConvertDatatype.js"></script>
 	<script src="./LibraryBlocks/Core/FeedbackNode.js"></script>
-	<script src="./LibraryBlocks/Core/ForLoop.js"></script>
+	<script src="./LibraryBlocks/Core/utils/Loop2.js"></script>
 	<script src="./LibraryBlocks/Core/Multilayered3.js"></script>
 	<script src="./LibraryBlocks/Core/PointerDatatypeNode.js"></script>
 	<script src="./LibraryBlocks/Core/Return.js"></script>
@@ -131,13 +133,16 @@
 	<script src="./LibraryBlocks/Core/TerminalOutput.js"></script>
 	<script src="./LibraryBlocks/Core/UnbundleByName.js"></script>
 	<script src="./LibraryBlocks/Core/Unbundle.js"></script>
-	<script src="./LibraryBlocks/Core/utils/InputPort.js"></script>
-	<script src="./LibraryBlocks/Core/utils/Jailhouse.js"></script>
+	<script src="./LibraryBlocks/Core/utils/InputPort_extended.js"></script>
+	<script src="./LibraryBlocks/Core/ForLoop.js"></script>
+	<script src="./LibraryBlocks/Core/utils/OutputPort_extended.js"></script>
+	<script src="./LibraryBlocks/Core/utils/GraphLang_InputPort.js"></script>
+	<script src="./LibraryBlocks/Core/utils/GraphLang_Jailhouse.js"></script>
 	<script src="./LibraryBlocks/Core/utils/Label.js"></script>
 	<script src="./LibraryBlocks/Core/utils/LayerChooser.js"></script>
 	<script src="./LibraryBlocks/Core/utils/Tunnel.js"></script>
 	<script src="./LibraryBlocks/Core/ClusterDatatypeNode2.js"></script>
-	<script src="./LibraryBlocks/Core/utils/OutputPort.js"></script>
+	<script src="./LibraryBlocks/Core/utils/GraphLang_OutputPort.js"></script>
 	<script src="./LibraryBlocks/Core/utils/Port.js"></script>
 	<script src="./LibraryBlocks/Core/utils/RightTunnel.js"></script>
 	<script src="./LibraryBlocks/Core/utils/LeftTunnel.js"></script>
@@ -398,7 +403,6 @@ function displayJSON(canvas){
 			<div data-shape="GraphLang.Shapes.Basic.ConstantNode" data-label="ConstantNode" class="palette_node_element draw2d_droppable">ConstantNode</div>
 			<div data-shape="ConvertDatatype" data-label="ConvertDatatype" class="palette_node_element draw2d_droppable">ConvertDatatype</div>
 			<div data-shape="GraphLang.Shapes.Basic.FeedbackNode" data-label="FeedbackNode" class="palette_node_element draw2d_droppable">FeedbackNode</div>
-			<div data-shape="GraphLang.Shapes.Basic.Loop2.ForLoop" data-label="ForLoop" class="palette_node_element draw2d_droppable">ForLoop</div>
 			<div data-shape="GraphLang.Shapes.Basic.Loop2.Multilayered3" data-label="Multilayered3" class="palette_node_element draw2d_droppable">Multilayered3</div>
 			<div data-shape="GraphLang.Shapes.Basic.PointerDatatypeNode" data-label="PointerDatatypeNode" class="palette_node_element draw2d_droppable">PointerDatatypeNode</div>
 			<div data-shape="GraphLang.Shapes.Basic.Return" data-label="Return" class="palette_node_element draw2d_droppable">Return</div>
@@ -407,6 +411,7 @@ function displayJSON(canvas){
 			<div data-shape="GraphLang.Shapes.Basic.TerminalOutput" data-label="TerminalOutput" class="palette_node_element draw2d_droppable">TerminalOutput</div>
 			<div data-shape="GraphLang.Shapes.Basic.UnbundleByName" data-label="UnbundleByName" class="palette_node_element draw2d_droppable">UnbundleByName</div>
 			<div data-shape="GraphLang.Shapes.Basic.Unbundle" data-label="Unbundle" class="palette_node_element draw2d_droppable">Unbundle</div>
+			<div data-shape="GraphLang.Shapes.Basic.Loop2.ForLoop" data-label="ForLoop" class="palette_node_element draw2d_droppable">ForLoop</div>
 			<div data-shape="GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2" data-label="ClusterDatatypeNode2" class="palette_node_element draw2d_droppable">ClusterDatatypeNode2</div>
 			<div data-shape="GraphLang.Shapes.Basic.VectorNode" data-label="VectorNode" class="palette_node_element draw2d_droppable">VectorNode</div>
 			<div data-shape="GraphLang.Shapes.Basic.Loop2.WhileLayer" data-label="WhileLayer" class="palette_node_element draw2d_droppable">WhileLayer</div>

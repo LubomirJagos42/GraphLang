@@ -362,7 +362,7 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
     cCode += "//inside loop wires declaration\n";
 
     /*
-     *  THIS HERE WAS FIRST DEVELOPED FOR Jailhouse.js, copied here
+     *  THIS HERE WAS FIRST DEVELOPED FOR GraphLang_Jailhouse.js, copied here
      */
     layerFigures = this.getAssignedFigures();
     layerFigures.sort(function(figureA, figureB){ return figureA.userData.executionOrder - figureB.userData.executionOrder}); //order figure by their executionOrder

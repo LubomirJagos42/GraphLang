@@ -9392,7 +9392,7 @@ _packages2.default.Connection.DROP_FILTER = null;
 
 /***/ "./src/Figure.js":
 /*!***********************!*\
-  !*** ./src/Figure.js ***!
+  !*** ./src/Node_extended.js ***!
   \***********************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
@@ -12511,7 +12511,7 @@ _packages2.default.HybridPort = _packages2.default.Port.extend({
 
 /***/ "./src/InputPort.js":
 /*!**************************!*\
-  !*** ./src/InputPort.js ***!
+  !*** ./src/InputPort_extended.js ***!
   \**************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
@@ -12568,7 +12568,7 @@ _packages2.default.InputPort = _packages2.default.Port.extend({
 
 /***/ "./src/OutputPort.js":
 /*!***************************!*\
-  !*** ./src/OutputPort.js ***!
+  !*** ./src/OutputPort_extended.js ***!
   \***************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
@@ -44067,7 +44067,7 @@ _packages2.default.shape.composite.Group = _packages2.default.shape.composite.St
 
 /***/ "./src/shape/composite/Jailhouse.js":
 /*!******************************************!*\
-  !*** ./src/shape/composite/Jailhouse.js ***!
+  !*** ./src/shape/composite/GraphLang_Jailhouse.js ***!
   \******************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {

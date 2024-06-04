@@ -2001,7 +2001,8 @@ GraphLang.Utils.getVisibleLoopsAndMultilayered = function(canvas) {
 GraphLang.Utils.getUniqueNodeLabel = function(canvas, nodeLabel = "nodeLabel"){
     var nodeLabelList = new draw2d.util.ArrayList();
     canvas.getFigures().each(function(figureIndex, figureObj){
-        if (figureObj.userData.isTerminal && figureObj.userData.nodeLabel){
+        if (figureObj.getUserData().hasOwnProperty('isTerminal') && figureObj.getUserData().isTerminal &&
+            figureObj.getUserData().hasOwnProperty('nodeLabel') && figureObj.getUserData().nodeLabel){
             nodeLabelList.push(figureObj.userData.nodeLabel);
         }
     });

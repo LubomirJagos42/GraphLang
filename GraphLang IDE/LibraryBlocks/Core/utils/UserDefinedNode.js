@@ -162,6 +162,27 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
         return this.canvas.paper.setFinish();
    },
 
+   //DUPLICATE BECAUSE FOR SOME UKNOWN REASON IS NOT POSSIBLE TO EXTEND NODE BASE CLASS SO IT'S ON MORE PLACES
+   isNodeClass: function(){
+       if (!this.getUserData()) return false;
+       if (this.getUserData().hasOwnProperty('isClass')) return this.getUserData().isClass;
+       return false;
+   },
+
+   //DUPLICATE BECAUSE FOR SOME UKNOWN REASON IS NOT POSSIBLE TO EXTEND NODE BASE CLASS SO IT'S ON MORE PLACES
+   isNodeCluster: function(){
+       if (!this.getUserData()) return false;
+       if (this.getUserData().hasOwnProperty('isCluster')) return this.getUserData().isCluster;
+       return false;
+   },
+
+   //DUPLICATE BECAUSE FOR SOME UKNOWN REASON IS NOT POSSIBLE TO EXTEND NODE BASE CLASS SO IT'S ON MORE PLACES
+   isNodeMultilayered: function(){
+       if (!this.getUserData()) return false;
+       if (this.getUserData().hasOwnProperty('isMultilayered')) return this.getUserData().isMultilayered;
+       return false;
+   },
+
   /*****************************************************************************************************************
    *    JSON schematic, by default empty
    *****************************************************************************************************************/

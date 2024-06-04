@@ -268,6 +268,7 @@ def formatData(t,s):
 createVariableIniStatement = []
 classList = []
 treeStr = ""
+
 def createVariableInitDeclaration(t,s, outStr = ""):
     global createVariableIniStatement
     for key in t:
@@ -277,8 +278,14 @@ def createVariableInitDeclaration(t,s, outStr = ""):
             createVariableIniStatement.append("\t" + outStr + ('.' if len(outStr) > 0 else '') + key + " = {};\n")
             classList.append(outStr + ('.' if len(outStr) > 0 else '') + key)
 
+def fillVariablesJavascriptClassHierarchy():
+    '''
+    This will search specified folders and fill arrays with blocks paths, parent classes and so...
+    '''
 
-if __name__ == "__main__":
+    global createVariableIniStatement
+    global classList
+
     for dirName in searchDirs:
         searchPath = dirName + '/**'
         for fileName in glob.glob(searchPath, recursive=True):
@@ -334,6 +341,15 @@ if __name__ == "__main__":
     print('============= classList ================')
     print(classList)
 
+
+####################################################################################################################################
+#  Here starts script when running from command line
+####################################################################################################################################
+
+if __name__ == "__main__":
+    
+    #search dirs and evaluate class hierarchy
+    fillVariablesJavascriptClassHierarchy()
 
     jsScriptIncludeStatement = ""
     tabList = [[] for k in range(len(blocksToTabsAssignment))]

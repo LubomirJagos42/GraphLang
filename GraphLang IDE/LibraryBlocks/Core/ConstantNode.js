@@ -1,5 +1,5 @@
 /**
- *  @class GraphLang.Shapes.Basic.NUmericConstant
+ *  @class GraphLang.Shapes.Basic.NumericConstant
  *  @descritpition Numeric constant. For now implemented just integers and floats.
  */
 GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
