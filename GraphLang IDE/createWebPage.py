@@ -292,11 +292,16 @@ def fillVariablesJavascriptClassHierarchy():
             if not os.path.isdir(fileName):
                 #print(fileName)
                 with open(fileName, "r") as currentFile:
-                     fileContent = currentFile.read()
-                     regExp = re.compile(r"[\/\s\n]*([a-zA-Z0-9\.\-\_]+)[\s]*=[\s]*([a-zA-Z0-9\.\-]+)\.extend", re.MULTILINE)
-                     matchPattern = regExp.findall(fileContent)
-                     if matchPattern:
-                        objectsNamesList.append((os.path.dirname(fileName), fileName, matchPattern[0][0], matchPattern[0][1]))
+                    fileContent = currentFile.read()
+                    regExp = re.compile(r"[\/\s\n]*([a-zA-Z0-9\.\-\_]+)[\s]*=[\s]*([a-zA-Z0-9\.\-]+)\.extend", re.MULTILINE)
+                    matchPattern = regExp.findall(fileContent)
+                    if matchPattern:
+                        objectsNamesList.append((
+                            os.path.dirname(fileName),
+                            fileName,
+                            matchPattern[0][0],
+                            matchPattern[0][1]
+                        ))
 
     #print('===================================')
     #print(objectsNamesList)

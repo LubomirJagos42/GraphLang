@@ -31,7 +31,7 @@ if __name__ == "__main__":
     print("======= SENDING QUERY ==========")
     try:
         query = (
-            "SELECT node_name, node_content_code, node_owner FROM storage_schematic_blocks "
+            "SELECT node_display_name, node_content_code, node_owner FROM storage_schematic_blocks "
             #"WHERE internal_id = 3"
         )
         cursor.execute(query)
@@ -86,28 +86,33 @@ if __name__ == "__main__":
 
     TABLE_SCHEMATIC_BLOCKS_NAME = "storage_schematic_blocks"
     OUTPUT_NODES_SCHEMATIC_FILE = f"{TABLE_SCHEMATIC_BLOCKS_NAME}_import.sql"
-    with open(OUTPUT_NODES_SCHEMATIC_FILE, "w") as schematicNodesFile:            
+    with open(OUTPUT_NODES_SCHEMATIC_FILE, "w") as schematicNodesFile:           #file is opened in binary mode
         #NODE_LANGUAGE = "C/C++"
         #NODE_LANGUAGE = "python"
         NODE_LANGUAGE = "LabVIEW"
         
-        NODE_OWNER = "47"
-        NODE_PROJECT = "exampleProject"
+        NODE_OWNER = 47
+        NODE_PROJECT = 2
+
+        query = ""
 
         #this is prototype of cleaning nodes schematics which are going to be imported, NEED IMPROVEMENT, this is just developer version
-        schematicNodesFile.write(f"delete from {TABLE_SCHEMATIC_BLOCKS_NAME} where node_owner={NODE_OWNER};\n");
+        query = f"delete from {TABLE_SCHEMATIC_BLOCKS_NAME} where node_owner={NODE_OWNER};\n"
+        schematicNodesFile.write(query);
 
         for k in localNodesHelper.objectsNamesList:
-            NODE_CATEGORY = k[0].replace('\\', '/')
+            NODE_DIRECTORY = k[0].replace('\\', '/')
             NODE_CONTENT = open(k[1], "r").read().encode().hex()
-            NODE_NAME = os.path.splitext(os.path.basename(k[1]))[0]
+            NODE_DISPLAY_NAME = os.path.splitext(os.path.basename(k[1]))[0]
+            NODE_CLASS_NAME = k[2]
 
-            schematicNodesFile.write(
-                f"INSERT INTO `storage_schematic_blocks`"
-                f"(`node_name`, `node_content_code`, `node_language`, `node_category`, `node_owner`, `node_project`) VALUES"
-                f"('{NODE_NAME}', '{NODE_CONTENT}', '{NODE_LANGUAGE}', '{NODE_CATEGORY}', {NODE_OWNER}, '{NODE_PROJECT}');"
-                f"\n"
-            );
+            query = ""
+            query += f"INSERT INTO `storage_schematic_blocks`"
+            query += f"(`node_display_name`, `node_class_name`, `node_language`, `node_directory`, `node_owner`, `node_project`, `node_content_code`) VALUES"
+            query += f"('{NODE_DISPLAY_NAME}', '{NODE_CLASS_NAME}', '{NODE_LANGUAGE}', '{NODE_DIRECTORY}', {NODE_OWNER}, {NODE_PROJECT}, UNHEX('{NODE_CONTENT}'));"
+            query += f"\n"
+
+            schematicNodesFile.write(query);
     
     print("======== END SEARCHING LOCAL FILE SYSTEM FOR NODES ==========")
 
