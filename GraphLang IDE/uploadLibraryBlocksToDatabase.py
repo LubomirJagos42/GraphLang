@@ -91,8 +91,8 @@ if __name__ == "__main__":
         #NODE_LANGUAGE = "python"
         NODE_LANGUAGE = "LabVIEW"
         
-        NODE_OWNER = 47
-        NODE_PROJECT = 2
+        NODE_OWNER = 2
+        NODE_PROJECT = 47
 
         query = ""
 
@@ -105,11 +105,12 @@ if __name__ == "__main__":
             NODE_CONTENT = open(k[1], "r").read().encode().hex()
             NODE_DISPLAY_NAME = os.path.splitext(os.path.basename(k[1]))[0]
             NODE_CLASS_NAME = k[2]
+            NODE_CLASS_PARENT = k[3]
 
             query = ""
             query += f"INSERT INTO `storage_schematic_blocks`"
-            query += f"(`node_display_name`, `node_class_name`, `node_language`, `node_directory`, `node_owner`, `node_project`, `node_content_code`) VALUES"
-            query += f"('{NODE_DISPLAY_NAME}', '{NODE_CLASS_NAME}', '{NODE_LANGUAGE}', '{NODE_DIRECTORY}', {NODE_OWNER}, {NODE_PROJECT}, UNHEX('{NODE_CONTENT}'));"
+            query += f"(`node_display_name`, `node_class_name`, `node_class_parent`, `node_language`, `node_directory`, `node_owner`, `node_project`, `node_content_code`) VALUES"
+            query += f"('{NODE_DISPLAY_NAME}', '{NODE_CLASS_NAME}', '{NODE_CLASS_PARENT}', '{NODE_LANGUAGE}', '{NODE_DIRECTORY}', {NODE_OWNER}, {NODE_PROJECT}, UNHEX('{NODE_CONTENT}'));"
             query += f"\n"
 
             schematicNodesFile.write(query);
