@@ -168,7 +168,6 @@
 	<script src="./LibraryBlocks/UserDefinedNode/GraphLangTestShape57.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/GraphLangTestShape59.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/NestedBlock_1.js"></script>
-	<script src="./LibraryBlocks/UserDefinedNode/SubNodes.TopBlock_1.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/Test.MultipleSerialPrint_1.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/Test.WhileLoop_1.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/UserDefinedExample.js"></script>
@@ -176,8 +175,10 @@
 
  <script type="text/javascript">
 
+app = {};	//lobal to be able debug and use it in developer console
+
 document.addEventListener("DOMContentLoaded",function () {
-     var app  = new example.Application();
+     app  = new example.Application();
 
      /**
       *   WIRE CONNECTION policy
@@ -341,7 +342,6 @@ function displayJSON(canvas){
 ,'GraphLangTestShape57'
 ,'GraphLangTestShape59'
 ,'SubNodes.Block_1'
-,'SubNodes.TopBlock_1'
 ,'Test.MultipleSerialPrint_1'
 ,'Test.WhileLoop_1'
 ,'UserDefinedExample'
@@ -435,7 +435,6 @@ function displayJSON(canvas){
 			<div data-shape="GraphLangTestShape57" data-label="GraphLangTestShape57" class="palette_node_element draw2d_droppable">GraphLangTestShape57</div>
 			<div data-shape="GraphLangTestShape59" data-label="GraphLangTestShape59" class="palette_node_element draw2d_droppable">GraphLangTestShape59</div>
 			<div data-shape="SubNodes.Block_1" data-label="Block_1" class="palette_node_element draw2d_droppable">Block_1</div>
-			<div data-shape="SubNodes.TopBlock_1" data-label="TopBlock_1" class="palette_node_element draw2d_droppable">TopBlock_1</div>
 			<div data-shape="Test.MultipleSerialPrint_1" data-label="MultipleSerialPrint_1" class="palette_node_element draw2d_droppable">MultipleSerialPrint_1</div>
 			<div data-shape="Test.WhileLoop_1" data-label="WhileLoop_1" class="palette_node_element draw2d_droppable">WhileLoop_1</div>
 			<div data-shape="UserDefinedExample" data-label="UserDefinedExample" class="palette_node_element draw2d_droppable">UserDefinedExample</div>
@@ -443,6 +442,8 @@ function displayJSON(canvas){
 
 
   </div>
+
+   <div id="helperPane" style="width: 100px;"></div>
 
    <!-- window with JSON representation of schematic -->
    <div id="json" style="display: none; overflow:auto;position:absolute; top:100px; right:10px; width:350; height:100;background:white;border:1px solid gray"></div>

@@ -30,18 +30,18 @@ example.Application = Class.extend(
 
 	       // layout FIRST the body
 	       this.appLayout = $('#container').layout({
-	   	     west: {
-	              resizable:true,
-	              closable:true,
-	              resizeWhileDragging:true,
-	              paneSelector: "#navigation"
-	            },
-	            center: {
-	              resizable:true,
-	              closable:true,
-	              resizeWhileDragging:true,
-	              paneSelector: "#content"
-	            }
+			west: {
+				resizable:true,
+				closable:true,
+				resizeWhileDragging:true,
+				paneSelector: "#navigation"
+			},
+			center: {
+				resizable:true,
+				closable:true,
+				resizeWhileDragging:true,
+				paneSelector: "#content"
+			},
 	       });
 
 	       //

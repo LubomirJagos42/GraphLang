@@ -96,8 +96,10 @@ htmlTemplate = """
 
  <script type="text/javascript">
 
+app = {};	//lobal to be able debug and use it in developer console
+
 document.addEventListener("DOMContentLoaded",function () {
-     var app  = new example.Application();
+     app  = new example.Application();
 
      /**
       *   WIRE CONNECTION policy
@@ -245,6 +247,8 @@ function displayJSON(canvas){
 
   </div>
 
+   <div id="helperPane" style="width: 100px;"></div>
+
    <!-- window with JSON representation of schematic -->
    <div id="json" style="display: none; overflow:auto;position:absolute; top:100px; right:10px; width:350; height:100;background:white;border:1px solid gray"></div>
    <div id="json2" style="display: none; overflow:auto;position:absolute; top:100px; left:220px; width:250; height:100;background:white;border:1px solid gray"></div>
@@ -329,6 +333,13 @@ def fillVariablesJavascriptClassHierarchy():
 
     print('============ objectsNameList ================')
 
+    #sorting nodes based on which class they extend, this is simple algorithm
+    #   going from beginning of list for k for 0, 1, 2, 3, ... list end
+    #   for each step of k there is scan from 0 to k if for object at j position has name of extended class which is on k position of class name
+    #       ie. if object at lower index j is extension of object on k position if yes then it swap them
+    #
+    #   This is maybe inefficient but it's running so it's here.
+    #
     k = 0
     while True:
         for j in range(0, k):

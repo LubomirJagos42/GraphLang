@@ -36,15 +36,22 @@ example.Application = Class.extend(
 	              resizeWhileDragging:true,
 	              paneSelector: "#navigation"
 	            },
-	            center: {
-	              resizable:true,
-	              closable:true,
-	              resizeWhileDragging:true,
-	              paneSelector: "#content"
-	            }
+			center: {
+				resizable:true,
+				closable:true,
+				resizeWhileDragging:true,
+				paneSelector: "#content"
+			},
+			east: {                        //<--- LuboJ added auxiliary pane for settings, error logs for user and so
+				resizable:true,
+				closable:true,
+				resizeWhileDragging:true,
+				paneSelector: "#helperPane"
+			}
 	       });
+		   this.appLayout.addCloseBtn("#helperPane", "east");	//when clicked on east pane then it close whole pane
 
-	       //
+	       // content settings for canvas and toolbar with buttons
 	       this.contentLayout = $('#content').layout({
 	   	     north: {
 	              resizable:false,

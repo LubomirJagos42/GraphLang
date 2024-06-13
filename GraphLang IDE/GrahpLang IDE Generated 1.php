@@ -40,6 +40,35 @@
       var appCanvas;
 
 	  GraphLang = {};
+
+
+
+		UserDefinedExample = {};
+		Test = {};
+		SubNodes = {};
+		GraphLangTestShape3 = {};
+		GraphLangTestShape2 = {};
+		GraphLangTestShape = {};
+		Convolution = {};
+		ConsoleLog2 = {};
+		ConsoleLog = {};
+		shape = {};
+		shape.composite = {};
+		ConvertDatatype = {};
+		Arduino = {};
+		Arduino.File = {};
+		GraphLang.PythonQtGuiLib = {};
+		GraphLang.Shapes = {};
+		GraphLang.Shapes.ItemsNode = {};
+		GraphLang.Shapes.ItemsNode.InvokeNode = {};
+		GraphLang.Shapes.Basic = {};
+		GraphLang.Shapes.Basic.Loop2 = {};
+		GraphLang.ArduinoLib = {};
+		GraphLang.ArduinoLib.String = {};
+		GraphLang.ArduinoLib.FileLib = {};
+		GraphLang.ArduinoLib.Node = {};
+		GraphLang.ArduinoLib.Node.Serial = {};
+		GraphLang.ArduinoLib.Node.Math = {};
     </script>
 
     <script src="./GraphLang/GraphLang IDE/gui/Application.js"></script>
@@ -60,7 +89,7 @@
     <script src="./GraphLang/GraphLang IDE/GraphLangUtils/ArrayClusterInPlaceEditor.js"></script>
 
     <!-- user defined nodes place to insert -->
-	<script type="text/javascript" src="?q=loadNodesFromServer"></script>
+	<script type="text/javascript" src="?q=experimentGetJavascriptForNodes"></script>
 
 
  <script type="text/javascript">
@@ -209,6 +238,13 @@ function displayJSON(canvas){
    <div id="navigation" class="">
 
         <!-- user defined nodes menu place to insert -->
+
+			<div data-shape="GraphLang.ArduinoLib.Node.Add" data-label="Add" class="palette_node_element draw2d_droppable">Add</div>
+			<div data-shape="GraphLang.ArduinoLib.Node.analogRead" data-label="analogRead" class="palette_node_element draw2d_droppable">analogRead</div>
+			<div data-shape="GraphLang.ArduinoLib.Node.analogWrite" data-label="analogWrite" class="palette_node_element draw2d_droppable">analogWrite</div>
+			<div data-shape="GraphLang.ArduinoLib.Node.digitalRead" data-label="digitalRead" class="palette_node_element draw2d_droppable">digitalRead</div>
+			<div data-shape="GraphLang.ArduinoLib.Node.digitalWrite" data-label="digitalWrite" class="palette_node_element draw2d_droppable">digitalWrite</div>
+			<div data-shape="GraphLang.ArduinoLib.Node.Divide" data-label="Divide" class="palette_node_element draw2d_droppable">Divide</div>
 
   </div>
 
