@@ -63,7 +63,7 @@
     <script src="./GraphLang/GraphLang IDE/GraphLangUtils/ArrayClusterInPlaceEditor.js"></script>
 
     <!-- user defined nodes place to insert -->
-	<script type="text/javascript" src="?q=experimentGetJavascriptForNodes"></script>
+	<script type="text/javascript" src="?q=experimentGetJavascriptForNodes&projectId=<?php echo($currentProject);?>"></script>
 
 
  <script type="text/javascript">
