@@ -32,43 +32,17 @@
     <script src="./GraphLang/draw2d_hardCopy/draw2d.js"></script>
 
     <script type="text/javascript">
-      /**
-       *  GLOBAL DEFINITIONS
-       *    - save reference to canvas to have it globally acessible
-       *    - init empty variable object for each library, otherwise there would be error in console
-       */
-      var appCanvas;
+        /**
+         *  GLOBAL DEFINITIONS
+         *    - save reference to canvas to have it globally acessible
+         *    - init empty variable object for each library, otherwise there would be error in console
+         */
+        var appCanvas;
 
-	  GraphLang = {};
-
-
-
-		UserDefinedExample = {};
-		Test = {};
-		SubNodes = {};
-		GraphLangTestShape3 = {};
-		GraphLangTestShape2 = {};
-		GraphLangTestShape = {};
-		Convolution = {};
-		ConsoleLog2 = {};
-		ConsoleLog = {};
-		shape = {};
-		shape.composite = {};
-		ConvertDatatype = {};
-		Arduino = {};
-		Arduino.File = {};
-		GraphLang.PythonQtGuiLib = {};
-		GraphLang.Shapes = {};
-		GraphLang.Shapes.ItemsNode = {};
-		GraphLang.Shapes.ItemsNode.InvokeNode = {};
-		GraphLang.Shapes.Basic = {};
-		GraphLang.Shapes.Basic.Loop2 = {};
-		GraphLang.ArduinoLib = {};
-		GraphLang.ArduinoLib.String = {};
-		GraphLang.ArduinoLib.FileLib = {};
-		GraphLang.ArduinoLib.Node = {};
-		GraphLang.ArduinoLib.Node.Serial = {};
-		GraphLang.ArduinoLib.Node.Math = {};
+        /*
+         *  Default tree object initialization for javascript - php generated from DB
+         */
+<?php foreach ($nodeDefaultTreeDefinition as $newObjectName){echo("\t\t$newObjectName = {};\n");} ?>
     </script>
 
     <script src="./GraphLang/GraphLang IDE/gui/Application.js"></script>
@@ -223,6 +197,16 @@ function displayJSON(canvas){
     return jsonStr;
 }
 
+let global_allUserDefinedNodesList = [
+<?php
+$k = 0;
+foreach ($userDefinedNodesClassNames as $className){
+    if ($k == 0) echo("'$className'\n");
+    else echo("\t, '$className'\n");
+    $k++;
+}
+?>
+];
 </script>
 
 </head>
@@ -237,14 +221,45 @@ function displayJSON(canvas){
 
    <div id="navigation" class="">
 
-        <!-- user defined nodes menu place to insert -->
+       <!-- buttons to display nodes in some category-->
+       <input type="button" value="all" onclick="$('#navigation span').show();" />
+       <input type="button" value="others" onclick="$('#navigation span').hide(); $('#tab0').show();" />
+       <?php
+        $k = 1;
+        foreach (array_keys($nodesNamesWithCategories) as $categoryName){
+            if ($categoryName != 0){
+            ?>
+            <input type='button' value='<?php echo($categoryName); ?>' onclick="$('#navigation span').hide(); $('#tab<?php echo($k);?>').show();" />
+            <?php
+                $k++;
+            }
+       }
+       ?>
 
-			<div data-shape="GraphLang.ArduinoLib.Node.Add" data-label="Add" class="palette_node_element draw2d_droppable">Add</div>
-			<div data-shape="GraphLang.ArduinoLib.Node.analogRead" data-label="analogRead" class="palette_node_element draw2d_droppable">analogRead</div>
-			<div data-shape="GraphLang.ArduinoLib.Node.analogWrite" data-label="analogWrite" class="palette_node_element draw2d_droppable">analogWrite</div>
-			<div data-shape="GraphLang.ArduinoLib.Node.digitalRead" data-label="digitalRead" class="palette_node_element draw2d_droppable">digitalRead</div>
-			<div data-shape="GraphLang.ArduinoLib.Node.digitalWrite" data-label="digitalWrite" class="palette_node_element draw2d_droppable">digitalWrite</div>
-			<div data-shape="GraphLang.ArduinoLib.Node.Divide" data-label="Divide" class="palette_node_element draw2d_droppable">Divide</div>
+       <!-- user defined nodes menu place to insert -->
+        <span id="tab0">
+        <?php
+        foreach ($nodesNamesWithCategories[0] as $nodeWithoutCategory){
+        ?>
+            <div data-shape="<?php echo($nodeWithoutCategory[0]); ?>" data-label="<?php echo($nodeWithoutCategory[1]); ?>" class="palette_node_element draw2d_droppable"><?php echo($nodeWithoutCategory[1]); ?></div>
+        <?php
+        }
+        ?>
+        </span>
+
+        <?php
+        $k = 1;
+        foreach (array_keys($nodesNamesWithCategories) as $categoryName){
+           if ($categoryName != 0){
+               echo("\t\t<span id='tab$k'>\n");
+               foreach ($nodesNamesWithCategories[$categoryName] as $node){
+                   echo("\t\t\t<div data-shape='$node[0]' data-label='$node[1]' class='palette_node_element draw2d_droppable'>$node[1]</div>\n");
+               }
+               echo("\t\t</span>\n\n");
+               $k++;
+           }
+        }
+        ?>
 
   </div>
 

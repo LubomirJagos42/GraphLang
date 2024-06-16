@@ -2,7 +2,6 @@
  *  @class GraphLang.Shapes.PropertyNode
  *  @description Thisi s property node for GraphLang.
  */
-//GraphLang.Shapes.ItemsNode.InvokeNode.ExternalOutputPort = GraphLang.Shapes.ItemsNode.InvokeNode.extend({
 GraphLang.Shapes.ExternalOutputPortNode = draw2d.shape.layout.VerticalLayout.extend({
 	NAME: "GraphLang.Shapes.ExternalOutputPortNode",
 

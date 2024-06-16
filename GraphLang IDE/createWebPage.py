@@ -289,6 +289,7 @@ def fillVariablesJavascriptClassHierarchy():
 
     global createVariableIniStatement
     global classList
+    global objectsNamesList
 
     for dirName in searchDirs:
         searchPath = dirName + '/**'
@@ -300,12 +301,12 @@ def fillVariablesJavascriptClassHierarchy():
                     regExp = re.compile(r"[\/\s\n]*([a-zA-Z0-9\.\-\_]+)[\s]*=[\s]*([a-zA-Z0-9\.\-]+)\.extend", re.MULTILINE)
                     matchPattern = regExp.findall(fileContent)
                     if matchPattern:
-                        objectsNamesList.append((
+                        objectsNamesList.append([
                             os.path.dirname(fileName),
                             fileName,
                             matchPattern[0][0],
                             matchPattern[0][1]
-                        ))
+                        ])
 
     #print('===================================')
     #print(objectsNamesList)
@@ -351,6 +352,29 @@ def fillVariablesJavascriptClassHierarchy():
         if k >= len(objectsNamesList):
             break 
         
+    #
+    #   Add categories into objectNamesList
+    #
+    k = 0
+    for nodeItem in objectsNamesList:
+        generateHtml = True
+        for excludeStr in excludeFromHtmlBlockPatterns:
+            if (nodeItem[1].replace('\\','/').find(excludeStr) > -1):
+                generateHtml = False
+                objectsNamesList[k].append(None)
+                objectsNamesList[k].append(True)
+
+        if generateHtml:            
+            for tabDirLocation in blocksToTabsAssignment.keys():
+                if (nodeItem[0].startswith(tabDirLocation)):
+                    objectsNamesList[k].append(blocksToTabsAssignment[tabDirLocation])
+                    objectsNamesList[k].append(False)
+        
+        k += 1
+               
+    #
+    #   FINALLY print objectNamesList
+    #
     for k in objectsNamesList:
         print(k)
 

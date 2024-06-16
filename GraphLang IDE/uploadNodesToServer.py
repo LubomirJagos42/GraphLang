@@ -9,6 +9,7 @@ URL = 'http://localhost/GraphLangServerApp/?q=uploadNodesToServer'
 NODE_OWNER = 2
 NODE_PROJECT = 47
 NODE_LANGUAGE = "C/C++"
+NODE_ISHIDDEN = 0
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -34,7 +35,9 @@ if __name__ == "__main__":
         myData['nodeDir'] = nodeToUpload[0].replace('\\', '/')
         myData['nodeClassParent'] = nodeToUpload[3]
         myData['nodeDisplayName'] = os.path.splitext(os.path.basename(nodeToUpload[1]))[0]
-        
+        myData['nodeCategory'] = nodeToUpload[4];
+        myData['nodeIsHidden'] = nodeToUpload[5];
+
         print(f"#REQUEST 1 - result:\n");
         x = requests.post(URL, data = myData)
         print(x.text)    
