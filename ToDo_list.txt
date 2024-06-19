@@ -14,6 +14,32 @@ This is list features what to do due I always forget on what to work
     - it will look into userData.datatype variable, parent node or somewhere else
 - translate polymorphic datatype into right C/C++ code datatype in C/C++
 
+
+- GENERAL PRESERVATION PROPERTIS for SHAPE DESIGNER - HOW TO EXTRACT STRING FUNCTIONS FROM CUSTOM OBJECTS GENERALLY steps:
+
+  1. redefine extend() as custom function to save it's input object into some variable like this:
+    > GraphLang.UserDefinedNode.extend = function(obj){this.extendObj = obj;}
+
+  2. copy and paste code from node file as whole, it will run extend() and store input object into variable
+
+     GraphLang.ArduinoLib.Node.Add = GraphLang.UserDefinedNode.extend({
+         NAME: "GraphLang.ArduinoLib.Node.Add",
+         init:function(attr, setter, getter)
+         {
+             this._super( $.extend({stroke:0, bgColor:null, width:123.40234375, height:78, flagAutoCreatePorts: false},attr), setter, getter);
+             var port;
+             // in1
+             port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(27.108986736728813, 27.564102564102566));
+             port.setConnectionDirection(3);
+             port.setBackgroundColor("#37B1DE");
+             port.setName("in1");
+             port.setMaxFanOut(20);
+     ...
+
+  3. now this is way how to print into console string content of each property:
+    > for (m in GraphLang.UserDefinedNode.extendObj){console.log(GraphLang.UserDefinedNode.extendObj[m].toString())}
+
+
 In progress features
 ====================
 

@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, minimum-scale=1.0" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
-   <link type="text/css" rel="stylesheet" href="./GraphLang/GraphLang IDE/css/aristo/jquery-ui-1.8.16.custom.css" />
-   <link type="text/css" rel="stylesheet" href="./GraphLang/GraphLang IDE/css/jquery.layout.css" />
-   <link type="text/css" rel="stylesheet" href="./GraphLang/GraphLang IDE/css/application.css" />
-   <link type="text/css" rel="stylesheet" href="./GraphLang/GraphLang IDE/css/GraphLang_application.css" />
+   <link type="text/css" rel="stylesheet" href="<?php echo $htmlIncludeDirPrefix; ?>/css/aristo/jquery-ui-1.8.16.custom.css" />
+   <link type="text/css" rel="stylesheet" href="<?php echo $htmlIncludeDirPrefix; ?>/css/jquery.layout.css" />
+   <link type="text/css" rel="stylesheet" href="<?php echo $htmlIncludeDirPrefix; ?>/css/application.css" />
+   <link type="text/css" rel="stylesheet" href="<?php echo $htmlIncludeDirPrefix; ?>/css/GraphLang_application.css" />
 
     <style type="text/css">
       .palette_node_element{
@@ -22,14 +22,14 @@
       }
     </style>
 
-    <script src="./GraphLang/GraphLang IDE/lib/jquery.js"></script>
-    <script src="./GraphLang/GraphLang IDE/lib/jquery-ui.js"></script>
-    <script src="./GraphLang/GraphLang IDE/lib/jquery.browser.js"></script>
-    <script src="./GraphLang/GraphLang IDE/lib/jquery.layout.js"></script>
-    <script src="./GraphLang/GraphLang IDE/lib/jquery.ui.touch-punch.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/lib/jquery.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/lib/jquery-ui.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/lib/jquery.browser.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/lib/jquery.layout.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/lib/jquery.ui.touch-punch.js"></script>
 
 <!--     <script src="../draw2d/dist/draw2d.js"></script>   -->
-    <script src="./GraphLang/draw2d_hardCopy/draw2d.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/../draw2d_hardCopy/draw2d.js"></script>
 
     <script type="text/javascript">
         /**
@@ -45,22 +45,22 @@
 <?php foreach ($nodeDefaultTreeDefinition as $newObjectName){echo("\t\t$newObjectName = {};\n");} ?>
     </script>
 
-    <script src="./GraphLang/GraphLang IDE/gui/Application.js"></script>
-    <script src="./GraphLang/GraphLang IDE/gui/View.js"></script>
-    <script src="./GraphLang/GraphLang IDE/gui/Toolbar 2.js"></script>
-    <script src="./GraphLang/GraphLang IDE/gui/HoverConnection.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/Application.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/View.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/Toolbar 2.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/HoverConnection.js"></script>
 
-    <script src="./GraphLang/GraphLang IDE/GraphLangUtils/Utils.js"></script>
-    <script src="./GraphLang/GraphLang IDE/GraphLangUtils/TranslateToCppCode_1.js"></script>
-    <script src="./GraphLang/GraphLang IDE/GraphLangUtils/TranslateToPythonCode_1.js"></script>
-    <script src="./GraphLang/GraphLang IDE/GraphLangUtils/RightRelPortLocator.js"></script>
-    <script src="./GraphLang/GraphLang IDE/GraphLangUtils/BottomRelPortLocator.js"></script>
-    <script src="./GraphLang/GraphLang IDE/GraphLangUtils/LeftRelPortLocator.js"></script>
-    <script src="./GraphLang/GraphLang IDE/GraphLangUtils/TopRelPortLocator.js"></script>
-    <script src="./GraphLang/GraphLang IDE/GraphLangUtils/CommandDelete.js"></script>
-    <script src="./GraphLang/GraphLang IDE/GraphLangUtils/KeyboardDeletePolicy.js"></script>
-    <script src="./GraphLang/GraphLang IDE/GraphLangUtils/Color.js"></script>
-    <script src="./GraphLang/GraphLang IDE/GraphLangUtils/ArrayClusterInPlaceEditor.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Utils.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToCppCode_1.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToPythonCode_1.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/RightRelPortLocator.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/BottomRelPortLocator.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/LeftRelPortLocator.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TopRelPortLocator.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/CommandDelete.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/KeyboardDeletePolicy.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Color.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/ArrayClusterInPlaceEditor.js"></script>
 
     <!-- user defined nodes place to insert -->
 	<script type="text/javascript" src="?q=experimentGetJavascriptForNodes&projectId=<?php echo($currentProject);?>"></script>
