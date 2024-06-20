@@ -42,6 +42,8 @@
         /*
          *  Default tree object initialization for javascript - php generated from DB
          */
+        GraphLang = {}; //this is used for utils and so, must be here by default
+        
 <?php foreach ($nodeDefaultTreeDefinition as $newObjectName){echo("\t\t$newObjectName = {};\n");} ?>
     </script>
 
