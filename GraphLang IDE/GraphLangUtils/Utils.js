@@ -2356,7 +2356,7 @@ GraphLang.Utils.serverSendReceive = function(operationStr, projectId){
 
     // Making our connection
     // let url = `?q=${operationStr}&projectId=${projectId}`;
-    let url = `?q=isUserLogged&projectId=2`;
+    let url = `?q=${operationStr}&projectId=${projectId}`;
     xhr.open("POST", url, true);
 
     // function execute after request is successful
