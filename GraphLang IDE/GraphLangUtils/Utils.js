@@ -2162,6 +2162,16 @@ GraphLang.Utils.getClusterDatatypeDefinitionFromUserDefinedNode = function(clust
 }
 
 /**
+ *  Error list which can occur during graph validation. This is to have it unified through whole application and not to use string comparison.
+ */
+GraphLang.Utils.ErrorList = {
+    MANDATORY_CONNECTION_FOR_PORT_REQUIRED: "MANDATORY_CONNECTION_FOR_PORT_REQUIRED",
+    MULTIPLE_CONNECTIONS_FOR_PORT_NOT_ALLOWED: "MULTIPLE_CONNECTIONS_FOR_PORT_NOT_ALLOWED",
+    CONNECTION_UNDEFINED_DATATYPE: "CONNECTION_UNDEFINED_DATATYPE",
+    CONNECTION_DIFFERENT_DATATYPE: "CONNECTION_DIFFERENT_DATATYPE",
+}
+
+/**
  *  @method validateCanvas
  *  @param {Object} canvasObj - Canvas which will be checked
  *  @param {String} canvasOwnerName - if provided this is name of owner node, ie. this canvas is diagram of some node
@@ -2197,7 +2207,8 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
                         figureName: figureObj.NAME,
                         figureId: figureObj.getId(),
                         portName: portObj.getName(),
-                        message: "MANDATORY_CONNECTION_FOR_PORT_REQUIRED"
+                        type: GraphLang.Utils.ErrorList.MANDATORY_CONNECTION_FOR_PORT_REQUIRED,
+                        message: `${figureObj.NAME} missing connection for port '${portObj.getName()}'`
                     });
                     console.error(errorList.last());
 
@@ -2214,6 +2225,7 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
                         figureName: figureObj.NAME,
                         figureId: figureObj.getId(),
                         portName: portObj.getName(),
+                        type: GraphLang.Utils.ErrorList.MULTIPLE_CONNECTIONS_FOR_PORT_NOT_ALLOWED,
                         message: "MULTIPLE_CONNECTIONS_FOR_PORT_NOT_ALLOWED"
                     });
                     console.error(errorList.last());
@@ -2260,6 +2272,7 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
                 connectionSourceDatatype: sourcePortDatatype,
                 connectionTargetDatatype: targetPortDatatype,
                 connectionTarget: lineObj.getTarget(),
+                type: GraphLang.Utils.ErrorList.CONNECTION_UNDEFINED_DATATYPE,
                 message: "CONNECTION_UNDEFINED_DATATYPE"
             });
             console.error(errorList.last());
@@ -2282,7 +2295,8 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
                     connectionSourceDatatype: sourcePortDatatype,
                     connectionTargetDatatype: targetPortDatatype,
                     connectionTarget: lineObj.getTarget(),
-                    message: "CONNECTION_DIFFERENT_DATATYPE"
+                    type: GraphLang.Utils.ErrorList.CONNECTION_DIFFERENT_DATATYPE,
+                    message: `Wire between port '${lineObj.getSource().getName()}' and '${lineObj.getTarget().getName()}' connects different datatypes '${sourcePortDatatype}' and '${targetPortDatatype}'`
                 });
                 console.error(errorList.last());
 
@@ -2294,6 +2308,46 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
     });
 
     return errorList;
+}
+
+/**
+ * @description This method interactively after click shows user error.
+ */
+GraphLang.Utils.userInteractiveErrorOnClick = function(errorObj){
+    /*
+     *  Animate blink for error object (wire, port, ...)
+     */
+    function animateBlinkObject(obj){
+        let errorOpacityToggle = true;
+        let errorOpacityToggleCounter = 0;
+        obj.on("timer", function(emitter){
+            obj.attr({opacity: (errorOpacityToggle ? 0.1 : 1)});
+            errorOpacityToggle = !errorOpacityToggle;
+            errorOpacityToggleCounter++;
+            if (errorOpacityToggleCounter > 6){
+                obj.stopTimer();
+                obj.attr({opacity: 1});
+                errorOpacityToggleCounter = 0;
+            }
+        });
+        obj.startTimer(120);
+    }
+
+    if (errorObj.type == GraphLang.Utils.ErrorList.CONNECTION_DIFFERENT_DATATYPE) {
+        let nodeCanvas = (errorObj.canvasOwnerName == "") ? appCanvas : errorObj.canvasOwnerName;
+
+        let errorConnection = nodeCanvas.getLine(errorObj.connectionId);
+        animateBlinkObject(errorConnection);
+    }
+    else if (errorObj.type == GraphLang.Utils.ErrorList.MANDATORY_CONNECTION_FOR_PORT_REQUIRED) {
+        let nodeCanvas = (errorObj.canvasOwnerName == "") ? appCanvas : errorObj.canvasOwnerName;
+
+        let errorPort = nodeCanvas.getFigure(errorObj.figureId).getPort(errorObj.portName);
+        animateBlinkObject(errorPort);
+    }
+    else{
+        alert(`error type: ${errorObj.type}\nnot recognized`);
+    }
 }
 
 

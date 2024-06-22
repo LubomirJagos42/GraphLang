@@ -272,9 +272,6 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                  */
                 if (nodeObj.translateToCppCode) cCode += nodeObj.translateToCppCode();
 
-
-
-
                 /*
                  *    Translate POST code, like ending while or for loop
                  */
@@ -307,15 +304,31 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
 
     /*********************************************************************************************************
      * CANVAS SCHEMATIC VALIDATION
-     * TODO this should be done as first thing, but now it's here due there is no luster definition array
+     * TODO this should be done as first thing, but now it's here due there is no cluster definition array
      * filling at the beginning but should be placed there now for validation it's placed here
      *********************************************************************************************************/
     translateToCppCodeErrorList.addAll(
         GraphLang.Utils.validateCanvas(canvas, nodeName, translateClusterTypeDefinitionItems)
     );
 
+    /*
+     *  HERE IS WRITING ERRORS FOR USER INTO #helperPane
+     */
+    let outputTarget = document.getElementById("helperPane");
+    outputTarget.innerHTML = "";
+    translateToCppCodeErrorList.each(function(errorIndex, errorObj){
+        let errorElement = document.createElement("span");
+        errorElement.innerHTML = errorObj.type;
+        errorElement.onclick = function(){GraphLang.Utils.userInteractiveErrorOnClick(errorObj);};
+        errorElement.appendChild(document.createElement("br"));
 
+        let errorElementMessage = document.createElement("span");
+        errorElementMessage.innerHTML = errorObj.message;
+        errorElement.appendChild(errorElementMessage);
 
+        outputTarget.appendChild(errorElement);
+        outputTarget.appendChild(document.createElement("hr"));
+    });
 
     /******************************************************************************
      * REWRITE IDs to HUMAN READABLE NUMBERS (starts from 1,2,...,N)

@@ -77,7 +77,7 @@ htmlTemplate = """
 
     <script src="./gui/Application.js"></script>
     <script src="./gui/View.js"></script>
-    <script src="./gui/Toolbar 2.js"></script>
+    <script src="./gui/Toolbar.js"></script>
     <script src="./gui/HoverConnection.js"></script>
 
     <script src="./GraphLangUtils/Utils.js"></script>

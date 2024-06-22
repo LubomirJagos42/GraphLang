@@ -49,7 +49,7 @@
 
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/Application.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/View.js"></script>
-    <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/Toolbar 2.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/Toolbar.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/HoverConnection.js"></script>
 
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Utils.js"></script>
@@ -66,7 +66,6 @@
 
     <!-- user defined nodes place to insert -->
 	<script type="text/javascript" src="?q=experimentGetJavascriptForNodes&projectId=<?php echo($currentProject);?>"></script>
-
 
  <script type="text/javascript">
 

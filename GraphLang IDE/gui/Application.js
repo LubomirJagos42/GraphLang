@@ -49,7 +49,7 @@ example.Application = Class.extend(
 				paneSelector: "#helperPane"
 			}
 	       });
-		   this.appLayout.addCloseBtn("#helperPane", "east");	//when clicked on east pane then it close whole pane
+		   // this.appLayout.addCloseBtn("#helperPane", "east");	//when clicked on east pane then it close whole pane
 
 	       // content settings for canvas and toolbar with buttons
 	       this.contentLayout = $('#content').layout({
