@@ -2350,7 +2350,25 @@ GraphLang.Utils.userInteractiveErrorOnClick = function(errorObj){
     }
 }
 
+GraphLang.Utils.serverSendReceive = function(operationStr, projectId){
+    // Creating Our XMLHttpRequest object
+    let xhr = new XMLHttpRequest();
 
+    // Making our connection
+    // let url = `?q=${operationStr}&projectId=${projectId}`;
+    let url = `?q=isUserLogged&projectId=2`;
+    xhr.open("POST", url, true);
 
+    // function execute after request is successful
+    let response = {};
+    xhr.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+            console.log(this.responseText);
+            response = JSON.parse(this.responseText.replace('"','\"'));   //THIS IS REALLY NEEDED TO PARSE JSON CORRECTLY WITHOUT THIS IT'S NOT RUNNING AT ALL!!!
+            console.log(response);
+        }
+    }
 
-
+    // Sending our request
+    xhr.send();
+}
