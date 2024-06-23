@@ -1750,7 +1750,7 @@ GraphLang.Utils.displayContents = function(contents){
 GraphLang.Utils.loadedNodeShapeAndSchematicStr = null;
 
 /**
- *  @method displayContents2
+ *  @method displayContentsFromClass
  *  @param {String} content String content to display
  *  @description Translates schematic on given canvas to C/C++ code as function which can be called in other diagrams using symbol with assign schematic.
  */
@@ -2210,7 +2210,7 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
                         type: GraphLang.Utils.ErrorList.MANDATORY_CONNECTION_FOR_PORT_REQUIRED,
                         message: `${figureObj.NAME} missing connection for port '${portObj.getName()}'`
                     });
-                    console.error(errorList.last());
+                    console.warn(errorList.last());
 
                     //mark port as faulty, change it's color or stroke or something
                     portObj.setStroke(2);
@@ -2228,7 +2228,7 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
                         type: GraphLang.Utils.ErrorList.MULTIPLE_CONNECTIONS_FOR_PORT_NOT_ALLOWED,
                         message: "MULTIPLE_CONNECTIONS_FOR_PORT_NOT_ALLOWED"
                     });
-                    console.error(errorList.last());
+                    console.warn(errorList.last());
 
                     //mark port as faulty, change it's color or stroke or something
                     portObj.setStroke(2);
@@ -2275,7 +2275,7 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
                 type: GraphLang.Utils.ErrorList.CONNECTION_UNDEFINED_DATATYPE,
                 message: "CONNECTION_UNDEFINED_DATATYPE"
             });
-            console.error(errorList.last());
+            console.warn(errorList.last());
 
             //mark line as faulty, change it's color or stroke or something
             lineObj.setDashArray("-");
@@ -2298,7 +2298,7 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
                     type: GraphLang.Utils.ErrorList.CONNECTION_DIFFERENT_DATATYPE,
                     message: `Wire between port '${lineObj.getSource().getName()}' and '${lineObj.getTarget().getName()}' connects different datatypes '${sourcePortDatatype}' and '${targetPortDatatype}'`
                 });
-                console.error(errorList.last());
+                console.warn(errorList.last());
 
                 //mark line as faulty, change it's color or stroke or something
                 lineObj.setDashArray("-");
@@ -2333,20 +2333,32 @@ GraphLang.Utils.userInteractiveErrorOnClick = function(errorObj){
         obj.startTimer(120);
     }
 
-    if (errorObj.type == GraphLang.Utils.ErrorList.CONNECTION_DIFFERENT_DATATYPE) {
-        let nodeCanvas = (errorObj.canvasOwnerName == "") ? appCanvas : errorObj.canvasOwnerName;
+    let nodeCanvas = (errorObj.canvasOwnerName == "") ? appCanvas : appCanvas2;
+    if (errorObj.canvasOwnerName == ""){
+        //do nothing error is located on main canvas
+    }else {
+        //error is inside some block, need to load it into helper canvas
+        appCanvas2.clear();
 
+        let loadedNode = eval(`new ${errorObj.canvasOwnerName}()`);
+
+        let reader = new draw2d.io.json.Reader();
+        reader.unmarshal(nodeCanvas, loadedNode.jsonDocument)
+    }
+
+    /*
+     *  INTERACTIVE DISPLAY ERROR TO USER
+     */
+    if (errorObj.type == GraphLang.Utils.ErrorList.CONNECTION_DIFFERENT_DATATYPE) {
         let errorConnection = nodeCanvas.getLine(errorObj.connectionId);
         animateBlinkObject(errorConnection);
     }
     else if (errorObj.type == GraphLang.Utils.ErrorList.MANDATORY_CONNECTION_FOR_PORT_REQUIRED) {
-        let nodeCanvas = (errorObj.canvasOwnerName == "") ? appCanvas : errorObj.canvasOwnerName;
-
         let errorPort = nodeCanvas.getFigure(errorObj.figureId).getPort(errorObj.portName);
         animateBlinkObject(errorPort);
     }
     else{
-        alert(`error type: ${errorObj.type}\nnot recognized`);
+        alert(`error type: ${errorObj.type}\nThere is no interactive display, you must find it manually.`);
     }
 }
 

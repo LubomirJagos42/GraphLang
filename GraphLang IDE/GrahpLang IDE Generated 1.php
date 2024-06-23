@@ -65,12 +65,13 @@
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/ArrayClusterInPlaceEditor.js"></script>
 
     <!-- user defined nodes place to insert -->
-	<script type="text/javascript" src="?q=experimentGetJavascriptForNodes&projectId=<?php echo($currentProject);?>"></script>
+	<script type="text/javascript" src="?q=getJavascriptForNodes&projectId=<?php echo($currentProject);?>"></script>
 
  <script type="text/javascript">
 
+var app = {};   //definition for app object is here to have it globaly accesible
 document.addEventListener("DOMContentLoaded",function () {
-     var app  = new example.Application();
+     app = new example.Application();
 
      /**
       *   WIRE CONNECTION policy
