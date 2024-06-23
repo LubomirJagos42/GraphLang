@@ -1255,45 +1255,50 @@ GraphLang.Utils.setWiresColorByPorts = function setWiresColorByPorts(canvas){
  * @returns {String} jsonStr
  * @description For selected loop show number of tunnels.
  */
-GraphLang.Utils.getCanvasJson = function(canvas){
-  var writer = new draw2d.io.json.Writer();
-  var jsonStr = '';
-  writer.marshal(canvas,function(json){
-      var clearedJson = [];
-      var wrongJson = [];
-      for (var k = 0; k < json.length; k++){
-        if (json[k].type != undefined && json[k].type.toLowerCase().search("multilayered") > -1){
-          var multilayeredJson = canvas.getFigure(json[k].id);
-          var multilayerChooser = multilayeredJson.getChildren().get(0);
+GraphLang.Utils.getCanvasJson = function (canvas) {
+    var writer = new draw2d.io.json.Writer();
+    var jsonStr = '';
+    writer.marshal(canvas, function (json) {
+        var clearedJson = [];
+        var wrongJson = [];
+        for (var k = 0; k < json.length; k++) {
+            if (json[k].type != undefined && json[k].type.toLowerCase().search("multilayered") > -1) {
+                var multilayeredJson = canvas.getFigure(json[k].id);
+                var multilayerChooser = multilayeredJson.getChildren().get(0);
 
-          var chooserObj =  new draw2d.shape.basic.Label(multilayerChooser);
-          //clearedJson.push(chooserObj);
-          clearedJson.push(json[k]);
-          // alert(multilayerChooser.text);
-        }else if (json[k].type != undefined && json[k].type.toLowerCase().search("connection") > -1){
-          //alert("connection");
-          clearedJson.push(json[k]);
-        }else if (json[k].type != undefined && json[k].type.toLowerCase().search("tunnel") == -1){
-          clearedJson.push(json[k]);
-        }else{
-          wrongJson.push(json[k]);
+                var chooserObj = new draw2d.shape.basic.Label(multilayerChooser);
+                //clearedJson.push(chooserObj);
+                clearedJson.push(json[k]);
+                // alert(multilayerChooser.text);
+            } else if (json[k].type != undefined && json[k].type.toLowerCase().search("connection") > -1) {
+                //alert("connection");
+                clearedJson.push(json[k]);
+            } else if (json[k].type != undefined && json[k].type.toLowerCase().search("terminaloutput") > -1) {
+                let outputTerminalObj = canvas.getFigure(json[k].id);
+                json[k].userData.datatype = outputTerminalObj.getDatatype();
+
+                clearedJson.push(json[k]);
+            } else if (json[k].type != undefined && json[k].type.toLowerCase().search("tunnel") == -1) {
+                clearedJson.push(json[k]);
+            } else {
+                wrongJson.push(json[k]);
+            }
         }
-      }
 
-      jsonStr = JSON.stringify(clearedJson, null, 2);
-      // jsonStr = JSON.stringify(wrongJson, null, 2);
+        jsonStr = JSON.stringify(clearedJson, null, 2);
+        // jsonStr = JSON.stringify(wrongJson, null, 2);
 
-      var copyElement = document.createElement('textarea');
+        var copyElement = document.createElement('textarea');
 
-      copyElement.innerHTML= "var jsonDocument = " + jsonStr + ";";
-      jsonStr = copyElement.innerHTML;
-      copyElement = document.body.appendChild(copyElement);
-      copyElement.select();
-      document.execCommand('copy');
-      copyElement.remove();
-  });
+        copyElement.innerHTML = "var jsonDocument = " + jsonStr + ";";
+        jsonStr = copyElement.innerHTML;
+        copyElement = document.body.appendChild(copyElement);
+        copyElement.select();
+        document.execCommand('copy');
+        copyElement.remove();
+    });
 
-  return jsonStr;
+    return jsonStr;
 }
 
 /**
@@ -2379,7 +2384,7 @@ GraphLang.Utils.hex_to_ascii = function (str1) {
 GraphLang.Utils.toHex = function (str) {
     var result = '';
     for (var i=0; i<str.length; i++) {
-        result += str.charCodeAt(i).toString(16);
+        result += str.charCodeAt(i).toString(16).padStart(2, '0');
     }
     return result;
 }
@@ -2454,12 +2459,15 @@ GraphLang.Utils.getNodeAsString = function(nodeClassName){
  * @returns {string}
  * @description Call server to provide node content code and evaluate it into object do some stuff and return string again.
  */
-GraphLang.Utils.getNodeAsString2 = function(projectId, nodeClassName){
+GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(projectId, nodeClassName){
     if (projectId == null || projectId == ""){
         let currUrl = window.location.href;
         const urlParams = new URLSearchParams(currUrl);
         projectId = urlParams.get('projectId');
     }
+
+    GLOBAL_HELPER_VARIABLE_1 = projectId;
+    GLOBAL_HELPER_VARIABLE_2 = nodeClassName;
 
     GraphLang.Utils.serverSendReceive(
         'getNodeJavascriptCode',
@@ -2471,10 +2479,54 @@ GraphLang.Utils.getNodeAsString2 = function(projectId, nodeClassName){
             console.log(`ajax response saved in GLOBAL_AJAX_RESPONSE variable`);
             console.log(`node content saved in GLOBAL_NODE_CONTENT variable`);
 
+            //getting input params from global variables, this is not ideal but it will run smoothly
+            let projectId = GLOBAL_HELPER_VARIABLE_1;
+            let nodeClassName = GLOBAL_HELPER_VARIABLE_2;
+
             //GraphLang.UserDefinedNode.extend = function(obj){this.extendObj = obj;}
             //...run node code content...
             //for (m in GraphLang.UserDefinedNode.extendObj){console.log(GraphLang.UserDefinedNode.extendObj[m].toString())}
 
+            eval(GraphLang.Utils.getCanvasJson(appCanvas)); //this will create jsonDocument variable
+
+            GLOBAL_HELPER_VARIABLE_1 = {};
+            GLOBAL_HELPER_VARIABLE_2 = {};
+            let codeToRun = "";
+            codeToRun += `GLOBAL_HELPER_VARIABLE_1 = ${GLOBAL_AJAX_RESPONSE.nodeClassParent}.extend;\n`;
+            codeToRun += `${GLOBAL_AJAX_RESPONSE.nodeClassParent}.extend = function(obj){this.extendObj = obj;}\n`;
+            codeToRun += `${GLOBAL_NODE_CONTENT}`;
+            codeToRun += `GLOBAL_HELPER_VARIABLE_2 = "";\n`;
+            codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "${GLOBAL_AJAX_RESPONSE.nodeClassName} = ${GLOBAL_AJAX_RESPONSE.nodeClassParent}.extend({\\n"\n`;
+
+            codeToRun += `for (m in ${GLOBAL_AJAX_RESPONSE.nodeClassParent}.extendObj){\n`;
+            codeToRun += `\t\tlet objItem = ${GLOBAL_AJAX_RESPONSE.nodeClassParent}.extendObj[m];\n`;
+            codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += m + ": ";\n`;
+            codeToRun += `\t\tif (m != 'jsonDocument'){\n`;
+            codeToRun += `\t\t\t\tif (typeof objItem != 'string'){\n`;
+            codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += (typeof objItem == 'Object' || Array.isArray(objItem)) ? JSON.stringify(objItem) : objItem.toString();\n`;
+            codeToRun += `\t\t\t\t}else{\n`;
+            codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '"' + objItem.toString() + '"';\n`;
+            codeToRun += `\t\t\t\t}\n`;
+            codeToRun += `\t\t}else{\n`;
+            codeToRun += `\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '${JSON.stringify(jsonDocument)}';\n`;
+            codeToRun += `\t\t}\n`;
+            codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += ",\\n";\n`;
+            codeToRun += `}\n`;
+
+            codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "});\\n"\n`;
+            codeToRun += `${GLOBAL_AJAX_RESPONSE.nodeClassParent}.extend = GLOBAL_HELPER_VARIABLE_1;\n`;
+
+            // console.log(`Going eval() this code:`);
+            // console.log(`${codeToRun}`);
+            eval(codeToRun);
+            GLOBAL_HELPER_VARIABLE_1 = codeToRun;
+            console.log(`JS code which run in eval() available in GLOBAL_HELPER_VARIABLE_1`);
+            console.log(`node class code available in GLOBAL_HELPER_VARIABLE_2`);
+
+            let nodeContent = GraphLang.Utils.toHex(GLOBAL_HELPER_VARIABLE_2);
+
+            console.log(`start saving this for porjectId:${projectId}, nodeClassName:${nodeClassName}`);
+            GraphLang.Utils.serverUpdateNodeCodeContent(projectId, nodeClassName, nodeContent);
         }
     );
 }
