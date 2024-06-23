@@ -2362,14 +2362,46 @@ GraphLang.Utils.userInteractiveErrorOnClick = function(errorObj){
     }
 }
 
-GraphLang.Utils.serverSendReceive = function(operationStr, projectId){
+GraphLang.Utils.hex_to_ascii = function (str1) {
+    // Convert the input hexadecimal string to a regular string
+    var hex = str1.toString();
+    // Initialize an empty string to store the resulting ASCII characters
+    var str = '';
+    // Iterate through the hexadecimal string, processing two characters at a time
+    for (var n = 0; n < hex.length; n += 2) {
+        // Extract two characters from the hexadecimal string and convert them to their ASCII equivalent
+        str += String.fromCharCode(parseInt(hex.substr(n, 2), 16));
+    }
+    // Return the resulting ASCII string
+    return str;
+}
+
+GraphLang.Utils.toHex = function (str) {
+    var result = '';
+    for (var i=0; i<str.length; i++) {
+        result += str.charCodeAt(i).toString(16);
+    }
+    return result;
+}
+
+/**
+ * @method GraphLang.Utils.serverSendReceive
+ * @param operationStr
+ * @param projectId
+ * @param additionalGetStr
+ * @descritpion Send request to server and receive and parse JSON response into global object GLOBAL_AJAX_RESPONSE
+ */
+GraphLang.Utils.serverSendReceive = function(operationStr, projectId, additionalGetStr, callbackFunction = null, postParams = null){
     // Creating Our XMLHttpRequest object
     let xhr = new XMLHttpRequest();
 
     // Making our connection
     // let url = `?q=${operationStr}&projectId=${projectId}`;
-    let url = `?q=${operationStr}&projectId=${projectId}`;
+    let url = `?q=${operationStr}&projectId=${projectId}${additionalGetStr}`;
     xhr.open("POST", url, true);
+
+    // Send the proper header information along with the request
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
     // function execute after request is successful
     let response = {};
@@ -2378,9 +2410,96 @@ GraphLang.Utils.serverSendReceive = function(operationStr, projectId){
             console.log(this.responseText);
             response = JSON.parse(this.responseText.replace('"','\"'));   //THIS IS REALLY NEEDED TO PARSE JSON CORRECTLY WITHOUT THIS IT'S NOT RUNNING AT ALL!!!
             console.log(response);
+
+            GLOBAL_AJAX_RESPONSE = response; //to have access to response in browser
+            if (callbackFunction) callbackFunction();   //RUN CALLBACK FUNCTION IF PROVIDED
         }
     }
 
     // Sending our request
-    xhr.send();
+    xhr.send(postParams);
 }
+
+/**
+ * @method GraphLang.Utils.getNodeAsString
+ * @param nodeClassName
+ * @returns {string}
+ * @description DO NOT USE THIS, this is experiment but it's not returning init() correctly, seems like it's little complicated to get all function as string right.
+ *
+ * @deprecated
+ */
+GraphLang.Utils.getNodeAsString = function(nodeClassName){
+    let nodeClassObj = eval("new " + nodeClassName + "()");
+    let outputCode = "";
+
+    outputCode += `${nodeClassObj.__proto__.NAME} = ${nodeClassObj.__proto__.__proto__.NAME}.extend({\n`;
+
+    for (const [key, value] of Object.entries(nodeClassObj.__proto__)){
+        if (typeof value === "function"){
+            outputCode += `${key}: ${value.toString()},\n`;
+        }
+        else if (key === "jsonDocument"){
+            outputCode += `${key}: ${JSON.stringify(value)},\n`;
+        }
+    }
+
+    outputCode += "});\n";
+
+    return outputCode;
+}
+
+/**
+ * @method GraphLang.Utils.getNodeAsString2
+ * @param nodeClassName
+ * @returns {string}
+ * @description Call server to provide node content code and evaluate it into object do some stuff and return string again.
+ */
+GraphLang.Utils.getNodeAsString2 = function(projectId, nodeClassName){
+    if (projectId == null || projectId == ""){
+        let currUrl = window.location.href;
+        const urlParams = new URLSearchParams(currUrl);
+        projectId = urlParams.get('projectId');
+    }
+
+    GraphLang.Utils.serverSendReceive(
+        'getNodeJavascriptCode',
+        projectId,
+        `&nodeClassName=${nodeClassName}`,
+        function(){
+            GLOBAL_NODE_CONTENT = GraphLang.Utils.hex_to_ascii(GLOBAL_AJAX_RESPONSE.nodeContent);
+            //console.log(GLOBAL_NODE_CONTENT);
+            console.log(`ajax response saved in GLOBAL_AJAX_RESPONSE variable`);
+            console.log(`node content saved in GLOBAL_NODE_CONTENT variable`);
+
+            //GraphLang.UserDefinedNode.extend = function(obj){this.extendObj = obj;}
+            //...run node code content...
+            //for (m in GraphLang.UserDefinedNode.extendObj){console.log(GraphLang.UserDefinedNode.extendObj[m].toString())}
+
+        }
+    );
+}
+
+/**
+ * @param projectId
+ * @param nodeClassName
+ * @param nodeCodeContent
+ * @description This will update node code content on server, code content MUST BE FORMATTED IN HEXADECIMAL STRING, you can use GraphLang.Utils.toHex(String str)
+ */
+GraphLang.Utils.serverUpdateNodeCodeContent = function(projectId, nodeClassName, nodeCodeContent){
+    if (projectId == null || projectId == ""){
+        let currUrl = window.location.href;
+        const urlParams = new URLSearchParams(currUrl);
+        projectId = urlParams.get('projectId');
+    }
+
+    GraphLang.Utils.serverSendReceive(
+        'updateNodeJavascriptCode',
+        projectId,
+        `&nodeClassName=${nodeClassName}`,
+        null,
+        `nodeClassContent=${nodeCodeContent}`
+    );
+
+}
+
+
