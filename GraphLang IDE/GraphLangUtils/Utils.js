@@ -2174,6 +2174,7 @@ GraphLang.Utils.ErrorList = {
     MULTIPLE_CONNECTIONS_FOR_PORT_NOT_ALLOWED: "MULTIPLE_CONNECTIONS_FOR_PORT_NOT_ALLOWED",
     CONNECTION_UNDEFINED_DATATYPE: "CONNECTION_UNDEFINED_DATATYPE",
     CONNECTION_DIFFERENT_DATATYPE: "CONNECTION_DIFFERENT_DATATYPE",
+    NODE_MISSING_TRANSLATE_FUNCTION: "NODE_MISSING_TRANSLATE_FUNCTION",
 }
 
 /**
@@ -2194,7 +2195,9 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
             //if there is validation function use it
             errorList.addAll(figureObj.validateSelf(canvasOwnerName, clusterDefinitionArray));
         }else{
-            //PORT CHECK
+            /*
+             *  PORT CHECK
+             */
             let inputPortList = figureObj.getInputPorts();
             let outputPortList =figureObj.getOutputPorts();
             figureObj.getPorts().each(function(portIndex, portObj){
@@ -2231,7 +2234,7 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
                         figureId: figureObj.getId(),
                         portName: portObj.getName(),
                         type: GraphLang.Utils.ErrorList.MULTIPLE_CONNECTIONS_FOR_PORT_NOT_ALLOWED,
-                        message: "MULTIPLE_CONNECTIONS_FOR_PORT_NOT_ALLOWED"
+                        message: `${figureObj.NAME} port '${portObj.getName()}' allows just one wire connected.`
                     });
                     console.warn(errorList.last());
 
@@ -2240,8 +2243,21 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
                     portObj.setColor("#FF9500");
                     portObj.setDashArray(".");
                 }
-
             });
+
+            /*
+             *  TRANSLATE FUNCTION CHECK
+             *  TODO: Need to recognize which language and target to check right translate function, for now done for C/C++
+             */
+            if (figureObj.translateToCppCode === undefined) errorList.add({
+                canvasOwnerName: canvasOwnerName,
+                figureName: figureObj.NAME,
+                figureId: figureObj.getId(),
+                portName: portObj.getName(),
+                type: GraphLang.Utils.ErrorList.NODE_MISSING_TRANSLATE_FUNCTION,
+                message: `${figureObj.NAME} missing function translateToCppCode() to translate into C/C++ code.`
+            });
+
         }
     });
 

@@ -236,6 +236,13 @@ foreach ($userDefinedNodesClassNames as $className){
                 $k++;
             }
        }
+
+       foreach ($emptyCategories as $category){
+           ?>
+           <input type='button' value='<?php echo($category['name']); ?>' onclick="$('#navigation span').hide(); $('#tab<?php echo($k);?>').show();" />
+           <?php
+           $k++;
+       }
        ?>
 
        <!-- user defined nodes menu place to insert -->
