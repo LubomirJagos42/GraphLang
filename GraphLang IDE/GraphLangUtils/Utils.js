@@ -1886,45 +1886,45 @@ GraphLang.Utils.displayContentsFromClass = function(contents, canvasObj){
  *  diagrams using symbol with assign schematic, this function is general one and newer, using also canvas
  *  reference where content is displayed.
  */
-GraphLang.Utils.displayContents2 = function(jsonDocument, canvasObj){
+GraphLang.Utils.displayContents2 = function (jsonDocument, canvasObj) {
 
-  //THIS FOLLOW VIOLATE ALL PROGRAMMING PRINCIPPLES NOW FOR DEBUGGING SUPPOSE VARIABLES ARE GLOBAL!
-  //eval(contents); //all schematics are saved as JSON assigned to variable jsonDocument
+    //THIS FOLLOW VIOLATE ALL PROGRAMMING PRINCIPPLES NOW FOR DEBUGGING SUPPOSE VARIABLES ARE GLOBAL!
+    //eval(contents); //all schematics are saved as JSON assigned to variable jsonDocument
 
-  canvasObj.clear();
-  var reader = new draw2d.io.json.Reader();
+    canvasObj.clear();
+    var reader = new draw2d.io.json.Reader();
 
-  //need to do put connection into separate list and create them after all fgures are created to have phzsically on canvas ports to have place for them
-  //var connectionList = new draw2d.utils.ArrayList
+    //need to do put connection into separate list and create them after all fgures are created to have phzsically on canvas ports to have place for them
+    //var connectionList = new draw2d.utils.ArrayList
 
-  //jsonDocumentCopy = jsonDocument;
-  jsonDocumentCopy = JSON.parse(JSON.stringify(jsonDocument));
-  reader.unmarshal(canvasObj, jsonDocumentCopy);  //this variable was evaluated inside eval() function
-  //just for now, uncomment in future //this.initAllPortToDefault();  //this must be here, without this canvas behave non/standard, it's not possible to remove wires etc.
+    //jsonDocumentCopy = jsonDocument;
+    jsonDocumentCopy = JSON.parse(JSON.stringify(jsonDocument));
+    reader.unmarshal(canvasObj, jsonDocumentCopy);  //this variable was evaluated inside eval() function
+    //just for now, uncomment in future //this.initAllPortToDefault();  //this must be here, without this canvas behave non/standard, it's not possible to remove wires etc.
 
-  //here are composite object repaired, they are assigned back to their ownership
-  var allFigures = canvasObj.getFigures();
-  allFigures.each(function(figureIndex, figureObj){
-    //if (figureObj.getComposite)
-    if (figureObj.NAME.toLowerCase().search('multilayered') != -1){
-      figureObj.getAssignedFigures().each(function(assignedFigureIndex, assignedFigureObj){
-        figureObj.layers.push(assignedFigureObj); //THIS ADD EACH LAYER TO PARENT JAILHOUSE COMPOSITE OBJECT, this is needed to be here
-      });
-      figureObj.renewLayerChooser();
-      figureObj.renewLayerSelector(); //NOT RUNNING CORRECTLY
-    }
+    //here are composite object repaired, they are assigned back to their ownership
+    var allFigures = canvasObj.getFigures();
+    allFigures.each(function (figureIndex, figureObj) {
+        //if (figureObj.getComposite)
+        if (figureObj.NAME.toLowerCase().search('multilayered') != -1) {
+            figureObj.getAssignedFigures().each(function (assignedFigureIndex, assignedFigureObj) {
+                figureObj.layers.push(assignedFigureObj); //THIS ADD EACH LAYER TO PARENT JAILHOUSE COMPOSITE OBJECT, this is needed to be here
+            });
+            figureObj.renewLayerChooser();
+            figureObj.renewLayerSelector(); //NOT RUNNING CORRECTLY
+        }
 
-    /*
-     *  Repairs sequence frames, top node owns just frames, all other nodes are part of each frame,
-     *  so here is needed just to reassign frames
-     */
-    if (figureObj.NAME.toLowerCase().search('sequence') > -1){
-      figureObj.getAssignedFigures().each(function(assignedFigureIndex, assignedFigureObj){
-        figureObj.frames.push(assignedFigureObj);
-        figureObj.updateFrames();
-      });
-    }
-  });
+        /*
+         *  Repairs sequence frames, top node owns just frames, all other nodes are part of each frame,
+         *  so here is needed just to reassign frames
+         */
+        if (figureObj.NAME.toLowerCase().search('sequence') > -1) {
+            figureObj.getAssignedFigures().each(function (assignedFigureIndex, assignedFigureObj) {
+                figureObj.frames.push(assignedFigureObj);
+                figureObj.updateFrames();
+            });
+        }
+    });
 
 }
 

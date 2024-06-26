@@ -243,7 +243,7 @@ foreach ($userDefinedNodesClassNames as $className){
         <?php
         foreach ($nodesNamesWithCategories[0] as $nodeWithoutCategory){
         ?>
-            <div data-shape="<?php echo($nodeWithoutCategory[0]); ?>" data-label="<?php echo($nodeWithoutCategory[1]); ?>" class="palette_node_element draw2d_droppable"><?php echo($nodeWithoutCategory[1]); ?></div>
+            <div data-shape="<?php echo($nodeWithoutCategory['className']); ?>" data-label="<?php echo($nodeWithoutCategory['displayName']); ?>" class="palette_node_element draw2d_droppable"><?php echo($nodeWithoutCategory['displayName']); ?></div>
         <?php
         }
         ?>
@@ -255,7 +255,7 @@ foreach ($userDefinedNodesClassNames as $className){
            if ($categoryName != 0){
                echo("\t\t<span id='tab$k'>\n");
                foreach ($nodesNamesWithCategories[$categoryName] as $node){
-                   echo("\t\t\t<div data-shape='$node[0]' data-label='$node[1]' class='palette_node_element draw2d_droppable'>$node[1]</div>\n");
+                   echo("\t\t\t<div data-shape='".$node['className']."' data-label='".$node['displayName']."' class='palette_node_element draw2d_droppable'>".$node['displayName']."</div>\n");
                }
                echo("\t\t</span>\n\n");
                $k++;
