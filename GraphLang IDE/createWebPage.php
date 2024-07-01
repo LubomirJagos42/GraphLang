@@ -2,7 +2,7 @@ import os, sys
 import glob
 import re
 
-blocksRootDir = "LibraryBlocks"
+blocksRootDir = "<?= $params["blocksRootDir"]?>"
 
 searchDirs = [
     blocksRootDir,
@@ -11,20 +11,30 @@ searchDirs = [
 #
 #   List of excluded directories, these here are included but there is no menu item generated
 #
+#   Example of folder with hidden nodes definition:
+#       excludeFromHtmlBlockPatterns = {
+#           "_hidden",
+#           "anotherFolderPath"
+#       }
+#
 excludeFromHtmlBlockPatterns = [
-    "Core/utils",
-    "GraphLangExperimental",
+<?php foreach ($params["excludeFromHtmlBlockPatterns"] as $item) echo("\t'".$item."',\n");?>
 ]
 
 #
 #   Tabs assignemnt blocs. If it path starts with some of keys then is under this tab.
 #
+#   Example of blocks to categories definition:
+#       blocksToTabsAssignment = {
+#           os.path.join(blocksRootDir, "Arduino"):                 "Arduino",
+#           os.path.join(blocksRootDir, "Core"):                    "Core",
+#           os.path.join(blocksRootDir, "GraphLangExperimental"):   "Experimental",
+#           os.path.join(blocksRootDir, "PythonQtGuiLib"):          "Python GUI",
+#           os.path.join(blocksRootDir, "UserDefinedNode"):         "User Nodes"
+#       }
+#
 blocksToTabsAssignment = {
-    os.path.join(blocksRootDir, "Arduino"):                 "Arduino",
-    os.path.join(blocksRootDir, "Core"):                    "Core",
-    os.path.join(blocksRootDir, "GraphLangExperimental"):   "Experimental",
-    os.path.join(blocksRootDir, "PythonQtGuiLib"):          "Python GUI",
-    os.path.join(blocksRootDir, "UserDefinedNode"):         "User Nodes"
+<?php foreach ($params["blocksToTabsAssignment"] as $categoryDir => $categoryName) echo("\tos.path.join(blocksRootDir, '".$categoryDir."'): '".$categoryName."',\n");?>
 }
 
 objectsNamesList = []
@@ -350,8 +360,8 @@ def fillVariablesJavascriptClassHierarchy():
                 break   
         k += 1
         if k >= len(objectsNamesList):
-            break 
-        
+            break
+
     #
     #   Add categories into objectNamesList
     #
