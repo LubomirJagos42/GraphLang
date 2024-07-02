@@ -79,7 +79,8 @@
 
 
     <script type="text/javascript">
-        let GLOBAL_PROJECT_ID = <?= $currentProject ?>;
+        let GLOBAL_PROJECT_ID = <?= $currentProject ? $currentProject : -1 ?>;
+        let GLOBAL_NODE_CLASS_NAME = '<?= $nodeClassName ? $nodeClassName : "" ?>';
         let GLOBAL_HELPER_VAR_1 = null;
 
         /**
@@ -104,11 +105,11 @@
                 app  = new shape_designer.Application(true);
 
                 /****************************************************************************************
-                 * LuboJ
+                 * LuboJ start code for shape designer
+                 *  - assumption it's called from IDE and therefore there is node class name
+                 *    which to edit and project id available
                  ****************************************************************************************/
-                /*
-                */
-
+                loadNodeFromServer(GLOBAL_PROJECT_ID, GLOBAL_NODE_CLASS_NAME);
             }
             catch(e){
                 alert(e);
