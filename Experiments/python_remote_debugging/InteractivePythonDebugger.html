@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Client Interactive Python Debugger using GDB</title>
+
+    <script type="text/javascript">
+        let exampleSocket = {};
+
+        function createWebSocket(options = null){
+            exampleSocket = new WebSocket("ws://localhost:8888");
+            exampleSocket.onmessage = (event) => {
+                console.log(event.data);
+                //document.querySelector('#generatedContent').append(event.data);
+                //document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', event.data.replaceAll("\n","<br/>\n") + "<hr />");
+                document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>" + event.data + "<pre/><hr/>");
+            };
+
+            /*
+             *  if callback func onopen available use that one
+             *      otherwise use some default
+             */
+            console.log(`result: ${options != null && Object.getOwnPropertyNames(options).includes('onopen')}`);
+            if (options != null && Object.getOwnPropertyNames(options).includes('onopen')){
+                exampleSocket.onopen = options.onopen;
+            }else{
+                exampleSocket.onopen = function(){
+                    console.log("Connection is Established");
+                    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>CONNECTION ESTABLISHED</span><br/><hr/>\n");
+                };
+            }
+
+            exampleSocket.onclose = function(event){
+                console.log(`Connection is CLOSED`);
+                console.log(event);
+                document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>CONNECTION CLOSED</span><br/><hr/>\n");
+            };
+
+        }
+
+        function onclickSendButton(){
+            function sendMessageAndAddToLog(){
+                let message = document.querySelector('#cmdStr').value;
+                exampleSocket.send(message);
+                document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>>" + message + "<pre/><hr/>");
+            }
+
+            console.log(`send button clicked`);
+            if (exampleSocket.readyState === WebSocket.CLOSED){
+                /*
+                 *  socket is close, trying to open it and as open function use send message to have smooth UI experience for user
+                 */
+                console.warn(`re-open websocket`);
+                document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>>tryin to reopen connection<pre/><hr/>");
+                createWebSocket({
+                    onopen: sendMessageAndAddToLog
+                });
+            }else if (exampleSocket.readyState === WebSocket.OPEN){
+                sendMessageAndAddToLog();
+            }else{
+                document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>WEBSOCKET NOT OPENED<pre/><hr/>");
+            }
+        }
+
+        window.addEventListener("load", function(event){
+            createWebSocket();
+        });
+    </script>
+</head>
+<body>
+    <h1>Websocket to localhost</h1>
+	<p>
+		"end debugging" will stop whole background python debugger interface script
+	</p>
+    <input name="sendButton" type="button" value="SEND MESSAGE" onclick="onclickSendButton()" />
+    <input id="cmdStr" name="cmdStr" type="text" value="" />
+	<hr/>
+    <div id ="wholeWrapper">
+        <div id="generatedContent"></div>
+    </div>
+
+</body>
+</html>
