@@ -229,7 +229,7 @@ foreach ($userDefinedNodesClassNames as $className){
        <?php
         $k = 1;
         foreach (array_keys($nodesNamesWithCategories) as $categoryName){
-            if ($categoryName != 0){
+            if ($categoryName != "0"){
             ?>
             <input type='button' value='<?php echo($categoryName); ?>' onclick="$('#navigation span').hide(); $('#tab<?php echo($k);?>').show();" />
             <?php
@@ -259,7 +259,7 @@ foreach ($userDefinedNodesClassNames as $className){
         <?php
         $k = 1;
         foreach (array_keys($nodesNamesWithCategories) as $categoryName){
-           if ($categoryName != 0){
+           if ($categoryName != "0"){
                echo("\t\t<span id='tab$k'>\n");
                foreach ($nodesNamesWithCategories[$categoryName] as $node){
                    echo("\t\t\t<div data-shape='".$node['className']."' data-label='".$node['displayName']."' class='palette_node_element draw2d_droppable'>".$node['displayName']."</div>\n");
