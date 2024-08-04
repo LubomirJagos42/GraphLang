@@ -9,8 +9,9 @@
                 let websocketPort = 8888;
 
 		function createWebSocket(options = null){
-                        console.log("Connecting to websocket ws://"+ window.location.host +":"+ websocketPort);
-                        exampleSocket = new WebSocket("ws://"+ window.location.host +":"+ websocketPort);
+                        let websocketHost = window.location.host ? window.location.host : "localhost";
+                        console.log("Connecting to websocket ws://"+ websocketHost +":"+ websocketPort);
+                        exampleSocket = new WebSocket("ws://"+ websocketHost +":"+ websocketPort);
 			exampleSocket.onmessage = (event) => {
 				console.log(event.data);
 				//document.querySelector('#generatedContent').append(event.data);
