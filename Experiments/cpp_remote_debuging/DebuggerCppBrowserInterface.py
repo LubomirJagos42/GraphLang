@@ -1,5 +1,9 @@
 #
 #    Following lines run remote debugger and waiting for telnet connection
+#    To run this this needs to be installed:
+#       - pip3 install websockets
+#       - pip3 install pygdbmi
+#
 #
 import asyncio
 import websockets
@@ -10,7 +14,7 @@ import pprint as pp
 class DebbugerCppBrowserInterface:
     __gdbmi = None
     __websocketInterface = None
-    websocketHost = "localhost"
+    websocketHost = "0.0.0.0"
     websocketPort = 8888
     
     def __init__(self):

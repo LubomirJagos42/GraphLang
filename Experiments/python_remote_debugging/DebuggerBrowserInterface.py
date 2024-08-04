@@ -13,7 +13,7 @@ class DebbugerBrowserInterface:
     telnetPort = 4444
     
     __websocketInterface = None
-    websocketHost = "localhost"
+    websocketHost = "0.0.0.0"
     websocketPort = 8888
     
     def __init__(self):

@@ -6,9 +6,11 @@
 
     <script type="text/javascript">
 		let exampleSocket = {};
+                let websocketPort = 8888;
 
 		function createWebSocket(options = null){
-			exampleSocket = new WebSocket("ws://localhost:8888");
+                        console.log("Connecting to websocket ws://"+ window.location.host +":"+ websocketPort);
+                        exampleSocket = new WebSocket("ws://"+ window.location.host +":"+ websocketPort);
 			exampleSocket.onmessage = (event) => {
 				console.log(event.data);
 				//document.querySelector('#generatedContent').append(event.data);
