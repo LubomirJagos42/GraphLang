@@ -1,11 +1,16 @@
 #
 #    Following lines run remote debugger and waiting for telnet connection
+#    To be able debug remotely python file there must be header added using remote_pdb
+#       - pip3 install remote_pdb
+#         or
+#       - pip3 install remote-pdb
 #
 import asyncio
 import websockets
 from telnetlib import Telnet
 import os
 import subprocess
+import time
 
 class DebbugerBrowserInterface:
     __telnetInterface = None
@@ -41,7 +46,9 @@ class DebbugerBrowserInterface:
 if __name__ == "__main__":
     #currDir = pathlib.Path(__file__).parent.resolve()
     
-    subprocess.Popen(['python', 'helloWorld.py'])
+    subprocess.Popen(['python3', 'helloWorld.py'])
+
+    time.sleep(3)  #wait little for telnet to start in previous process
 
     browserInterface = DebbugerBrowserInterface()
     browserInterface.startAsyncLoop()
