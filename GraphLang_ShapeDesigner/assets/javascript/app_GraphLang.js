@@ -5940,6 +5940,14 @@ shape_designer.policy.LineToolPolicy = shape_designer.policy.AbstractToolPolicy.
 /********************************************************************************************************************
  *  LuboJ GraphLang functions
  ********************************************************************************************************************/
+
+/**
+ *  Global variables to help at some tasks.
+ */
+GLOBAL_CURRENT_LOADED_OBJECT_NAME = "";         //stores current loaded object class name, used during load procees
+GLOBAL_CURRENT_LOADED_OBJECT_PARENT = "";       //stores curent loaded object parent class name, needed during save process
+GLOBAL_CURRENT_LOADED_OBJECT_CODE_CONTENT = "";       //stores curent loaded object code content
+
 /**
  *  @method readSingleFile
  *  @param {HTMLInputFileTag} e Javascript object for input file tag placed somewhere in toolbar or else.
@@ -6129,7 +6137,6 @@ shape_designer.GraphLangFigureWriter = draw2d.io.Writer.extend({
             figure.translate(x,y);
         });
         
-        var template =$("#shape-base-template").text().trim();
 
         //LuboJ
         jsonDocument = "[]";
@@ -6138,23 +6145,69 @@ shape_designer.GraphLangFigureWriter = draw2d.io.Writer.extend({
         if (shape_designer.loadedObjectPreservedFunctions) loadedObjectPreservedFunctions = shape_designer.loadedObjectPreservedFunctions;
         symbolPicture = shape_designer.getSymbolPicture(app.view);
 
-        var compiled = Hogan.compile(template);
-        var output = compiled.render({
-            className: className,
-            baseClass: baseClass,
-            figures: shapes,
-            ports: ports,
-            width: b.w,
-            height: b.h,
-            symbolPicture: symbolPicture,
-            jsonDocument: jsonDocument,
-            loadedObjectPreservedFunctions: loadedObjectPreservedFunctions
-        });
+        /*******************************************************************************************
+         *  COMMON VARIABLES TO GENERATE OUTPUT CLASS CODE
+         *******************************************************************************************/
+        let output = "";
+        let compiled = "";
+        let template = "";
 
-        //LuboJ, remove shape instance creation
-        //output = output +"\n\n"+customCode;
-        
-        resultCallback(output,  draw2d.util.Base64.encode(output));
+        /*******************************************************************************************
+         *  OUTPUT CLASS CODE - VARIANT 1 - use when new object is created
+         *      During loading there are remembered some methods which names are hardwired into
+         *      this file, steps:
+         *          1. during load methods strings is saved into string variable
+         *          2. during save they are written into result file
+         *******************************************************************************************/
+
+        if (GLOBAL_CURRENT_LOADED_OBJECT_NAME.length == 0) {
+            template = $("#shape-base-template").text().trim();
+            compiled = Hogan.compile(template);
+            output = compiled.render({
+                className: className,
+                baseClass: baseClass,
+                figures: shapes,
+                ports: ports,
+                width: b.w,
+                height: b.h,
+                symbolPicture: symbolPicture,
+                jsonDocument: jsonDocument,
+                loadedObjectPreservedFunctions: loadedObjectPreservedFunctions
+            });
+
+            //LuboJ, remove shape instance creation
+            //output = output +"\n\n"+customCode;
+        }
+
+        /*******************************************************************************************
+         *  OUTPUT CLASS CODE - VARIANT 2 - use on existing object
+         *      This is universal variant since it uses just basic template to generate basic class
+         *      stuff:
+         *          - NAME
+         *          - shape
+         *      and after it rewrites all methods and everything inside class into it as it is
+         *
+         *******************************************************************************************/
+
+        if (GLOBAL_CURRENT_LOADED_OBJECT_NAME.length > 0) {
+            template = $("#template-shape-functions").text().trim();
+            compiled = Hogan.compile(template);
+            output = compiled.render({
+                className: className,
+                baseClass: baseClass,
+                figures: shapes,
+                ports: ports,
+                width: b.w,
+                height: b.h,
+                symbolPicture: symbolPicture,
+            });
+            output = shape_designer.generateCurentClassCode(className, baseClass, output);
+        }
+
+        /*******************************************************************************************
+         *  SAVE FILE TO USER on local drive
+         *******************************************************************************************/
+        resultCallback(output, draw2d.util.Base64.encode(output));
     }
 });
 
@@ -6180,6 +6233,10 @@ shape_designer.loadSymbolFromGraphLangClass = function(contents, appCanvas, appC
 
     objectTree = "";
     newObjectName = matchPattern[1];
+    GLOBAL_CURRENT_LOADED_OBJECT_CODE_CONTENT = contents;
+    GLOBAL_CURRENT_LOADED_OBJECT_NAME = matchPattern[1];
+    GLOBAL_CURRENT_LOADED_OBJECT_PARENT = matchPattern[2];
+
     matchPattern[1].split('.').forEach(function(element, index){
         if (index > 0){
             objectTree += '.';        
@@ -6654,3 +6711,59 @@ shape_designer.saveSymbol = function(){
         }
     });
 }
+
+/**
+ *  @description This will generate code for current class and replace parts responsible for create symbol picture.
+ */
+shape_designer.generateCurentClassCode = function(className, classParent, beforeCodeToInsert){
+    GLOBAL_HELPER_VARIABLE_1 = {};
+    GLOBAL_HELPER_VARIABLE_2 = {};
+    let codeToRun = "";
+
+    // 1. Replace extend function with custom function which store objects, functions, properties into variable inside object
+    codeToRun += `GLOBAL_HELPER_VARIABLE_1 = ${GLOBAL_CURRENT_LOADED_OBJECT_PARENT}.extend;\n`;
+    codeToRun += `${GLOBAL_CURRENT_LOADED_OBJECT_PARENT}.extend = function(obj){this.extendObj = obj;}\n`;
+    codeToRun += `${GLOBAL_CURRENT_LOADED_OBJECT_CODE_CONTENT}`;
+
+    // 2. start writing new result object header
+    codeToRun += `GLOBAL_HELPER_VARIABLE_2 = "";\n`;
+    codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "${className} = ${classParent}.extend({\\n"\n`;
+
+    // 3. insert generated code from template which define symbol shape
+    codeToRun += `\n\n`;
+    codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += \`${beforeCodeToInsert}\`\n`;
+    codeToRun += `\n\n`;
+
+    // 4. Rest of magic, rewrite left of function as they were
+    codeToRun += `for (m in ${GLOBAL_CURRENT_LOADED_OBJECT_PARENT}.extendObj){\n`;
+    codeToRun += `\t\tlet objItem = ${GLOBAL_CURRENT_LOADED_OBJECT_PARENT}.extendObj[m];\n`;
+    codeToRun += `\t\tif (m == 'NAME' || m == 'init' || m == 'createShapeElement' || m == 'createSet' || m == 'symbolPicture'){\n`;
+    codeToRun += `\t\t\t\t/* DO NOTHING - not copy anything */;\n`;
+    codeToRun += `\t\t\t\tconsole.log('----> function NOT INCLUDED: ' + m);\n`;
+    codeToRun += `\t\t}else{\n`;
+    codeToRun += `\t\t\t\tif (typeof objItem != 'string'){\n`;
+    codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += m + ": ";\n`;
+    codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += (typeof objItem == 'Object' || Array.isArray(objItem)) ? JSON.stringify(objItem) : objItem.toString();\n`;
+    codeToRun += `\t\t\t\t\t\tconsole.log('----> serialize function: ' + m);\n`;
+    codeToRun += `\t\t\t\t}else{\n`;
+    codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '"' + objItem.toString() + '"';\n`;
+    codeToRun += `\t\t\t\t}\n`;
+    codeToRun += `\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += ",\\n";\n`;
+    codeToRun += `\t\t}\n`;
+    codeToRun += `}\n`;
+    codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "});\\n"\n`;
+
+    // 5. Return extend function as it was before start rewriting
+    codeToRun += `${GLOBAL_CURRENT_LOADED_OBJECT_PARENT}.extend = GLOBAL_HELPER_VARIABLE_1;\n`;
+
+    console.log(`Going eval() this code:`);
+    console.log(`${codeToRun}`);
+
+    eval(codeToRun);
+    GLOBAL_HELPER_VARIABLE_1 = codeToRun;
+    console.log(`JS code which run in eval() available in GLOBAL_HELPER_VARIABLE_1`);
+    console.log(`node class code available in GLOBAL_HELPER_VARIABLE_2`);
+
+    return GLOBAL_HELPER_VARIABLE_2;
+}
+
