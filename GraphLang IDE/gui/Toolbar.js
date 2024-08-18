@@ -156,6 +156,17 @@ example.Toolbar = Class.extend({
 			GraphLang.Utils.saveSchematic2(appCanvas, filename, 'text/javascript');
 		}));
 		this.html.append(this.saveSchematicButton);
+
+		/**
+		 *	debuggerOpen Button
+		 */
+		this.debuggerOpenButton  = $("<button id=\"debuggerOpenButton\">Open Debugger</button>");
+		this.debuggerOpenButton.button().click($.proxy(function(){
+			GraphLang.Debugger.Cpp.open({
+				targetElementId: 'helperPane'
+			});
+		}));
+		this.html.append(this.debuggerOpenButton);
 	},
 
 	/**

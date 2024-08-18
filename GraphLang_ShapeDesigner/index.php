@@ -72,12 +72,6 @@
     <!-- user defined nodes place to insert -->
     <script type="text/javascript" src="?q=getJavascriptForNodes&projectId=<?php echo($currentProject);?>"></script>
 
-
-
-
-
-
-
     <script type="text/javascript">
         let GLOBAL_PROJECT_ID = <?= $currentProject ? $currentProject : -1 ?>;
         let GLOBAL_NODE_CLASS_NAME = '<?= $nodeClassName ? $nodeClassName : "" ?>';
@@ -549,6 +543,59 @@
 
     {{loadedObjectPreservedFunctions}}
     });
+</script>
+
+<!--
+    THIS TEMPLATE ARE JUST PURE FUNCTIONS WHICH MUST BE INCLUDED THAN INSIDE CLASS
+-->
+<script id="template-shape-functions" type="text/js-template">
+    NAME: "{{{className}}}",
+
+    init:function(attr, setter, getter)
+    {
+    this._super( $.extend({stroke:0, bgColor:null, width:{{width}}, height:{{height}}, flagAutoCreatePorts: false},attr), setter, getter);
+    var port;
+    {{#ports}}
+    // {{{name}}}
+    port = this.{{{method}}}({{{type}}}, new draw2d.layout.locator.XYRelPortLocator({{x}}, {{y}}));
+    port.setConnectionDirection({{direction}});
+    port.setBackgroundColor("{{color}}");
+    port.setName("{{name}}");
+    port.setMaxFanOut({{fanout}});
+
+    if (!port.userData) port.userData = {}
+    port.userData.datatype = "{{datatype}}";
+    port.userData.allowMultipleConnections = {{allowMultipleConnections}};
+    port.userData.connectionMandatory = {{connectionMandatory}};
+
+    {{/ports}}
+    this.persistPorts=false;
+    },
+
+    createShapeElement : function()
+    {
+    var shape = this._super();
+    this.originalWidth = {{width}};
+    this.originalHeight= {{height}};
+    return shape;
+    },
+
+    createSet: function()
+    {
+    this.canvas.paper.setStart();
+
+    {{#figures}}
+    // {{{name}}}
+    shape = {{{constructor}}};
+    shape.attr({{{attr}}});
+    shape.data("name","{{{name}}}");
+    {{{extra}}}
+    {{/figures}}
+
+    return this.canvas.paper.setFinish();
+    },
+
+    symbolPicture: "{{symbolPicture}}",
 </script>
 
 </body>

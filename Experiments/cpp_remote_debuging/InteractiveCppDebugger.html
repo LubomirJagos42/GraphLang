@@ -4,14 +4,29 @@
     <meta charset="UTF-8">
     <title>Client Interactive CPP Debugger using GDB</title>
 
+	<style type="text/css">
+		table{
+			border: 1px #000000 solid;
+			border-collapse: collapse;
+		}
+		table td{
+			border: 1px #000000 solid;
+			vertical-align: top;
+			text-align: left;
+		}
+		pre{
+		}
+	</style>
+
     <script type="text/javascript">
 		let exampleSocket = {};
-                let websocketPort = 8888;
+        let websocketPort = 8888;
 
 		function createWebSocket(options = null){
-                        let websocketHost = window.location.host ? window.location.host : "localhost";
-                        console.log("Connecting to websocket ws://"+ websocketHost +":"+ websocketPort);
-                        exampleSocket = new WebSocket("ws://"+ websocketHost +":"+ websocketPort);
+			let websocketHost = window.location.host ? window.location.host : "localhost";
+			console.log("Connecting to websocket ws://"+ websocketHost +":"+ websocketPort);
+			exampleSocket = new WebSocket("ws://"+ websocketHost +":"+ websocketPort);
+
 			exampleSocket.onmessage = (event) => {
 				console.log(event.data);
 				//document.querySelector('#generatedContent').append(event.data);
@@ -54,7 +69,7 @@
                  *  socket is close, trying to open it and as open function use send message to have smooth UI experience for user
                  */
 				console.warn(`re-open websocket`);
-				document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>>tryin to reopen connection<pre/><hr/>");
+				document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>>trying to reopen connection<pre/><hr/>");
 				createWebSocket({
 					onopen: sendMessageAndAddToLog
 				});
@@ -67,25 +82,40 @@
 
 		window.addEventListener("load", function(event){
 			createWebSocket();
-		});    </script>
+		});
+	</script>
 </head>
 <body>
     <h1>Websocket to localhost</h1>
 	<p>
-		"end debugging" will stop whole background python debugger interface script
-		<br /><br />
-		This sequence of commands will do some step in hello world program:<br />
-		<pre>
-		file a
-		b 14
-		start
-		c
-		print a
-		print b
-		print c
-		q
-		</pre>
+		<b>"end debugging"</b> will stop whole background python debugger interface script
 	</p>
+	<table>
+		<tr>
+			<td>
+				This sequence of commands will do some step in hello world program:<br />
+				<pre>
+				file a
+				b 14
+				start
+				c
+				print a
+				print b
+				print c
+				q
+				</pre>
+			</td>
+			<td>
+				Another useful commands:<br />
+				<pre>
+				cd ..
+				cd [path]
+				pwd
+				</pre>
+			</td>
+		</tr>
+	</table>
+	<br />
     <input name="sendButton" type="button" value="SEND MESSAGE" onclick="onclickSendButton()" />
     <input id="cmdStr" name="cmdStr" type="text" value="" />
 	<hr/>
