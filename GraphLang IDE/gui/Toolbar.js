@@ -158,6 +158,17 @@ example.Toolbar = Class.extend({
 		this.html.append(this.saveSchematicButton);
 
 		/**
+		 *	uploadSchematic Button
+		 */
+		this.uploadSchematicButton  = $("<button id=\"uploadSchematicButton\">Upload</button>");
+		this.uploadSchematicButton.button().click($.proxy(function(){
+			let schematicTextData = GraphLang.Utils.getCanvasAsObjectString(appCanvas);
+
+			alert(`Function upload not implemented yet. This is going to be saved:\n\n${schematicTextData}`);
+		}));
+		this.html.append(this.uploadSchematicButton);
+
+		/**
 		 *	debuggerOpen Button
 		 */
 		this.debuggerOpenButton  = $("<button id=\"debuggerOpenButton\">Open Debugger</button>");

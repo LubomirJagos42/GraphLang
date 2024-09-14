@@ -1,0 +1,68 @@
+GraphLang web endpoints
+=======================
+- NODE MANIPULATION:
+	q = <string>:
+		nodeOperation
+	operation = <string>:
+			changeNodeDisplayName
+		| 	changeNodeClassName
+		|	changeNodeLanguage
+		|	changeNodeIsHidden
+		|	getNodeInfo
+		|	changeNodeCodeContent
+	nodeId = <int>
+	nodeClassName = <string>
+	nodeNewClassName = <string>
+	nodeNewDisplayName = <string>
+	nodeNewIsHidden = <string>
+	nodeNewCodeContent = <string>
+	nodeNewLanguage = <string>
+	nodeNewParent = <string>
+
+- NODE MANIPULATION:			// <--- THIS NEEDS TO BE IMPLEMENTED
+	q = <string>:
+		nodeUpload				
+	projectId = <int>
+	nodeId = <int>
+	nodeClassName = <string>
+	nodeCodeContent = <string>
+
+- UPLOAD GENERATED PROJECT CODE		// <--- THIS NEEDS TO BE IMPLEMENTED
+	get:
+		q = <string>:
+			nodeUpload
+
+	post:
+		projectId = <int>
+		nodeId = <int>
+		nodeClassName = <string>
+		nodeDisplayName = <string>
+		nodeClassParentName = <string>
+		nodeCodeContent = <string>	//in HEX format
+
+- CATEGORY OPERATION
+	q = <string>:
+		categoryOperation
+	operation = <string>:
+			deleteNodeFromCategory
+		| 	deleteCategory
+		|	renameCategory
+		|	addCategory
+	categoryId = <int>
+	nodeId = <int>
+	categoryName = <string>
+
+- CPP DEBUGGER:
+	q = <string>:
+		runPythonCppDebugServer
+
+- CODE COMPILE:
+	q = <string>:
+		compileCode
+	nodeCodeContent = <string>	//code in HEX format
+
+
+
+
+
+

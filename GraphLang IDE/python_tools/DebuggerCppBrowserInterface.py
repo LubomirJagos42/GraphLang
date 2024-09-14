@@ -10,6 +10,8 @@ import websockets
 import os
 from pygdbmi.gdbcontroller import GdbController
 import pprint as pp
+import subprocess
+import json
 
 class DebbugerCppBrowserInterface:
     __gdbmi = None
@@ -25,21 +27,39 @@ class DebbugerCppBrowserInterface:
         async for message in websocket:
         
             if (message == "end debugging"):
+                #
+                # This ends this script.
+                #
                 exit(0)
 
-            response = self.__gdbmi.write(message);
-            
-            #
-            #   this is possible how to send response to browser
-            #
-            #await websocket.send(str(response))
+            elif (message.startswith("compile code")):
+                #
+                # Call script to compile CPP code.
+                #
+                inputFile = message.replace("compile code", "").strip()
 
-            #
-            #   this print using pretty print
-            #
-            pp.pprint(response)
-            response = pp.pformat(response)
-            await websocket.send(response)
+                response = subprocess.run(['python', 'compileCppCode.py', inputFile], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                if (len(response.stdout) > 0):
+                    await websocket.send(response.stdout)
+                elif (len(response.stderr) > 0):
+                    await websocket.send(response.stderr)
+                else:
+                    await websocket.send(json.dumps({"status": -1, "message": "unknown error"}))
+
+            else:
+                response = self.__gdbmi.write(message);
+            
+                #
+                #   this is possible how to send response to browser
+                #
+                #await websocket.send(str(response))
+
+                #
+                #   this print using pretty print
+                #
+                pp.pprint(response)
+                response = pp.pformat(response)
+                await websocket.send(response)
 
     async def handlerAsyncLoop(self):
         async with websockets.serve(self.processBrowserMessage, self.websocketHost, self.websocketPort):

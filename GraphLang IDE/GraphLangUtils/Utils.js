@@ -2442,6 +2442,75 @@ GraphLang.Utils.serverSendReceive = function(operationStr, projectId, additional
 }
 
 /**
+ * @method GraphLang.Utils.serverAjaxPostSendReceive
+ * @param getParams - array of string which are serialized into HTTP request as GET parameters which are part of url
+ * @param postParams - array of string which are serialized into HTTP body part as POST parameters
+ * @descritpion Send request to server and receive and parse JSON response into global object GLOBAL_AJAX_RESPONSE, this one has method parameters order done right :)
+ * example call:
+ *      GraphLang.Utils.serverSendReceive2(
+ *          ['operationId', 'someOperationName', 'projectId', '2'],
+ *          ['sessionId', 'aad767fd09fda0909af0900adsf090990fdsa0'],
+ *          function(){
+ *              alert(GLOBAL_AJAX_RESPONSE)
+ *          }
+ *      );
+ */
+GraphLang.Utils.serverAjaxPostSendReceive = function(getParams = [], postParams = [], callbackFunction = null){
+    // Creating Our XMLHttpRequest object
+    let xhr = new XMLHttpRequest();
+
+    // Making our connection
+    // let url = `?q=${operationStr}&projectId=${projectId}`;
+    let url = window.location.href.split('?')[0];
+    if (getParams !== null && getParams.length > 0) {
+        url += '?';
+        for (let k = 0; k < getParams.length; k += 2) {
+            if (k+1 < getParams.length) {
+                if (k > 0) url += '&';
+                url += getParams[k] + '=' + getParams[k + 1];
+            }
+        }
+    }
+
+    console.log(`sending ajax request to: ${url}`);
+
+    // Set HTTP method to POST
+    xhr.open("POST", url, true);
+
+    // Send the proper header information along with the request
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+    // function execute after request is successful
+    let response = {};
+    xhr.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+            console.log(this.responseText);
+            response = JSON.parse(this.responseText.replace('"','\"'));   //THIS IS REALLY NEEDED TO PARSE JSON CORRECTLY WITHOUT THIS IT'S NOT RUNNING AT ALL!!!
+            console.log(response);
+
+            GLOBAL_AJAX_RESPONSE = response; //to have access to response in browser
+            if (callbackFunction) callbackFunction();   //RUN CALLBACK FUNCTION IF PROVIDED
+        }
+    }
+
+    // POST parameters array serialization into shape param1=someValue&param2=anotherValue&...
+    let postParamsSerialized = '';
+    if (postParams !== null && postParams.length > 0) {
+        for (let k = 0; k < postParams.length; k += 2) {
+            if (k+1 < postParams.length) {
+                if (k > 0) postParamsSerialized += '&';
+                postParamsSerialized += postParams[k] + '=' + postParams[k + 1];
+            }
+        }
+    }
+
+    console.log(`post params: ${postParamsSerialized}`);
+
+    // Sending our request
+    xhr.send(postParamsSerialized);
+}
+
+/**
  * @method GraphLang.Utils.getNodeAsString
  * @param nodeClassName
  * @returns {string}

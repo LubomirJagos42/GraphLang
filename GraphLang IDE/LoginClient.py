@@ -33,7 +33,7 @@ def loginUsingNamePassword(USERNAME = "", PASSWORD = ""):
     x = requests.post(URL, data = myData)
 
     response = {}
-    for variable in x.text.split("&"):
+    for variable in x.text.strip().split("&"):
         item = variable.split("=")
         response[item[0]] = item[1]
 

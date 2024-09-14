@@ -823,12 +823,18 @@ shape_designer.Toolbar = Class.extend({
 
         this.saveSymbolButton  = $('<button  data-toggle="tooltip" title="Save symbol</span>" class=\"btn btn-default\" >Save</button>');
         this.saveSymbolButton.on("click",$.proxy(function(){
-            new shape_designer.saveSymbol();
+            shape_designer.saveSymbol();
+        },this));
+
+        this.saveSymbolOnServerButton  = $('<button  data-toggle="tooltip" title="Save symbol on server</span>" class=\"btn btn-default\" >Upload</button>');
+        this.saveSymbolOnServerButton.on("click",$.proxy(function(){
+            shape_designer.uploadSymbolToServer();
         },this));
 
         symbolNameGroup.append(this.symbolCheckButton);
         symbolNameGroup.append(this.symbolNameInput);
         symbolNameGroup.append(this.saveSymbolButton);
+        symbolNameGroup.append(this.saveSymbolOnServerButton);
 
         // Inject the UNDO Button and the callbacks
         //
@@ -6201,7 +6207,7 @@ shape_designer.GraphLangFigureWriter = draw2d.io.Writer.extend({
                 height: b.h,
                 symbolPicture: symbolPicture,
             });
-            output = shape_designer.generateCurentClassCode(className, baseClass, output);
+            output = shape_designer.generateCurrentClassCode(className, baseClass, output);
         }
 
         /*******************************************************************************************
@@ -6713,9 +6719,19 @@ shape_designer.saveSymbol = function(){
 }
 
 /**
+ *  @description Marshal symbol and upload it to server to be stored in database.
+ */
+shape_designer.uploadSymbolToServer = function(){
+    var writer = new shape_designer.GraphLangFigureWriter();
+    writer.marshal(app.view,$("#symbol-name-input").val(),function(data){
+        alert("UPLOAD FEATURE UNDER DEVLOPMENT:\n\n" + data);
+    });
+}
+
+/**
  *  @description This will generate code for current class and replace parts responsible for create symbol picture.
  */
-shape_designer.generateCurentClassCode = function(className, classParent, beforeCodeToInsert){
+shape_designer.generateCurrentClassCode = function(className, classParent, beforeCodeToInsert){
     GLOBAL_HELPER_VARIABLE_1 = {};
     GLOBAL_HELPER_VARIABLE_2 = {};
     let codeToRun = "";
