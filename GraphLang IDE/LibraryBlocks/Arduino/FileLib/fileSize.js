@@ -86,7 +86,7 @@ Arduino.File.fileSize = GraphLang.UserDefinedNode.extend({
         
         // Label
         shape = this.canvas.paper.text(0,0,'size');
-        shape.attr({"x":58.79476620406058,"y":68.19611838052651,"text-anchor":"start","text":"size","font-family":"\"Arial\"","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape.attr({"x":58.79476620406058,"y":68.19611838052651,"text-anchor":"start","text":"size","font-family":"Arial","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
         
         // Line_shadow

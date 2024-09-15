@@ -83,7 +83,7 @@ GraphLang.ArduinoLib.Node.digitalWrite = GraphLang.UserDefinedNode.extend({
         
         // Label
         shape = this.canvas.paper.text(0,0,'DIG WRITE');
-        shape.attr({"x":8,"y":11,"text-anchor":"start","text":"DIG WRITE","font-family":"\"Arial\"","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape.attr({"x":8,"y":11,"text-anchor":"start","text":"DIG WRITE","font-family":"Arial","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
         
         // Line_shadow

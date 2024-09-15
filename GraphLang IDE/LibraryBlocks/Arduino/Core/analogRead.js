@@ -88,7 +88,7 @@ GraphLang.ArduinoLib.Node.analogRead = draw2d.SetFigure.extend({
             "y": 12.95903205871582,
             "text-anchor": "start",
             "text": "analogRead",
-            "font-family": "\"Arial\"",
+            "font-family": "Arial",
             "font-size": 16,
             "stroke": "none",
             "fill": "#080808",

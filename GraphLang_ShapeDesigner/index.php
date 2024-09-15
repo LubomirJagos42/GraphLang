@@ -89,6 +89,7 @@
                 function(){
                     GLOBAL_HELPER_VAR_1 = GraphLang.Utils.hex_to_ascii(GLOBAL_AJAX_RESPONSE.nodeContent);
                     shape_designer.loadSymbolFromGraphLangClass(GLOBAL_HELPER_VAR_1, app.view, app.view.auxView);
+                    $("#symbol-display-name-input").val(GLOBAL_AJAX_RESPONSE.nodeDisplayName);
                 }
             );
         }

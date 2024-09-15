@@ -66,17 +66,17 @@ GraphLang.ArduinoLib.Node.Add = GraphLang.UserDefinedNode.extend({
         
         // Label
         shape = this.canvas.paper.text(0,0,'in1');
-        shape.attr({"x":4.0546875,"y":11,"text-anchor":"start","text":"in1","font-family":"\"Arial\"","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape.attr({"x":4.0546875,"y":11,"text-anchor":"start","text":"in1","font-family":"Arial","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
         
         // Label
         shape = this.canvas.paper.text(0,0,'in2');
-        shape.attr({"x":4,"y":67,"text-anchor":"start","text":"in2","font-family":"\"Arial\"","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape.attr({"x":4,"y":67,"text-anchor":"start","text":"in2","font-family":"Arial","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
         
         // Label
         shape = this.canvas.paper.text(0,0,'out');
-        shape.attr({"x":102.0546875,"y":20,"text-anchor":"start","text":"out","font-family":"\"Arial\"","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape.attr({"x":102.0546875,"y":20,"text-anchor":"start","text":"out","font-family":"Arial","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
         
         // Line_shadow

@@ -78,7 +78,7 @@ GraphLang.ArduinoLib.Node.pinMode = GraphLang.UserDefinedNode.extend({
         
         // Label
         shape = this.canvas.paper.text(0,0,'pinMode');
-        shape.attr({"x":16.733668679913535,"y":11,"text-anchor":"start","text":"pinMode","font-family":"\"Arial\"","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape.attr({"x":16.733668679913535,"y":11,"text-anchor":"start","text":"pinMode","font-family":"Arial","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
         
         // Line_shadow

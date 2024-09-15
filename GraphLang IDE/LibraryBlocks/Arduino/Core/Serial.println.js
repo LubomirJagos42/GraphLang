@@ -68,7 +68,7 @@ GraphLang.ArduinoLib.Node.Serial.println = GraphLang.UserDefinedNode.extend({
         
         // Label
         shape = this.canvas.paper.text(0,0,'Serial.println');
-        shape.attr({"x":11,"y":11,"text-anchor":"start","text":"Serial.println","font-family":"\"Arial\"","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape.attr({"x":11,"y":11,"text-anchor":"start","text":"Serial.println","font-family":"Arial","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
         
         // Line_shadow

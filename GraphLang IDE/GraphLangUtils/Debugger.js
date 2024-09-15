@@ -20,6 +20,11 @@ GraphLang.Debugger.Cpp = {};
 GraphLang.Debugger.websocket = {};
 GraphLang.Debugger.websocketPort = 8888;
 
+/**
+ * @method createWebScoket
+ * @param options
+ * @description Opens websocket on javascript side, looking for python opened port, if python server script is not running this will not connect and display it for user.
+ */
 GraphLang.Debugger.Cpp.createWebSocket = function(options = null){
     let websocketHost = window.location.host ? window.location.host : "localhost";
     console.log("Connecting to websocket ws://"+ websocketHost +":"+ GraphLang.Debugger.websocketPort);
@@ -82,8 +87,55 @@ GraphLang.Debugger.Cpp.onclickSendButton = function(options = null){
 }
 
 /**
+ *  @method startDebuggerServer
+ *  @description This will start python script which acts as debugger server, aking interface between GDB and websocket and send and receive messages betweeen them.
+ */
+GraphLang.Debugger.Cpp.startDebuggerServer = function(options = null){
+    console.log(`start CPP debugger button clicked`);
+    GraphLang.Utils.serverAjaxPostSendReceive(
+        ["q", "runPythonCppDebugServer"],
+        null,
+        function(){
+            document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>> start debugger server button clicked<pre/><hr/>");
+        }
+    );
+}
+
+/**
+ *  @method compileCurrentNode
+ *  @description This will sen AJAX request to PHP server to run compile process of current generated code.
+ */
+GraphLang.Debugger.Cpp.compileCurrentNode = function(options = null){
+    console.log(`compile current node button clicked`);
+
+    /*
+     *  TODO getting current node and sent it to server
+     */
+    let url_string = window.location.href;
+    let url = new URL(url_string);
+
+    let projectId = url.searchParams.get("projectId");
+    let outputFileName = "main.exe";
+    let nodeCodeContent = GraphLang.Utils.getCppCode3(appCanvas, false);
+    nodeCodeContent = GraphLang.Utils.toHex(nodeCodeContent);
+
+    /*
+     *  Send AJAX request to server to compile code
+     */
+    GraphLang.Utils.serverAjaxPostSendReceive(
+        ["q", "compileProject"],
+        ["projectId", projectId, "outputFileName", outputFileName, "nodeCodeContent", nodeCodeContent],
+        function(){
+            document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>> compile current node button clicked<pre/><hr/>");
+            // GLOBAL_AJAX_RESPONSE;
+        }
+    );
+}
+
+/**
+ * @method open
  * @param options - {targetElementId: string}
- * @descritption Open debugger in target element, start websocket.
+ * @descritption Open debugger in target element, start websocket, creates GUI for user ie. buttons to control debugging process and also output for messages from GDB and others sources (it creates HTML element for messages)
  */
 GraphLang.Debugger.Cpp.open = function(options = null){
     //erase target element content
@@ -92,9 +144,12 @@ GraphLang.Debugger.Cpp.open = function(options = null){
     //add control elements for debugging
     document.querySelector('#'+options.targetElementId).insertAdjacentHTML(
         'afterbegin',
-        `<input name="createWebsocketButton" type="button" value="OPEN WEBSOCKET" onclick="GraphLang.Debugger.Cpp.createWebSocket()" />
+        `<input name="startDebuggerServerButton" type="button" value="START DEBUGGER" onclick="GraphLang.Debugger.Cpp.startDebuggerServer()" />
+        <input name="createWebsocketButton" type="button" value="OPEN WEBSOCKET" onclick="GraphLang.Debugger.Cpp.createWebSocket()" />
+        <input name="compileNodeButton" type="button" value="COMPILE" onclick="GraphLang.Debugger.Cpp.compileCurrentNode()" />
         <input name="sendButton" type="button" value="SEND MESSAGE" onclick="GraphLang.Debugger.Cpp.onclickSendButton()" />
         <input id="cmdStr" name="cmdStr" type="text" value="" />
+        <input name="compileCurrentNode" type="button" value="COMPILE" onclick="GraphLang.Debugger.Cpp.compileCurrentNode()" />
         <input name="clearDebugMesaages" type="button" value="CLEAR MESSAGES" onclick="document.querySelector('#generatedContent').innerHTML=''" />
         <hr/>
         <div id="generatedContent"></div><div id="generatedContent"></div>`

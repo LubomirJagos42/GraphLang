@@ -21,4 +21,18 @@ GraphLang.Utils.serverAjaxPostSendReceive(
 	}
 )
 
+Run CPP Debug Server
+--------------------
+GraphLang.Utils.serverAjaxPostSendReceive(
+	["q", "runPythonCppDebugServer"],
+	null,
+	function(){
+		//alert("ajax response\n"+GLOBAL_AJAX_RESPONSE.toString());
+	}
+)
+
+
+
+
+
 

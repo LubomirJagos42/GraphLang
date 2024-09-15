@@ -98,12 +98,12 @@ Convolution = GraphLang.UserDefinedNode.extend({
         
         // Label
         shape = this.canvas.paper.text(0,0,'[1.13, ...]*');
-        shape.attr({"x":26.354686268310502,"y":30.648000286102274,"text-anchor":"start","text":"[1.13, ...]*","font-family":"\"Arial\"","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape.attr({"x":26.354686268310502,"y":30.648000286102274,"text-anchor":"start","text":"[1.13, ...]*","font-family":"Arial","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
         
         // Label
         shape = this.canvas.paper.text(0,0,'convolution');
-        shape.attr({"x":14.080288914184507,"y":62.048000381469706,"text-anchor":"start","text":"convolution","font-family":"\"Arial\"","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape.attr({"x":14.080288914184507,"y":62.048000381469706,"text-anchor":"start","text":"convolution","font-family":"Arial","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
         
         // Line_shadow

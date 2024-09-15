@@ -814,7 +814,8 @@ shape_designer.Toolbar = Class.extend({
          */
         var symbolNameGroup=$("<div class='btn-group'  title='Symbol functions'></div>");
         this.toolbarDiv.append(symbolNameGroup);
-		this.symbolNameInput = $('<div class="btn btn-default">Symbol Name <input type="input" id="symbol-name-input" style="width: 270px;" class="" value="GraphLangTestShape" /></div>');
+		this.symbolDisplayNameInput = $('<div class="btn btn-default">Display Name <input type="input" id="symbol-display-name-input" style="width: 120px;" class="" value="" /></div>');
+		this.symbolClassNameInput = $('<div class="btn btn-default">Class Name <input type="input" id="symbol-name-input" style="width: 220px;" class="" value="GraphLangTestShape" /></div>');
 
 		this.symbolCheckButton = $('<button  data-toggle="tooltip" title="Check Symbol" class="btn btn-default" >Check Symbol</button>');
         this.symbolCheckButton.on("click",$.proxy(function(){
@@ -832,7 +833,8 @@ shape_designer.Toolbar = Class.extend({
         },this));
 
         symbolNameGroup.append(this.symbolCheckButton);
-        symbolNameGroup.append(this.symbolNameInput);
+        symbolNameGroup.append(this.symbolDisplayNameInput);
+        symbolNameGroup.append(this.symbolClassNameInput);
         symbolNameGroup.append(this.saveSymbolButton);
         symbolNameGroup.append(this.saveSymbolOnServerButton);
 
@@ -6118,7 +6120,15 @@ shape_designer.GraphLangFigureWriter = draw2d.io.Writer.extend({
                 attr = figure.svgNodes[0].attr();
                 attr.x = attr.x+figure.getAbsoluteX();
                 attr.y = attr.y+figure.getAbsoluteY();
+
+                /*
+                 *  Remove some attributes:
+                 *      - 14-Sept-2024 - font-family - there is strange error during serialization like in output there is "font-family":""Arial""
+                 *                      and double quotes causing error during reading therefore delete it, need to be observed and repaired in future
+                 */
                 delete attr.transform;
+                delete attr["font-family"];
+
                 shapes.push({
                     constructor:"this.canvas.paper.text(0,0,'"+figure.getText()+"')", 
                     attr:JSON.stringify(attr) ,
@@ -6724,7 +6734,43 @@ shape_designer.saveSymbol = function(){
 shape_designer.uploadSymbolToServer = function(){
     var writer = new shape_designer.GraphLangFigureWriter();
     writer.marshal(app.view,$("#symbol-name-input").val(),function(data){
-        alert("UPLOAD FEATURE UNDER DEVLOPMENT:\n\n" + data);
+        /*
+         *  This will call upload function after marshaler, javascript code stored inside 'data'
+         */
+
+        let url_string = window.location.href;
+        let url = new URL(url_string);
+
+        /*
+         *  Get all needed parameters from:
+         *      1. current url - means node is edited and going to be saved into DB
+         *      2. html inputs on webpage
+         *
+         *  - if display name not define use class name
+         */
+        let projectId = url.searchParams.get("projectId");
+
+        let nodeId = url.searchParams.get("nodeId");
+        nodeId = nodeId ? nodeId : -1;
+
+        let nodeClassName = url.searchParams.get("nodeClassName");
+        nodeClassName = nodeClassName ? nodeClassName : $("#symbol-name-input").val();
+
+        let nodeDisplayName = $("#symbol-display-name-input").val();
+        nodeDisplayName = nodeDisplayName ? nodeDisplayName : nodeClassName;
+
+        let nodeCodeContent = GraphLang.Utils.toHex(data);
+
+        /*
+         *  Call server backend to save node
+         */
+        GraphLang.Utils.serverAjaxPostSendReceive(
+            ["q", "nodeUpload"],
+            ["projectId", projectId, "nodeId", nodeId, "nodeClassName", nodeClassName, "nodeDisplayName", nodeDisplayName, "nodeCodeContent", nodeCodeContent],
+            function(){
+                console.log(JSON.stringify(GLOBAL_AJAX_RESPONSE));
+            }
+        );
     });
 }
 

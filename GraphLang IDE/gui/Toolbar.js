@@ -148,6 +148,12 @@ example.Toolbar = Class.extend({
 		this.html.append(this.schematicNameInput);
 
 		/**
+		 *	Schematic display name input
+		 */
+		this.schematicDisplayNameInput  = $("<span>&nbsp; Schematic display name: <input id=\"schematicDisplayName\" type=\"input\" value=\"\"/></span>");
+		this.html.append(this.schematicDisplayNameInput);
+
+		/**
 		 *	saveSchematic Button
 		 */
 		this.saveSchematicButton  = $("<button id=\"saveSchematicButton\">saveSchematic</button>");
@@ -162,9 +168,7 @@ example.Toolbar = Class.extend({
 		 */
 		this.uploadSchematicButton  = $("<button id=\"uploadSchematicButton\">Upload</button>");
 		this.uploadSchematicButton.button().click($.proxy(function(){
-			let schematicTextData = GraphLang.Utils.getCanvasAsObjectString(appCanvas);
-
-			alert(`Function upload not implemented yet. This is going to be saved:\n\n${schematicTextData}`);
+			GraphLang.Utils.serverUploadNodeSchematic();
 		}));
 		this.html.append(this.uploadSchematicButton);
 

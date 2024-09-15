@@ -58,7 +58,7 @@ GraphLang.ArduinoLib.Node.Not = GraphLang.UserDefinedNode.extend({
         
         // Label
         shape = this.canvas.paper.text(0,0,'not');
-        shape.attr({"x":35.561282014647475,"y":16.840000000000032,"text-anchor":"start","text":"not","font-family":"\"Arial\"","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape.attr({"x":35.561282014647475,"y":16.840000000000032,"text-anchor":"start","text":"not","font-family":"Arial","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
         
         // Line_shadow

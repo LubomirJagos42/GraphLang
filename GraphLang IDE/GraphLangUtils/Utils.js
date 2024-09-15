@@ -2472,7 +2472,7 @@ GraphLang.Utils.serverAjaxPostSendReceive = function(getParams = [], postParams 
         }
     }
 
-    console.log(`sending ajax request to: ${url}`);
+    console.log(`GraphLang.Utils.serverAjaxPostSendReceive -> sending ajax request to: ${url}`);
 
     // Set HTTP method to POST
     xhr.open("POST", url, true);
@@ -2484,8 +2484,12 @@ GraphLang.Utils.serverAjaxPostSendReceive = function(getParams = [], postParams 
     let response = {};
     xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
+            console.log(`GraphLang.Utils.serverAjaxPostSendReceive -> raw text response:`);
             console.log(this.responseText);
+
             response = JSON.parse(this.responseText.replace('"','\"'));   //THIS IS REALLY NEEDED TO PARSE JSON CORRECTLY WITHOUT THIS IT'S NOT RUNNING AT ALL!!!
+
+            console.log(`GraphLang.Utils.serverAjaxPostSendReceive -> parsed response:`);
             console.log(response);
 
             GLOBAL_AJAX_RESPONSE = response; //to have access to response in browser
@@ -2539,10 +2543,11 @@ GraphLang.Utils.getNodeAsString = function(nodeClassName){
 }
 
 /**
- * @method GraphLang.Utils.getNodeAsString2
+ * @method GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram
+ * @param projectId
  * @param nodeClassName
  * @returns {string}
- * @description Call server to provide node content code and evaluate it into object do some stuff and return string again.
+ * @description Update node with class name on server with current schematic. This will replace jsonDocument inside node javascript code with current canvas code.
  */
 GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(projectId, nodeClassName){
     if (projectId == null || projectId == ""){
@@ -2636,7 +2641,45 @@ GraphLang.Utils.serverUpdateNodeCodeContent = function(projectId, nodeClassName,
         null,
         `nodeClassContent=${nodeCodeContent}`
     );
+}
 
+/**
+ * @method serverUploadNodeSchematic
+ * @description Upload schematic to server.
+ */
+GraphLang.Utils.serverUploadNodeSchematic = function(){
+    /*
+     *  This will call upload function after marshaler, javascript code stored inside 'data'
+     */
+
+    let url_string = window.location.href;
+    let url = new URL(url_string);
+
+    /*
+     *  Get all needed parameters from:
+     *      1. current url - means node is edited and going to be saved into DB
+     *      2. html inputs on webpage
+     *
+     *  - if display name not define use class name
+     */
+    let projectId = url.searchParams.get("projectId");
+
+    let nodeId = url.searchParams.get("nodeId");
+    nodeId = nodeId ? nodeId : -1;
+
+    let nodeClassName = url.searchParams.get("nodeClassName");
+    let newNodeClassName = $("#schematicName").val();
+
+    let nodeDisplayName = $("#schematicDisplayName").val();
+    nodeDisplayName = nodeDisplayName ? nodeDisplayName : nodeClassName;
+
+    /*
+     *  Call server to replace node schematic with current schematic, node class name needed.
+     *  TODO:
+     *      - need to check if class name changed in that case need to call node rename function
+     *      - need check if update display name
+     */
+    GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram(projectId, nodeClassName);
 }
 
 

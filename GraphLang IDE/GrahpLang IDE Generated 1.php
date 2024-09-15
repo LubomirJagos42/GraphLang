@@ -160,6 +160,16 @@ document.addEventListener("DOMContentLoaded",function () {
           htmlObj.append(imgElement);
         }
       });
+
+    <?php
+        #   THIS HERE WILL GENERATE LOAD SCHEMATIC FROM NODE WHEN nodeId or nodeClassName is provided
+        if ($nodeClassName){
+            echo("// THIS WILL LOAD SCHEMATIC INTO MAIN CANVAS IF IT IS SPECIFIED IN URL\n");
+            echo("let loadedClass = new $nodeClassName();\n");
+            echo("if (loadedClass.jsonDocument) GraphLang.Utils.displayContents2(loadedClass.jsonDocument, appCanvas);\n");
+            echo("else console.warn(\"Loaded node $nodeId, $nodeClassName has no schematic!\");");
+        }
+    ?>
 });
 
 /**

@@ -91,12 +91,12 @@ GraphLang.Shapes.Basic.FeedbackNode = draw2d.SetFigure.extend({
 
         // Label
         shape = this.canvas.paper.text(0,0,'z');
-        shape.attr({"x":33.14338559999999,"y":45.5625,"text-anchor":"start","text":"z","font-family":"\"Arial\"","font-size":16,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape.attr({"x":33.14338559999999,"y":45.5625,"text-anchor":"start","text":"z","font-family":"Arial","font-size":16,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
 
         // Label
         shape = this.canvas.paper.text(0,0,'-1');
-        shape.attr({"x":44.03316480000001,"y":40.5,"text-anchor":"start","text":"-1","font-family":"\"Arial\"","font-size":8,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape.attr({"x":44.03316480000001,"y":40.5,"text-anchor":"start","text":"-1","font-family":"Arial","font-size":8,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
 
         // Line_shadow

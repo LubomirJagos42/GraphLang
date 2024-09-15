@@ -47,7 +47,7 @@ createSet: function()
         
         // Label
         shape = this.canvas.paper.text(0,0,'multiple print');
-        shape.attr({"x":5,"y":13.5,"text-anchor":"start","text":"multiple print","font-family":"\"Arial\"","font-size":16,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape.attr({"x":5,"y":13.5,"text-anchor":"start","text":"multiple print","font-family":"Arial","font-size":16,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
         
 
