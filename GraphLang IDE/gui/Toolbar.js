@@ -86,7 +86,7 @@ example.Toolbar = Class.extend({
 		*/
 		this.getCppCode3Button  = $("<button id=\"getCppCode3Button\">C/C++</button>");
 		this.getCppCode3Button.button().click($.proxy(function(){
-			GraphLang.Utils.getCppCode3(appCanvas);
+			GraphLang.Utils.getCppCode4(appCanvas);
 		}));
 		this.html.append(this.getCppCode3Button);
 
@@ -178,7 +178,7 @@ example.Toolbar = Class.extend({
 		this.debuggerOpenButton  = $("<button id=\"debuggerOpenButton\">Open Debugger</button>");
 		this.debuggerOpenButton.button().click($.proxy(function(){
 			GraphLang.Debugger.Cpp.open({
-				targetElementId: 'helperPane'
+				targetElementId: 'debuggerPane'
 			});
 		}));
 		this.html.append(this.debuggerOpenButton);

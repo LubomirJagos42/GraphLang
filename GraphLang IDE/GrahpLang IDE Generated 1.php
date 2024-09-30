@@ -283,7 +283,10 @@ foreach ($userDefinedNodesClassNames as $className){
 
   </div>
 
-   <div id="helperPane" style="width: 100px;"></div>
+   <div id="helperPane" style="width: 300px;">
+       <div id="schematicErrors"></div>
+       <div id="debuggerPane"></div>
+   </div>
 
    <!-- window with JSON representation of schematic -->
    <div id="json" style="display: none; overflow:auto;position:absolute; top:100px; right:10px; width:350; height:100;background:white;border:1px solid gray"></div>

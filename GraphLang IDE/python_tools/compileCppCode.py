@@ -75,6 +75,9 @@ if __name__ == "__main__":
 
     #########################################################################################################################################
     # STEP 3 - compile file
+    #        - g++ flags:
+    #              -fdiagnostics-format=json - output of command is in json
+    #              -g - compile with debug information, this is needed for gdb
     #########################################################################################################################################
 
     #print("Start compile file")
@@ -83,9 +86,9 @@ if __name__ == "__main__":
     #print()
     try:
         if (outputFile):
-             cmdOutput = subprocess.run(['g++', '-o', outputFile, inputFile], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+             cmdOutput = subprocess.run(['g++', '-fdiagnostics-format=json', '-g', '-o', outputFile, inputFile], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         else:
-             cmdOutput = subprocess.run(['g++', inputFile], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+             cmdOutput = subprocess.run(['g++', '-fdiagnostics-format=json', '-g', inputFile], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     except:
         pass
 
@@ -105,12 +108,14 @@ if __name__ == "__main__":
     else:
         #print("Compilation error")
         scriptOutput['status'] = -1
-        scriptOutput['message'] = f"Compilation error:\n{cmdOutput.stderr}"
+        scriptOutput['message'] = f""
+        scriptOutput['errorMsg'] = cmdOutput.stderr
         print(json.dumps(scriptOutput))
 
         exit(-1)
 
     scriptOutput['status'] = 0
+    scriptOutput['errorMsg'] = ""
     scriptOutput['message'] = f"Compilation sucessful\n{cmdOutput.stdout}"
     print(json.dumps(scriptOutput))
 

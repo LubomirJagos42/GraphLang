@@ -27,6 +27,55 @@ HoverConnection = draw2d.Connection.extend({
             });
         });
 
+        this.on("contextmenu", function(emitter, event){
+            $.contextMenu({
+                selector: 'body',
+                events:
+                    {
+                        hide:function(){ $.contextMenu( 'destroy' ); }
+                    },
+
+                //these functions are run after user click on some context menu option
+                callback: $.proxy(function(key, options)
+                {
+                    switch(key){
+                        case "setBreakpoint":
+                            emitter.setStroke(3);
+                            emitter.setColor("#DD2241");
+                            // emitter.setDashArray("-");
+                            if (!emitter.getUserData()) emitter.userData = {};
+                            emitter.getUserData().isSetBreakpoint = true;
+                            break;
+                        case "unsetBreakpoint":
+                            emitter.setStroke(1);
+                            emitter.setColor("#000000");
+                            emitter.setDashArray("");
+                            if (!emitter.getUserData()) emitter.userData = {};
+                            emitter.getUserData().isSetBreakpoint = false;
+                            break;
+                        case "isBreakpoint":
+                            if (emitter.getUserData() && emitter.getUserData().hasOwnProperty("isSetBreakpoint")) alert(emitter.getUserData().isSetBreakpoint);
+                            else alert("Wire has no breakpoint data.");
+                            break;
+                        case "debugGetValue":
+                            GraphLang.Debugger.Cpp.debugGetWireValue({wireId: emitter.getId()});
+                            break;
+                        default:
+                            break;
+                    }
+                },this),
+                x:event.x,
+                y:event.y,
+                items:
+                    {
+                        "setBreakpoint": {name: "Set breakpoint"},
+                        "unsetBreakpoint": {name: "Unset breakpoint"},
+                        "separator": "--------------",
+                        "isBreakpoint": {name: "Show if is breakpoint"},
+                        "debugGetValue": {name: "Debug get value"}
+                    }
+            });
+        });
 
     },
 

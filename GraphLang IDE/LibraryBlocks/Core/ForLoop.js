@@ -14,6 +14,8 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     port.userData = {};
     port.userData.datatype = "int";
 
+    this.iterationTerminal = port;
+
     port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(2, 10));
     port.setConnectionDirection(1);
     port.setBackgroundColor("#0000FF");
@@ -21,6 +23,8 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     port.setMaxFanOut(20);
     port.userData = {};
     port.userData.datatype = "int";
+
+    this.iterationTerminalOutput = port;
 
     this.userData = {};
     this.userData.executionOrder = 1;
@@ -100,6 +104,8 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     port.userData = {};
     port.userData.datatype = "int";
 
+    this.iterationTerminal = port;
+
     port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(2, 10));
     port.setConnectionDirection(1);
     port.setBackgroundColor("#0000FF");
@@ -125,10 +131,31 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     }
   },
 
+  /*
+   *  Modified function to provide input port to add also iteration terminal
+   */
+  getInputPorts: function(){
+    let inputPortsList = this._super();
+    inputPortsList.add(this.iterationTerminal);
+    return inputPortsList;
+  },
+
+  /*
+   *  Modified function to provide input port to add also iteration terminal output
+   */
+  getOutputPorts: function(){
+    let outputPortsList = this._super();
+    outputPortsList.add(this.iterationTerminalOutput);
+    return outputPortsList;
+  },
+
   symbolPicture: " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFYAAABSCAIAAABBpbS2AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAGSSURBVHhe7dw/SwJxHMdxUfyHwyG4hSL0QBxtaxAdBIXWpp5A2z2Lc2lxcQ7aFHKwVdpuiWaDzClL6iP+Og4hiuuG++X7zXdSvOP74tBz0NT64IMAAggUBBBAoCD4BcFg8G71+P6b2eSbfiBYrVbt9kO1uqzVNjZOKvURnWAymbRa3aOvms3T0Wj0bFXz+Ut0As/ztHa5fJHP32Yyj7ncneNc6hHXdc3hbSg6wXQ61bal0pVeH55i8VqPD4dDc4bEF52g1zurVM7DywfjOG6jcWLOkPiiE9Trx4XCTXjzYLLZe10Ivu+bkyS7iASLxUJLatXw5sGk00s9O5vNzEmSHVcB7wV/IeATYduh3xfsGo/HB313GLT7jtDpPJmjWlU8BKrf33S7r+aoVgUBBBAoCCCAQEEAAQQKAgggUBBAAIGCAAIIFAQQQKAggAACBQEEECgIIIBAQQABBAoCCCBQEEAAgYIAAggUBBBAoCCAAAIVJ8Hez8EtmngI9v4OwLqJgeDfBwEEECgIIIBAQQDBev0J+WznB2v5Ek4AAAAASUVORK5CYII=",
 
   translateToCppCode: function(){
     this.getUserData().wasTranslatedToCppCode = true;
+    this.translateToCppCodeImportArray.clear();
+    this.translateToCppCodeBreakpointList.clear();
+
     // return "for (TBD){";
 
     var cCode = "";
@@ -156,12 +183,36 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
      */
     cCode += "/*code inside FOR LOOP */\n\n";
     this.getAssignedFigures().each(function(figIndex, figObj){
+      //Getting import statements
+      if (figObj.translateToCppCodeImport){
+        if (typeof figObj.translateToCppCodeImport() === "string") this.translateToCppCodeImportArray.push(figObj.translateToCppCodeImport());
+        if (figObj.translateToCppCodeImport().each){
+          figObj.translateToCppCodeImport().each(function(strIndex, strObj){
+            if (typeof strObj === "string") this.translateToCppCodeImportArray.push(strObj);
+          });
+        }
+      }
+
+      //Getting clusters and objects type definitions
       if (figObj.translateToCppCodeDeclaration && figObj.NAME.toLowerCase().search("feedbacknode") == -1) cCode += "\t" + figObj.translateToCppCodeDeclaration().replaceAll("\n", "\n\t");
 
       if (figObj.translateToCppCode){
         cCode += figObj.translateToCppCode().replaceAll("\n", "\n\t");
       }else if (figObj.translateToCppCode2){
         cCode += figObj.translateToCppCode2().replaceAll("\n", "\n\t");
+      }
+
+      //breakpoint - add node line into list
+      if (figObj.getUserData() && figObj.getUserData().isSetBreakpoint){
+        let currentLineNumber = cCode.split("\n").length + 2;
+        this.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "node"});
+      }
+      if (figObj.getBreakpointList){
+        let lineNumberOffset = cCode.split("\n").length - 1;
+        figObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
+          breakpointObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
+          this.translateToCppCodeBreakpointList.add(breakpointObj);
+        });
       }
 
       /* in case of post C/C++ code run it */
@@ -179,6 +230,6 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     cCode += "} //END FOR LOOP\n";
 
     return cCode;
-  }
+  },
 
 });

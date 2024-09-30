@@ -10,6 +10,8 @@ GraphLang web endpoints
 		|	changeNodeIsHidden
 		|	getNodeInfo
 		|	changeNodeCodeContent
+		|	deleteNode
+	projectId = <int>
 	nodeId = <int>
 	nodeClassName = <string>
 	nodeNewClassName = <string>

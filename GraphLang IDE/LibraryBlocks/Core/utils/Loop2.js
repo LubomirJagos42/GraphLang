@@ -19,6 +19,8 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
     this.userData = {};
     this.userData.executionOrder = 1;
     this.userData.wasTranslatedToCppCode = false;
+    this.translateToCppCodeImportArray = new draw2d.util.ArrayList();
+    this.translateToCppCodeBreakpointList = new draw2d.util.ArrayList();
   },
 
   //THIS IS MY FUNCTION TO GET INPUT PORTS LIST FOR THIS Loop
@@ -57,6 +59,18 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
         var tunnelExecutionOrder = childObj.getUserData().executionOrder;
         if (tunnelExecutionOrder > tunnelHighestExecutionOrder) tunnelHighestExecutionOrder = tunnelExecutionOrder;
       }
+    });
+
+    /*
+     *  Look also for input ports if there are any
+     */
+    this.getInputPorts().each(function(portIndex, portObj){
+        if (portObj.getUserData() &&
+            portObj.getUserData().executionOrder &&
+            portObj.getUserData().executionOrder > tunnelHighestExecutionOrder
+        ){
+            tunnelHighestExecutionOrder = portObj.getUserData().executionOrder;
+        }
     });
 
     //in case there are no input tunnels on loop is needed to look for parent and used it's execution order, if parent is directly canvas, then this loop without input tunnels is executed as first, so it's execution order is 1
@@ -278,9 +292,17 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
       return subnodesWithDiagramInside;
   },
 
+  getBreakpointList: function(){
+      return this.translateToCppCodeBreakpointList;
+  },
+
   /*****************************************************************************************************************************************************
    *    TRANSLATE TO C/C++ functions
-   *****************************************************************************************************************************************************/ 
+   *****************************************************************************************************************************************************/
+
+  translateToCppCodeImport: function(){
+      return this.translateToCppCodeImportArray;
+  },
 
   translateToCppCode: function(){
     this.getUserData().wasTranslatedToCppCode = true;
@@ -383,10 +405,17 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
             }else{
                 //if loop is found, then it's going to iterate over it's children left tunnels and add connections to their input ports
                 if (figureObj.NAME.toLowerCase().search('loop') > -1){
+
+                    //add left tunnels connections
                     figureObj.getChildren().each(function(childIndex, childObj){
                         if (childObj.NAME.toLowerCase().search('lefttunnel') > -1){
                             allConnections.addAll(childObj.getInputPort(0).getConnections());	//adding conenction into list of top most connections on canvas
                         }
+                    });
+
+                    //add loop input port connections, similar like for other nodes - for now it's for forLoop iteration terminal output mostly
+                    figureObj.getInputPorts().each(function(portIndex, portObj){
+                        allConnections.addAll(portObj.getConnections());
                     });
                 }
             }
@@ -409,11 +438,13 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
         let datatypeStr = "";
         let datatypeStr_orig = connectionObj.getSource().userData.datatype;
         //if (connectionObj.getSource().getDatatype) datatypeStr = connectionObj.getSource().getDatatype();    //use getDatatype function if available
+
         try {
             datatypeStr = connectionObj.getSource().getParent().getDatatype();    //use getDatatype function if available
         }catch(e){
             datatypeStr = datatypeStr_orig;
         }
+        if (datatypeStr == "") datatypeStr = datatypeStr_orig;
 
         cCode += datatypeStr + " wire_" + connectionObj.getId() + ";\n";
   	});

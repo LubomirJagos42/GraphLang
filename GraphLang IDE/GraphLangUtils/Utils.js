@@ -1571,6 +1571,8 @@ GraphLang.Utils.setTunnelColorByWire = function(canvas){
  *  @returns {String} Translated code with rewiritten ID to something more readible - normal numbers, so code is shorter and nicer looking.
  */
 GraphLang.Utils.rewriteIDtoNumbers = function(canvas, cCode, additionalIdList = null, additionalIdNoHyphenList = null){
+  var translationIdTable = [];
+
   var allIdList = new draw2d.util.ArrayList();
   var allIdNoHyphenList = new draw2d.util.ArrayList();
   canvas.getFigures().each(function(figureIndex, figureObj){
@@ -1597,14 +1599,18 @@ GraphLang.Utils.rewriteIDtoNumbers = function(canvas, cCode, additionalIdList = 
   var counter = 0;
   allIdList.each(function(IdIndex, IdObj){
     var regExpression = new RegExp(IdObj, 'g');
-    cCode = cCode.replace(regExpression, counter++);    //this replace id with number
+
+    // cCode = cCode.replace(regExpression, counter++);    //this replace id with number
+    cCode = cCode.replace(regExpression, IdObj.replaceAll('-', '_'));    //replace id with - replaced to _
   });
 
   //replace IDs without hyphen - this is mainly for clusters
   var counter = 0;
   allIdNoHyphenList.each(function(IdIndex, IdObj){
       var regExpression = new RegExp(IdObj, 'g');
-      cCode = cCode.replace(regExpression, counter++);    //this replace id with number
+
+      // cCode = cCode.replace(regExpression, counter++);    //this replace id with number
+      cCode = cCode.replace(regExpression, IdObj.replaceAll('-', '_'));    //replace id with - replaced to _
   });
 
   return cCode;
@@ -2456,62 +2462,72 @@ GraphLang.Utils.serverSendReceive = function(operationStr, projectId, additional
  *      );
  */
 GraphLang.Utils.serverAjaxPostSendReceive = function(getParams = [], postParams = [], callbackFunction = null){
-    // Creating Our XMLHttpRequest object
-    let xhr = new XMLHttpRequest();
+    return new Promise((resolve, reject) => {
+        // Creating Our XMLHttpRequest object
+        let xhr = new XMLHttpRequest();
 
-    // Making our connection
-    // let url = `?q=${operationStr}&projectId=${projectId}`;
-    let url = window.location.href.split('?')[0];
-    if (getParams !== null && getParams.length > 0) {
-        url += '?';
-        for (let k = 0; k < getParams.length; k += 2) {
-            if (k+1 < getParams.length) {
-                if (k > 0) url += '&';
-                url += getParams[k] + '=' + getParams[k + 1];
+        // Making our connection
+        // let url = `?q=${operationStr}&projectId=${projectId}`;
+        let url = window.location.href.split('?')[0];
+        if (getParams !== null && getParams.length > 0) {
+            url += '?';
+            for (let k = 0; k < getParams.length; k += 2) {
+                if (k + 1 < getParams.length) {
+                    if (k > 0) url += '&';
+                    url += getParams[k] + '=' + getParams[k + 1];
+                }
             }
         }
-    }
 
-    console.log(`GraphLang.Utils.serverAjaxPostSendReceive -> sending ajax request to: ${url}`);
+        console.log(`GraphLang.Utils.serverAjaxPostSendReceive -> sending ajax request to: ${url}`);
 
-    // Set HTTP method to POST
-    xhr.open("POST", url, true);
+        // Set HTTP method to POST
+        xhr.open("POST", url, true);
 
-    // Send the proper header information along with the request
-    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        // Send the proper header information along with the request
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
-    // function execute after request is successful
-    let response = {};
-    xhr.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-            console.log(`GraphLang.Utils.serverAjaxPostSendReceive -> raw text response:`);
-            console.log(this.responseText);
+        // function execute after request is successful
+        let response = {};
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4 && xhr.status >= 200 && xhr.status < 300) {
+                console.log(`GraphLang.Utils.serverAjaxPostSendReceive -> raw text response:`);
+                console.log(xhr.responseText);
 
-            response = JSON.parse(this.responseText.replace('"','\"'));   //THIS IS REALLY NEEDED TO PARSE JSON CORRECTLY WITHOUT THIS IT'S NOT RUNNING AT ALL!!!
+                response = JSON.parse(xhr.responseText.replace('"', '\"'));   //THIS IS REALLY NEEDED TO PARSE JSON CORRECTLY WITHOUT THIS IT'S NOT RUNNING AT ALL!!!
 
-            console.log(`GraphLang.Utils.serverAjaxPostSendReceive -> parsed response:`);
-            console.log(response);
+                console.log(`GraphLang.Utils.serverAjaxPostSendReceive -> parsed response:`);
+                console.log(response);
 
-            GLOBAL_AJAX_RESPONSE = response; //to have access to response in browser
-            if (callbackFunction) callbackFunction();   //RUN CALLBACK FUNCTION IF PROVIDED
-        }
-    }
+                GLOBAL_AJAX_RESPONSE = response; //to have access to response in browser
+                if (callbackFunction) callbackFunction();   //RUN CALLBACK FUNCTION IF PROVIDED
 
-    // POST parameters array serialization into shape param1=someValue&param2=anotherValue&...
-    let postParamsSerialized = '';
-    if (postParams !== null && postParams.length > 0) {
-        for (let k = 0; k < postParams.length; k += 2) {
-            if (k+1 < postParams.length) {
-                if (k > 0) postParamsSerialized += '&';
-                postParamsSerialized += postParams[k] + '=' + postParams[k + 1];
+                resolve(response);  //resolve promise with response from server
+            }else if (xhr.readyState == 4 && xhr.status >= 300){
+                reject(`Error ${xhr.status}: ${xhr.statusText}`);  // Reject promise with error
             }
         }
-    }
 
-    console.log(`post params: ${postParamsSerialized}`);
+        xhr.onerror = function() {
+            reject("Request failed");  // Reject on failure
+        };
 
-    // Sending our request
-    xhr.send(postParamsSerialized);
+        // POST parameters array serialization into shape param1=someValue&param2=anotherValue&...
+        let postParamsSerialized = '';
+        if (postParams !== null && postParams.length > 0) {
+            for (let k = 0; k < postParams.length; k += 2) {
+                if (k + 1 < postParams.length) {
+                    if (k > 0) postParamsSerialized += '&';
+                    postParamsSerialized += postParams[k] + '=' + postParams[k + 1];
+                }
+            }
+        }
+
+        console.log(`post params: ${postParamsSerialized}`);
+
+        // Sending our request
+        xhr.send(postParamsSerialized);
+    });
 }
 
 /**
@@ -2638,7 +2654,7 @@ GraphLang.Utils.serverUpdateNodeCodeContent = function(projectId, nodeClassName,
         'updateNodeJavascriptCode',
         projectId,
         `&nodeClassName=${nodeClassName}`,
-        null,
+        function(){alert(JSON.stringify(GLOBAL_AJAX_RESPONSE))},
         `nodeClassContent=${nodeCodeContent}`
     );
 }

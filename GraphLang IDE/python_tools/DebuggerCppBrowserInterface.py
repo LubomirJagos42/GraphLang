@@ -12,6 +12,8 @@ from pygdbmi.gdbcontroller import GdbController
 import pprint as pp
 import subprocess
 import json
+import random
+import json
 
 class DebbugerCppBrowserInterface:
     __gdbmi = None
@@ -26,11 +28,18 @@ class DebbugerCppBrowserInterface:
     async def processBrowserMessage(self, websocket):
         async for message in websocket:
         
+            print(f"received> {message}")
+
             if (message == "end debugging"):
                 #
                 # This ends this script.
                 #
                 exit(0)
+
+            elif (message.startswith("get random")):
+                 numberStr = str(random.random())
+                 print(f"sending> {numberStr}")
+                 await websocket.send(numberStr)
 
             elif (message.startswith("compile code")):
                 #
@@ -47,6 +56,7 @@ class DebbugerCppBrowserInterface:
                     await websocket.send(json.dumps({"status": -1, "message": "unknown error"}))
 
             else:
+                #this returns list
                 response = self.__gdbmi.write(message);
             
                 #
@@ -58,8 +68,10 @@ class DebbugerCppBrowserInterface:
                 #   this print using pretty print
                 #
                 pp.pprint(response)
-                response = pp.pformat(response)
-                await websocket.send(response)
+                #response = pp.pformat(response)
+                #await websocket.send(response)
+
+                await websocket.send(json.dumps(response))
 
     async def handlerAsyncLoop(self):
         async with websockets.serve(self.processBrowserMessage, self.websocketHost, self.websocketPort):

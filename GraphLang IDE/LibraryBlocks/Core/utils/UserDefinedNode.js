@@ -11,13 +11,15 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
 
    init:function(attr, setter, getter)
    {
-    this._super( $.extend({stroke:0, bgColor:null, width: 42, height: 42},attr), setter, getter);
-    this.persistPorts=false;
+        this._super( $.extend({stroke:0, bgColor:null, width: 42, height: 42},attr), setter, getter);
+        this.persistPorts=false;
 
-    //alert(JSON.stringify(attr));
-    
-    //flagAutoCreatePorts indicate if flags should be created from JSON schematic
-    if (this.jsonDocument && attr && ("flagAutoCreatePorts" in attr) && attr.flagAutoCreatePorts) this.createPortsFromJson(this.jsonDocument);
+        //alert(JSON.stringify(attr));
+
+        //flagAutoCreatePorts indicate if flags should be created from JSON schematic
+        if (this.jsonDocument && attr && ("flagAutoCreatePorts" in attr) && attr.flagAutoCreatePorts) this.createPortsFromJson(this.jsonDocument);
+
+        this.createContextMenu();
    },
 
    /*
@@ -86,6 +88,54 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
         }
         return;
    },
+
+    createContextMenu: function(){
+        this.on("contextmenu", function(emitter, event){
+            $.contextMenu({
+                selector: 'body',
+                events:
+                    {
+                        hide:function(){ $.contextMenu( 'destroy' ); }
+                    },
+
+                //these functions are run after user click on some context menu option
+                callback: $.proxy(function(key, options)
+                {
+                    switch(key){
+                        case "setBreakpoint":
+                            emitter.setStroke(3);
+                            emitter.setColor("#DD2241");
+                            // emitter.setDashArray("-");
+                            if (!emitter.getUserData()) emitter.userData = {};
+                            emitter.getUserData().isSetBreakpoint = true;
+                            break;
+                        case "unsetBreakpoint":
+                            emitter.setStroke(1);
+                            emitter.setColor("#000000");
+                            emitter.setDashArray("");
+                            if (!emitter.getUserData()) emitter.userData = {};
+                            emitter.getUserData().isSetBreakpoint = false;
+                            break;
+                        case "isBreakpoint":
+                            if (emitter.getUserData() && emitter.getUserData().hasOwnProperty("isSetBreakpoint")) alert(emitter.getUserData().isSetBreakpoint);
+                            else alert("Wire has no breakpoint data.");
+                            break;
+                        default:
+                            break;
+                    }
+                },this),
+                x:event.x,
+                y:event.y,
+                items:
+                    {
+                        "setBreakpoint": {name: "Set breakpoint"},
+                        "unsetBreakpoint": {name: "Unset breakpoint"},
+                        "separator": "--------------",
+                        "isBreakpoint": {name: "Show if is breakpoint"},
+                    }
+            });
+        });
+    },
 
   getObjectAsString: function(){
     var objStr = "";

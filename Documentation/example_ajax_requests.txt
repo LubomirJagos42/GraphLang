@@ -31,6 +31,15 @@ GraphLang.Utils.serverAjaxPostSendReceive(
 	}
 )
 
+Get node info
+-------------
+response = await GraphLang.Utils.serverAjaxPostSendReceive(
+	["q", "nodeOperation", "operation", "getNodeInfo", "projectId", 2, "nodeId", 73],
+	null,
+	function(){
+		alert(JSON.stringify(GLOBAL_AJAX_RESPONSE));
+	}
+)
 
 
 

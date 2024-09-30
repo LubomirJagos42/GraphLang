@@ -42,7 +42,12 @@ This is list features what to do due I always forget on what to work
 
 In progress features
 ====================
-
+- g++ compilation messages display in IDE
+  - for compilation to have output in JSON use this command:
+    > g++ -fdiagnostics-format=json <input file name>
+  - use Mingw64, normal Mingw is using gcc 6.3.0 which has no -fdiagnostics-format option
+    - url:     https://www.mingw-w64.org/downloads/#mingw-w64-builds
+    - release: https://github.com/niXman/mingw-builds-binaries/releases
 
 Finished features
 =================

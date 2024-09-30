@@ -14,6 +14,8 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
     port.userData = {};
     port.userData.datatype = "bool";
 
+    this.stopTerminal = port;
+
     this.userData = {};
     this.userData.executionOrder = 1;
     this.userData.wasTranslatedToCppCode = false;
@@ -130,7 +132,16 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
       }
   },
 
-    symbolPicture: " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFkAAABUCAIAAABm9wwmAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAJrSURBVHhe7dw/aBphHMZxW86huWpIMlSF0EDWZGoX61QKtcVJt0IzmYKboUsXN8FSJ6d2sEqIiKTdnATBLZRASEEslLYujX8okuCg5BRieugbnir+K81yb5/PcN7vvZu+cC+3nDe63a6J+m6KX2KLP7EFsAWwBbAFsAWwBcx+16rX64lEQgzGFAqFxNlUc7Xw+Xxut1vMRqMoyjW3SKfTNptNLBlHNBqdvwX3C2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAuQtkWz2SwUCuVyuVqtiqVZ5GwRiURcLterYPDHwUEul7u3uZlMJsW1ySRs8WJr69P+/vuzs28nJ0eVyvdaLVithsNhPZC4YwLZWsRisZ/F4sdK5cn5+WDl1uWlv9VKnZ7G4/F8Pj9YHEu2FplU6mWjcefiQsxXHmras3Y7s7sr5nGkalEqlVqa9ljTxDzsUadzdHwshnGkatHpdPSjtdcbjCMsvV67f8MkUrVwOBz68YvZPBhHfDWb7079xFaqFna7/f7Gxp6qinlYZmXlqdcrhnFk2zsDOzsZVX1nsYi5T39mgsvLraWlQCAglsaRrYXT6dTfI14vLnpXV/UiHxYW3litD9bWPq+vv00kLMONRvzF9+xiNoJarZbNZouHh78ajduq+nx72+/3K4oiLk8wbwsxGJDH47nO/zkQZ4al76nibKrZLf4fsu2d/4ItgC2ALYAtgC2ALYAtgC2umEy/AQJRu3dzYW7lAAAAAElFTkSuQmCC",
+  /*
+   *  Modified function to provide input port to add also stop terminal
+   */
+  getInputPorts: function(){
+      let inputPortsList = this._super();
+      inputPortsList.add(this.stopTerminal);
+      return inputPortsList;
+  },
+
+  symbolPicture: " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFkAAABUCAIAAABm9wwmAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAJrSURBVHhe7dw/aBphHMZxW86huWpIMlSF0EDWZGoX61QKtcVJt0IzmYKboUsXN8FSJ6d2sEqIiKTdnATBLZRASEEslLYujX8okuCg5BRieugbnir+K81yb5/PcN7vvZu+cC+3nDe63a6J+m6KX2KLP7EFsAWwBbAFsAWwBcx+16rX64lEQgzGFAqFxNlUc7Xw+Xxut1vMRqMoyjW3SKfTNptNLBlHNBqdvwX3C2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAtgC2ALYAuQtkWz2SwUCuVyuVqtiqVZ5GwRiURcLterYPDHwUEul7u3uZlMJsW1ySRs8WJr69P+/vuzs28nJ0eVyvdaLVithsNhPZC4YwLZWsRisZ/F4sdK5cn5+WDl1uWlv9VKnZ7G4/F8Pj9YHEu2FplU6mWjcefiQsxXHmras3Y7s7sr5nGkalEqlVqa9ljTxDzsUadzdHwshnGkatHpdPSjtdcbjCMsvV67f8MkUrVwOBz68YvZPBhHfDWb7079xFaqFna7/f7Gxp6qinlYZmXlqdcrhnFk2zsDOzsZVX1nsYi5T39mgsvLraWlQCAglsaRrYXT6dTfI14vLnpXV/UiHxYW3litD9bWPq+vv00kLMONRvzF9+xiNoJarZbNZouHh78ajduq+nx72+/3K4oiLk8wbwsxGJDH47nO/zkQZ4al76nibKrZLf4fsu2d/4ItgC2ALYAtgC2ALYAtgC2umEy/AQJRu3dzYW7lAAAAAElFTkSuQmCC",
 
   /*****************************************************************************************************************************************************
    *    TRANSLATE TO C/C++ functions
@@ -139,6 +150,9 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
   translateToCppCode: function(){
     var cCode = "";
     this.getUserData().wasTranslatedToCppCode = true;
+    this.translateToCppCodeImportArray.clear();
+    this.translateToCppCodeBreakpointList.clear();
+
     var stopTerminal = this.getInputPort("stopTerminal");
     var wireStop = stopTerminal.getConnections().first();
     if (wireStop != undefined){
@@ -156,6 +170,17 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
     cCode += "\n\t";
 
     this.getAssignedFigures().each(function(figIndex, figObj){
+        //Getting import statements
+        if (figObj.translateToCppCodeImport){
+            if (typeof figObj.translateToCppCodeImport() === "string") this.translateToCppCodeImportArray.push(figObj.translateToCppCodeImport());
+            if (figObj.translateToCppCodeImport().each){
+                figObj.translateToCppCodeImport().each(function(strIndex, strObj){
+                    if (typeof strObj === "string") this.translateToCppCodeImportArray.push(strObj);
+                });
+            }
+        }
+
+      //Getting clusters and objects type definitions
       if (figObj.translateToCppCodeDeclaration && figObj.NAME.toLowerCase().search("feedbacknode") == -1) cCode += figObj.translateToCppCodeDeclaration().replaceAll("\n", "\n\t") ;
 
       if (figObj.translateToCppCode){
@@ -163,7 +188,13 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
       }else if (figObj.translateToCppCode2){
         cCode += figObj.translateToCppCode2().replaceAll("\n", "\n\t")
       }
-      
+
+      //breakpoint - add node line into list
+      if (figObj.getUserData() && figObj.getUserData().isSetBreakpoint){
+          let currentLineNumber = cCode.split("\n").length;
+          this.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "node"});
+      }
+
      /* in case of post C/C++ code run it */
      if (figObj.translateToCppCodePost) cCode += figObj.translateToCppCodePost().replaceAll("\n", "\n\t"); //if there is defined to put somethin after let's do it
     });

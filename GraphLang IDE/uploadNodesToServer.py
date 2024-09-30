@@ -54,7 +54,13 @@ if __name__ == "__main__":
         myData['nodeClassParent'] = nodeToUpload[3]
         myData['nodeDisplayName'] = os.path.splitext(os.path.basename(nodeToUpload[1]))[0]
         myData['nodeCategory'] = nodeToUpload[4];
-        myData['nodeIsHidden'] = nodeToUpload[5];
+        myData['nodeIsHidden'] = 1 if nodeToUpload[5] else 0;    #conver True/False to 1/0 because this is going into SQL DB and without this it wasn't handled on PHP side correctly
+
+        #
+        # for debugging, there is long output due there is whole class code printed into command line
+        #
+        #print(f"#REQUEST 1 - data:\n");
+        #print(myData)
 
         print(f"#REQUEST 1 - result:\n");
         x = requests.post(URL, data = myData)

@@ -19,6 +19,7 @@ translateToCppCodeAdditionalId = new draw2d.util.ArrayList();
 translateToCppCodeAdditionalIdNoHyphen = new draw2d.util.ArrayList();
 
 translateToCppCodeErrorList = new draw2d.util.ArrayList();
+translateToCppCodeBreakpointList = new draw2d.util.ArrayList();
 
 GraphLang.Utils.getCppCodeImport = function(){
     var cCode = "";
@@ -158,6 +159,8 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
     /*
      *    Translate nodes based on their execution order
      *        Now it's running for some limited execution order.
+     *
+     *    TODO: There is now maximum steps to translate set to 20 but should be translate everything
      */
     for (var actualStep = 0; actualStep < 20; actualStep++){
         /*
@@ -183,7 +186,14 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                 /*
                  *    Getting import statements
                  */
-                if (nodeObj.translateToCppCodeImport) translateToCppCodeImportArray.push(nodeObj.translateToCppCodeImport());
+                if (nodeObj.translateToCppCodeImport){
+                    if (typeof nodeObj.translateToCppCodeImport() === "string") translateToCppCodeImportArray.push(nodeObj.translateToCppCodeImport());
+                    if (nodeObj.translateToCppCodeImport().each){
+                        nodeObj.translateToCppCodeImport().each(function(strIndex, strObj){
+                            if (typeof strObj === "string") translateToCppCodeImportArray.push(strObj);
+                        });
+                    }
+                }
 
                 /*
                  *    Getting TYPE DEFINITION, ie. for clusters
@@ -273,15 +283,44 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                 if (nodeObj.translateToCppCode) cCode += nodeObj.translateToCppCode();
 
                 /*
+                 *  Breakpoint list fullfilment
+                 *      - for normal canvas nodes
+                 *      - for loops and similar
+                 */
+                if (nodeObj.getUserData() && nodeObj.getUserData().isSetBreakpoint){
+                    let currentLineNumber = cCode.split("\n").length - 1;
+                    translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "node"});
+                }
+                if (nodeObj.getBreakpointList){
+                    let lineNumberOffset = cCode.split("\n").length - 1;
+                    nodeObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
+                        breakpointObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
+                        translateToCppCodeBreakpointList.add(breakpointObj);
+                    });
+                }
+
+                /*
                  *    Translate POST code, like ending while or for loop
                  */
                 if (nodeObj.translateToCppCodePost) cCode += nodeObj.translateToCppCodePost();
+
+                /*
+                 *  TODO: Here must be check if wires connected to node have set breakpoint, if yes need to add code line into breakpoint list
+                 */
+                nodeObj.getOutputPorts().each(function(portIndex, portObj){
+                    portObj.getConnections().each(function(wireIndex, wireObj){
+                        if (wireObj.getUserData() && wireObj.getUserData().isSetBreakpoint){
+                            let currentLineNumber = cCode.split("\n").length - 1;
+                            translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "wire"});
+                        }
+                    });
+                });
             }
         });
     }
 
     /*
-     *  Obtain additionaly used type definitions
+     *  Obtain additional used type definitions
      */
     typeDefinitionNeededList.each(function(definitionIndex, definitionStr){
         let definition = definitionStr.split("->");
@@ -314,7 +353,7 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
     /*
      *  HERE IS WRITING ERRORS FOR USER INTO #helperPane
      */
-    let outputTarget = document.getElementById("helperPane");
+    let outputTarget = document.getElementById("schematicErrors");
     outputTarget.innerHTML = "";
     translateToCppCodeErrorList.each(function(errorIndex, errorObj){
         let errorElement = document.createElement("span");
@@ -529,6 +568,7 @@ GraphLang.Utils.getCppCode3 = function(canvas, showCode = true){
     translateToCppCodeAdditionalId.clear();
     translateToCppCodeAdditionalIdNoHyphen.clear();
     translateToCppCodeErrorList.clear();
+    translateToCppCodeBreakpointList.clear();
 
     /******************************************************************************
      * Translate canvas to C/C++ code
@@ -629,6 +669,13 @@ SerialClass Serial;
 
     template_cCode += "void setup() {\n";
     template_cCode += "\n";
+
+    //add offset to breakpoints line numbers since here before is some code generated and breakpoints were counted just from canvas code
+    let lineNumberOffset = template_cCode.split("\n").length - 1;
+    translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObject){
+        breakpointObject.lineNumber += lineNumberOffset;
+    });
+
     template_cCode += cCode;
     template_cCode += "\n";
     template_cCode += "}\n";
@@ -644,6 +691,105 @@ SerialClass Serial;
     template_cCode += "\t return 0;\n";
     template_cCode += "}\n";
     */
+
+    cCode = template_cCode;
+
+    /******************************************************************************
+     * REWRITE IDs to HUMAN READABLE NUMBERS (starts from 1,2,...,N)
+     *******************************************************************************/
+    cCode = this.rewriteIDtoNumbers(canvas, cCode, translateToCppCodeAdditionalId, translateToCppCodeAdditionalIdNoHyphen);
+
+    var copyElement = document.createElement('textarea');
+    copyElement.innerHTML = cCode;
+    copyElement = document.body.appendChild(copyElement);
+    copyElement.select();
+    document.execCommand('copy');
+    copyElement.remove();
+
+    if (showCode) alert(cCode); //DEBUG show code in alert message
+
+    this.initAllPortToDefault(canvas);
+    return cCode; //return C/C++ code as string
+}
+
+/**
+ * @method getCppCode4
+ * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
+ * @param {bool} showCode - if true there is code showed in alert message after click on button
+ * @returns {String} C/C++ code as string
+ * @description Generate C/C++ code for desktop.
+ */
+GraphLang.Utils.getCppCode4 = function(canvas, showCode = true){
+
+    translateToCppCodeImportArray.clear();          //import statements
+    translateToCppCodeTypeDefinitionArray.clear();
+    translateToCppCodeFunctionsArray.clear();       //translated subnodes functions bodies
+    translateToCppCodeSubnodeArray.clear();         //already translated subnodes function names
+    translateSubnodeCanvasArray.clear();
+    typeDefinitionUsedList.clear();
+    typeDefinitionNeededList.clear();
+    translateClusterTypeDefinitionCanvasArray.clear();
+    translateClusterTypeDefinitionItems = [];
+    translateToCppCodeAdditionalId.clear();
+    translateToCppCodeAdditionalIdNoHyphen.clear();
+    translateToCppCodeErrorList.clear();
+    translateToCppCodeBreakpointList.clear();
+
+    /******************************************************************************
+     * Translate canvas to C/C++ code
+     *******************************************************************************/
+    let cCode = GraphLang.Utils.translateCanvasToCppCode(canvas, translateTerminalsDeclaration = true);
+
+    var template_cCode = "";
+
+    template_cCode += "//THIS CODE IS GENERATED FROM GraphLang\n";
+    template_cCode += "\n";
+
+    template_cCode += "//import libraries\n";
+    template_cCode += this.getCppCodeImport();
+    template_cCode += "\n";
+
+    template_cCode += `
+//type definitions for datatypes in GraphLang -> C++ types        
+typedef int errorDatatype;
+typedef int int32;
+typedef int undefined;
+typedef unsigned int uint;
+typedef float numeric;
+    `;
+
+    template_cCode += "using namespace std;\n";
+    template_cCode += "\n";
+
+    template_cCode += "\n";
+    template_cCode += this.getCppCodeTypeDefinition();
+    template_cCode += "\n";
+
+    /******************************************************************************
+     * SubNode code printed as subfunctions
+     *******************************************************************************/
+    template_cCode += "/************* BEGIN Transcripted SubNode function definitions ************/\n\n";
+    translateToCppCodeFunctionsArray.unique();  //removes duplicates
+    translateToCppCodeFunctionsArray.each(function(functionIndex, functionStr){
+        template_cCode += "\n";
+        template_cCode += functionStr;
+        template_cCode += "\n";
+    });
+    template_cCode += "/************* END Transcripted SubNode function definitions ************/\n\n";
+
+    template_cCode += "int main() {\n";
+    template_cCode += "\n";
+
+    //add offset to breakpoints line numbers since here before is some code generated and breakpoints were counted just from canvas code
+    let lineNumberOffset = template_cCode.split("\n").length - 1;
+    translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObject){
+        breakpointObject.lineNumber += lineNumberOffset;
+    });
+
+    template_cCode += cCode;
+    template_cCode += "\n";
+    template_cCode += "return 0;    //<-- THIS IS HARDCODED IN TEMPLATE!\n";
+    template_cCode += "}\n";
 
     cCode = template_cCode;
 
