@@ -184,6 +184,12 @@ GraphLang.Debugger.Cpp.debugSchematic = async function(options = null){
     console.log(`debug schematic button clicked`);
 
     /*
+     *  This will uncheck rewrite ID for compilation due for debugging there is needed to have in generated code original code with original IDs
+     */
+    var codeRewriteIdHtmlElement = document.querySelector("#codeRewriteIdFlag");
+    if (codeRewriteIdHtmlElement) codeRewriteIdHtmlElement.checked = false;
+
+    /*
      *  First compile current schematic
      */
     let ajaxResponse = await GraphLang.Debugger.Cpp.compileCurrentNode();

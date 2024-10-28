@@ -168,7 +168,7 @@ example.Toolbar = Class.extend({
 		 */
 		this.uploadSchematicButton  = $("<button id=\"uploadSchematicButton\">Upload</button>");
 		this.uploadSchematicButton.button().click($.proxy(function(){
-			GraphLang.Utils.serverUploadNodeSchematic();
+			GraphLang.Utils.serverUploadNodeSchematic(appCanvas);
 		}));
 		this.html.append(this.uploadSchematicButton);
 
@@ -182,6 +182,35 @@ example.Toolbar = Class.extend({
 			});
 		}));
 		this.html.append(this.debuggerOpenButton);
+
+		/**
+		 *	mouseRightClick Button - for tablet mostly
+		 *		TODO: There is still problem that jQuery context menu is not displayed, but this event seems to be working properly
+		 */
+		this.mouseRightClickButton  = $("<button id=\"mouseRightClickButton\">mouseRightClick</button>");
+		this.mouseRightClickButton.button().click($.proxy(function(){
+			let selectedObject = appCanvas.getSelection().getPrimary();
+			if (selectedObject){
+				console.log("trying to imitate right mouse button click");
+
+				selectedObject.fireEvent("contextmenu", {
+					x: selectedObject.getX() + selectedObject.getWidth()/2 + 500,
+					y: selectedObject.getY() + selectedObject.getHeight()/2 + 500,
+					figure: selectedObject,
+				});
+
+			}else{
+				console.log("warning: right mouse button click, no object selected");
+			}
+		}));
+		this.html.append(this.mouseRightClickButton);
+
+		/**
+		 *	codeRewriteIdFlag checkbox to change internal IDs in generated code to human readible counting from 1..inf
+		 */
+		this.codeRewriteIdFlag  = $("<span>&nbsp; Rewrite ID: <input id=\"codeRewriteIdFlag\" type=\"checkbox\" /></span>");
+		this.html.append(this.codeRewriteIdFlag);
+
 	},
 
 	/**

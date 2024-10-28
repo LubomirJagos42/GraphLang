@@ -202,10 +202,10 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
         cCode += figObj.translateToCppCode2().replaceAll("\n", "\n\t");
       }
 
-      //breakpoint - add node line into list
+      //breakpoint - add node into list
       if (figObj.getUserData() && figObj.getUserData().isSetBreakpoint){
         let currentLineNumber = cCode.split("\n").length + 2;
-        this.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "node"});
+        this.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "node", parent: this.getName()});
       }
       if (figObj.getBreakpointList){
         let lineNumberOffset = cCode.split("\n").length - 1;

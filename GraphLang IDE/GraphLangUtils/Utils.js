@@ -1,7 +1,10 @@
 /*******************************************************************************
  *  Utils.js by LuboJ
  */
+
 lastCreatedConnection = null;
+GLOBAL_MAIN_CANVAS_LOADED_NODE = null;
+GLOBAL_HELPER_CANVAS_LOADED_NODE = null;
 
 /**
  *  @class GraphLang.Utils
@@ -1340,96 +1343,100 @@ GraphLang.Utils.getCanvasAsObjectString = function(canvas){
       var jsonCanvasStr = JSON.stringify(clearedJson, null, 2);
       var objectDefaultName = $("#schematicName").val();
 
-      schematicAsObjectStr += objectDefaultName + ' = GraphLang.UserDefinedNode.extend({' + "\n";
-      schematicAsObjectStr += 'NAME: "' + objectDefaultName + '",' + "\n";
 
       /*
        *    If object was loaded from some file ie. means that it can have some symbol defined,
        *    then init function and shape functions are taken original ones.
        */
       if (GraphLang.Utils.loadedNodeShapeAndSchematicStr !== null){
-        schematicAsObjectStr += '/******************************************* STORED FROM PREVIOUS NODE **********************************/' + "\n";
-        schematicAsObjectStr += GraphLang.Utils.loadedNodeShapeAndSchematicStr + "\n";
-        schematicAsObjectStr += '/********************************************************************************************************/' + "\n";
-      }else{
-        schematicAsObjectStr += 'init: function(attr)' + "\n";
-        schematicAsObjectStr += '{' + "\n";
-        schematicAsObjectStr += '    this._super($.extend({width: 42, height: 42, flagAutoCreatePorts: true}, attr));' + "\n";
-        schematicAsObjectStr += '},' + "\n";
-      }
-      schematicAsObjectStr += "jsonDocument: " + jsonCanvasStr + ",\n";     //json schematic is saved new one
+            // schematicAsObjectStr += '/******************************************* STORED FROM PREVIOUS NODE **********************************/' + "\n";
+            // schematicAsObjectStr += GraphLang.Utils.loadedNodeShapeAndSchematicStr + "\n";
+            // schematicAsObjectStr += '/********************************************************************************************************/' + "\n";
 
-      schematicAsObjectStr += 'applyAlpha: function(){},' + "\n";
-      schematicAsObjectStr += 'layerGet: function(name, attributes){' + "\n";
-      schematicAsObjectStr += '  if(this.svgNodes===null) return null;' + "\n";
-      schematicAsObjectStr += '  var result=null;' + "\n";
-      schematicAsObjectStr += '  this.svgNodes.some(function(shape){' + "\n";
-      schematicAsObjectStr += '     if(shape.data("name")===name){' + "\n";
-      schematicAsObjectStr += '        result=shape;' + "\n";
-      schematicAsObjectStr += '     }' + "\n";
-      schematicAsObjectStr += '     return result!==null;' + "\n";
-      schematicAsObjectStr += '  });' + "\n";
-      schematicAsObjectStr += '  return result;' + "\n";
-      schematicAsObjectStr += '},' + "\n";
-      schematicAsObjectStr += 'layerAttr: function(name, attributes){' + "\n";
-      schematicAsObjectStr += ' if(this.svgNodes===null) return;' + "\n";
-      schematicAsObjectStr += ' this.svgNodes.forEach(function(shape){' + "\n";
-      schematicAsObjectStr += '         if(shape.data("name")===name){' + "\n";
-      schematicAsObjectStr += '              shape.attr(attributes);' + "\n";
-      schematicAsObjectStr += '         }' + "\n";
-      schematicAsObjectStr += ' });' + "\n";
-      schematicAsObjectStr += '},' + "\n";
-      schematicAsObjectStr += 'layerShow: function(name, flag, duration){' + "\n";
-      schematicAsObjectStr += '  if(this.svgNodes===null) return;' + "\n";
-      schematicAsObjectStr += '  if(duration){' + "\n";
-      schematicAsObjectStr += '    this.svgNodes.forEach(function(node){' + "\n";
-      schematicAsObjectStr += '        if(node.data("name")===name){' + "\n";
-      schematicAsObjectStr += '            if(flag){' + "\n";
-      schematicAsObjectStr += '                node.attr({ opacity : 0 }).show().animate({ opacity : 1 }, duration);' + "\n";
-      schematicAsObjectStr += '            }' + "\n";
-      schematicAsObjectStr += '            else{' + "\n";
-      schematicAsObjectStr += '                node.animate({ opacity : 0 }, duration, function () { this.hide() });' + "\n";
-      schematicAsObjectStr += '            }' + "\n";
-      schematicAsObjectStr += '        }' + "\n";
-      schematicAsObjectStr += '    });' + "\n";
-      schematicAsObjectStr += '  }' + "\n";
-      schematicAsObjectStr += '  else{' + "\n";
-      schematicAsObjectStr += '      this.svgNodes.forEach(function(node){' + "\n";
-      schematicAsObjectStr += '          if(node.data("name")===name){' + "\n";
-      schematicAsObjectStr += '               if(flag){node.show();}' + "\n";
-      schematicAsObjectStr += '               else{node.hide();}' + "\n";
-      schematicAsObjectStr += '           }' + "\n";
-      schematicAsObjectStr += '       });' + "\n";
-      schematicAsObjectStr += '  }' + "\n";
-      schematicAsObjectStr += '},' + "\n";
-      schematicAsObjectStr += 'getParameterSettings: function(){' + "\n";
-      schematicAsObjectStr += '    return [];' + "\n";
-      schematicAsObjectStr += '},' + "\n";
-      schematicAsObjectStr += 'addPort: function(port, locator){' + "\n";
-      schematicAsObjectStr += '    this._super(port, locator);' + "\n";
-      schematicAsObjectStr += '    return port;' + "\n";
-      schematicAsObjectStr += '},' + "\n";
-      schematicAsObjectStr += 'getPersistentAttributes : function(){' + "\n";
-      schematicAsObjectStr += '    var memento = this._super();' + "\n";
-      schematicAsObjectStr += '    memento.labels = [];' + "\n";
-      schematicAsObjectStr += '    this.children.each(function(i,e){' + "\n";
-      schematicAsObjectStr += '        var labelJSON = e.figure.getPersistentAttributes();' + "\n";
-      schematicAsObjectStr += '        labelJSON.locator=e.locator.NAME;' + "\n";
-      schematicAsObjectStr += '        memento.labels.push(labelJSON);' + "\n";
-      schematicAsObjectStr += '    });' + "\n";
-      schematicAsObjectStr += '    return memento;' + "\n";
-      schematicAsObjectStr += '},' + "\n";
-      schematicAsObjectStr += 'setPersistentAttributes : function(memento){' + "\n";
-      schematicAsObjectStr += '    this._super(memento);' + "\n";
-      schematicAsObjectStr += '    this.resetChildren();' + "\n";
-      schematicAsObjectStr += '    $.each(memento.labels, $.proxy(function(i,json){' + "\n";
-      schematicAsObjectStr += '        var figure =  eval("new "+json.type+"()");' + "\n";
-      schematicAsObjectStr += '        figure.attr(json);' + "\n";
-      schematicAsObjectStr += '        var locator =  eval("new "+json.locator+"()");' + "\n";
-      schematicAsObjectStr += '        this.add(figure, locator);' + "\n";
-      schematicAsObjectStr += '    },this));' + "\n";
-      schematicAsObjectStr += '}' + "\n";
-      schematicAsObjectStr += "});\n";
+            schematicAsObjectStr += GraphLang.Utils.getNodeCodeWithReplacedSchematicWithCurrentCanvas(objectDefaultName ,"GraphLang.UserDefinedNode", jsonCanvasStr);
+      }else{
+            schematicAsObjectStr += objectDefaultName + ' = GraphLang.UserDefinedNode.extend({' + "\n";
+            schematicAsObjectStr += 'NAME: "' + objectDefaultName + '",' + "\n";
+
+            schematicAsObjectStr += 'init: function(attr)' + "\n";
+            schematicAsObjectStr += '{' + "\n";
+            schematicAsObjectStr += '    this._super($.extend({width: 42, height: 42, flagAutoCreatePorts: true}, attr));' + "\n";
+            schematicAsObjectStr += '},' + "\n";
+
+            schematicAsObjectStr += "jsonDocument: " + jsonCanvasStr + ",\n";     //json schematic is saved new one
+
+            schematicAsObjectStr += 'applyAlpha: function(){},' + "\n";
+            schematicAsObjectStr += 'layerGet: function(name, attributes){' + "\n";
+            schematicAsObjectStr += '  if(this.svgNodes===null) return null;' + "\n";
+            schematicAsObjectStr += '  var result=null;' + "\n";
+            schematicAsObjectStr += '  this.svgNodes.some(function(shape){' + "\n";
+            schematicAsObjectStr += '     if(shape.data("name")===name){' + "\n";
+            schematicAsObjectStr += '        result=shape;' + "\n";
+            schematicAsObjectStr += '     }' + "\n";
+            schematicAsObjectStr += '     return result!==null;' + "\n";
+            schematicAsObjectStr += '  });' + "\n";
+            schematicAsObjectStr += '  return result;' + "\n";
+            schematicAsObjectStr += '},' + "\n";
+            schematicAsObjectStr += 'layerAttr: function(name, attributes){' + "\n";
+            schematicAsObjectStr += ' if(this.svgNodes===null) return;' + "\n";
+            schematicAsObjectStr += ' this.svgNodes.forEach(function(shape){' + "\n";
+            schematicAsObjectStr += '         if(shape.data("name")===name){' + "\n";
+            schematicAsObjectStr += '              shape.attr(attributes);' + "\n";
+            schematicAsObjectStr += '         }' + "\n";
+            schematicAsObjectStr += ' });' + "\n";
+            schematicAsObjectStr += '},' + "\n";
+            schematicAsObjectStr += 'layerShow: function(name, flag, duration){' + "\n";
+            schematicAsObjectStr += '  if(this.svgNodes===null) return;' + "\n";
+            schematicAsObjectStr += '  if(duration){' + "\n";
+            schematicAsObjectStr += '    this.svgNodes.forEach(function(node){' + "\n";
+            schematicAsObjectStr += '        if(node.data("name")===name){' + "\n";
+            schematicAsObjectStr += '            if(flag){' + "\n";
+            schematicAsObjectStr += '                node.attr({ opacity : 0 }).show().animate({ opacity : 1 }, duration);' + "\n";
+            schematicAsObjectStr += '            }' + "\n";
+            schematicAsObjectStr += '            else{' + "\n";
+            schematicAsObjectStr += '                node.animate({ opacity : 0 }, duration, function () { this.hide() });' + "\n";
+            schematicAsObjectStr += '            }' + "\n";
+            schematicAsObjectStr += '        }' + "\n";
+            schematicAsObjectStr += '    });' + "\n";
+            schematicAsObjectStr += '  }' + "\n";
+            schematicAsObjectStr += '  else{' + "\n";
+            schematicAsObjectStr += '      this.svgNodes.forEach(function(node){' + "\n";
+            schematicAsObjectStr += '          if(node.data("name")===name){' + "\n";
+            schematicAsObjectStr += '               if(flag){node.show();}' + "\n";
+            schematicAsObjectStr += '               else{node.hide();}' + "\n";
+            schematicAsObjectStr += '           }' + "\n";
+            schematicAsObjectStr += '       });' + "\n";
+            schematicAsObjectStr += '  }' + "\n";
+            schematicAsObjectStr += '},' + "\n";
+            schematicAsObjectStr += 'getParameterSettings: function(){' + "\n";
+            schematicAsObjectStr += '    return [];' + "\n";
+            schematicAsObjectStr += '},' + "\n";
+            schematicAsObjectStr += 'addPort: function(port, locator){' + "\n";
+            schematicAsObjectStr += '    this._super(port, locator);' + "\n";
+            schematicAsObjectStr += '    return port;' + "\n";
+            schematicAsObjectStr += '},' + "\n";
+            schematicAsObjectStr += 'getPersistentAttributes : function(){' + "\n";
+            schematicAsObjectStr += '    var memento = this._super();' + "\n";
+            schematicAsObjectStr += '    memento.labels = [];' + "\n";
+            schematicAsObjectStr += '    this.children.each(function(i,e){' + "\n";
+            schematicAsObjectStr += '        var labelJSON = e.figure.getPersistentAttributes();' + "\n";
+            schematicAsObjectStr += '        labelJSON.locator=e.locator.NAME;' + "\n";
+            schematicAsObjectStr += '        memento.labels.push(labelJSON);' + "\n";
+            schematicAsObjectStr += '    });' + "\n";
+            schematicAsObjectStr += '    return memento;' + "\n";
+            schematicAsObjectStr += '},' + "\n";
+            schematicAsObjectStr += 'setPersistentAttributes : function(memento){' + "\n";
+            schematicAsObjectStr += '    this._super(memento);' + "\n";
+            schematicAsObjectStr += '    this.resetChildren();' + "\n";
+            schematicAsObjectStr += '    $.each(memento.labels, $.proxy(function(i,json){' + "\n";
+            schematicAsObjectStr += '        var figure =  eval("new "+json.type+"()");' + "\n";
+            schematicAsObjectStr += '        figure.attr(json);' + "\n";
+            schematicAsObjectStr += '        var locator =  eval("new "+json.locator+"()");' + "\n";
+            schematicAsObjectStr += '        this.add(figure, locator);' + "\n";
+            schematicAsObjectStr += '    },this));' + "\n";
+            schematicAsObjectStr += '}' + "\n";
+            schematicAsObjectStr += "});\n";
+      }
 
       var copyElement = document.createElement('textarea');
       copyElement.innerHTML = schematicAsObjectStr;
@@ -1470,7 +1477,7 @@ GraphLang.Utils.getCanvasAsPNG = function(canvas){
 
            srcRatio = srcWidth / srcHeight;
 
-           //GRAB IMAGE CONTENT AND DRAW IT ONTO CANVAS, ADVATAGE IS THAT WE CAN DO CROP JUST PART OF CANVAS
+           //GRAB IMAGE CONTENT AND DRAW IT ONTO CANVAS, ADVANTAGE IS THAT WE CAN DO CROP JUST PART OF CANVAS
            myCanvas = document.getElementById('myCanvas');
            ctx = myCanvas.getContext('2d');
            targetWidth = myCanvas.width;
@@ -1575,6 +1582,13 @@ GraphLang.Utils.rewriteIDtoNumbers = function(canvas, cCode, additionalIdList = 
 
   var allIdList = new draw2d.util.ArrayList();
   var allIdNoHyphenList = new draw2d.util.ArrayList();
+
+  /*
+   *    Check checkbox on HTML page if it's checked there will be no replace of ID to another human readible number
+   */
+  var codeRewriteIdHtmlElement = document.querySelector("#codeRewriteIdFlag");
+  var codeRewriteIdFlag = codeRewriteIdHtmlElement ? codeRewriteIdHtmlElement.checked : false;
+
   canvas.getFigures().each(function(figureIndex, figureObj){
       allIdList.push(figureObj.getId());
       allIdNoHyphenList.push(figureObj.getId().replaceAll("-",""));
@@ -1600,7 +1614,7 @@ GraphLang.Utils.rewriteIDtoNumbers = function(canvas, cCode, additionalIdList = 
   allIdList.each(function(IdIndex, IdObj){
     var regExpression = new RegExp(IdObj, 'g');
 
-    // cCode = cCode.replace(regExpression, counter++);    //this replace id with number
+    if (codeRewriteIdFlag) cCode = cCode.replace(regExpression, counter++);    //this replace id with number
     cCode = cCode.replace(regExpression, IdObj.replaceAll('-', '_'));    //replace id with - replaced to _
   });
 
@@ -1609,7 +1623,7 @@ GraphLang.Utils.rewriteIDtoNumbers = function(canvas, cCode, additionalIdList = 
   allIdNoHyphenList.each(function(IdIndex, IdObj){
       var regExpression = new RegExp(IdObj, 'g');
 
-      // cCode = cCode.replace(regExpression, counter++);    //this replace id with number
+      if (codeRewriteIdFlag) cCode = cCode.replace(regExpression, counter++);    //this replace id with number
       cCode = cCode.replace(regExpression, IdObj.replaceAll('-', '_'));    //replace id with - replaced to _
   });
 
@@ -1689,10 +1703,16 @@ GraphLang.Utils.readSingleFile2 = function(e){
   if (!file) {
     return;
   }
+
+  //extract display name from file name
+  var filename = e.target.files[0].name;
+  var displayName = filename.replace(/\.[^/.]+$/, "");  //remove last . (dot) and all after that, just filename without extension will left
+
   var reader = new FileReader();
   reader.onload = function(e) {
     var contents = e.target.result;             //result is read
     GraphLang.Utils.displayContentsFromClass(contents, appCanvas);  //display as alert
+    document.querySelector("#schematicDisplayName").value = displayName;
   };
   reader.readAsText(file);  //this will put result into internal variable named result
 }
@@ -1797,6 +1817,8 @@ GraphLang.Utils.displayContentsFromClass = function(contents, canvasObj){
 
     objectTree = "";
     newObjectName = matchPattern[1];
+    newObjectParent = matchPattern[2];
+
     matchPattern[1].split('.').forEach(function(element, index){
         if (index > 0) objectTree += '.';
         objectTree += element;
@@ -1835,10 +1857,12 @@ GraphLang.Utils.displayContentsFromClass = function(contents, canvasObj){
   $("#schematicName").val(newObject.NAME);
 
   /*
-   *    If object has method getObjectAsString() its content is stored into loaded function string, becuase object is
+   *    If object has method getObjectAsString() its content is stored into loaded function string, because object is
    *    user defined an potentionaly can have some shape generated in Shape Designer
    */
   if (newObject.getObjectAsString) GraphLang.Utils.loadedNodeShapeAndSchematicStr = newObject.getObjectAsString();
+  GLOBAL_CURRENT_LOADED_OBJECT_PARENT = newObjectParent;
+  GLOBAL_CURRENT_LOADED_OBJECT_CODE_CONTENT = contents;
 
   //here are composite object repaired, they are assigned back to their ownership
   var allFigures = canvasObj.getFigures();
@@ -2504,7 +2528,7 @@ GraphLang.Utils.serverAjaxPostSendReceive = function(getParams = [], postParams 
 
                 resolve(response);  //resolve promise with response from server
             }else if (xhr.readyState == 4 && xhr.status >= 300){
-                reject(`Error ${xhr.status}: ${xhr.statusText}`);  // Reject promise with error
+                reject(`{error:{${xhr.status}:"${xhr.statusText}"}}`);  // Reject promise with error
             }
         }
 
@@ -2560,81 +2584,172 @@ GraphLang.Utils.getNodeAsString = function(nodeClassName){
 
 /**
  * @method GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram
- * @param projectId
- * @param nodeClassName
+ * @param options: {projectId: string, nodeId: int, nodeClassName: string, nodeDisplayName: string}
  * @returns {string}
  * @description Update node with class name on server with current schematic. This will replace jsonDocument inside node javascript code with current canvas code.
  */
-GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(projectId, nodeClassName){
-    if (projectId == null || projectId == ""){
-        let currUrl = window.location.href;
-        const urlParams = new URLSearchParams(currUrl);
-        projectId = urlParams.get('projectId');
-    }
+GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(parametersObj){
+    /*
+     *  1. Call on server to et JS code for node class based on its class name
+     *  2. In callback function there is upload if node doesn't exists it's created on server
+     */
+    GraphLang.Utils.serverAjaxPostSendReceive(
+        ["q", "getNodeJavascriptCode", "projectId", parametersObj.projectId, "nodeClassName", parametersObj.nodeClassName],
+        null,
+        function() {
+            /*
+             *  Extract variables from ajax answer
+             */
+            let nodeClassParent = GLOBAL_AJAX_RESPONSE.nodeClassParent ? GLOBAL_AJAX_RESPONSE.nodeClassParent : "GraphLang.UserDefinedNode";
+            let nodeContent = GLOBAL_AJAX_RESPONSE.nodeContent;
+            // nodeClassName = GLOBAL_AJAX_RESPONSE.nodeClassName;
+            // nodeDisplayName = GLOBAL_AJAX_RESPONSE.nodeDisplayName;
 
-    GLOBAL_HELPER_VARIABLE_1 = projectId;
-    GLOBAL_HELPER_VARIABLE_2 = nodeClassName;
+            let projectId = parametersObj.projectId;
+            let nodeId = parametersObj.nodeId;
+            let nodeClassName = parametersObj.nodeClassName;
+            let nodeDisplayName = parametersObj.nodeDisplayName;
 
-    GraphLang.Utils.serverSendReceive(
-        'getNodeJavascriptCode',
-        projectId,
-        `&nodeClassName=${nodeClassName}`,
-        function(){
-            GLOBAL_NODE_CONTENT = GraphLang.Utils.hex_to_ascii(GLOBAL_AJAX_RESPONSE.nodeContent);
-            //console.log(GLOBAL_NODE_CONTENT);
-            console.log(`ajax response saved in GLOBAL_AJAX_RESPONSE variable`);
-            console.log(`node content saved in GLOBAL_NODE_CONTENT variable`);
+            /*
+             *  There are 2 cases:
+             *      1. nodeContent from server not empty, need to just modify JS class code
+             *      2. nodeContent on server empty - need to create whole JS class from scratch
+             */
+            if (nodeContent.length > 0){
+                nodeContent = GraphLang.Utils.hex_to_ascii(nodeContent);
+                GLOBAL_NODE_CONTENT = nodeContent;
+                //console.log(GLOBAL_NODE_CONTENT);
+                console.log(`ajax response saved in GLOBAL_AJAX_RESPONSE variable`);
+                console.log(`node content saved in GLOBAL_NODE_CONTENT variable`);
 
-            //getting input params from global variables, this is not ideal but it will run smoothly
-            let projectId = GLOBAL_HELPER_VARIABLE_1;
-            let nodeClassName = GLOBAL_HELPER_VARIABLE_2;
+                eval(GraphLang.Utils.getCanvasJson(appCanvas)); //this will create jsonDocument variable
 
-            //GraphLang.UserDefinedNode.extend = function(obj){this.extendObj = obj;}
-            //...run node code content...
-            //for (m in GraphLang.UserDefinedNode.extendObj){console.log(GraphLang.UserDefinedNode.extendObj[m].toString())}
+                GLOBAL_HELPER_VARIABLE_1 = {};
+                GLOBAL_HELPER_VARIABLE_2 = {};
+                let codeToRun = "";
+                codeToRun += `GLOBAL_HELPER_VARIABLE_1 = ${nodeClassParent}.extend;\n`;
+                codeToRun += `${nodeClassParent}.extend = function(obj){this.extendObj = obj;}\n`;
+                codeToRun += `${nodeContent}`;
+                codeToRun += `GLOBAL_HELPER_VARIABLE_2 = "";\n`;
+                codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "${nodeClassName} = ${nodeClassParent}.extend({\\n"\n`;
 
-            eval(GraphLang.Utils.getCanvasJson(appCanvas)); //this will create jsonDocument variable
+                codeToRun += `for (m in ${nodeClassParent}.extendObj){\n`;
+                codeToRun += `\t\tlet objItem = ${nodeClassParent}.extendObj[m];\n`;
+                codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += m + ": ";\n`;
+                codeToRun += `\t\tif (m != 'jsonDocument'){\n`;
+                codeToRun += `\t\t\t\tif (typeof objItem != 'string'){\n`;
+                codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += (typeof objItem == 'Object' || Array.isArray(objItem)) ? JSON.stringify(objItem) : objItem.toString();\n`;
+                codeToRun += `\t\t\t\t}else{\n`;
+                codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '"' + objItem.toString() + '"';\n`;
+                codeToRun += `\t\t\t\t}\n`;
+                codeToRun += `\t\t}else{\n`;
+                codeToRun += `\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '${JSON.stringify(jsonDocument)}';\n`;    // <--- HERE jsonDocument canvas schematic is injected and replaced
+                codeToRun += `\t\t}\n`;
+                codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += ",\\n";\n`;
+                codeToRun += `}\n`;
 
-            GLOBAL_HELPER_VARIABLE_1 = {};
-            GLOBAL_HELPER_VARIABLE_2 = {};
-            let codeToRun = "";
-            codeToRun += `GLOBAL_HELPER_VARIABLE_1 = ${GLOBAL_AJAX_RESPONSE.nodeClassParent}.extend;\n`;
-            codeToRun += `${GLOBAL_AJAX_RESPONSE.nodeClassParent}.extend = function(obj){this.extendObj = obj;}\n`;
-            codeToRun += `${GLOBAL_NODE_CONTENT}`;
-            codeToRun += `GLOBAL_HELPER_VARIABLE_2 = "";\n`;
-            codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "${GLOBAL_AJAX_RESPONSE.nodeClassName} = ${GLOBAL_AJAX_RESPONSE.nodeClassParent}.extend({\\n"\n`;
+                codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "});\\n"\n`;
+                codeToRun += `${nodeClassParent}.extend = GLOBAL_HELPER_VARIABLE_1;\n`;
 
-            codeToRun += `for (m in ${GLOBAL_AJAX_RESPONSE.nodeClassParent}.extendObj){\n`;
-            codeToRun += `\t\tlet objItem = ${GLOBAL_AJAX_RESPONSE.nodeClassParent}.extendObj[m];\n`;
-            codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += m + ": ";\n`;
-            codeToRun += `\t\tif (m != 'jsonDocument'){\n`;
-            codeToRun += `\t\t\t\tif (typeof objItem != 'string'){\n`;
-            codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += (typeof objItem == 'Object' || Array.isArray(objItem)) ? JSON.stringify(objItem) : objItem.toString();\n`;
-            codeToRun += `\t\t\t\t}else{\n`;
-            codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '"' + objItem.toString() + '"';\n`;
-            codeToRun += `\t\t\t\t}\n`;
-            codeToRun += `\t\t}else{\n`;
-            codeToRun += `\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '${JSON.stringify(jsonDocument)}';\n`;
-            codeToRun += `\t\t}\n`;
-            codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += ",\\n";\n`;
-            codeToRun += `}\n`;
+                console.log(`Going eval() this code:`);
+                console.log(`${codeToRun}`);
+                eval(codeToRun);
+                GLOBAL_HELPER_VARIABLE_1 = codeToRun;
+                console.log(`JS code which run in eval() available in GLOBAL_HELPER_VARIABLE_1`);
+                console.log(`node class code available in GLOBAL_HELPER_VARIABLE_2`);
 
-            codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "});\\n"\n`;
-            codeToRun += `${GLOBAL_AJAX_RESPONSE.nodeClassParent}.extend = GLOBAL_HELPER_VARIABLE_1;\n`;
-
-            // console.log(`Going eval() this code:`);
-            // console.log(`${codeToRun}`);
-            eval(codeToRun);
-            GLOBAL_HELPER_VARIABLE_1 = codeToRun;
-            console.log(`JS code which run in eval() available in GLOBAL_HELPER_VARIABLE_1`);
-            console.log(`node class code available in GLOBAL_HELPER_VARIABLE_2`);
-
-            let nodeContent = GraphLang.Utils.toHex(GLOBAL_HELPER_VARIABLE_2);
+                nodeContent = GLOBAL_HELPER_VARIABLE_2;
+            }else{
+                nodeContent = GraphLang.Utils.getCanvasAsObjectString(parametersObj.canvas);
+            }
+            nodeContent = GraphLang.Utils.toHex(nodeContent);
 
             console.log(`start saving this for porjectId:${projectId}, nodeClassName:${nodeClassName}`);
-            GraphLang.Utils.serverUpdateNodeCodeContent(projectId, nodeClassName, nodeContent);
+
+            // newer function for node upload doing also rename, create, update
+            GraphLang.Utils.serverAjaxPostSendReceive(
+                ["q", "nodeUpload"],
+                ["projectId", projectId, "nodeId", nodeId, "nodeClassName", nodeClassName, "nodeDisplayName", nodeDisplayName, "nodeCodeContent", nodeContent],
+                function () {
+                    console.log(JSON.stringify(GLOBAL_AJAX_RESPONSE));
+                }
+            )
+                .then(response => alert(JSON.stringify(response)))
+                .catch(response => alert(JSON.stringify(response)));
         }
-    );
+    )
+
+    // GraphLang.Utils.serverSendReceive(
+    //     'getNodeJavascriptCode',
+    //     projectId,
+    //     `&nodeClassName=${nodeClassName}`,
+    //     function(){
+    //         /*
+    //          *  Extract variables from ajax answer
+    //          */
+    //         nodeClassName = GLOBAL_AJAX_RESPONSE.nodeClassName;
+    //         nodeClassParent = GLOBAL_AJAX_RESPONSE.nodeClassParent;
+    //         nodeContent = GLOBAL_AJAX_RESPONSE.nodeContent;
+    //         nodeDisplayName = GLOBAL_AJAX_RESPONSE.nodeDisplayName;
+    //
+    //         GLOBAL_NODE_CONTENT = GraphLang.Utils.hex_to_ascii(nodeContent);
+    //         //console.log(GLOBAL_NODE_CONTENT);
+    //         console.log(`ajax response saved in GLOBAL_AJAX_RESPONSE variable`);
+    //         console.log(`node content saved in GLOBAL_NODE_CONTENT variable`);
+    //
+    //         //getting input params from global variables, this is not ideal but it will run smoothly
+    //         let projectId = GLOBAL_HELPER_VARIABLE_1;
+    //         let nodeClassName = GLOBAL_HELPER_VARIABLE_2;
+    //
+    //         //GraphLang.UserDefinedNode.extend = function(obj){this.extendObj = obj;}
+    //         //...run node code content...
+    //         //for (m in GraphLang.UserDefinedNode.extendObj){console.log(GraphLang.UserDefinedNode.extendObj[m].toString())}
+    //
+    //         eval(GraphLang.Utils.getCanvasJson(appCanvas)); //this will create jsonDocument variable
+    //
+    //         GLOBAL_HELPER_VARIABLE_1 = {};
+    //         GLOBAL_HELPER_VARIABLE_2 = {};
+    //         let codeToRun = "";
+    //         codeToRun += `GLOBAL_HELPER_VARIABLE_1 = ${nodeClassParent}.extend;\n`;
+    //         codeToRun += `${nodeClassParent}.extend = function(obj){this.extendObj = obj;}\n`;
+    //         codeToRun += `${nodeContent}`;
+    //         codeToRun += `GLOBAL_HELPER_VARIABLE_2 = "";\n`;
+    //         codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "${nodeClassName} = ${nodeClassParent}.extend({\\n"\n`;
+    //
+    //         codeToRun += `for (m in ${nodeClassParent}.extendObj){\n`;
+    //         codeToRun += `\t\tlet objItem = ${nodeClassParent}.extendObj[m];\n`;
+    //         codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += m + ": ";\n`;
+    //         codeToRun += `\t\tif (m != 'jsonDocument'){\n`;
+    //         codeToRun += `\t\t\t\tif (typeof objItem != 'string'){\n`;
+    //         codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += (typeof objItem == 'Object' || Array.isArray(objItem)) ? JSON.stringify(objItem) : objItem.toString();\n`;
+    //         codeToRun += `\t\t\t\t}else{\n`;
+    //         codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '"' + objItem.toString() + '"';\n`;
+    //         codeToRun += `\t\t\t\t}\n`;
+    //         codeToRun += `\t\t}else{\n`;
+    //         codeToRun += `\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '${JSON.stringify(jsonDocument)}';\n`;    // <--- HERE jsonDocument canvas schematic is injected and replaced
+    //         codeToRun += `\t\t}\n`;
+    //         codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += ",\\n";\n`;
+    //         codeToRun += `}\n`;
+    //
+    //         codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "});\\n"\n`;
+    //         codeToRun += `${nodeClassParent}.extend = GLOBAL_HELPER_VARIABLE_1;\n`;
+    //
+    //         console.log(`Going eval() this code:`);
+    //         console.log(`${codeToRun}`);
+    //         eval(codeToRun);
+    //         GLOBAL_HELPER_VARIABLE_1 = codeToRun;
+    //         console.log(`JS code which run in eval() available in GLOBAL_HELPER_VARIABLE_1`);
+    //         console.log(`node class code available in GLOBAL_HELPER_VARIABLE_2`);
+    //
+    //         let nodeContent = GraphLang.Utils.toHex(GLOBAL_HELPER_VARIABLE_2);
+    //
+    //         console.log(`start saving this for porjectId:${projectId}, nodeClassName:${nodeClassName}`);
+    //
+    //         // OLD WAY USING update function, this is not able to create new schematic just update
+    //         GraphLang.Utils.serverUpdateNodeCodeContent(projectId, nodeClassName, nodeContent);
+    //     }
+    // );
+
 }
 
 /**
@@ -2663,7 +2778,7 @@ GraphLang.Utils.serverUpdateNodeCodeContent = function(projectId, nodeClassName,
  * @method serverUploadNodeSchematic
  * @description Upload schematic to server.
  */
-GraphLang.Utils.serverUploadNodeSchematic = function(){
+GraphLang.Utils.serverUploadNodeSchematic = function(canvasObj){
     /*
      *  This will call upload function after marshaler, javascript code stored inside 'data'
      */
@@ -2679,15 +2794,30 @@ GraphLang.Utils.serverUploadNodeSchematic = function(){
      *  - if display name not define use class name
      */
     let projectId = url.searchParams.get("projectId");
+    projectId = projectId ? projectId : -1;
 
     let nodeId = url.searchParams.get("nodeId");
     nodeId = nodeId ? nodeId : -1;
 
     let nodeClassName = url.searchParams.get("nodeClassName");
     let newNodeClassName = $("#schematicName").val();
+    nodeClassName = nodeClassName ? nodeClassName : newNodeClassName;
 
     let nodeDisplayName = $("#schematicDisplayName").val();
-    nodeDisplayName = nodeDisplayName ? nodeDisplayName : nodeClassName;
+    nodeDisplayName = nodeDisplayName ? nodeDisplayName : (nodeClassName ? nodeClassName : newNodeClassName);
+
+    /*
+     *  Debugging output
+     */
+    console.log(`--->serverUploadNodeSchematic: projectId: ${projectId}, nodeId: ${nodeId}, nodeClassName: ${nodeClassName}, nodeDisplayName: ${nodeDisplayName}`);
+
+    /*
+     *  Check for nodeId or class name, if both are not provided finish here as there is no way how to create new node.
+     */
+    if (nodeId == -1 && nodeClassName == ""){
+        console.log(`No nodeId or nodeClassName provided, ending here. Please fill form for schematic name.`);
+        alert(`No nodeId or nodeClassName provided, ending here. Please fill form for schematic name.`);
+    }
 
     /*
      *  Call server to replace node schematic with current schematic, node class name needed.
@@ -2695,7 +2825,65 @@ GraphLang.Utils.serverUploadNodeSchematic = function(){
      *      - need to check if class name changed in that case need to call node rename function
      *      - need check if update display name
      */
-    GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram(projectId, nodeClassName);
+    GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram({
+        projectId: projectId,
+        nodeId: nodeId,
+        nodeClassName: nodeClassName,
+        nodeDisplayName: nodeDisplayName,
+        canvas: canvasObj
+    });
 }
 
+/**
+ *  @description This will generate code for current class and replace parts responsible for create symbol picture.
+ */
+GraphLang.Utils.getNodeCodeWithReplacedSchematicWithCurrentCanvas = function(className, classParent, jsonDocument){
+    GLOBAL_HELPER_VARIABLE_1 = {};
+    GLOBAL_HELPER_VARIABLE_2 = {};
+    let codeToRun = "";
 
+    // 1. Replace extend function with custom function which store objects, functions, properties into variable inside object
+    codeToRun += `GLOBAL_HELPER_VARIABLE_1 = ${GLOBAL_CURRENT_LOADED_OBJECT_PARENT}.extend;\n`;
+    codeToRun += `${GLOBAL_CURRENT_LOADED_OBJECT_PARENT}.extend = function(obj){this.extendObj = obj;}\n`;
+    codeToRun += `${GLOBAL_CURRENT_LOADED_OBJECT_CODE_CONTENT}`;
+
+    // 2. start writing new result object header
+    codeToRun += `GLOBAL_HELPER_VARIABLE_2 = "";\n`;
+    codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "${className} = ${classParent}.extend({\\n"\n`;
+
+    // 3. Rest of magic, rewrite left of function as they were
+    codeToRun += `for (m in ${GLOBAL_CURRENT_LOADED_OBJECT_PARENT}.extendObj){\n`;
+    codeToRun += `\t\tlet objItem = ${GLOBAL_CURRENT_LOADED_OBJECT_PARENT}.extendObj[m];\n`;
+    codeToRun += `\t\tif (m == 'NAME'){\n`;
+    codeToRun += `\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += m + ": '${className}',\\n";\n`;
+    codeToRun += `\t\t\t\tconsole.log('----> NAME written: ${className}');\n`;
+    codeToRun += `\t\t}else if (m == 'jsonDocument'){\n`;
+    codeToRun += `\t\t\t\t/* DO NOTHING - not copy anything */;\n`;
+    codeToRun += `\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += m + \`: ${jsonDocument}\` + ",\\n";\n`;
+    codeToRun += `\t\t\t\tconsole.log('----> jsonDocument added');\n`;
+    codeToRun += `\t\t}else{\n`;
+    codeToRun += `\t\t\t\tif (typeof objItem != 'string'){\n`;
+    codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += m + ": ";\n`;
+    codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += (typeof objItem == 'Object' || Array.isArray(objItem)) ? JSON.stringify(objItem) : objItem.toString();\n`;
+    codeToRun += `\t\t\t\t\t\tconsole.log('----> serialize function: ' + m);\n`;
+    codeToRun += `\t\t\t\t}else{\n`;
+    codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '"' + objItem.toString() + '"';\n`;
+    codeToRun += `\t\t\t\t}\n`;
+    codeToRun += `\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += ",\\n";\n`;
+    codeToRun += `\t\t}\n`;
+    codeToRun += `}\n`;
+    codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "});\\n"\n`;
+
+    // 5. Return extend function as it was before start rewriting
+    codeToRun += `${GLOBAL_CURRENT_LOADED_OBJECT_PARENT}.extend = GLOBAL_HELPER_VARIABLE_1;\n`;
+
+    console.log(`Going eval() this code:`);
+    console.log(`${codeToRun}`);
+
+    eval(codeToRun);
+    GLOBAL_HELPER_VARIABLE_1 = codeToRun;
+    console.log(`JS code which run in eval() available in GLOBAL_HELPER_VARIABLE_1`);
+    console.log(`node class code available in GLOBAL_HELPER_VARIABLE_2`);
+
+    return GLOBAL_HELPER_VARIABLE_2;
+}

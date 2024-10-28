@@ -14,7 +14,6 @@ This is list features what to do due I always forget on what to work
     - it will look into userData.datatype variable, parent node or somewhere else
 - translate polymorphic datatype into right C/C++ code datatype in C/C++
 
-
 - GENERAL PRESERVATION PROPERTIS for SHAPE DESIGNER - HOW TO EXTRACT STRING FUNCTIONS FROM CUSTOM OBJECTS GENERALLY steps:
 
   1. redefine extend() as custom function to save it's input object into some variable like this:
@@ -42,6 +41,12 @@ This is list features what to do due I always forget on what to work
 
 In progress features
 ====================
+- breakpoints for C++ debugger:
+    - on top level canvas OK
+    - nested nodes (schematics) - FAIL - need to add support for breakpoints
+
+Finished features
+=================
 - g++ compilation messages display in IDE
   - for compilation to have output in JSON use this command:
     > g++ -fdiagnostics-format=json <input file name>
@@ -49,6 +54,30 @@ In progress features
     - url:     https://www.mingw-w64.org/downloads/#mingw-w64-builds
     - release: https://github.com/niXman/mingw-builds-binaries/releases
 
-Finished features
-=================
+- saving node to local drive
+    - if node already exists left all functions
+    - if new use template with needed functions
 
+- shape editor for user defined nodes
+    - top nodes without inner schematic - OK
+    - user defined with schematics inside - OK
+
+- shape designer newly created nodes image creation from clipboard image is empty - OK
+    - after refresh and upload it's ok
+    - shape designer is using this function: shape_designer.loadSymbolFromGraphLangClass
+    - problem is caused when uploading zoomed symbol, when zoom is 1.0 PNG image preview is generated right
+    - before upload added click on zoom normal button
+
+- create new schematic - OK
+    - it's using old backend function, using newly one as in shape designer will solve problem
+    - new code from shape desinger for upload:
+        GraphLang.Utils.serverAjaxPostSendReceive(
+            ["q", "nodeUpload"],
+            ["projectId", projectId, "nodeId", nodeId, "nodeClassName", nodeClassName, "nodeDisplayName", nodeDisplayName, "nodeCodeContent", nodeCodeContent],
+            function(){
+                console.log(JSON.stringify(GLOBAL_AJAX_RESPONSE));
+            }
+        )
+            .then(response => alert(JSON.stringify(response)))
+            .catch(response => alert(JSON.stringify(response)));
+    - code updated, now new schematic or update is running ok

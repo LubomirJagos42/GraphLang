@@ -192,7 +192,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
       //breakpoint - add node line into list
       if (figObj.getUserData() && figObj.getUserData().isSetBreakpoint){
           let currentLineNumber = cCode.split("\n").length;
-          this.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "node"});
+          this.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "node", parent: this.getName()});
       }
 
      /* in case of post C/C++ code run it */

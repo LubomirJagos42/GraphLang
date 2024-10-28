@@ -289,7 +289,7 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                  */
                 if (nodeObj.getUserData() && nodeObj.getUserData().isSetBreakpoint){
                     let currentLineNumber = cCode.split("\n").length - 1;
-                    translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "node"});
+                    translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "node", parent: null});
                 }
                 if (nodeObj.getBreakpointList){
                     let lineNumberOffset = cCode.split("\n").length - 1;
@@ -311,7 +311,7 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                     portObj.getConnections().each(function(wireIndex, wireObj){
                         if (wireObj.getUserData() && wireObj.getUserData().isSetBreakpoint){
                             let currentLineNumber = cCode.split("\n").length - 1;
-                            translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "wire"});
+                            translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "wire", parent: null});
                         }
                     });
                 });

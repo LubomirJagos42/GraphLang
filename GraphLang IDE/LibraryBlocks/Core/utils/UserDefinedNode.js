@@ -90,51 +90,72 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
    },
 
     createContextMenu: function(){
-        this.on("contextmenu", function(emitter, event){
-            $.contextMenu({
-                selector: 'body',
-                events:
-                    {
-                        hide:function(){ $.contextMenu( 'destroy' ); }
-                    },
+       let addSupportForLeftMouseButton = false;    //add context menu for left mouse button, this is here to try make context menu working on tablets, but seems not enough :(
 
-                //these functions are run after user click on some context menu option
-                callback: $.proxy(function(key, options)
-                {
-                    switch(key){
-                        case "setBreakpoint":
-                            emitter.setStroke(3);
-                            emitter.setColor("#DD2241");
-                            // emitter.setDashArray("-");
-                            if (!emitter.getUserData()) emitter.userData = {};
-                            emitter.getUserData().isSetBreakpoint = true;
-                            break;
-                        case "unsetBreakpoint":
-                            emitter.setStroke(1);
-                            emitter.setColor("#000000");
-                            emitter.setDashArray("");
-                            if (!emitter.getUserData()) emitter.userData = {};
-                            emitter.getUserData().isSetBreakpoint = false;
-                            break;
-                        case "isBreakpoint":
-                            if (emitter.getUserData() && emitter.getUserData().hasOwnProperty("isSetBreakpoint")) alert(emitter.getUserData().isSetBreakpoint);
-                            else alert("Wire has no breakpoint data.");
-                            break;
-                        default:
-                            break;
-                    }
-                },this),
-                x:event.x,
-                y:event.y,
-                items:
-                    {
-                        "setBreakpoint": {name: "Set breakpoint"},
-                        "unsetBreakpoint": {name: "Unset breakpoint"},
-                        "separator": "--------------",
-                        "isBreakpoint": {name: "Show if is breakpoint"},
-                    }
-            });
-        });
+       function contextMenuCreate(emitter, event, useLeftMouseButton = false){
+           console.log(event);
+           console.log(emitter);
+           $.contextMenu({
+               trigger: useLeftMouseButton ? 'left' : 'right',
+               selector: 'body',
+               events:
+                   {
+                       hide:function(){ $.contextMenu( 'destroy' ); }
+                   },
+
+               //these functions are run after user click on some context menu option
+               callback: $.proxy(function(key, options)
+               {
+                   switch(key){
+                       case "setBreakpoint":
+                           emitter.setStroke(3);
+                           emitter.setColor("#DD2241");
+                           // emitter.setDashArray("-");
+                           if (!emitter.getUserData()) emitter.userData = {};
+                           emitter.getUserData().isSetBreakpoint = true;
+                           break;
+                       case "unsetBreakpoint":
+                           emitter.setStroke(1);
+                           emitter.setColor("#000000");
+                           emitter.setDashArray("");
+                           if (!emitter.getUserData()) emitter.userData = {};
+                           emitter.getUserData().isSetBreakpoint = false;
+                           break;
+                       case "isBreakpoint":
+                           if (emitter.getUserData() && emitter.getUserData().hasOwnProperty("isSetBreakpoint")) alert(emitter.getUserData().isSetBreakpoint);
+                           else alert("Wire has no breakpoint data.");
+                           break;
+                       default:
+                           break;
+                   }
+               },emitter),
+               x:event.x,
+               y:event.y,
+               items:
+                   {
+                       "setBreakpoint": {name: "Set breakpoint"},
+                       "unsetBreakpoint": {name: "Unset breakpoint"},
+                       "separator": "--------------",
+                       "isBreakpoint": {name: "Show if is breakpoint"},
+                   }
+           });
+       };
+
+       /*
+        *   Add context menu for left mouse button click - this is for tablets which has no right mouse button
+        */
+       if (addSupportForLeftMouseButton){
+           this.on(`click`, function(emitter, event){
+               contextMenuCreate(emitter, event, true);
+           });
+       }
+
+       /*
+        *   Add context menu after click on right mouse button - this is normal on PC, this will be always ON
+        */
+       this.on(`contextmenu`, function(emitter, event){
+           contextMenuCreate(emitter, event, false);
+       });
     },
 
   getObjectAsString: function(){

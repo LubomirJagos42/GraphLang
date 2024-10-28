@@ -167,7 +167,16 @@ document.addEventListener("DOMContentLoaded",function () {
             echo("// THIS WILL LOAD SCHEMATIC INTO MAIN CANVAS IF IT IS SPECIFIED IN URL\n");
             echo("let loadedClass = new $nodeClassName();\n");
             echo("if (loadedClass.jsonDocument) GraphLang.Utils.displayContents2(loadedClass.jsonDocument, appCanvas);\n");
-            echo("else console.warn(\"Loaded node $nodeId, $nodeClassName has no schematic!\");");
+            echo("else console.warn(\"Loaded node $nodeId, $nodeClassName has no schematic!\");\n");
+            echo("\n");
+            echo("//THIS WILL ADD CURRENT CLASS AND DISPLAY NAME INTO INPUT FORMS\n");
+            echo("document.querySelector('#schematicName').value = '$nodeClassName';\n");
+            echo("document.querySelector('#schematicDisplayName').value = '$nodeDisplayName';\n");
+            echo("\n");
+            echo("//THIS WILL PRETEND THAT NODE WAS LOADED FROM FILE ON DRIVE, FOR CASE IT WILL BE SAVED TO DRIVE TO GENERATE JS CODE WITH ALL THING PERSISTED\n");
+            echo("GraphLang.Utils.loadedNodeShapeAndSchematicStr = {};\n");
+            echo("GLOBAL_CURRENT_LOADED_OBJECT_PARENT = '$nodeClassParent';\n");
+            echo("GLOBAL_CURRENT_LOADED_OBJECT_CODE_CONTENT = GraphLang.Utils.hex_to_ascii('$nodeCodeContent');\n");
         }
     ?>
 });

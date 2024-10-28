@@ -3276,7 +3276,7 @@ shape_designer.filter.PortDatatypeFilter = shape_designer.filter.Filter.extend({
             '         <option value="float">float</option>'+
             '         <option value="double">double</option>'+
             '         <option value="bool">bool</option>'+
-            '         <option value="String">String</option>'+
+            '         <option value="string">string</option>'+
             '         <option value="other">other</option>'+
             '       </select>'+
             '       <br />'+
@@ -6159,6 +6159,10 @@ shape_designer.GraphLangFigureWriter = draw2d.io.Writer.extend({
         loadedObjectPreservedFunctions = "";
         if (shape_designer.loadedObjectJsonDocument) jsonDocument = shape_designer.loadedObjectJsonDocument;
         if (shape_designer.loadedObjectPreservedFunctions) loadedObjectPreservedFunctions = shape_designer.loadedObjectPreservedFunctions;
+
+        /*
+         *  Create PNG symbol picture from canvas
+         */
         symbolPicture = shape_designer.getSymbolPicture(app.view);
 
         /*******************************************************************************************
@@ -6679,10 +6683,12 @@ shape_designer.getSymbolPicture = function(canvas){
         
         var resultPictureAsVase64Data = "";
         writer.marshal(canvas,function(pngBase64Data, pngData){
-            navigator.clipboard.writeText(pngBase64Data);
+            //navigator.clipboard.writeText(pngBase64Data);
             resultPictureAsVase64Data = pngBase64Data;
         }, boundingBox);
-        
+
+        console.log(resultPictureAsVase64Data);
+
         return resultPictureAsVase64Data;
 }
 
@@ -6732,8 +6738,21 @@ shape_designer.saveSymbol = function(){
  *  @description Marshal symbol and upload it to server to be stored in database.
  */
 shape_designer.uploadSymbolToServer = function(){
+    /*
+     *  Create marshaller object
+     */
     var writer = new shape_designer.GraphLangFigureWriter();
-    writer.marshal(app.view,$("#symbol-name-input").val(),function(data){
+
+    /*
+     *  Set zoom to 1.0, if canvas is zoomed image is not taken right
+     *      - other posibility would be create copy of canvas in background, zoom to 1.0 and save png from that one
+     *      - this is good enough for now
+     */
+    // app.view.setZoom(1.0);           //this needs to be additionaly scrolled to view symbol in the middle of canvas
+    $("#canvas_zoom_normal").click();   //this will click on zoom button which has inside function to adjust view to symbol
+
+    //do marshalling
+    writer.marshal(app.view, $("#symbol-name-input").val(),function(data){
         /*
          *  This will call upload function after marshaler, javascript code stored inside 'data'
          */
@@ -6770,7 +6789,10 @@ shape_designer.uploadSymbolToServer = function(){
             function(){
                 console.log(JSON.stringify(GLOBAL_AJAX_RESPONSE));
             }
-        );
+        )
+            .then(response => alert(JSON.stringify(response)))
+            .catch(response => alert(JSON.stringify(response)));
+
     });
 }
 
@@ -6789,11 +6811,12 @@ shape_designer.generateCurrentClassCode = function(className, classParent, befor
 
     // 2. start writing new result object header
     codeToRun += `GLOBAL_HELPER_VARIABLE_2 = "";\n`;
-    codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "${className} = ${classParent}.extend({\\n"\n`;
+    codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "${className} = ${classParent}.extend({\\n";\n`;
 
     // 3. insert generated code from template which define symbol shape
     codeToRun += `\n\n`;
-    codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += \`${beforeCodeToInsert}\`\n`;
+    codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += \`${beforeCodeToInsert}\`;\n`;
+    codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += "\\n\\n";\n`;
     codeToRun += `\n\n`;
 
     // 4. Rest of magic, rewrite left of function as they were

@@ -52,8 +52,6 @@
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/lib/prettify/src/prettify.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/lib/jscolor/jscolor.js"></script>
 
-
-
     <!--
         BELOW IS LOADING GRAPHLANG NODES STUFF AND SO
     -->
@@ -97,7 +95,7 @@
         var app = null;
         $(window).load(function() {
             try{
-                app  = new shape_designer.Application(true);
+                app = new shape_designer.Application(true);
 
                 /****************************************************************************************
                  * LuboJ start code for shape designer
@@ -110,6 +108,17 @@
                 alert(e);
             }
         });
+
+        let global_allUserDefinedNodesList = [
+            <?php
+            $k = 0;
+            foreach ($userDefinedNodesClassNames as $className){
+                if ($k == 0) echo("'$className'\n");
+                else echo("\t, '$className'\n");
+                $k++;
+            }
+            ?>
+        ];
     </script>
 
 </head>
@@ -597,6 +606,7 @@
     },
 
     symbolPicture: "{{symbolPicture}}",
+
 </script>
 
 </body>

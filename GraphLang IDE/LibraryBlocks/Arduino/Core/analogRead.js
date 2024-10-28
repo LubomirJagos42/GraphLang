@@ -5,7 +5,7 @@
 // Go to the Designer http://www.draw2d.org
 // to design your own shape or download user generated
 //
-GraphLang.ArduinoLib.Node.analogRead = draw2d.SetFigure.extend({
+GraphLang.ArduinoLib.Node.analogRead = GraphLang.UserDefinedNode.extend({
 
     NAME: "GraphLang.ArduinoLib.Node.analogRead",
 
