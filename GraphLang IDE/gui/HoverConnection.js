@@ -53,6 +53,24 @@ HoverConnection = draw2d.Connection.extend({
                             if (!emitter.getUserData()) emitter.userData = {};
                             emitter.getUserData().isSetBreakpoint = false;
                             break;
+                        case "setWatch":
+                            emitter.setStroke(3);
+                            emitter.setColor("#2235dd");
+                            // emitter.setDashArray("-");
+                            if (!emitter.getUserData()) emitter.userData = {};
+                            emitter.getUserData().isSetWatch = true;
+                            break;
+                        case "unsetWatch":
+                            emitter.setStroke(1);
+                            emitter.setColor("#000000");
+                            emitter.setDashArray("");
+                            if (!emitter.getUserData()) emitter.userData = {};
+                            emitter.getUserData().isSetWatch = false;
+                            break;
+                        case "hasWatch":
+                            if (emitter.getUserData() && emitter.getUserData().hasOwnProperty("isSetWatch")) alert(emitter.getUserData().isSetWatch);
+                            else alert("Wire has no watch set.");
+                            break;
                         case "isBreakpoint":
                             if (emitter.getUserData() && emitter.getUserData().hasOwnProperty("isSetBreakpoint")) alert(emitter.getUserData().isSetBreakpoint);
                             else alert("Wire has no breakpoint data.");
@@ -71,7 +89,11 @@ HoverConnection = draw2d.Connection.extend({
                         "setBreakpoint": {name: "Set breakpoint"},
                         "unsetBreakpoint": {name: "Unset breakpoint"},
                         "separator": "--------------",
+                        "setWatch": {name: "Set watch"},
+                        "unsetWatch": {name: "Unset watch"},
+                        "separator2": "--------------",
                         "isBreakpoint": {name: "Show if is breakpoint"},
+                        "hasWatch": {name: "Show if is watch"},
                         "debugGetValue": {name: "Debug get value"}
                     }
             });

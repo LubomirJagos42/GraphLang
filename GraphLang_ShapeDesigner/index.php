@@ -370,127 +370,114 @@
 </div>
 
 <script id="shape-base-template" type="text/js-template">
-    // Generated Code for the GraphLang
-    // special thanks to Draw2D touch HTML5 lib
-    //
-    // http://www.draw2d.org
-    //
-    {{{className}}} = {{{baseClass}}}.extend({
+// Generated Code for the GraphLang
+// special thanks to Draw2D touch HTML5 lib
+//
+// http://www.draw2d.org
+//
+{{{className}}} = {{{baseClass}}}.extend({
 
     NAME: "{{{className}}}",
 
-    init:function(attr, setter, getter)
-    {
-    this._super( $.extend({stroke:0, bgColor:null, width:{{width}}, height:{{height}}, flagAutoCreatePorts: false},attr), setter, getter);
-    var port;
-    {{#ports}}
-    // {{{name}}}
-    port = this.{{{method}}}({{{type}}}, new draw2d.layout.locator.XYRelPortLocator({{x}}, {{y}}));
-    port.setConnectionDirection({{direction}});
-    port.setBackgroundColor("{{color}}");
-    port.setName("{{name}}");
-    port.setMaxFanOut({{fanout}});
+    init:function(attr, setter, getter){
+        this._super( $.extend({stroke:0, bgColor:null, width:{{width}}, height:{{height}}, flagAutoCreatePorts: false},attr), setter, getter);
+        var port;
+        {{#ports}}
+        // {{{name}}}
+        port = this.{{{method}}}({{{type}}}, new draw2d.layout.locator.XYRelPortLocator({{x}}, {{y}}));
+        port.setConnectionDirection({{direction}});
+        port.setBackgroundColor("{{color}}");
+        port.setName("{{name}}");
+        port.setMaxFanOut({{fanout}});
 
-    if (!port.userData) port.userData = {}
-    port.userData.datatype = "{{datatype}}";
-    port.userData.allowMultipleConnections = {{allowMultipleConnections}};
-    port.userData.connectionMandatory = {{connectionMandatory}};
+        if (!port.userData) port.userData = {}
+        port.userData.datatype = "{{datatype}}";
+        port.userData.allowMultipleConnections = {{allowMultipleConnections}};
+        port.userData.connectionMandatory = {{connectionMandatory}};
 
-    {{/ports}}
-    this.persistPorts=false;
+        {{/ports}}
+        this.persistPorts=false;
     },
 
-    createShapeElement : function()
-    {
-    var shape = this._super();
-    this.originalWidth = {{width}};
-    this.originalHeight= {{height}};
-    return shape;
+    createShapeElement : function(){
+        var shape = this._super();
+        this.originalWidth = {{width}};
+        this.originalHeight= {{height}};
+        return shape;
     },
 
-    createSet: function()
-    {
-    this.canvas.paper.setStart();
+    createSet: function(){
+        this.canvas.paper.setStart();
 
-    {{#figures}}
-    // {{{name}}}
-    shape = {{{constructor}}};
-    shape.attr({{{attr}}});
-    shape.data("name","{{{name}}}");
-    {{{extra}}}
-    {{/figures}}
+        {{#figures}}
+        // {{{name}}}
+        shape = {{{constructor}}};
+        shape.attr({{{attr}}});
+        shape.data("name","{{{name}}}");
+        {{{extra}}}
+        {{/figures}}
 
-    return this.canvas.paper.setFinish();
+        return this.canvas.paper.setFinish();
     },
 
-    applyAlpha: function()
-    {
+    applyAlpha: function(){
     },
 
-    layerGet: function(name, attributes)
-    {
-    if(this.svgNodes===null) return null;
-
-    var result=null;
-    this.svgNodes.some(function(shape){
-    if(shape.data("name")===name){
-    result=shape;
-    }
-    return result!==null;
-    });
-
-    return result;
+    layerGet: function(name, attributes){
+        if(this.svgNodes===null) return null;
+            var result=null;
+            this.svgNodes.some(function(shape){
+            if(shape.data("name")===name){
+                result=shape;
+            }
+            return result!==null;
+        });
+        return result;
     },
 
-    layerAttr: function(name, attributes)
-    {
-    if(this.svgNodes===null) return;
+    layerAttr: function(name, attributes){
+        if(this.svgNodes===null) return;
 
-    this.svgNodes.forEach(function(shape){
-    if(shape.data("name")===name){
-    shape.attr(attributes);
-    }
-    });
+        this.svgNodes.forEach(function(shape){
+            if(shape.data("name")===name){
+                shape.attr(attributes);
+            }
+        });
     },
 
-    layerShow: function(name, flag, duration)
-    {
-    if(this.svgNodes===null) return;
+    layerShow: function(name, flag, duration){
+        if(this.svgNodes===null) return;
 
-    if(duration){
-    this.svgNodes.forEach(function(node){
-    if(node.data("name")===name){
-    if(flag){
-    node.attr({ opacity : 0 }).show().animate({ opacity : 1 }, duration);
-    }
-    else{
-    node.animate({ opacity : 0 }, duration, function () { this.hide() });
-    }
-    }
-    });
-    }
-    else{
-    this.svgNodes.forEach(function(node){
-    if(node.data("name")===name){
-    if(flag){node.show();}
-    else{node.hide();}
-    }
-    });
-    }
+        if(duration){
+            this.svgNodes.forEach(function(node){
+                if(node.data("name")===name){
+                    if(flag){
+                        node.attr({ opacity : 0 }).show().animate({ opacity : 1 }, duration);
+                    }else{
+                        node.animate({ opacity : 0 }, duration, function () { this.hide() });
+                    }
+                }
+            });
+        }else{
+            this.svgNodes.forEach(function(node){
+            if(node.data("name")===name){
+                if(flag){node.show();}
+                    else{node.hide();}
+                }
+            });
+        }
     },
 
-    getParameterSettings: function()
-    {
-    return [];
+    getParameterSettings: function(){
+        return [];
     },
 
     /**
     * @method
     */
-    addPort: function(port, locator)
-    {
-    this._super(port, locator);
-    return port;
+    addPort: function(port, locator){
+        this._super(port, locator);
+        return port;
     },
 
     /**
@@ -499,20 +486,19 @@
     *
     * @returns {Object}
     */
-    getPersistentAttributes : function()
-    {
-    var memento = this._super();
+    getPersistentAttributes : function(){
+        var memento = this._super();
 
-    // add all decorations to the memento
-    //
-    memento.labels = [];
-    this.children.each(function(i,e){
-    var labelJSON = e.figure.getPersistentAttributes();
-    labelJSON.locator=e.locator.NAME;
-    memento.labels.push(labelJSON);
-    });
+        // add all decorations to the memento
+        //
+        memento.labels = [];
+        this.children.each(function(i,e){
+            var labelJSON = e.figure.getPersistentAttributes();
+            labelJSON.locator=e.locator.NAME;
+            memento.labels.push(labelJSON);
+        });
 
-    return memento;
+        return memento;
     },
 
     /**
@@ -522,29 +508,28 @@
     * @param {Object} memento
     * @returns
     */
-    setPersistentAttributes : function(memento)
-    {
-    this._super(memento);
+    setPersistentAttributes : function(memento){
+        this._super(memento);
 
-    // remove all decorations created in the constructor of this element
-    //
-    this.resetChildren();
+        // remove all decorations created in the constructor of this element
+        //
+        this.resetChildren();
 
-    // and add all children of the JSON document.
-    //
-    $.each(memento.labels, $.proxy(function(i,json){
-    // create the figure stored in the JSON
-    var figure =  eval("new "+json.type+"()");
+        // and add all children of the JSON document.
+        //
+        $.each(memento.labels, $.proxy(function(i,json){
+            // create the figure stored in the JSON
+            var figure =  eval("new "+json.type+"()");
 
-    // apply all attributes
-    figure.attr(json);
+            // apply all attributes
+            figure.attr(json);
 
-    // instantiate the locator
-    var locator =  eval("new "+json.locator+"()");
+            // instantiate the locator
+            var locator =  eval("new "+json.locator+"()");
 
-    // add the new figure as child to this figure
-    this.add(figure, locator);
-    },this));
+            // add the new figure as child to this figure
+            this.add(figure, locator);
+        },this));
     },
 
     symbolPicture: "{{symbolPicture}}",
@@ -552,7 +537,7 @@
     jsonDocument: {{jsonDocument}},
 
     {{loadedObjectPreservedFunctions}}
-    });
+});
 </script>
 
 <!--
@@ -561,48 +546,45 @@
 <script id="template-shape-functions" type="text/js-template">
     NAME: "{{{className}}}",
 
-    init:function(attr, setter, getter)
-    {
-    this._super( $.extend({stroke:0, bgColor:null, width:{{width}}, height:{{height}}, flagAutoCreatePorts: false},attr), setter, getter);
-    var port;
-    {{#ports}}
-    // {{{name}}}
-    port = this.{{{method}}}({{{type}}}, new draw2d.layout.locator.XYRelPortLocator({{x}}, {{y}}));
-    port.setConnectionDirection({{direction}});
-    port.setBackgroundColor("{{color}}");
-    port.setName("{{name}}");
-    port.setMaxFanOut({{fanout}});
+    init:function(attr, setter, getter){
+        this._super( $.extend({stroke:0, bgColor:null, width:{{width}}, height:{{height}}, flagAutoCreatePorts: false},attr), setter, getter);
+        var port;
+        {{#ports}}
+        // {{{name}}}
+        port = this.{{{method}}}({{{type}}}, new draw2d.layout.locator.XYRelPortLocator({{x}}, {{y}}));
+        port.setConnectionDirection({{direction}});
+        port.setBackgroundColor("{{color}}");
+        port.setName("{{name}}");
+        port.setMaxFanOut({{fanout}});
 
-    if (!port.userData) port.userData = {}
-    port.userData.datatype = "{{datatype}}";
-    port.userData.allowMultipleConnections = {{allowMultipleConnections}};
-    port.userData.connectionMandatory = {{connectionMandatory}};
+        if (!port.userData) port.userData = {}
+        port.userData.datatype = "{{datatype}}";
+        port.userData.allowMultipleConnections = {{allowMultipleConnections}};
+        port.userData.connectionMandatory = {{connectionMandatory}};
 
-    {{/ports}}
-    this.persistPorts=false;
+        {{/ports}}
+        this.persistPorts=false;
     },
 
-    createShapeElement : function()
-    {
-    var shape = this._super();
-    this.originalWidth = {{width}};
-    this.originalHeight= {{height}};
-    return shape;
+    createShapeElement : function(){
+        var shape = this._super();
+        this.originalWidth = {{width}};
+        this.originalHeight= {{height}};
+        return shape;
     },
 
-    createSet: function()
-    {
-    this.canvas.paper.setStart();
+    createSet: function(){
+        this.canvas.paper.setStart();
 
-    {{#figures}}
-    // {{{name}}}
-    shape = {{{constructor}}};
-    shape.attr({{{attr}}});
-    shape.data("name","{{{name}}}");
-    {{{extra}}}
-    {{/figures}}
+        {{#figures}}
+        // {{{name}}}
+        shape = {{{constructor}}};
+        shape.attr({{{attr}}});
+        shape.data("name","{{{name}}}");
+        {{{extra}}}
+        {{/figures}}
 
-    return this.canvas.paper.setFinish();
+        return this.canvas.paper.setFinish();
     },
 
     symbolPicture: "{{symbolPicture}}",

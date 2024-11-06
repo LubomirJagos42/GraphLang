@@ -227,6 +227,22 @@ GraphLang.Debugger.Cpp.debugGetWireValue = function(options = null){
 }
 
 GraphLang.Debugger.Cpp.getCodeLocation = function(){
+    function animateBlinkObject(obj){
+        let errorOpacityToggle = true;
+        let errorOpacityToggleCounter = 0;
+        obj.on("timer", function(emitter){
+            obj.attr({opacity: (errorOpacityToggle ? 0.1 : 1)});
+            errorOpacityToggle = !errorOpacityToggle;
+            errorOpacityToggleCounter++;
+            if (errorOpacityToggleCounter > 6){
+                obj.stopTimer();
+                obj.attr({opacity: 1});
+                errorOpacityToggleCounter = 0;
+            }
+        });
+        obj.startTimer(120);
+    }
+
     GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`frame`, function(response) {
         let gdbMessages = JSON.parse(response);
         let lineNumber = -1;
@@ -247,6 +263,17 @@ GraphLang.Debugger.Cpp.getCodeLocation = function(){
 
         //log info
         GraphLang.Debugger.Cpp.logResponse({data: `code current line: ${lineNumber}, breakpoint: ${JSON.stringify(breakpointInfo)}`});
+
+        //TODO: NEED TO REMEMBER WHAT IS MAIN CANVAS, WHAT SCHEMATIC WAS THERE LOADED!!!
+
+        //if breakpoint is in subnode load it into main canvas
+        if (breakpointInfo.parentName != null){
+            let nodeWithBreakpointObj = eval("new " + breakpointInfo.parentName + "();")
+            GraphLang.Utils.displayContents(nodeWithBreakpointObj.jsonDocument);                //this will load schematic into main appCanvas
+        }
+
+        let currentObj = appCanvas.getFigure(breakpointInfo.objectId);
+        animateBlinkObject(currentObj);    //animate node to make visible where is breakpoint or scroll to it to make it visible
     });
 }
 
@@ -262,7 +289,8 @@ GraphLang.Debugger.Cpp.open = function(options = null){
     //add control elements for debugging
     document.querySelector('#'+options.targetElementId).insertAdjacentHTML(
         'afterbegin',
-        `<input name="startDebuggerServerButton" type="button" value="START DEBUGGER" onclick="GraphLang.Debugger.Cpp.startDebuggerServer()" />
+        `<b>Interactive debugger:</b><br/><br />
+        <input name="startDebuggerServerButton" type="button" value="START DEBUGGER" onclick="GraphLang.Debugger.Cpp.startDebuggerServer()" />
         <input name="createWebsocketButton" type="button" value="OPEN WEBSOCKET" onclick="GraphLang.Debugger.Cpp.createWebSocket()" />
         <input name="compileCurrentNode" type="button" value="COMPILE" onclick="GraphLang.Debugger.Cpp.compileCurrentNode()" />
         <input id="cmdStr" name="cmdStr" type="text" value="" />
@@ -273,10 +301,46 @@ GraphLang.Debugger.Cpp.open = function(options = null){
         <input name="endDebuggingButton" type="button" value="END DEBUGGING" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('end debugging')" />
         <input name="frameButton" type="button" value="FRAME" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('frame')" />
         <input name="getCodeLocationButton" type="button" value="?" onclick="GraphLang.Debugger.Cpp.getCodeLocation()" />
-        <input name="randomNumberButton" type="button" value="test random number" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('get random number');GraphLang.Debugger.Cpp.sendMessageAndAddToLog('get random number');GraphLang.Debugger.Cpp.sendMessageAndAddToLog('get random number');" />
+        <input name="randomNumberButton" type="button" value="test random number" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('get random number')" />
+        <input name="codeBreakpointListButton" type="button" value="breakpoint list" onclick="GraphLang.Debugger.Cpp.refreshBreakpointList()" />
         <hr/>
-        <div id="generatedContent"></div><div id="generatedContent"></div>`
+        <div id="generatedContent"></div>`
     );
 }
 
 
+
+
+
+/**
+ *  Functions to open breakpoint list to see variables current value
+ */
+
+GraphLang.Debugger.Cpp.refreshBreakpointList = function(funcParams){
+    let outputElement = document.querySelector("#breakpointList");
+
+    // for (let breakpointRow of document.querySelectorAll("#breakpointList span")){
+    //     breakpointRow.remove();
+    // }
+
+    outputElement.innerHTML = "<b>Code breakpoint list:</b><br /><br/>";
+    translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObj){
+        outputElement.insertAdjacentHTML("beforeend", `<span>${JSON.stringify(breakpointObj)}</span><br />`)
+    });
+}
+
+GraphLang.Debugger.Cpp.toggleBreakpointList = function(funcParams = null){
+    alert("display breakpoint on canvas - not implemented yet");
+}
+
+
+
+
+
+/**
+ *  Functions to open watch list to see variables current value
+ */
+GraphLang.Debugger.Cpp.toggleVariablesWatch = function(funcParams = null){
+    alert('watch open - not implemented yet');
+    let outputElement = document.querySelector("#variablesWatch");
+}

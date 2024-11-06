@@ -974,7 +974,18 @@ GraphLang.Utils.executionOrder = function executionOrder(canvas){
    *      -1 .....not executed, data not available stylesheet
    *      +1 .....prepared, OK
    ******************************************************************************/
-  for (var actualStepNum = 1; actualStepNum < 20; actualStepNum++){
+
+  /**
+   *    This will add steps for infinite big schematic, when actual step is not changed during evaluation it means all nodes have assigned execution order.
+   *        - if there left nodes without execution order it means there are loops and which has to be resolved by changing schematic by user.
+   */
+  let actualStepNumberWasAssigned = true;  //set to true just to enter while loop
+  let actualStepNum = 0;
+  // for (var actualStepNum = 1; actualStepNum < 20; actualStepNum++){
+  while (actualStepNumberWasAssigned){
+    actualStepNum++;
+    actualStepNumberWasAssigned = false;
+
     allNodes.each(function(nodeIndex, nodeObj){
 
       //gathering information about input ports, checking if all of them are already prepared
@@ -1028,6 +1039,7 @@ GraphLang.Utils.executionOrder = function executionOrder(canvas){
           if (inPortPrepared == true){
             if (portObj.userData == undefined)  portObj.userData = {};
             portObj.userData.executionOrder = actualStepNum;
+              actualStepNumberWasAssigned = true;    //PORT execution order was assign therefore there was change
           }
         }
         inputPortCnt++; //conting input ports of node
@@ -1044,7 +1056,10 @@ GraphLang.Utils.executionOrder = function executionOrder(canvas){
           }
         });
         if (!isPropertyNodePrepared){cnt1 = 0; inputPortCnt = 1;} //if inputs are not prepared just set counters into invalid state and execution order is not generated
-        else if (nodeObj.getParent().userData.executionOrder == -1) nodeObj.getParent().userData.executionOrder = actualStepNum;  //set PropertyNode executionOrder
+        else if (nodeObj.getParent().userData.executionOrder == -1){
+            nodeObj.getParent().userData.executionOrder = actualStepNum;    //set PropertyNode executionOrder
+            actualStepNumberWasAssigned = true;                                    //NODE execution order was assign therefore there was change
+        }
       }
 
       /***************************************************************************************
@@ -2205,6 +2220,7 @@ GraphLang.Utils.ErrorList = {
     CONNECTION_UNDEFINED_DATATYPE: "CONNECTION_UNDEFINED_DATATYPE",
     CONNECTION_DIFFERENT_DATATYPE: "CONNECTION_DIFFERENT_DATATYPE",
     NODE_MISSING_TRANSLATE_FUNCTION: "NODE_MISSING_TRANSLATE_FUNCTION",
+    NO_EXECUTION_ORDER: "NO_EXECUTION_ORDER",
 }
 
 /**
@@ -2368,17 +2384,19 @@ GraphLang.Utils.userInteractiveErrorOnClick = function(errorObj){
     /*
      *  Animate blink for error object (wire, port, ...)
      */
-    function animateBlinkObject(obj){
+    function animateBlinkObject(obj, callbackFunction){
+        let MAX_TOGGLE_COUNT = 6;
         let errorOpacityToggle = true;
         let errorOpacityToggleCounter = 0;
         obj.on("timer", function(emitter){
             obj.attr({opacity: (errorOpacityToggle ? 0.1 : 1)});
             errorOpacityToggle = !errorOpacityToggle;
             errorOpacityToggleCounter++;
-            if (errorOpacityToggleCounter > 6){
+            if (errorOpacityToggleCounter > MAX_TOGGLE_COUNT){
                 obj.stopTimer();
                 obj.attr({opacity: 1});
-                errorOpacityToggleCounter = 0;
+                errorOpacityToggleCounter = 0;  //erase toggle counter
+                callbackFunction(obj);             //call callback function
             }
         });
         obj.startTimer(120);
@@ -2407,6 +2425,18 @@ GraphLang.Utils.userInteractiveErrorOnClick = function(errorObj){
     else if (errorObj.type == GraphLang.Utils.ErrorList.MANDATORY_CONNECTION_FOR_PORT_REQUIRED) {
         let errorPort = nodeCanvas.getFigure(errorObj.figureId).getPort(errorObj.portName);
         animateBlinkObject(errorPort);
+    }
+    else if (errorObj.type == GraphLang.Utils.ErrorList.NO_EXECUTION_ORDER) {
+        /*
+         *  this will recalculate whole execution order, here should be just show labels in middle of nodes,
+         *  this is computation expensive, but for now it makes what it should do
+         */
+        GraphLang.Utils.initAllPortToDefault(nodeCanvas);
+        GraphLang.Utils.executionOrder(nodeCanvas);
+
+        let errorNode = nodeCanvas.getFigure(errorObj.figureId);
+        errorNode.setStroke(4).setColor("#DD2241");
+        animateBlinkObject(errorNode, (errorNode) => errorNode.setStroke(0));
     }
     else{
         alert(`error type: ${errorObj.type}\nThere is no interactive display, you must find it manually.`);

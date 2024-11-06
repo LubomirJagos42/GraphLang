@@ -20,6 +20,9 @@ translateToCppCodeAdditionalIdNoHyphen = new draw2d.util.ArrayList();
 
 translateToCppCodeErrorList = new draw2d.util.ArrayList();
 translateToCppCodeBreakpointList = new draw2d.util.ArrayList();
+translateToCppCodeWatchList = new draw2d.util.ArrayList();
+
+GLOBAL_CODE_LINE_OFFSET = 0;
 
 GraphLang.Utils.getCppCodeImport = function(){
     var cCode = "";
@@ -64,10 +67,42 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
     //ORIGINAL WITHOUT REWRITING IDs
     //copyElement.innerHTML = GraphLang.Utils.translateToCppCode2(canvas, null);
 
-    // INITIALIZATION
-    // added by LuboJ. this CAN CAUSE SOME ERRORS IT WASN'T HERE UNTIL RECENTLY when I saw that there is not port initialization and execution order done in this task.
+    /*********************************************************************************************************
+     *  PORT INITIALIZATION
+     *      - added by LuboJ. this CAN CAUSE SOME ERRORS IT WASN'T HERE UNTIL RECENTLY when I saw that there
+     *      is not port initialization and execution order done in this task.
+     */
     this.initAllPortToDefault(canvas);
+
+    /*********************************************************************************************************
+     *  Calculate execution order of nodes, if there are "loops" created in diagram it can happen that nodes
+     *  will not have execution order
+     *      - TODO: after execution order check if there are nodes without execution order and therefore this needs to be resolved by user
+     */
     this.executionOrder(canvas);
+
+    //TODO: here must be check if all nodes at canvas have execution order!!!
+    let haveAllNodesExecutionOrder = true;
+    canvas.getFigures().each(function(figureIndex, figureObj){
+        if (figureObj.getUserData() && figureObj.getUserData().executionOrder && figureObj.getUserData().executionOrder <= 0){
+            haveAllNodesExecutionOrder = false;
+
+            translateToCppCodeErrorList.add({
+                canvasOwnerName: '',
+                figureName: figureObj.NAME,
+                figureId: figureObj.getId(),
+                portName: portObj.getName(),
+                type: GraphLang.Utils.ErrorList.NO_EXECUTION_ORDER,
+                message: `${figureObj.NAME} has no execution order`
+            });
+            console.warn(translateToCppCodeErrorList.last());
+        }
+    });
+    if (haveAllNodesExecutionOrder === false){
+        let errorMessage =`Cannot calculate execution order for some nodes, there could be loops in diagram, need to be resolved!`;
+        console.error(errorMessage);
+        alert(errorMessage);
+    }
 
     /*********************************************************************************************************
      *  WIRES DECLARATION
@@ -227,7 +262,7 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                  */
                 if (!translateToCppCodeSubnodeArray.contains(nodeObj.NAME) && nodeObj.jsonDocument !== undefined && nodeObj.jsonDocument.length > 0){
                     translateToCppCodeSubnodeArray.push(nodeObj.NAME);
-                    GraphLang.Utils.translateToCppCodeSubNode(nodeObj);
+                    GraphLang.Utils.translateToCppCodeSubNode({nodeObj: nodeObj, schematicOwnerId: null, schematicOwnerName: null});
                 }
 
                 /*
@@ -238,7 +273,7 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                     nodeObjChildrenWithDiagram.each(function(subnodeIndex, subnodeObj){
                         if (!translateToCppCodeSubnodeArray.contains(subnodeObj.NAME) && subnodeObj.jsonDocument !== undefined && subnodeObj.jsonDocument.length > 0){
                             translateToCppCodeSubnodeArray.push(subnodeObj.NAME);
-                            GraphLang.Utils.translateToCppCodeSubNode(subnodeObj);
+                            GraphLang.Utils.translateToCppCodeSubNode({nodeObj: subnodeObj, schematicOwnerId: nodeObj.getId(), schematicOwnerName: nodeObj.NAME});
                         }
                     });
                 }
@@ -279,23 +314,36 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
 
                 /*
                  *  C/C++ code line generated
+                 *      - input parameter to translate function is objectm this way there could be named parameters passed and easily tested and used inside function
                  */
-                if (nodeObj.translateToCppCode) cCode += nodeObj.translateToCppCode();
+                if (nodeObj.translateToCppCode) cCode += nodeObj.translateToCppCode({nodeId: nodeObj.getId()});
 
                 /*
-                 *  Breakpoint list fullfilment
+                 *  BREAKPOINT LIST FILLING FOR NODES
                  *      - for normal canvas nodes
                  *      - for loops and similar
                  */
                 if (nodeObj.getUserData() && nodeObj.getUserData().isSetBreakpoint){
                     let currentLineNumber = cCode.split("\n").length - 1;
-                    translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "node", parent: null});
+                    translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "node", parentId: null, parentName: null});
                 }
                 if (nodeObj.getBreakpointList){
                     let lineNumberOffset = cCode.split("\n").length - 1;
                     nodeObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
                         breakpointObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
                         translateToCppCodeBreakpointList.add(breakpointObj);
+                    });
+                }
+
+                /*
+                 *  WATCH LIST getting from node
+                 *      If node provides watch list get it from it, this is for Loops since they have subdiagrams
+                 */
+                if (nodeObj.getWatchList){
+                    let lineNumberOffset = cCode.split("\n").length - 1;
+                    nodeObj.getWatchList().each(function(watchIndex, watchObj){
+                        watchObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
+                        translateToCppCodeWatchList.add(watchObj);
                     });
                 }
 
@@ -309,9 +357,21 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                  */
                 nodeObj.getOutputPorts().each(function(portIndex, portObj){
                     portObj.getConnections().each(function(wireIndex, wireObj){
+                        /*
+                         *  SET BREAKPOINT ON WIRE
+                         */
                         if (wireObj.getUserData() && wireObj.getUserData().isSetBreakpoint){
                             let currentLineNumber = cCode.split("\n").length - 1;
-                            translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "wire", parent: null});
+                            translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "wire", parentId: null, parentName: null});
+                        }
+
+                        /*
+                         *  SET WATCH ON WIRE - watch can be just on wire since there is where data are floating
+                         *      - this is ONLY PLACE where watch for wires is obtained
+                         */
+                        if (wireObj.getUserData() && wireObj.getUserData().isSetBreakpoint){
+                            let currentLineNumber = cCode.split("\n").length - 1;
+                            translateToCppCodeWatchList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "wire", parentId: null, parentName: null});
                         }
                     });
                 });
@@ -354,7 +414,7 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
      *  HERE IS WRITING ERRORS FOR USER INTO #helperPane
      */
     let outputTarget = document.getElementById("schematicErrors");
-    outputTarget.innerHTML = "";
+    outputTarget.innerHTML = "<b>Schematic errors:</b><br /><br />";
     translateToCppCodeErrorList.each(function(errorIndex, errorObj){
         let errorElement = document.createElement("span");
         errorElement.innerHTML = errorObj.type;
@@ -429,12 +489,18 @@ GraphLang.Utils.translateToCppCodeClusterTypeDefinitionFromNode = function(class
  * @returns {String} C/C++ code as string
  * @description Load node schematic in auxiliary canvas and run translate process for it, result should be function definition for particular node.
  */
-GraphLang.Utils.translateToCppCodeSubNode = function(nodeObj){
+GraphLang.Utils.translateToCppCodeSubNode = function(funcParams){
     let cCode = "";
     cCodeParams = "";
     cCodeParamsInput = "";
     cCodeParamsOutput = "";
     cCodeReturnDatatype = "void";
+
+    let SUB_NODE_ID = Object.hasOwn(funcParams, "schematicOwnerId") ? funcParams.schematicOwnerId : null;
+    let SUB_NODE_NAME = Object.hasOwn(funcParams, "schematicOwnerName") ? funcParams.schematicOwnerName : null;
+
+    let nodeObj = Object.hasOwn(funcParams, "nodeObj") ? funcParams.nodeObj : null;
+    if (nodeObj === null) console.error(`Translating subnode, nodeObj must be defined in parameters!`);
 
     /*
      *      SET GLOBAL FLAG TO NOT CREATE TERMINALS DECLARATIONs
@@ -483,6 +549,46 @@ GraphLang.Utils.translateToCppCodeSubNode = function(nodeObj){
             };
             console.log(`added subnode port: translateToCppCodeSubnodeInputTerminalsDefaultValuesArray["${nodeObj.NAME}"]["${figureObj.getUserData().nodeLabel}"]`);
         }
+
+        /*
+         *  Breakpoint list fulfilment for SUB NODE
+         *      - for normal canvas nodes
+         *      - for loops and similar
+         */
+        if (figureObj.getUserData() && figureObj.getUserData().isSetBreakpoint){
+            let currentLineNumber = cCode.split("\n").length - 1;
+            translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: figureObj.getId(), type: "node", parentId: SUB_NODE_ID, parentName: SUB_NODE_NAME});
+        }
+        if (figureObj.getBreakpointList){
+            let lineNumberOffset = cCode.split("\n").length - 1;
+            figureObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
+                breakpointObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
+                translateToCppCodeBreakpointList.add(breakpointObj);
+            });
+        }
+        /*
+         *  TODO: Here must be check if wires connected to node have set breakpoint, if yes need to add code line into breakpoint list
+         */
+        figureObj.getOutputPorts().each(function(portIndex, portObj){
+            portObj.getConnections().each(function(wireIndex, wireObj){
+                /*
+                 *  Nested node getting breakpoints for NODES
+                 */
+                if (wireObj.getUserData() && wireObj.getUserData().isSetBreakpoint){
+                    let currentLineNumber = cCode.split("\n").length - 1;
+                    translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "wire", parentId: SUB_NODE_ID, parentName: SUB_NODE_NAME});
+                }
+
+                /*
+                 *  Nested node getting breakpoints for WIRES
+                 */
+                if (wireObj.getUserData() && wireObj.getUserData().isSetWatch){
+                    let currentLineNumber = cCode.split("\n").length - 1;
+                    translateToCppCodeWatchList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "wire", parentId: SUB_NODE_ID, parentName: SUB_NODE_NAME});
+                }
+            });
+        });
+        //END breakpoint list filling
 
         /*
          *  OUTPUT TERMINAL, as pointers
@@ -675,6 +781,10 @@ SerialClass Serial;
     translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObject){
         breakpointObject.lineNumber += lineNumberOffset;
     });
+    translateToCppCodeWatchList.each(function(watchIndex, watchObject){
+        watchObject.lineNumber += lineNumberOffset;
+    });
+    GLOBAL_CODE_LINE_OFFSET = lineNumberOffset;
 
     template_cCode += cCode;
     template_cCode += "\n";
@@ -734,6 +844,7 @@ GraphLang.Utils.getCppCode4 = function(canvas, showCode = true){
     translateToCppCodeAdditionalIdNoHyphen.clear();
     translateToCppCodeErrorList.clear();
     translateToCppCodeBreakpointList.clear();
+    translateToCppCodeWatchList.clear();
 
     /******************************************************************************
      * Translate canvas to C/C++ code
@@ -785,6 +896,13 @@ typedef float numeric;
     translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObject){
         breakpointObject.lineNumber += lineNumberOffset;
     });
+    translateToCppCodeWatchList.each(function(watchIndex, watchObject){
+        watchObject.lineNumber += lineNumberOffset;
+    });
+    GLOBAL_CODE_LINE_OFFSET = lineNumberOffset;
+
+    //add program startpoint main() into breakpoint list, in debug mode it's first stop where it's waiting during stepping
+    translateToCppCodeBreakpointList.add({lineNumber: lineNumberOffset, objectId: null, type: "programStart", parent: null});
 
     template_cCode += cCode;
     template_cCode += "\n";

@@ -81,3 +81,107 @@ Finished features
             .then(response => alert(JSON.stringify(response)))
             .catch(response => alert(JSON.stringify(response)));
     - code updated, now new schematic or update is running ok
+
+Installation
+============
+- needed things:
+    - mysql or MariaDB
+    - php
+    - ftp
+    - gcc > 11.0.0
+
+- log into raspi:
+    - sshpass -p raspberry ssh pi@192.168.0.198
+
+- 5th November, added into /etc/sudoers.d/010_pi-nopasswd line:
+    www-data ALL=(ALL) NOPASSWD: /usr/bin/python3 /var/www/html/GraphLangServerApp/run_cpp_debugger.py
+- don't know if this helps but now script is running since I also installed into system pygdbmi using command:
+    pip3 install --break-system-packages pygdbm
+
+- commands
+    sudo apt-get install mc php mariadb-client mariadb-server apache2 phpmyadmin git
+    sudo systemctl enable --now apache2
+    cd ~/Downloads
+
+    mysql_secure_installation
+        ALTER USER 'root'@'localhost' IDENTIFIED BY 'root';
+
+    sudo apt install vsftpd
+    sudo nano /etc/vsftpd.conf
+        uncomment following lines:
+            write_enable=YES
+            local_umask=022
+            chroot_local_user=YES
+        change line:
+            anonymous_enable=YES
+            to
+            anonymous_enable=NO
+        add lines at the end:
+            user_sub_token=$USER
+            local_root=/var/www
+    set permissions to ftp folder:
+            chmod a-w /var/www  //remove write permission to ftp folder for other users, DON'T USE THIS
+    sudo service vsftpd restart
+
+    wget -O get-platformio.py https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py
+    python3 get-platformio.py
+
+    arduino installation by: https://www.caronteconsulting.com/en/news/how-to/raspberry-arduino-cli/
+
+    ESP core installation into arduino:
+        arduino-cli core install esp32:esp32
+
+    PHP set configuration:
+        sudo nano /etc/php/8.2/apache2/php.ini
+            - max_upload_size=100M
+            - post_max_size=100M
+            - display_errors=On
+
+    index.php add to display error:
+        ini_set('display_errors', 1);
+
+    raspi C library:
+        pigpio library: https://abyz.me.uk/rpi/pigpio/cif.html#gpioSetMode
+        wiringPi:       https://github.com/WiringPi/WiringPi
+                        sudo apt install wiringpi
+
+                        wget https://github.com/WiringPi/WiringPi/releases/download/3.10/wiringpi_3.10_armhf.deb
+                        sudo apt install ./wiringpi_....deb
+
+        compile code with wiringPi:
+            g++ blink_1.cpp -lwiringPi
+
+    sudo git clone https://github.com/LubomirJagos42/GraphLangServerApp.git GraphLangServerApp
+    cd GraphLangServerApp
+    sudo git checkout develop
+
+                //dont use this //git submodule update --init --recursive             //just when runing first time
+
+    cd GraphLang
+    sudo git clone https://github.com/LubomirJagos42/GraphLang.git 0v1
+
+    cd /var/www/html/
+    sudo chmod 777 -R GraphLangServerApp
+
+    apache restart:
+        sudo /etc/init.d/apache2 restart
+
+    install python packages:
+        pip3 install --break-system-packages pygdbmi
+        pip3 install --break-system-packages remote_pdb
+        pip3 install --break-system-packages websockets
+        pip3 install --break-system-packages psutil
+
+- test running debugger server using this command on raspbian it seems to have problem to execute it under different account:
+        sudo -u www-data bash -c '/var/www/html/GraphLangServerApp/run_cpp_debugger.sh'
+
+
+
+
+
+
+
+
+
+
+

@@ -184,6 +184,24 @@ example.Toolbar = Class.extend({
 		this.html.append(this.debuggerOpenButton);
 
 		/**
+		 *	variablesWatchToggle Button
+		 */
+		this.variablesWatchToggleButton  = $("<button id=\"variablesWatchToggleButton\">Watch</button>");
+		this.variablesWatchToggleButton.button().click($.proxy(function(){
+			GraphLang.Debugger.Cpp.toggleVariablesWatch();
+		}));
+		this.html.append(this.variablesWatchToggleButton);
+
+		/**
+		 *	breakpointListToggle Button
+		 */
+		this.breakpointListToggleButton  = $("<button id=\"breakpointListToggleButton\">Breakpoint List</button>");
+		this.breakpointListToggleButton.button().click($.proxy(function(){
+			GraphLang.Debugger.Cpp.toggleBreakpointList();
+		}));
+		this.html.append(this.breakpointListToggleButton);
+
+		/**
 		 *	mouseRightClick Button - for tablet mostly
 		 *		TODO: There is still problem that jQuery context menu is not displayed, but this event seems to be working properly
 		 */

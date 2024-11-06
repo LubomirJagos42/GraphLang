@@ -294,6 +294,8 @@ foreach ($userDefinedNodesClassNames as $className){
 
    <div id="helperPane" style="width: 300px;">
        <div id="schematicErrors"></div>
+       <div id="breakpointList"></div>
+       <div id="variablesWatch"></div>
        <div id="debuggerPane"></div>
    </div>
 

@@ -21,6 +21,7 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
     this.userData.wasTranslatedToCppCode = false;
     this.translateToCppCodeImportArray = new draw2d.util.ArrayList();
     this.translateToCppCodeBreakpointList = new draw2d.util.ArrayList();
+    this.translateToCppCodeWatchList = new draw2d.util.ArrayList();
   },
 
   //THIS IS MY FUNCTION TO GET INPUT PORTS LIST FOR THIS Loop
@@ -294,6 +295,10 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
 
   getBreakpointList: function(){
       return this.translateToCppCodeBreakpointList;
+  },
+
+  getWatchList: function(){
+      return this.translateToCppCodeWatchList;
   },
 
   /*****************************************************************************************************************************************************

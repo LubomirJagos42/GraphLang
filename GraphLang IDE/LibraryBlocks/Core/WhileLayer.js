@@ -147,7 +147,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
    *    TRANSLATE TO C/C++ functions
    *****************************************************************************************************************************************************/ 
   
-  translateToCppCode: function(){
+  translateToCppCode: function(funcParams){
     var cCode = "";
     this.getUserData().wasTranslatedToCppCode = true;
     this.translateToCppCodeImportArray.clear();
@@ -184,15 +184,15 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
       if (figObj.translateToCppCodeDeclaration && figObj.NAME.toLowerCase().search("feedbacknode") == -1) cCode += figObj.translateToCppCodeDeclaration().replaceAll("\n", "\n\t") ;
 
       if (figObj.translateToCppCode){
-        cCode += figObj.translateToCppCode().replaceAll("\n", "\n\t")
+        cCode += figObj.translateToCppCode({nodeId: figObj.getId()}).replaceAll("\n", "\n\t")
       }else if (figObj.translateToCppCode2){
         cCode += figObj.translateToCppCode2().replaceAll("\n", "\n\t")
       }
 
-      //breakpoint - add node line into list
+      //BREAKPOINT - ADD NODE into list
       if (figObj.getUserData() && figObj.getUserData().isSetBreakpoint){
           let currentLineNumber = cCode.split("\n").length;
-          this.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "node", parent: this.getName()});
+          this.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: figObj.getId(), type: "node", parentId: (Object.hasOwn(funcParams, "nodeId")?funcParams.nodeId:null), parentName: this.NAME});
       }
 
      /* in case of post C/C++ code run it */
