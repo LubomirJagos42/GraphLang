@@ -173,6 +173,78 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
         }
     );
 
+    /*
+     *  Evaluate compilation output
+     */
+    let compileErrorLines = new draw2d.util.ArrayList();
+    let compileErrorByLineNumbers = [];
+
+    let compileCommandOutputStr = ajaxResponse.compileCommandOutput;
+    console.log(`--> compileCommandOutputStr:`);
+    console.log(compileCommandOutputStr);
+    let compileCommandOutputObj = JSON.parse(compileCommandOutputStr);
+    console.log(`--> compileCommandOutputObj:`);
+    console.log(compileCommandOutputObj);
+    if (compileCommandOutputObj.status == -1){
+        /*
+         *  If there is status -1 it means there is whole error obj str in output json format
+         *  Error object structure:
+         *      - array[0..n]
+         *          - children: array[0..n]
+         *          - locations: array[0..n]
+         *              - caret:
+         *                  -line: number
+         *
+         *  This will extract just caret object information into array:
+         *      - array[0..n]
+         *          - byte-column
+         *          - column
+         *          - display-column
+         *          - file
+         *          - line
+         */
+        let compileErrorObj = JSON.parse(compileCommandOutputObj.errorMsg.replaceAll('\\"', '"'));
+        console.log(`--> compileErrorObj everything:`);
+        console.log(compileErrorObj);
+
+        for (let errorObj of compileErrorObj){
+            // console.log(`----> compileErrorObj one:`);
+            for (let errorLocation of errorObj.locations){
+                // console.log(errorLocation);
+                compileErrorLines.add(errorLocation.caret);
+
+                //create new array at line number key
+                let arrayKey = String(errorLocation.caret.line);    //output of this is object with properties, NO ARRAY
+                if (!compileErrorByLineNumbers[arrayKey]){
+                    compileErrorByLineNumbers[arrayKey] = [];
+                }
+
+                let lineError = errorLocation.caret;
+                lineError.message = errorObj.message;                           //duplicate error message into each caret on same line
+                compileErrorByLineNumbers[arrayKey].push(errorLocation.caret);  //add line error into array under line number key
+            }
+        }
+    }
+
+    console.log(`--> C/C++ code error lines:`);
+    compileErrorLines.each(function(errorLineIndex, errorLineObj){
+        console.log(errorLineObj);
+    });
+
+    console.log(`--> C/C++ error logs by line numbers:`);
+    console.log(compileErrorByLineNumbers);
+    console.log(`--> code errors lines numbers:`);
+    let allLineNumbersAsStr = '';
+    for (let numberStr in compileErrorByLineNumbers) allLineNumbersAsStr += numberStr + ', ';   //for loop is using 'in' so we are going through object properties NO ARRAY
+    console.log(allLineNumbersAsStr);
+
+    /*
+     *  TODO: put extracted information into output ajax structure
+     */
+
+    /*
+     *  Return output
+     */
     return ajaxResponse;
 }
 

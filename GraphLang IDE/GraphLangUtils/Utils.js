@@ -992,11 +992,13 @@ GraphLang.Utils.executionOrder = function executionOrder(canvas){
       nodeObj.getInputPorts().each(function(portIndex, portObj){
         if (portObj.getUserData().executionOrder > 0) cnt1++; //counting prepared input ports
         else if (portObj.getUserData().executionOrder < 0){
-          /* if input port is not ready, check connected ports for which is this port waiting
-          and check their status */
-          let inPortPrepared = true;
 
-          //CHECK STATE OF CONNECTED OUTPUTS BEFORE THIS PORT
+          /*
+           *    CHECK STATE OF CONNECTED OUTPUTS BEFORE THIS PORT
+           *        - if input port is not ready, check connected ports for which is this port waiting and check their status
+           *        - if input port is ready then signalized that actual step is true, BUT STEP NUMBER WILL BE ASSIGNED IN NEXT PASS
+           */
+          let inPortPrepared = true;
           portObj.getConnections().each(function(wireIndex, wireObj){
               if (wireObj.getSource() && wireObj.getSource().getExecutionOrder){
                   //if there is function on output port which provides execution order use it
@@ -1007,6 +1009,7 @@ GraphLang.Utils.executionOrder = function executionOrder(canvas){
                   inPortPrepared = false;
               }
           });
+          if (inPortPrepared == true) actualStepNumberWasAssigned = true;   //node input ports are prepared but node step number will be assigned in next pass, NEED TO SIGNALIZED otherwise step assignment will stop
 
           //CHECK FOR CONTENT INSIDE LOOP IF WAIT FOR INPUT TUNNELS
           if (nodeObj.NAME.toLowerCase().search("tunnel") >= 0){
@@ -1039,7 +1042,7 @@ GraphLang.Utils.executionOrder = function executionOrder(canvas){
           if (inPortPrepared == true){
             if (portObj.userData == undefined)  portObj.userData = {};
             portObj.userData.executionOrder = actualStepNum;
-              actualStepNumberWasAssigned = true;    //PORT execution order was assign therefore there was change
+            actualStepNumberWasAssigned = true;    //PORT execution order was assign therefore there was change
           }
         }
         inputPortCnt++; //conting input ports of node

@@ -193,11 +193,16 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
 
     /*
      *    Translate nodes based on their execution order
-     *        Now it's running for some limited execution order.
-     *
-     *    TODO: There is now maximum steps to translate set to 20 but should be translate everything
+     *      - looks into all nodes on canvas and found highest execution order
      */
-    for (var actualStep = 0; actualStep < 20; actualStep++){
+    let HIGHEST_STEP_NUMBER = 0;
+    canvas.getFigures().each(function(figureIndex, figureObj){
+        if (figureObj.getUserData() && figureObj.getUserData().executionOrder && figureObj.getUserData().executionOrder > HIGHEST_STEP_NUMBER){
+            HIGHEST_STEP_NUMBER = figureObj.getUserData().executionOrder;
+        }
+    });
+
+    for (var actualStep = 0; actualStep <= HIGHEST_STEP_NUMBER; actualStep++){
         /*
          *    First translate feedback nodes as they have higher priority than nodes.
          */
