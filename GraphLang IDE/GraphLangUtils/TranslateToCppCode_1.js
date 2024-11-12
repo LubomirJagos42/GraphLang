@@ -48,13 +48,32 @@ GraphLang.Utils.getCppCodeTypeDefinition = function(){
 
 /**
  * @method translateCanvasToCppCode
- * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
- * @param {boolean} translateTerminalsDeclaration - if set to false input/output terminals for outside world declaration are not written in C/C++, this is for translate subnodes
- * @param {String} nodeName - name of current node which schematic is being translated into code, this is set when subnode diagram is translated into code
+ * @param {Object}        funcParam - object with input parameters
+ * @param {draw2d.Canvas} funcParam.canvas - schematic which will be serialize to JSON
+ * @param {boolean}       funcParam.translateTerminalsDeclaration - if set to false input/output terminals for outside world declaration are not written in C/C++, this is for translate subnodes
+ * @param {String}        funcParam.nodeName - name of current node which schematic is being translated into code, this is set when subnode diagram is translated into code
+ * @param {Object[]}      funcParam.compileErrorLines - array of error lines which should be searched during translation process
+ * @param {int}           funcParam.codeLinesOffset - number of lines which are generated before, this is to got right line number when searching for error line
  * @returns {String} C/C++ code as string
  * @description Copy diagram as C/C++ code into clipboard, uses inside translateToCppCode2() function.
  */
-GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDeclaration = true, nodeName = ""){
+GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
+    //extract input params from input object
+    let canvas = Object.hasOwn(funcParams, "canvas") ? funcParams.canvas : null;
+    let translateTerminalsDeclaration = Object.hasOwn(funcParams, "translateTerminalsDeclaration") ? funcParams.translateTerminalsDeclaration : true;
+    let nodeName = Object.hasOwn(funcParams, "nodeName") ? funcParams.nodeName : "";
+
+    let codeLinesOffset = Object.hasOwn(funcParams, "codeLinesOffset") ? funcParams.codeLinesOffset : 0;
+    let compileErrorLines = Object.hasOwn(funcParams, "compileErrorLines") ? funcParams.compileErrorLines : null;
+
+    //check canvas variable, if not defined use main canvas
+    if (canvas === null){
+        let warningMessage = "Canvas not defined in call translateCanvasToCppCode(), default main canvas will be used!";
+        alert(warningMessage);
+        console.warn(warningMessage);
+        canvas = appCanvas;
+    }
+
     let cCode = "";
 
     //TO BE SURE RECALCULATE NODES OWNERSHIP BY loopsRecalculateAbroadFigures
@@ -160,7 +179,16 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
             /*
              *    when flag isWireOnTopCanvas is still true write wire declaration, otherwise do nothing and continue for next wire
              */
-            if (isWireOnTopCanvas)  cCode += sourceDatatype + " wire_" + lineObj.getId() + ";\n";
+            if (isWireOnTopCanvas){
+                cCode += sourceDatatype + " wire_" + lineObj.getId() + ";\n";
+                GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
+                    inputStr: cCode,
+                    startLine: 0,
+                    errorLines: compileErrorLines,
+                    lineOffset: codeLinesOffset,
+                    errorSourceObj: lineObj
+                });
+            }
         }
 
         /*
@@ -173,6 +201,13 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
         ){
             sourceDatatype = lineObj.getSource().getParent().getDatatype();
             cCode += sourceDatatype + " wire_" + lineObj.getId() + ";\n";
+            GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
+                inputStr: cCode,
+                startLine: 0,
+                errorLines: compileErrorLines,
+                lineOffset: codeLinesOffset,
+                errorSourceObj: lineObj
+            });
         }
     });
 
@@ -211,7 +246,17 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                 nodeObj.getUserData().executionOrder == actualStep &&
                 nodeObj.NAME.toLowerCase().search("feedbacknode") > -1
             ){
-                if (nodeObj.translateToCppCode) cCode += nodeObj.translateToCppCode();
+                if (nodeObj.translateToCppCode){
+                    let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
+                    cCode += nodeObj.translateToCppCode();
+                    GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
+                        inputStr: cCode,
+                        startLine: lineCountBefore,
+                        errorLines: compileErrorLines,
+                        lineOffset: codeLinesOffset,
+                        errorSourceObj: nodeObj
+                    });
+                }
             }
         });
 
@@ -295,7 +340,17 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                  *        node must NOT BE TERMINAL or
                  *        can be terminal but translateTerminalDeclaration == true    (transcripting top canvas)
                  */
-                if (nodeObj.translateToCppCodeDeclaration && (!nodeObj.userData.isTerminal || (nodeObj.userData.isTerminal && translateTerminalsDeclaration))) cCode += nodeObj.translateToCppCodeDeclaration();
+                if (nodeObj.translateToCppCodeDeclaration && (!nodeObj.userData.isTerminal || (nodeObj.userData.isTerminal && translateTerminalsDeclaration))){
+                    let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
+                    cCode += nodeObj.translateToCppCodeDeclaration();
+                    GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
+                        inputStr: cCode,
+                        startLine: lineCountBefore,
+                        errorLines: compileErrorLines,
+                        lineOffset: codeLinesOffset,
+                        errorSourceObj: nodeObj
+                    });
+                }
 
                 /*
                  *  TODO here must be default values for not connected node terminals, ie:
@@ -308,11 +363,19 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                         if (portObj.getConnections().getSize() == 0){
                             console.log(`getting default port value: translateToCppCodeSubnodeInputTerminalsDefaultValuesArray["${nodeObj.NAME}"]["${portObj.getName()}"]`);
                             let defaultPortValues = translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[`${nodeObj.NAME}`][portObj.getName()];
+                            let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
                             if (defaultPortValues.variableValue){
                                 cCode += `${defaultPortValues.datatype} node_${nodeObj.getId()}_inputPort_${defaultPortValues.variableName} = ${defaultPortValues.variableValue};\n`;
                             }else{
                                 cCode += `${defaultPortValues.datatype} node_${nodeObj.getId()}_inputPort_${defaultPortValues.variableName};\n`;
                             }
+                            GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
+                                inputStr: cCode,
+                                startLine: lineCountBefore,
+                                errorLines: compileErrorLines,
+                                lineOffset: codeLinesOffset,
+                                errorSourceObj: nodeObj
+                            });
                         }
                     });
                 }
@@ -321,7 +384,23 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                  *  C/C++ code line generated
                  *      - input parameter to translate function is objectm this way there could be named parameters passed and easily tested and used inside function
                  */
-                if (nodeObj.translateToCppCode) cCode += nodeObj.translateToCppCode({nodeId: nodeObj.getId()});
+                if (nodeObj.translateToCppCode){
+                    let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
+                    cCode += nodeObj.translateToCppCode({
+                        nodeId: nodeObj.getId(),
+                        codesLineOffset: codeLinesOffset + lineCountBefore,
+                        compileErrorLines: compileErrorLines,
+                    });
+
+                    console.log("--> ERROR SEARCHING NORMAL TRANSLATION NODE: " + nodeObj.NAME);
+                    GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
+                        inputStr: cCode,
+                        startLine: lineCountBefore,
+                        errorLines: compileErrorLines,
+                        lineOffset: codeLinesOffset,
+                        errorSourceObj: nodeObj
+                    });
+                }
 
                 /*
                  *  BREAKPOINT LIST FILLING FOR NODES
@@ -355,7 +434,17 @@ GraphLang.Utils.translateCanvasToCppCode = function(canvas, translateTerminalsDe
                 /*
                  *    Translate POST code, like ending while or for loop
                  */
-                if (nodeObj.translateToCppCodePost) cCode += nodeObj.translateToCppCodePost();
+                if (nodeObj.translateToCppCodePost){
+                    let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
+                    cCode += nodeObj.translateToCppCodePost();
+                    GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
+                        inputStr: cCode,
+                        startLine: lineCountBefore,
+                        errorLines: compileErrorLines,
+                        lineOffset: codeLinesOffset,
+                        errorSourceObj: nodeObj
+                    });
+                }
 
                 /*
                  *  TODO: Here must be check if wires connected to node have set breakpoint, if yes need to add code line into breakpoint list
@@ -635,7 +724,7 @@ GraphLang.Utils.translateToCppCodeSubNode = function(funcParams){
     /*
      *  Here is calling same parent C/C++ code transcription function on 2nd canvas
      */
-    cCode += GraphLang.Utils.translateCanvasToCppCode(subnodeCanvas, false, nodeObj.NAME).replaceAll('\n','\n\t');
+    cCode += GraphLang.Utils.translateCanvasToCppCode({canvas: subnodeCanvas, translateTerminalsDeclaration: false, nodeName: nodeObj.NAME}).replaceAll('\n','\n\t');
 
     cCode += "\n";  //to not have separate last curly bracket by tabulator
     cCode += '}' + "\n";
@@ -659,14 +748,9 @@ GraphLang.Utils.translateToCppCodeSubNode = function(funcParams){
 },
 
 /**
- * @method getCppCode3
- * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
- * @param {bool} showCode - if true there is code showed in alert message after click on button
- * @returns {String} C/C++ code as string
- * @description Generate C/C++ code using template written in this function.
+ *  Init buffers which collects information about current diagram which is translated.
  */
-GraphLang.Utils.getCppCode3 = function(canvas, showCode = true){
-
+GraphLang.Utils.initTranslateToCppBuffers = function(){
     translateToCppCodeImportArray.clear();          //import statements
     translateToCppCodeTypeDefinitionArray.clear();
     translateToCppCodeFunctionsArray.clear();       //translated subnodes functions bodies
@@ -680,11 +764,30 @@ GraphLang.Utils.getCppCode3 = function(canvas, showCode = true){
     translateToCppCodeAdditionalIdNoHyphen.clear();
     translateToCppCodeErrorList.clear();
     translateToCppCodeBreakpointList.clear();
+    translateToCppCodeWatchList.clear();
+}
+
+/**
+ * @method getCppCode3
+ * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
+ * @param {bool} showCode - if true there is code showed in alert message after click on button
+ * @returns {String} C/C++ code as string
+ * @description Generate C/C++ code using template written in this function.
+ */
+GraphLang.Utils.getCppCode3 = function(canvas, showCode = true){
+
+    /******************************************************************************
+     * Init buffers needed for translation process
+     *******************************************************************************/
+    GraphLang.Utils.initTranslateToCppBuffers();
 
     /******************************************************************************
      * Translate canvas to C/C++ code
      *******************************************************************************/
-    let cCode = GraphLang.Utils.translateCanvasToCppCode(canvas, translateTerminalsDeclaration = true);
+    let cCode = GraphLang.Utils.translateCanvasToCppCode({
+        canvas: canvas,
+        translateTerminalsDeclaration: true
+    });
 
     var template_cCode = "";
     var _disabled_template_cCode = "";
@@ -782,7 +885,7 @@ SerialClass Serial;
     template_cCode += "\n";
 
     //add offset to breakpoints line numbers since here before is some code generated and breakpoints were counted just from canvas code
-    let lineNumberOffset = template_cCode.split("\n").length - 1;
+    let lineNumberOffset = GraphLang.Utils.getLineCount(template_cCode) - 1;
     translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObject){
         breakpointObject.lineNumber += lineNumberOffset;
     });
@@ -836,26 +939,24 @@ SerialClass Serial;
  */
 GraphLang.Utils.getCppCode4 = function(canvas, showCode = true){
 
-    translateToCppCodeImportArray.clear();          //import statements
-    translateToCppCodeTypeDefinitionArray.clear();
-    translateToCppCodeFunctionsArray.clear();       //translated subnodes functions bodies
-    translateToCppCodeSubnodeArray.clear();         //already translated subnodes function names
-    translateSubnodeCanvasArray.clear();
-    typeDefinitionUsedList.clear();
-    typeDefinitionNeededList.clear();
-    translateClusterTypeDefinitionCanvasArray.clear();
-    translateClusterTypeDefinitionItems = [];
-    translateToCppCodeAdditionalId.clear();
-    translateToCppCodeAdditionalIdNoHyphen.clear();
-    translateToCppCodeErrorList.clear();
-    translateToCppCodeBreakpointList.clear();
-    translateToCppCodeWatchList.clear();
+    /******************************************************************************
+     * Init buffers needed for translation process
+     *******************************************************************************/
+    GraphLang.Utils.initTranslateToCppBuffers();
+
 
     /******************************************************************************
      * Translate canvas to C/C++ code
      *******************************************************************************/
-    let cCode = GraphLang.Utils.translateCanvasToCppCode(canvas, translateTerminalsDeclaration = true);
+    let cCode = GraphLang.Utils.translateCanvasToCppCode({
+        canvas: canvas,
+        translateTerminalsDeclaration: true
+    });
 
+
+    /******************************************************************************
+     * TEMPLATE START
+     *******************************************************************************/
     var template_cCode = "";
 
     template_cCode += "//THIS CODE IS GENERATED FROM GraphLang\n";
@@ -897,7 +998,7 @@ typedef float numeric;
     template_cCode += "\n";
 
     //add offset to breakpoints line numbers since here before is some code generated and breakpoints were counted just from canvas code
-    let lineNumberOffset = template_cCode.split("\n").length - 1;
+    let lineNumberOffset = GraphLang.Utils.getLineCount(template_cCode) - 1;
     translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObject){
         breakpointObject.lineNumber += lineNumberOffset;
     });

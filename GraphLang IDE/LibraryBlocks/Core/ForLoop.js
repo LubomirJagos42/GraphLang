@@ -152,11 +152,12 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
   symbolPicture: " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFYAAABSCAIAAABBpbS2AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAGSSURBVHhe7dw/SwJxHMdxUfyHwyG4hSL0QBxtaxAdBIXWpp5A2z2Lc2lxcQ7aFHKwVdpuiWaDzClL6iP+Og4hiuuG++X7zXdSvOP74tBz0NT64IMAAggUBBBAoCD4BcFg8G71+P6b2eSbfiBYrVbt9kO1uqzVNjZOKvURnWAymbRa3aOvms3T0Wj0bFXz+Ut0As/ztHa5fJHP32Yyj7ncneNc6hHXdc3hbSg6wXQ61bal0pVeH55i8VqPD4dDc4bEF52g1zurVM7DywfjOG6jcWLOkPiiE9Trx4XCTXjzYLLZe10Ivu+bkyS7iASLxUJLatXw5sGk00s9O5vNzEmSHVcB7wV/IeATYduh3xfsGo/HB313GLT7jtDpPJmjWlU8BKrf33S7r+aoVgUBBBAoCCCAQEEAAQQKAgggUBBAAIGCAAIIFAQQQKAggAACBQEEECgIIIBAQQABBAoCCCBQEEAAgYIAAggUBBBAoCCAAAIVJ8Hez8EtmngI9v4OwLqJgeDfBwEEECgIIIBAQQDBev0J+WznB2v5Ek4AAAAASUVORK5CYII=",
 
   translateToCppCode: function(funcParams){
+    let codeLinesOffset = Object.hasOwn(funcParams, "codesLineOffset") ? funcParams.codesLineOffset : 0;
+    let compileErrorLines = Object.hasOwn(funcParams, "compileErrorLines") ? funcParams.compileErrorLines : null;
+
     this.getUserData().wasTranslatedToCppCode = true;
     this.translateToCppCodeImportArray.clear();
     this.translateToCppCodeBreakpointList.clear();
-
-    // return "for (TBD){";
 
     var cCode = "";
     var iterationCount = "/* forLoop iterationCount value */"
@@ -196,11 +197,22 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
       //Getting clusters and objects type definitions
       if (figObj.translateToCppCodeDeclaration && figObj.NAME.toLowerCase().search("feedbacknode") == -1) cCode += "\t" + figObj.translateToCppCodeDeclaration().replaceAll("\n", "\n\t");
 
+      //HERE C/C++ code line is generated
+      let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
+
       if (figObj.translateToCppCode){
         cCode += figObj.translateToCppCode({nodeId: figObj.getId()}).replaceAll("\n", "\n\t");
       }else if (figObj.translateToCppCode2){
         cCode += figObj.translateToCppCode2().replaceAll("\n", "\n\t");
       }
+
+      GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
+        inputStr: cCode,
+        startLine: lineCountBefore,
+        errorLines: compileErrorLines,
+        lineOffset: codeLinesOffset,
+        errorSourceObj: figObj
+      });
 
       //breakpoint - add node into list
       if (figObj.getUserData() && figObj.getUserData().isSetBreakpoint){

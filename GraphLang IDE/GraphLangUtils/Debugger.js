@@ -177,35 +177,44 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
      *  Evaluate compilation output
      */
     let compileErrorLines = new draw2d.util.ArrayList();
-    let compileErrorByLineNumbers = [];
+    let errorLinesByLineNumbers = [];
 
     let compileCommandOutputStr = ajaxResponse.compileCommandOutput;
-    console.log(`--> compileCommandOutputStr:`);
-    console.log(compileCommandOutputStr);
+    // console.log(`--> compileCommandOutputStr:`);
+    // console.log(compileCommandOutputStr);
     let compileCommandOutputObj = JSON.parse(compileCommandOutputStr);
-    console.log(`--> compileCommandOutputObj:`);
-    console.log(compileCommandOutputObj);
+    // console.log(`--> compileCommandOutputObj:`);
+    // console.log(compileCommandOutputObj);
     if (compileCommandOutputObj.status == -1){
         /*
          *  If there is status -1 it means there is whole error obj str in output json format
          *  Error object structure:
          *      - array[0..n]
-         *          - children: array[0..n]
-         *          - locations: array[0..n]
-         *              - caret:
-         *                  -line: number
+         *        |__children: array[0..n]
+         *           |__locations: array[0..n]
+         *              |__caret:
+         *                 |__line: number
          *
          *  This will extract just caret object information into array:
-         *      - array[0..n]
-         *          - byte-column
-         *          - column
-         *          - display-column
-         *          - file
-         *          - line
+         *      - array[lineNumber]
+         *        |__array["...error message..."]
+         *           |__array[0..n]
+         *              |__byte-column
+         *              |__column
+         *              |__display-column
+         *              |__file
+         *              |__line
          */
-        let compileErrorObj = JSON.parse(compileCommandOutputObj.errorMsg.replaceAll('\\"', '"'));
-        console.log(`--> compileErrorObj everything:`);
-        console.log(compileErrorObj);
+        let compileErrorStr = compileCommandOutputObj.errorMsg.replaceAll('\\"', '"'); //.replaceAll('\\n', '\n').split('\n'); //THIS DOESN'T HAVE TO BE USED
+
+        let compileErrorObj = null;
+        try {
+            compileErrorObj = JSON.parse(compileErrorStr);
+            console.log(`--> compileErrorObj json answer from G++:`);
+            console.log(compileErrorObj);
+        }catch (e){
+            console.warn(`Error parsing compile error message: ${e.message}`);
+        }
 
         for (let errorObj of compileErrorObj){
             // console.log(`----> compileErrorObj one:`);
@@ -215,32 +224,66 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
 
                 //create new array at line number key
                 let arrayKey = String(errorLocation.caret.line);    //output of this is object with properties, NO ARRAY
-                if (!compileErrorByLineNumbers[arrayKey]){
-                    compileErrorByLineNumbers[arrayKey] = [];
+                if (!errorLinesByLineNumbers[arrayKey]){
+                    errorLinesByLineNumbers[arrayKey] = [];
                 }
 
+                //this will group message into
                 let lineError = errorLocation.caret;
-                lineError.message = errorObj.message;                           //duplicate error message into each caret on same line
-                compileErrorByLineNumbers[arrayKey].push(errorLocation.caret);  //add line error into array under line number key
+                let lineErrorMessage = errorObj.message;
+                if (!errorLinesByLineNumbers[arrayKey][lineErrorMessage]){
+                    errorLinesByLineNumbers[arrayKey][lineErrorMessage] = [];
+                }
+                errorLinesByLineNumbers[arrayKey][lineErrorMessage].push(errorLocation.caret);  //add line error into array under line number and error message key
             }
         }
-    }
 
-    console.log(`--> C/C++ code error lines:`);
-    compileErrorLines.each(function(errorLineIndex, errorLineObj){
-        console.log(errorLineObj);
-    });
+        //ASSIGN OBJECTS ON CANVAS TO EACH ERROR
+        GraphLang.Utils.initTranslateToCppBuffers();
+        GraphLang.Utils.translateCanvasToCppCode({
+            canvas: appCanvas,
+            translateTerminalsDeclaration: true,
+            compileErrorLines: errorLinesByLineNumbers,
+            codeLinesOffset: GLOBAL_CODE_LINE_OFFSET,
+        });
 
-    console.log(`--> C/C++ error logs by line numbers:`);
-    console.log(compileErrorByLineNumbers);
-    console.log(`--> code errors lines numbers:`);
-    let allLineNumbersAsStr = '';
-    for (let numberStr in compileErrorByLineNumbers) allLineNumbersAsStr += numberStr + ', ';   //for loop is using 'in' so we are going through object properties NO ARRAY
-    console.log(allLineNumbersAsStr);
+        /*
+         *  I wanted to use for (let obj in ...) but it doesn't seems to get indexes as line number, don't know why in Utils this is running and here no.
+         *      - therefore using this approach using normal loop to index array, non defined leements are undefined
+         */
+        for(let k = 0; k < errorLinesByLineNumbers.length; k++){
+            errorObj = errorLinesByLineNumbers[k];
+            if (errorObj === null || errorObj === undefined) continue;
 
-    /*
-     *  TODO: put extracted information into output ajax structure
-     */
+            let outputMsg= "";
+            let errorMessages = Object.getOwnPropertyNames(errorObj);
+            for (let message of errorMessages){
+                if (message == "length") continue;
+                if (message !== "sourceObjects"){
+                    /*
+                     *  This will put together message for user
+                     */
+                    outputMsg += `<b>compile error:</b>&nbsp;${message}<br/>`;
+                }else{
+                    /*
+                     *  Here are accessed problematic objects
+                     */
+                    for (let errorCanvasObj of errorObj["sourceObjects"]){
+                        // errorCanvasObj.setStroke(4).setColor("#b43500");                         //this will set stroke for each error object in stacktrace
+                        outputMsg += `<span onclick="GraphLang.Utils.animateBlinkObject(appCanvas, '${errorCanvasObj.getId()}', (obj) => obj.setStroke(0))">&nbsp;&nbsp;&nbsp;&nbsp;${errorCanvasObj.NAME}&nbsp;&nbsp;-->&nbsp;&nbsp;${errorCanvasObj.getId()}</span><br/>`;
+                    }
+                }
+            }
+            document.querySelector("#generatedContent").insertAdjacentHTML(
+                'afterbegin',
+                `<span>${outputMsg}</span><hr/>`
+            );
+        }
+    }   //end compile error lines evaluation
+
+    //put extracted information into output ajax structure
+    ajaxResponse.compileErrorByLineNumbers = errorLinesByLineNumbers;
+    console.log(ajaxResponse);
 
     /*
      *  Return output
@@ -389,6 +432,8 @@ GraphLang.Debugger.Cpp.open = function(options = null){
  */
 
 GraphLang.Debugger.Cpp.refreshBreakpointList = function(funcParams){
+    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>&gt; breakpoint list button clicked</span><br/><hr/>\n");
+
     let outputElement = document.querySelector("#breakpointList");
 
     // for (let breakpointRow of document.querySelectorAll("#breakpointList span")){
@@ -396,8 +441,9 @@ GraphLang.Debugger.Cpp.refreshBreakpointList = function(funcParams){
     // }
 
     outputElement.innerHTML = "<b>Code breakpoint list:</b><br /><br/>";
+
     translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObj){
-        outputElement.insertAdjacentHTML("beforeend", `<span>${JSON.stringify(breakpointObj)}</span><br />`)
+        outputElement.insertAdjacentHTML("beforeend", `<span onclick="GraphLang.Utils.animateBlinkObject(appCanvas, '${breakpointObj.objectId}')">${JSON.stringify(breakpointObj)}</span><br /><hr />`)
     });
 }
 
