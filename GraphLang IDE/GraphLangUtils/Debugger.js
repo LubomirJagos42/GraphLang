@@ -205,7 +205,7 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
          *              |__file
          *              |__line
          */
-        let compileErrorStr = compileCommandOutputObj.errorMsg.replaceAll('\\"', '"'); //.replaceAll('\\n', '\n').split('\n'); //THIS DOESN'T HAVE TO BE USED
+        let compileErrorStr = compileCommandOutputObj.errorMsg;//.replaceAll('\\"', '"'); //.replaceAll('\\n', '\n').split('\n'); //THIS DOESN'T HAVE TO BE USED
 
         let compileErrorObj = null;
         try {
@@ -263,7 +263,7 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
                     /*
                      *  This will put together message for user
                      */
-                    outputMsg += `<b>compile error:</b>&nbsp;${message}<br/>`;
+                    outputMsg += `<b>compile error (line ${k}):</b>&nbsp;${message}<br/>`;
                 }else{
                     /*
                      *  Here are accessed problematic objects
