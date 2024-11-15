@@ -151,13 +151,15 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
 
   symbolPicture: " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFYAAABSCAIAAABBpbS2AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAGSSURBVHhe7dw/SwJxHMdxUfyHwyG4hSL0QBxtaxAdBIXWpp5A2z2Lc2lxcQ7aFHKwVdpuiWaDzClL6iP+Og4hiuuG++X7zXdSvOP74tBz0NT64IMAAggUBBBAoCD4BcFg8G71+P6b2eSbfiBYrVbt9kO1uqzVNjZOKvURnWAymbRa3aOvms3T0Wj0bFXz+Ut0As/ztHa5fJHP32Yyj7ncneNc6hHXdc3hbSg6wXQ61bal0pVeH55i8VqPD4dDc4bEF52g1zurVM7DywfjOG6jcWLOkPiiE9Trx4XCTXjzYLLZe10Ivu+bkyS7iASLxUJLatXw5sGk00s9O5vNzEmSHVcB7wV/IeATYduh3xfsGo/HB313GLT7jtDpPJmjWlU8BKrf33S7r+aoVgUBBBAoCCCAQEEAAQQKAgggUBBAAIGCAAIIFAQQQKAggAACBQEEECgIIIBAQQABBAoCCCBQEEAAgYIAAggUBBBAoCCAAAIVJ8Hez8EtmngI9v4OwLqJgeDfBwEEECgIIIBAQQDBev0J+WznB2v5Ek4AAAAASUVORK5CYII=",
 
-  translateToCppCode: function(funcParams){
-    let codeLinesOffset = Object.hasOwn(funcParams, "codesLineOffset") ? funcParams.codesLineOffset : 0;
+  translateToCppCode: function(funcParams = {}){
+    let codesLinesOffset = Object.hasOwn(funcParams, "codesLineOffset") ? funcParams.codesLineOffset : 0;
     let compileErrorLines = Object.hasOwn(funcParams, "compileErrorLines") ? funcParams.compileErrorLines : null;
+    let breakpointParentId = Object.hasOwn(funcParams, "breakpointParentId") ? funcParams.breakpointParentId : null;
 
     this.getUserData().wasTranslatedToCppCode = true;
     this.translateToCppCodeImportArray.clear();
     this.translateToCppCodeBreakpointList.clear();
+    this.translateToCppCodeWatchList.clear();
 
     var cCode = "";
     var iterationCount = "/* forLoop iterationCount value */"
@@ -181,7 +183,11 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     /*  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      *          RECURSION CALL
      *  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+     *
+     *  - getAssignedFigures() will return nodes and ALSO CONNECTIONS
      */
+    this.sortAssignedFiguresByExecutionOrderPermanently();  //sort nodes again, they are sorted in get internal wires, but that is not call all the time
+
     cCode += "/*code inside FOR LOOP */\n\n";
     this.getAssignedFigures().each(function(figIndex, figObj){
       //Getting import statements
@@ -201,7 +207,12 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
       let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
 
       if (figObj.translateToCppCode){
-        cCode += figObj.translateToCppCode({nodeId: figObj.getId()}).replaceAll("\n", "\n\t");
+        cCode += figObj.translateToCppCode({
+          nodeId: figObj.getId(),
+          codesLineOffset: codesLinesOffset + lineCountBefore,
+          compileErrorLines: compileErrorLines,
+          breakpointParentId: breakpointParentId
+        }).replaceAll("\n", "\n\t");
       }else if (figObj.translateToCppCode2){
         cCode += figObj.translateToCppCode2().replaceAll("\n", "\n\t");
       }
@@ -210,14 +221,22 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
         inputStr: cCode,
         startLine: lineCountBefore,
         errorLines: compileErrorLines,
-        lineOffset: codeLinesOffset,
+        lineOffset: codesLinesOffset,
         errorSourceObj: figObj
       });
 
       //breakpoint - add node into list
+      //CHECK IF IT'S CONNECTION (wire) if yes don't do breakpoint assignment for it
       if (figObj.getUserData() && figObj.getUserData().isSetBreakpoint){
-        let currentLineNumber = cCode.split("\n").length + 2;
-        this.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: figObj.getId(), type: "node", parentId: (Object.hasOwn(funcParams, "nodeId")?funcParams.nodeId:null), parentName: this.NAME});
+        let currentLineNumber = GraphLang.Utils.getLineCount(cCode) + 2;
+        console.log(`--> for loop assign breakpoint line: ${currentLineNumber}, offset: ${codesLinesOffset}`);
+        this.translateToCppCodeBreakpointList.add({
+          lineNumber: currentLineNumber + codesLinesOffset,
+          objectId: figObj.getId(),
+          type: figObj.NAME.search('HoverConnection') == -1 ? "node" : "wire",
+          parentId: breakpointParentId,
+          parentName: this.NAME
+        });
       }
       if (figObj.getBreakpointList){
         let lineNumberOffset = cCode.split("\n").length - 1;
@@ -226,6 +245,27 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
           this.translateToCppCodeBreakpointList.add(breakpointObj);
         });
       }
+
+      //FILL WATCH LIST
+      if (figObj.getUserData() && figObj.getUserData().isSetWatch){
+        let currentLineNumber = GraphLang.Utils.getLineCount(cCode) + 2;
+        console.log(`--> for loop assign watch variable: ${currentLineNumber}, offset: ${codesLinesOffset}`);
+        this.translateToCppCodeWatchList.add({
+          lineNumber: currentLineNumber + codesLinesOffset,
+          objectId: figObj.getId(),
+          type: figObj.NAME.search('HoverConnection') == -1 ? "node" : "wire",
+          parentId: breakpointParentId,
+          parentName: this.NAME
+        });
+      }
+      if (figObj.getWatchList){
+        let lineNumberOffset = GraphLang.Utils.getLineCount(cCode) - 1;
+        figObj.getWatchList().each(function(watchIndex, watchObj){
+          watchObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
+          this.translateToCppCodeWatchList.add(watchObj);
+        });
+      }
+
 
       /* in case of post C/C++ code run it */
       if (figObj.translateToCppCodePost) cCode += "\t" + figObj.translateToCppCodePost().replaceAll("\n", "\n\t"); //if there is defined to put somethin after let's do it

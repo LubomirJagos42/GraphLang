@@ -14,7 +14,7 @@ This is list features what to do due I always forget on what to work
     - it will look into userData.datatype variable, parent node or somewhere else
 - translate polymorphic datatype into right C/C++ code datatype in C/C++
 
-- GENERAL PRESERVATION PROPERTIS for SHAPE DESIGNER - HOW TO EXTRACT STRING FUNCTIONS FROM CUSTOM OBJECTS GENERALLY steps:
+- GENERAL PRESERVATION PROPERTIES for SHAPE DESIGNER - HOW TO EXTRACT STRING FUNCTIONS FROM CUSTOM OBJECTS GENERALLY steps:
 
   1. redefine extend() as custom function to save it's input object into some variable like this:
     > GraphLang.UserDefinedNode.extend = function(obj){this.extendObj = obj;}
@@ -38,12 +38,70 @@ This is list features what to do due I always forget on what to work
   3. now this is way how to print into console string content of each property:
     > for (m in GraphLang.UserDefinedNode.extendObj){console.log(GraphLang.UserDefinedNode.extendObj[m].toString())}
 
+- Qt UI files which are XML convert to HTML, write XSL stylesheet for that
+    - this is example how to convert it:
+        (function() {
+
+        let xmlString = `<books>
+          <book>
+            <title>Book 1</title>
+            <author>Author 1</author>
+          </book>
+          <book>
+            <title>Book 2</title>
+            <author>Author 2</author>
+          </book>
+        </books>
+        `;
+
+        let xsltString = `<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+          <xsl:output method="xml" indent="yes"/>
+          <xsl:template match="/">
+            <catalog>
+              <xsl:for-each select="books/book">
+                <item>
+                  <name><xsl:value-of select="title"/></name>
+                  <writer><xsl:value-of select="author"/></writer>
+                </item>
+              </xsl:for-each>
+            </catalog>
+          </xsl:template>
+        </xsl:stylesheet>
+        `;
+
+        let parser = new DOMParser();
+        let xmlDoc = parser.parseFromString(xmlString, "application/xml");
+        let xsltDoc = parser.parseFromString(xsltString, "application/xml");
+
+        let xsltProcessor = new XSLTProcessor();
+        xsltProcessor.importStylesheet(xsltDoc);
+
+        // Perform the transformation, returning the result as a new XML document
+        let resultDoc = xsltProcessor.transformToDocument(xmlDoc);
+
+        // Serialize the result document to a string
+        let serializer = new XMLSerializer();
+        let resultString = serializer.serializeToString(resultDoc);
+        console.log(resultString);
+
+        })();
 
 In progress features
 ====================
-- breakpoints for C++ debugger:
+- breakpoints in code for C++ debugger:
     - on top level canvas OK
     - nested nodes (schematics) - FAIL - need to add support for breakpoints
+
+- breakpoints on canvas
+    - scan all nodes, connections in schematic and list breakpoints
+    - this happens through canvas not during translation process
+
+- javascript code generate and run it
+    - possibly open generated code in new window and run it, but both scripts must be on same domain (like running localhost - python, apache)
+        > anotherWindow = window.open('http://localhost:8000/...');
+        > anotherWindow.<here is access to all window DOM>
+
+- compile C++ code into WebAssembly and deploy it into separate webpage
 
 Finished features
 =================

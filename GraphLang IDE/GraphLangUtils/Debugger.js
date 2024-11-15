@@ -285,6 +285,12 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
     ajaxResponse.compileErrorByLineNumbers = errorLinesByLineNumbers;
     console.log(ajaxResponse);
 
+    /*********************************************************************************************************
+     *  REFRESH BREAKPOINTS and WATCH from code into #breakpointList, #variablesWatch
+     *********************************************************************************************************/
+    GraphLang.Debugger.Cpp.refreshBreakpointList();
+    GraphLang.Debugger.Cpp.refreshWatchList();
+
     /*
      *  Return output
      */
@@ -418,6 +424,7 @@ GraphLang.Debugger.Cpp.open = function(options = null){
         <input name="getCodeLocationButton" type="button" value="?" onclick="GraphLang.Debugger.Cpp.getCodeLocation()" />
         <input name="randomNumberButton" type="button" value="test random number" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('get random number')" />
         <input name="codeBreakpointListButton" type="button" value="breakpoint list" onclick="GraphLang.Debugger.Cpp.refreshBreakpointList()" />
+        <input name="codeWatchListButton" type="button" value="watch list" onclick="GraphLang.Debugger.Cpp.refreshWatchList()" />
         <hr/>
         <div id="generatedContent"></div>`
     );
@@ -432,6 +439,8 @@ GraphLang.Debugger.Cpp.open = function(options = null){
  */
 
 GraphLang.Debugger.Cpp.refreshBreakpointList = function(funcParams){
+    console.log(`REFRESHING BREAKPOINT LIST obtained during C++ code translation, breakpoint list content:`);
+    console.log(translateToCppCodeBreakpointList);
     document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>&gt; breakpoint list button clicked</span><br/><hr/>\n");
 
     let outputElement = document.querySelector("#breakpointList");
@@ -462,3 +471,18 @@ GraphLang.Debugger.Cpp.toggleVariablesWatch = function(funcParams = null){
     alert('watch open - not implemented yet');
     let outputElement = document.querySelector("#variablesWatch");
 }
+
+GraphLang.Debugger.Cpp.refreshWatchList = function(funcParams = null){
+    console.log(`REFRESHING WATCH LIST obtained during C++ code translation, watch list content:`);
+    console.log(translateToCppCodeWatchList);
+    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>&gt; watch list button clicked</span><br/><hr/>\n");
+
+    let outputElement = document.querySelector("#variablesWatch");
+
+    outputElement.innerHTML = "<b>Variables watch list:</b><br /><br/>";
+
+    translateToCppCodeWatchList.each(function(watchIndex, watchObj){
+        outputElement.insertAdjacentHTML("beforeend", `<span onclick="GraphLang.Debugger.Cpp.debugGetWireValue({wireId: '${watchObj.objectId}'})">${JSON.stringify(watchObj)}</span><br /><hr />`)
+    });
+}
+

@@ -390,6 +390,7 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
                         nodeId: nodeObj.getId(),
                         codesLineOffset: codeLinesOffset + lineCountBefore,
                         compileErrorLines: compileErrorLines,
+                        breakpointParentId: null
                     });
 
                     console.log("--> ERROR SEARCHING NORMAL TRANSLATION NODE: " + nodeObj.NAME);
@@ -447,7 +448,8 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
                 }
 
                 /*
-                 *  TODO: Here must be check if wires connected to node have set breakpoint, if yes need to add code line into breakpoint list
+                 *  Check if wires connected to node have set breakpoint, if yes need to add code line into breakpoint list
+                 *      - this is just for nodes on top canvas not inside loops
                  */
                 nodeObj.getOutputPorts().each(function(portIndex, portObj){
                     portObj.getConnections().each(function(wireIndex, wireObj){
@@ -456,16 +458,16 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
                          */
                         if (wireObj.getUserData() && wireObj.getUserData().isSetBreakpoint){
                             let currentLineNumber = cCode.split("\n").length - 1;
-                            translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "wire", parentId: null, parentName: null});
+                            translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: wireObj.getId(), type: "wire", parentId: null, parentName: null});
                         }
 
                         /*
                          *  SET WATCH ON WIRE - watch can be just on wire since there is where data are floating
                          *      - this is ONLY PLACE where watch for wires is obtained
                          */
-                        if (wireObj.getUserData() && wireObj.getUserData().isSetBreakpoint){
+                        if (wireObj.getUserData() && wireObj.getUserData().isSetWatch){
                             let currentLineNumber = cCode.split("\n").length - 1;
-                            translateToCppCodeWatchList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "wire", parentId: null, parentName: null});
+                            translateToCppCodeWatchList.add({lineNumber: currentLineNumber, objectId: wireObj.getId(), type: "wire", parentId: null, parentName: null});
                         }
                     });
                 });
@@ -504,9 +506,9 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
         GraphLang.Utils.validateCanvas(canvas, nodeName, translateClusterTypeDefinitionItems)
     );
 
-    /*
-     *  HERE IS WRITING ERRORS FOR USER INTO #helperPane
-     */
+    /*********************************************************************************************************
+     *  WRITING ERRORS FOR USER INTO #helperPane
+     *********************************************************************************************************/
     let outputTarget = document.getElementById("schematicErrors");
     outputTarget.innerHTML = "<b>Schematic errors:</b><br /><br />";
     translateToCppCodeErrorList.each(function(errorIndex, errorObj){
@@ -674,7 +676,7 @@ GraphLang.Utils.translateToCppCodeSubNode = function(funcParams){
                 }
 
                 /*
-                 *  Nested node getting breakpoints for WIRES
+                 *  Nested node getting watch for WIRES
                  */
                 if (wireObj.getUserData() && wireObj.getUserData().isSetWatch){
                     let currentLineNumber = cCode.split("\n").length - 1;

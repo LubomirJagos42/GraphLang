@@ -381,6 +381,19 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
       return cCode;
   },
 
+  /**
+   *  @description THIS HERE WAS FIRST DEVELOPED FOR GraphLang_Jailhouse.js, copied here
+   *  THIS WILL ALSO INTERNALLY REORDER NODES BASED ON THEIR EXECUTION ORDER and stayed like that
+   */
+  sortAssignedFiguresByExecutionOrderPermanently: function(){
+      let layerFigures = this.getAssignedFigures();
+      layerFigures.sort(function(figureA, figureB){
+          let execOrderA = figureA.getUserData() && figureA.getUserData().executionOrder ? figureA.getUserData().executionOrder : -1;
+          let execOrderB = figureB.getUserData() && figureB.getUserData().executionOrder ? figureB.getUserData().executionOrder : -1;
+          return execOrderA - execOrderB;
+      });
+  },
+
   /*
    *  WIRES INSIDE LOOP DECLARATION
    */
@@ -388,11 +401,8 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
     cCode = "";
     cCode += "//inside loop wires declaration\n";
 
-    /*
-     *  THIS HERE WAS FIRST DEVELOPED FOR GraphLang_Jailhouse.js, copied here
-     */
-    layerFigures = this.getAssignedFigures();
-    layerFigures.sort(function(figureA, figureB){ return figureA.userData.executionOrder - figureB.userData.executionOrder}); //order figure by their executionOrder
+    //sort nodes by execution order
+    this.sortAssignedFiguresByExecutionOrderPermanently();
 
   	allConnections = new draw2d.util.ArrayList();
     allFeedbackNodes = new draw2d.util.ArrayList();
@@ -401,6 +411,7 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
     /*
      *  Add wires connected to direct children figure TO THEIR INPUT PORTS
      */
+    let layerFigures = this.getAssignedFigures();
     layerFigures.each(function(figureIndex, figureObj){
         if (figureObj.getPorts){
             if (figureObj.NAME.toLowerCase().search('loop') == -1 && figureObj.NAME.toLowerCase().search('tunnel') == -1){

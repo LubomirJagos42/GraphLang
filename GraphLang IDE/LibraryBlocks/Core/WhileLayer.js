@@ -147,7 +147,11 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
    *    TRANSLATE TO C/C++ functions
    *****************************************************************************************************************************************************/ 
   
-  translateToCppCode: function(funcParams){
+  translateToCppCode: function(funcParams = {}){
+    let codesLinesOffset = Object.hasOwn(funcParams, "codesLineOffset") ? funcParams.codesLineOffset : 0;
+    let compileErrorLines = Object.hasOwn(funcParams, "compileErrorLines") ? funcParams.compileErrorLines : null;
+    let breakpointParentId = Object.hasOwn(funcParams, "breakpointParentId") ? funcParams.breakpointParentId : null;
+
     var cCode = "";
     this.getUserData().wasTranslatedToCppCode = true;
     this.translateToCppCodeImportArray.clear();
@@ -169,6 +173,12 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
     cCode += "\t" + this.getLeftTunnelsWiresAssignementCppCode().replaceAll("\n", "\n\t");
     cCode += "\n\t";
 
+    /*
+     *  - getAddignedFigures() also returns nodes and wires
+     *      - for wires don't do breakpoint check and assignemnet
+     */
+    this.sortAssignedFiguresByExecutionOrderPermanently();  //sort nodes again, they are sorted in get internal wires, but that is not call all the time
+
     this.getAssignedFigures().each(function(figIndex, figObj){
         //Getting import statements
         if (figObj.translateToCppCodeImport){
@@ -183,20 +193,47 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
       //Getting clusters and objects type definitions
       if (figObj.translateToCppCodeDeclaration && figObj.NAME.toLowerCase().search("feedbacknode") == -1) cCode += figObj.translateToCppCodeDeclaration().replaceAll("\n", "\n\t") ;
 
+      let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
+
       if (figObj.translateToCppCode){
-        cCode += figObj.translateToCppCode({nodeId: figObj.getId()}).replaceAll("\n", "\n\t")
+        cCode += figObj.translateToCppCode({
+            nodeId: figObj.getId(),
+            codesLineOffset: codeLinesOffset + lineCountBefore,
+            compileErrorLines: compileErrorLines,
+            breakpointParentId: breakpointParentId
+        }).replaceAll("\n", "\n\t");
       }else if (figObj.translateToCppCode2){
         cCode += figObj.translateToCppCode2().replaceAll("\n", "\n\t")
       }
 
+      GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
+          inputStr: cCode,
+          startLine: lineCountBefore,
+          errorLines: compileErrorLines,
+          lineOffset: codesLinesOffset,
+          errorSourceObj: figObj
+      });
+
       //BREAKPOINT - ADD NODE into list
       if (figObj.getUserData() && figObj.getUserData().isSetBreakpoint){
-          let currentLineNumber = cCode.split("\n").length;
-          this.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: figObj.getId(), type: "node", parentId: (Object.hasOwn(funcParams, "nodeId")?funcParams.nodeId:null), parentName: this.NAME});
+          let currentLineNumber = GraphLang.Utils.getLineCount(cCode);
+          this.translateToCppCodeBreakpointList.add({
+              lineNumber: currentLineNumber + codesLinesOffset,
+              objectId: figObj.getId(),
+              type: figObj.NAME.search('HoverConnection') == -1 ? "node" : "wire",
+              parentId: (Object.hasOwn(funcParams, "breakpointParentId")?funcParams.breakpointParentId:null), parentName: this.NAME
+          });
+      }
+      if (figObj.getBreakpointList){
+          let lineNumberOffset = cCode.split("\n").length - 1;
+          figObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
+              breakpointObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
+              this.translateToCppCodeBreakpointList.add(breakpointObj);
+          });
       }
 
      /* in case of post C/C++ code run it */
-     if (figObj.translateToCppCodePost) cCode += figObj.translateToCppCodePost().replaceAll("\n", "\n\t"); //if there is defined to put somethin after let's do it
+     if (figObj.translateToCppCodePost) cCode += figObj.translateToCppCodePost().replaceAll("\n", "\n\t"); //if there is defined to put something after let's do it
     });
 
     return cCode;
