@@ -1,0 +1,80 @@
+<html>
+	<head>
+		<script type="text/javascript">
+			window.addEventListener("load", function(){
+
+				function doTransform(xmlStr, xsltStr){
+					let parser = new DOMParser();
+					let xmlDoc = parser.parseFromString(xmlStr, "application/xml");
+					let xsltDoc = parser.parseFromString(xsltStr, "application/xml");
+
+					let xsltProcessor = new XSLTProcessor();
+					xsltProcessor.importStylesheet(xsltDoc);
+
+					// Perform the transformation, returning the result as a new XML document
+					let resultDoc = xsltProcessor.transformToDocument(xmlDoc);
+
+					// Serialize the result document to a string
+					let serializer = new XMLSerializer();
+					let resultString = serializer.serializeToString(resultDoc);
+					
+					//console.log(resultString);
+					return resultString;
+				}
+
+				document.getElementById("submitFormButton").addEventListener("click", async function(){
+					let uiStr = "";
+					let xsltStr = "";
+
+					let file = document.getElementById("uiFile").files[0];
+					if (file) {
+						uiStr = (new TextDecoder()).decode(await file.arrayBuffer());
+					}
+
+					file = document.getElementById("xsltFile").files[0];
+					if (file) {						
+						xsltStr = (new TextDecoder()).decode(await file.arrayBuffer());
+					}
+					
+					//PRINT OUTPUT to html
+					let transformOutput = doTransform(uiStr, xsltStr);
+						document.getElementById("outputCode").innerHTML = transformOutput
+							.replaceAll(/&/g, '&amp;')
+							.replaceAll(/</g, '&lt;')
+							.replaceAll(/>/g, '&gt;');
+
+				});
+
+			});
+		</script>
+	</head>
+	<body>
+		<h1>XSLT Transformation</h1>
+		<div id="formWrapper">
+			<form>
+				<table>
+					<tr>
+						<td>Qt .ui file:</td>
+						<td><input id="uiFile" type="file" /></td>
+					</tr>
+					<tr>
+						<td>XSLT file:</td>
+						<td><input id="xsltFile" type="file" /></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td><input id="submitFormButton" type="button" value="TRANSFORM"/></td>
+					</tr>
+				</table>
+			</form>
+		</div>
+		<pre id="outputCode">
+		</pre>
+	</body>
+</html>
+
+

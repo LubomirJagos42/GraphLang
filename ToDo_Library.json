@@ -1,0 +1,166 @@
+{
+    "GraphLang": {
+        "Math": {
+            "Basic": [
+                "Add",
+                "Subtract",
+                "Multiply",
+                "Divide",
+                "Not",
+                "Abs",
+                "constrain",
+                "max",
+                "min",
+                "map",
+                "pow",
+                "sq",
+                "sqrt"
+            ],
+            "Trigonometry": [
+                "cos",
+                "sin",
+                "tan"
+            ]
+        },
+        "String": [
+            "replace",
+            "toStr"
+        ],
+        "System": [
+            {
+                "utils": [
+                    "Loop"
+                ]
+            },
+            [
+                "return",
+                "ternarOperator",
+                "bundle",
+                "unbundle",
+                "bundleByName",
+                "unbandleByName",
+                "forLoop",
+                "whileLayer",
+                "wireConnection",
+                "ConstantNode",
+                "PointerDatatypeNode",
+                "ArrayNode",
+                "ConvertDatatype",
+                "FeedbackNode",
+                "Multilayered",
+                "ClusterDatatype",
+                "VectorNode",
+                "SliderNode",
+                "TerminalOutput",
+                "Sequence",
+                "EnumNode"
+            ]
+        ]
+    },
+    "HwArduinoNano": [
+    ],
+    "HwESP32": [
+    ],
+    "HwESP8266": [
+    ],
+    "HwRaspiZero": {
+        "Console": [
+            "ConsoleLog",
+            "ConsoleRead"
+        ],
+        "File": [
+            "fread",
+            "fwrite",
+            "fileSize",
+            "fopen",
+            "fclose"
+        ],
+        "I2C": [
+        ],
+        "Interrupts": [
+            "interrupts",
+            "noInterrupts"
+        ],
+        "IO": {
+            "Analog": [
+                "analogRead",
+                "analogWrite",
+                "analogReadResolution",
+                "analogWriteResolution",
+                "analogReference"
+            ],
+            "Constants": [
+                "PIN_NUMBER"
+            ],
+            "Digital": [
+                {
+                    "pinMode": {
+                        "INPUT": 0,
+                        "INPUT_PULLDOWN": 3,
+                        "INPUT_PULLUP": 2,
+                        "OUTPUT": 1,
+                        "OUTPUT_OPENDRAIN": 4
+                    }
+                },
+                "digitalRead",
+                "digitalWrite"
+            ]
+        },
+        "Random": [
+            "random",
+            "randomSeed"
+        ],
+        "Serial": [
+            "begin",
+            "println",
+            "write",
+            "read",
+            "end",
+            "available",
+            "availableForWrtie",
+            "find",
+            "findUntil",
+            "flush",
+            "parseFloat",
+            "parseInt",
+            "peek",
+            "println",
+            "readBytes",
+            "readBytesUntil",
+            "readString",
+            "readStringUntil",
+            "setTimeout",
+            "serialEvent"
+        ],
+        "SPI": [
+        ],
+        "Time": [
+            "waitUntilNextMs",
+            "delay",
+            "delayMicroseconds",
+            "millis",
+            "micros"
+        ]
+    },
+    "Messaging": {
+        "Flatbuffers": [
+        ],
+        "GoogleProtocolBuffers": [
+        ],
+        "ZeroMq": [
+            "Context",
+            "output",
+            {
+                "sock": [
+                    "bind",
+                    "send"
+                ]
+            }
+        ]
+    },
+    "SignalProcessing": [
+        "Convolution"
+    ],
+    "UserDefinedNode": [
+    ]
+}

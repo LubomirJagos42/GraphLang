@@ -1,0 +1,183 @@
+GraphLang Library blocks
+========================
+- arduino API:	https://docs.arduino.cc/learn/programming/reference/
+- ZeroMQ API:	https://zeromq.org/languages/cplusplus/
+
+Basic rules
+===========
+- inputs can be polymorphic
+- output MUST HAVE TYPE!!!
+	- generic output type is object
+
+My Library structure
+====================
+- programming language: C++
+
+> GraphLang
+	> System
+		> utils
+			+ Loop
+			
+		+ return
+		+ ternarOperator
+		+ bundle
+		+ unbundle
+		+ bundleByName
+		+ unbandleByName
+		+ forLoop
+		+ whileLayer
+		+ wireConnection
+		+ ConstantNode
+		+ PointerDatatypeNode
+		+ ClusterDatatype
+		+ ArrayNode
+		- EnumNode
+		+ ConvertDatatype
+		+ FeedbackNode
+		+ Multilayered
+		+ VectorNode
+		+ SliderNode
+		+ TerminalOutput
+		+ Sequence
+	
+	> Math
+		> Basic
+			+ Add
+			+ Subtract
+			+ Multiply
+			+ Divide
+			+ Not
+			+ Abs
+			- constrain
+			- max
+			- min
+			- map
+			- pow
+			- sq
+			- sqrt
+		
+		> Trigonometry
+			- cos
+			- sin
+			- tan
+
+> GraphLangExperimental
+	+ ExternalInputPortNode
+	+ ExternalOutputPortNode
+	+ InvokeNode
+	+ PropertyNode
+	+ UserCodeBlock
+
+> SignalProcessing
+	+ Convolution
+		
+> Messaging
+	> ZeroMq
+		- Context
+		- output
+		- sock
+			- bind
+			- send
+		
+	> Flatbuffers
+	> GoogleProtocolBuffers
+
+> HwRaspiZero
+	> IO
+		> Constants
+			- PIN_NUMBER
+			
+		> Digital
+			+ pinMode (INPUT=0, OUTPUT=1, INPUT_PULLUP=2, INPUT_PULLDOWN=3, OUTPUT_OPENDRAIN=4)
+			+ digitalRead
+			+ digitalWrite
+
+		> Analog
+			+ analogRead
+			+ analogWrite
+			- analogReadResolution
+			- analogWriteResolution
+			- analogReference
+
+	> Serial
+		+ begin
+		+ println
+		- write
+		- read
+		- end
+		- available
+		- availableForWrtie
+		- find
+		- findUntil
+		- flush
+		- parseFloat
+		- parseInt
+		- peek
+		- println
+		- readBytes
+		- readBytesUntil
+		- readString
+		- readStringUntil
+		- setTimeout
+		- serialEvent
+
+	> Console
+		+ ConsoleLog
+		- ConsoleRead
+
+	> File
+		+ fread
+		+ fwrite
+		+ fileSize
+		+ fopen
+		+ fclose
+
+	> Time
+		+ waitUntilNextMs
+		- delay
+		- delayMicroseconds
+		- millis
+		- micros
+		
+	> Random
+		- random
+		- randomSeed
+
+	> Interrupts
+		- interrupts
+		- noInterrupts
+		
+	> String
+		+ replace
+		+ toStr
+
+	> SPI
+		
+	> I2C
+
+> HwArduinoNano
+	> Serial
+		+ begin
+		+ println
+
+> HwESP8266
+> HwESP32
+
+> UserDefinedNode
+
+> PythonQtGuiLib
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

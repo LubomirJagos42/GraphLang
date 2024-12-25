@@ -3,9 +3,9 @@
 //                                                        
 // http://www.draw2d.org                                  
 //                                                        
-GraphLang.PythonQtGuiLib.UiExec = GraphLang.UserDefinedNode.extend({            
+PythonQtGuiLib.UiExec = GraphLang.UserDefinedNode.extend({
 
-   NAME: "GraphLang.PythonQtGuiLib.UiExec",
+   NAME: "PythonQtGuiLib.UiExec",
 
    init:function(attr, setter, getter)
    {

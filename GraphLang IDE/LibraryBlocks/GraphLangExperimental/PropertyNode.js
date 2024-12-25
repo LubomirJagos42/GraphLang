@@ -1,8 +1,7 @@
 /**
  *  @class GraphLang.Shapes.PropertyNode
- *  @description Thisi s property node for GraphLang.
+ *  @description This is property node for GraphLang.
  */
-GraphLang.Shapes.ItemsNode = {};
 GraphLang.Shapes.ItemsNode.PropertyNode = draw2d.shape.layout.VerticalLayout.extend({
 
 	NAME: "GraphLang.Shapes.ItemsNode.PropertyNode",

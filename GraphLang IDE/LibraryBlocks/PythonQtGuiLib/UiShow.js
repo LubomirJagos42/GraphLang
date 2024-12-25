@@ -3,9 +3,9 @@
 //                                                        
 // http://www.draw2d.org                                  
 //                                                        
-GraphLang.PythonQtGuiLib.UiShow = GraphLang.UserDefinedNode.extend({            
+PythonQtGuiLib.UiShow = GraphLang.UserDefinedNode.extend({
 
-   NAME: "GraphLang.PythonQtGuiLib.UiShow",
+   NAME: "PythonQtGuiLib.UiShow",
 
    init:function(attr, setter, getter)
    {

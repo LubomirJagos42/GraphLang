@@ -12,19 +12,28 @@ searchDirs = [
 #   List of excluded directories, these here are included but there is no menu item generated
 #
 excludeFromHtmlBlockPatterns = [
-    "Core/utils",
-    "GraphLangExperimental",
+    "System/utils",
 ]
 
 #
 #   Tabs assignemnt blocs. If it path starts with some of keys then is under this tab.
 #
 blocksToTabsAssignment = {
-    os.path.join(blocksRootDir, "Arduino"):                 "Arduino",
-    os.path.join(blocksRootDir, "Core"):                    "Core",
-    os.path.join(blocksRootDir, "GraphLangExperimental"):   "Experimental",
-    os.path.join(blocksRootDir, "PythonQtGuiLib"):          "Python GUI",
-    os.path.join(blocksRootDir, "UserDefinedNode"):         "User Nodes"
+    os.path.join(blocksRootDir, "GraphLang", "Math", "Basic"):            "GL_Math_Basic",
+    os.path.join(blocksRootDir, "GraphLang", "Math", "Trigonometry"):     "GL_Math_Trigon",
+    os.path.join(blocksRootDir, "GraphLang", "System"):                   "GL_System",
+    os.path.join(blocksRootDir, "GraphLangExperimental"):                 "GL_Experimental",
+    os.path.join(blocksRootDir, "HwArduinoNano", "Serial"):               "ArduinoNano_Serial",
+    os.path.join(blocksRootDir, "HwRaspiZero", "Console"):                "RaspiZero_Console",
+    os.path.join(blocksRootDir, "HwRaspiZero", "File"):                   "RaspiZero_File",
+    os.path.join(blocksRootDir, "HwRaspiZero", "IO", "Analog"):           "RaspiZero_Analog",
+    os.path.join(blocksRootDir, "HwRaspiZero", "IO", "Digital"):          "RaspiZero_Digital",
+    os.path.join(blocksRootDir, "HwRaspiZero", "IO", "Constants"):        "RaspiZero_Constants",
+    os.path.join(blocksRootDir, "HwRaspiZero", "String"):                 "RaspiZero_String",
+    os.path.join(blocksRootDir, "HwRaspiZero", "Time"):                   "RaspiZero_Time",
+    os.path.join(blocksRootDir, "PythonQtGuiLib"):                        "Python GUI",
+    os.path.join(blocksRootDir, "SignalProcessing"):                      "Signal Proc.",
+    os.path.join(blocksRootDir, "UserDefinedNode"):                       "User Nodes",
 }
 
 objectsNamesList = []
@@ -248,7 +257,12 @@ function displayJSON(canvas){
 
   </div>
 
-   <div id="helperPane" style="width: 100px;"></div>
+   <div id="helperPane" style="width: 100px;">
+       <div id="schematicErrors"></div>
+       <div id="breakpointList"></div>
+       <div id="variablesWatch"></div>
+       <div id="debuggerPane"></div>
+   </div>
 
    <!-- window with JSON representation of schematic -->
    <div id="json" style="display: none; overflow:auto;position:absolute; top:100px; right:10px; width:350; height:100;background:white;border:1px solid gray"></div>
