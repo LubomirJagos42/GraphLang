@@ -34,7 +34,7 @@ GraphLang.Debugger.Cpp.createWebSocket = function(options = null){
     GraphLang.Debugger.websocket = new WebSocket("ws://"+ websocketHost +":"+ GraphLang.Debugger.websocketPort);
 
     /*
-     *  websocket recevied message handler
+     *  websocket received message handler
      */
     GraphLang.Debugger.websocket.onmessage = (event) => GraphLang.Debugger.Cpp.logResponse(event);
 
@@ -84,18 +84,23 @@ GraphLang.Debugger.Cpp.logResponse = function(event){
     }
 }
 
-GraphLang.Debugger.Cpp.sendMessageAndAddToLog = function(message = null, callbackFunction = null){
-    GLOBAL_DEBUGGER_CPP_RESPONSE = null;
+GraphLang.Debugger.Cpp.sendMessageAndAddToLog = async function(message = null, callbackFunction = null){
+    return new Promise((resolve, reject) => {
+        GLOBAL_DEBUGGER_CPP_RESPONSE = null;
 
-    //if message is not provided in parameter look into <input> tag
-    if (!message) message = document.querySelector('#cmdStr').value;
+        //if message is not provided in parameter look into <input> tag
+        if (!message) message = document.querySelector('#cmdStr').value;
 
-    GLOBAL_DEBUGGER_CPP_WEBSOCKET_CALLBACK = callbackFunction;
-    GraphLang.Debugger.websocket.send(message);
+        GraphLang.Debugger.websocket.onmessage = (event) => {
+            GraphLang.Debugger.Cpp.logResponse(event);
+            resolve(event.data);
+        }
 
-    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>>" + message + "<pre/><hr/>");
+        GLOBAL_DEBUGGER_CPP_WEBSOCKET_CALLBACK = callbackFunction;
+        GraphLang.Debugger.websocket.send(message);
 
-    return message;
+        document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>>" + message + "<pre/><hr/>");
+    });
 }
 
 /**
@@ -340,41 +345,45 @@ GraphLang.Debugger.Cpp.debugSchematic = async function(options = null){
  *  @description Send message to GDB debugger to get wire variable value, evaluate output message and try to put it's value on screen on wire.
  */
 GraphLang.Debugger.Cpp.debugGetWireValue = function(options = null){
-    console.log(`debugGetWireValue executed`);
-    if (options){
-        let wireName = 'wire_' + options.objectId.replaceAll('-', '_');
+    return new Promise(async (resolve, reject) => {
+        console.log(`debugGetWireValue executed`);
+        if (options){
+            let wireName = 'wire_' + options.objectId.replaceAll('-', '_');
 
-        /*
-         *  This is first way, but this output structure is too complex
-         */
-        // GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`print ${wireName}`);
+            /*
+             *  This is first way, but this output structure is too complex
+             */
+            // GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`print ${wireName}`);
 
-        /*
-         *  This will evaluate expression and return address where variable is stored along its value
-         *  Here try to extract value from output payload and put it's value on screen on wire
-         *  This is example output from GDB from python:
-                [
-                  {
-                    "type": "result",
-                    "message": "done",
-                    "payload": {
-                      "value": "{_M_dataplus = {> = {> = {}, }, _M_p = 0x5ffda0 \"AAABBB\"}, _M_string_length = 6, {_M_local_buf = \"AAABBB\\000\\000\\\"\\322`\\254\\376\\177\\000\", _M_allocated_capacity = 72852346847553}}"
-                    },
-                    "token": null,
-                    "stream": "stdout"
-                  }
-                ]
+            /*
+             *  This will evaluate expression and return address where variable is stored along its value
+             *  Here try to extract value from output payload and put it's value on screen on wire
+             *  This is example output from GDB from python:
+                    [
+                      {
+                        "type": "result",
+                        "message": "done",
+                        "payload": {
+                          "value": "{_M_dataplus = {> = {> = {}, }, _M_p = 0x5ffda0 \"AAABBB\"}, _M_string_length = 6, {_M_local_buf = \"AAABBB\\000\\000\\\"\\322`\\254\\376\\177\\000\", _M_allocated_capacity = 72852346847553}}"
+                        },
+                        "token": null,
+                        "stream": "stdout"
+                      }
+                    ]
 
-         *  Output parsing is done in provided callback function.
-         *  TODO: now gdb response EXPECT STRING, need to add case for number or else, datatype can be got from wiretype
-         */
-        let gdbOutputStr = GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`-data-evaluate-expression ${wireName}`, (gdbOutputStr, watchObject = options) => {
+             *  Output parsing is done in provided callback function.
+             *  TODO: now gdb response EXPECT STRING, need to add case for number or else, datatype can be got from wiretype
+             */
+            let gdbOutputStr = await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`-data-evaluate-expression ${wireName}`)
+
             console.log(`> parsing gdb output`);
             console.log(gdbOutputStr);
 
-            let wireDatatype = appCanvas.getLine(watchObject.objectId).getSource().getUserData().datatype;
+            let wireDatatype = appCanvas.getLine(options.objectId).getSource().getUserData().datatype;
 
             let gdbOutputJson = JSON.parse(gdbOutputStr);
+            if (gdbOutputJson[0].payload.value === undefined){ resolve("__undefined__"); }
+
             const valueString = gdbOutputJson[0].payload.value;
             let wireValue = "NOT EVALUATED!";
 
@@ -395,22 +404,21 @@ GraphLang.Debugger.Cpp.debugGetWireValue = function(options = null){
                 document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>> no wire datatype recognized, gdb value response:\n" + wireValue + "<pre/><hr/>");
             }
 
-            //HERE WILL GO PLACING WIRE VALUE ON SCREEN
-            GraphLang.Debugger.Cpp.putWireValueOnScreen(watchObject, wireValue);
-        });
-
-    }else{
-        console.log(`no options provided`);
-    }
+            resolve(wireValue);  //return received data
+        }else{
+            console.log(`no options provided`);
+            reject("no options provided");
+        }
+    });
 }
 
 /**
  *  @method putWireValueOnScreen
  *  @description Put label on wire on screen if node is opened on main screen.
  */
-GraphLang.Debugger.Cpp.putWireValueOnScreen = function(watchObj, wireValue) {
+GraphLang.Debugger.Cpp.putWireValueOnScreen = function(watchObj, wireValue, doAnimation = true) {
     //TODO: check if watchObj for wire is valid, ie. contains all necessary info
-
+    console.log(`> putWireValueOnScreen - entered - ${watchObj.objectId}`);
     function animateBlinkObject(obj){
         let errorOpacityToggle = true;
         let errorOpacityToggleCounter = 0;
@@ -443,7 +451,10 @@ GraphLang.Debugger.Cpp.putWireValueOnScreen = function(watchObj, wireValue) {
         new draw2d.layout.locator.ManhattanMidpointLocator()
     );
 
-    animateBlinkObject(labelWithWireValueRef);
+    //if flag set to do animation there will be blinking of text label
+    if (doAnimation){
+        animateBlinkObject(labelWithWireValueRef);
+    }
 },
 
 /**
@@ -452,21 +463,6 @@ GraphLang.Debugger.Cpp.putWireValueOnScreen = function(watchObj, wireValue) {
  *  on which line it is and find it in schematic and focus screen on it, should work on nested nodes.
  */
 GraphLang.Debugger.Cpp.getCodeLocation = function(){
-    function animateBlinkObject(obj){
-        let errorOpacityToggle = true;
-        let errorOpacityToggleCounter = 0;
-        obj.on("timer", function(emitter){
-            obj.attr({opacity: (errorOpacityToggle ? 0.1 : 1)});
-            errorOpacityToggle = !errorOpacityToggle;
-            errorOpacityToggleCounter++;
-            if (errorOpacityToggleCounter > 6){
-                obj.stopTimer();
-                obj.attr({opacity: 1});
-                errorOpacityToggleCounter = 0;
-            }
-        });
-        obj.startTimer(120);
-    }
 
     GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`frame`, function(response) {
         let gdbMessages = JSON.parse(response);
@@ -489,6 +485,17 @@ GraphLang.Debugger.Cpp.getCodeLocation = function(){
         //log info
         GraphLang.Debugger.Cpp.logResponse({data: `code current line: ${lineNumber}, breakpoint: ${JSON.stringify(breakpointInfo)}`});
 
+        // line number -1 means program is not executed
+        if (lineNumber == -1){
+            GraphLang.Debugger.Cpp.logResponse({data: `PROGRAM NOT EXECUTED`});
+            return;
+        }
+
+        if (breakpointInfo.type == "programStart"){
+            GraphLang.Debugger.Cpp.logResponse({data: `PROGRAM AT BEGINNING`});
+            return;
+        }
+
         //TODO: NEED TO REMEMBER WHAT IS MAIN CANVAS, WHAT SCHEMATIC WAS THERE LOADED!!!
 
         //if breakpoint is in subnode load it into main canvas
@@ -498,7 +505,7 @@ GraphLang.Debugger.Cpp.getCodeLocation = function(){
         }
 
         let currentObj = appCanvas.getFigure(breakpointInfo.objectId);
-        animateBlinkObject(currentObj);    //animate node to make visible where is breakpoint or scroll to it to make it visible
+        GraphLang.Utils.animateBlinkObject(appCanvas, breakpointInfo.objectId); //animate node to make visible where is breakpoint or scroll to it to make it visible
     });
 }
 
@@ -526,6 +533,7 @@ GraphLang.Debugger.Cpp.open = function(options = null){
         <input name="endDebuggingButton" type="button" value="END DEBUGGING" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('end debugging')" />
         <input name="frameButton" type="button" value="FRAME" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('frame')" />
         <input name="getCodeLocationButton" type="button" value="?" onclick="GraphLang.Debugger.Cpp.getCodeLocation()" />
+        <input name="killProgramButton" type="button" value="KILL" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('kill')" />
         <input name="randomNumberButton" type="button" value="test random number" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('get random number')" />
         <input name="codeBreakpointListButton" type="button" value="breakpoint list" onclick="GraphLang.Debugger.Cpp.refreshBreakpointList()" />
         <input name="codeWatchListButton" type="button" value="watch list" onclick="GraphLang.Debugger.Cpp.refreshWatchList()" />
@@ -583,10 +591,41 @@ GraphLang.Debugger.Cpp.refreshWatchList = function(funcParams = null){
 
     let outputElement = document.querySelector("#variablesWatch");
 
-    outputElement.innerHTML = "<b>Variables watch list:</b><br /><br/>";
+    outputElement.innerHTML = "<b>Variables watch list:</b>&nbsp;&nbsp;&nbsp;&nbsp;<input name='readAllWatchButton' type='button' value='READ ALL WATCH' onclick='GraphLang.Debugger.Cpp.readAllWatchValues()' /><br /><br/>";
 
     translateToCppCodeWatchList.each(function(watchIndex, watchObj){
-        outputElement.insertAdjacentHTML("beforeend", `<span onclick='GraphLang.Debugger.Cpp.debugGetWireValue(${JSON.stringify(watchObj)})'>${JSON.stringify(watchObj)}</span><br /><hr />`)
+        outputElement.insertAdjacentHTML("beforeend", `<span onclick='GraphLang.Debugger.Cpp.readGdbWatchValueAndDisplayOnScreen(${JSON.stringify(watchObj)})'>${JSON.stringify(watchObj)}</span><br /><hr />`)
     });
 }
 
+/**
+ * @method readGdbWatchValueAndDisplayOnScreen
+ * @param {Object}  watchObj    - JSON watch object
+ * @param {bool}    doAnimation - if true label placed on wire blink for moment to show where it is placed on screen
+ * @returns {Promise<void>}
+ */
+GraphLang.Debugger.Cpp.readGdbWatchValueAndDisplayOnScreen = async function(watchObj, doAnimation = true) {
+    /*
+     *  This handles wire value, read and display.
+     *
+     *  TODO: Function name is general, so need to add also case when watch type is 'node' or something else
+     */
+    let wireValue = await GraphLang.Debugger.Cpp.debugGetWireValue(watchObj)
+    GraphLang.Debugger.Cpp.putWireValueOnScreen(watchObj, wireValue, doAnimation);
+}
+
+/**
+ * @method readAllWatchValues
+ * @description Go through current all watch list and read their values from GDB and put them on screen.
+ * @param {Object} funcParams
+ */
+GraphLang.Debugger.Cpp.readAllWatchValues = async function(funcParams = null) {
+    GraphLang.Debugger.Cpp.logResponse({data: `> readAllWatchValues - entered`});
+
+    //there is await used and each() doesn't support await therefore it must be done using for cycle
+    for (const watchObj of translateToCppCodeWatchList.asArray()){
+        await GraphLang.Debugger.Cpp.readGdbWatchValueAndDisplayOnScreen(watchObj, true);
+    }
+
+    GraphLang.Debugger.Cpp.logResponse({data: `> readAllWatchValues - finished`});
+}

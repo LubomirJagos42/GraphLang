@@ -1000,7 +1000,7 @@ typedef float numeric;
     template_cCode += "\n";
 
     //add offset to breakpoints line numbers since here before is some code generated and breakpoints were counted just from canvas code
-    let lineNumberOffset = GraphLang.Utils.getLineCount(template_cCode) - 1;
+    let lineNumberOffset = GraphLang.Utils.getLineCount(template_cCode);
     translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObject){
         breakpointObject.lineNumber += lineNumberOffset;
     });
@@ -1010,7 +1010,8 @@ typedef float numeric;
     GLOBAL_CODE_LINE_OFFSET = lineNumberOffset;
 
     //add program startpoint main() into breakpoint list, in debug mode it's first stop where it's waiting during stepping
-    translateToCppCodeBreakpointList.add({lineNumber: lineNumberOffset, objectId: null, type: "programStart", parent: null});
+    //line number is +1 due till now there is white line and now on next line will start generated code therefore breakpoint is there
+    translateToCppCodeBreakpointList.add({lineNumber: lineNumberOffset+1, objectId: null, type: "programStart", parent: null});
 
     template_cCode += cCode;
     template_cCode += "\n";

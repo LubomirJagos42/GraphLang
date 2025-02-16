@@ -76,7 +76,7 @@ HoverConnection = draw2d.Connection.extend({
                             else alert("Wire has no breakpoint data.");
                             break;
                         case "debugGetValue":
-                            GraphLang.Debugger.Cpp.debugGetWireValue({wireId: emitter.getId()});
+                            GraphLang.Debugger.Cpp.readGdbWatchValueAndDisplayOnScreen({objectId: emitter.getId()});
                             break;
                         default:
                             break;
