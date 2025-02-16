@@ -94,6 +94,8 @@ GraphLang.Debugger.Cpp.sendMessageAndAddToLog = function(message = null, callbac
     GraphLang.Debugger.websocket.send(message);
 
     document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>>" + message + "<pre/><hr/>");
+
+    return message;
 }
 
 /**
@@ -249,7 +251,7 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
 
         /*
          *  I wanted to use for (let obj in ...) but it doesn't seems to get indexes as line number, don't know why in Utils this is running and here no.
-         *      - therefore using this approach using normal loop to index array, non defined leements are undefined
+         *      - therefore using this approach using normal loop to index array, non defined elements are undefined
          */
         for(let k = 0; k < errorLinesByLineNumbers.length; k++){
             errorObj = errorLinesByLineNumbers[k];
@@ -335,18 +337,120 @@ GraphLang.Debugger.Cpp.debugSchematic = async function(options = null){
 
 /**
  *  @method debugGetWireValue
- *  @description This will set breakpoints into loaded code, load coad and run it.
+ *  @description Send message to GDB debugger to get wire variable value, evaluate output message and try to put it's value on screen on wire.
  */
 GraphLang.Debugger.Cpp.debugGetWireValue = function(options = null){
     console.log(`debugGetWireValue executed`);
     if (options){
-        let wireName = 'wire_' + options.wireId.replaceAll('-', '_');
-        GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`print ${wireName}`);
+        let wireName = 'wire_' + options.objectId.replaceAll('-', '_');
+
+        /*
+         *  This is first way, but this output structure is too complex
+         */
+        // GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`print ${wireName}`);
+
+        /*
+         *  This will evaluate expression and return address where variable is stored along its value
+         *  Here try to extract value from output payload and put it's value on screen on wire
+         *  This is example output from GDB from python:
+                [
+                  {
+                    "type": "result",
+                    "message": "done",
+                    "payload": {
+                      "value": "{_M_dataplus = {> = {> = {}, }, _M_p = 0x5ffda0 \"AAABBB\"}, _M_string_length = 6, {_M_local_buf = \"AAABBB\\000\\000\\\"\\322`\\254\\376\\177\\000\", _M_allocated_capacity = 72852346847553}}"
+                    },
+                    "token": null,
+                    "stream": "stdout"
+                  }
+                ]
+
+         *  Output parsing is done in provided callback function.
+         *  TODO: now gdb response EXPECT STRING, need to add case for number or else, datatype can be got from wiretype
+         */
+        let gdbOutputStr = GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`-data-evaluate-expression ${wireName}`, (gdbOutputStr, watchObject = options) => {
+            console.log(`> parsing gdb output`);
+            console.log(gdbOutputStr);
+
+            let wireDatatype = appCanvas.getLine(watchObject.objectId).getSource().getUserData().datatype;
+
+            let gdbOutputJson = JSON.parse(gdbOutputStr);
+            const valueString = gdbOutputJson[0].payload.value;
+            let wireValue = "NOT EVALUATED!";
+
+            //extract wire value from response based on its datatype, for number it's easy for string little more complicated
+            if (wireDatatype === "string"){
+                // Use a regular expression to match the string inside the quotes
+                const regex = /"([^"]*)"/; // This will match the string between quotes
+                const match = valueString.match(regex);
+
+                if (match && match[1]) {
+                    wireValue = match[1]; // "AAABBB"
+                    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>>" + wireValue + "<pre/><hr/>");
+                } else {
+                    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>> no wire value extracted!<pre/><hr/>");
+                }
+            }else{
+                wireValue = valueString;
+                document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>> no wire datatype recognized, gdb value response:\n" + wireValue + "<pre/><hr/>");
+            }
+
+            //HERE WILL GO PLACING WIRE VALUE ON SCREEN
+            GraphLang.Debugger.Cpp.putWireValueOnScreen(watchObject, wireValue);
+        });
+
     }else{
         console.log(`no options provided`);
     }
 }
 
+/**
+ *  @method putWireValueOnScreen
+ *  @description Put label on wire on screen if node is opened on main screen.
+ */
+GraphLang.Debugger.Cpp.putWireValueOnScreen = function(watchObj, wireValue) {
+    //TODO: check if watchObj for wire is valid, ie. contains all necessary info
+
+    function animateBlinkObject(obj){
+        let errorOpacityToggle = true;
+        let errorOpacityToggleCounter = 0;
+        obj.on("timer", function(emitter){
+            obj.attr({opacity: (errorOpacityToggle ? 0.1 : 1)});
+            errorOpacityToggle = !errorOpacityToggle;
+            errorOpacityToggleCounter++;
+            if (errorOpacityToggleCounter > 6){
+                obj.stopTimer();
+                obj.attr({opacity: 1});
+                errorOpacityToggleCounter = 0;
+            }
+        });
+        obj.startTimer(120);
+    }
+
+    wireObj = appCanvas.getLine(watchObj.objectId);
+
+    //delete all labels placed on wire
+    wireObj.getChildren().each(function(childIndex, childObj){
+        if (childObj.NAME && childObj.NAME == "draw2d.shape.basic.Label"){
+            wireObj.remove(childObj);
+        }
+    });
+
+    //add new label with current value
+    let labelWithWireValueRef = new draw2d.shape.basic.Label({text: wireValue});
+    wireObj.add(
+        labelWithWireValueRef,
+        new draw2d.layout.locator.ManhattanMidpointLocator()
+    );
+
+    animateBlinkObject(labelWithWireValueRef);
+},
+
+/**
+ *  @method getCodeLocation
+ *  @description ???This will blink on current code location, it scans source code, ask debugger
+ *  on which line it is and find it in schematic and focus screen on it, should work on nested nodes.
+ */
 GraphLang.Debugger.Cpp.getCodeLocation = function(){
     function animateBlinkObject(obj){
         let errorOpacityToggle = true;
@@ -482,7 +586,7 @@ GraphLang.Debugger.Cpp.refreshWatchList = function(funcParams = null){
     outputElement.innerHTML = "<b>Variables watch list:</b><br /><br/>";
 
     translateToCppCodeWatchList.each(function(watchIndex, watchObj){
-        outputElement.insertAdjacentHTML("beforeend", `<span onclick="GraphLang.Debugger.Cpp.debugGetWireValue({wireId: '${watchObj.objectId}'})">${JSON.stringify(watchObj)}</span><br /><hr />`)
+        outputElement.insertAdjacentHTML("beforeend", `<span onclick='GraphLang.Debugger.Cpp.debugGetWireValue(${JSON.stringify(watchObj)})'>${JSON.stringify(watchObj)}</span><br /><hr />`)
     });
 }
 

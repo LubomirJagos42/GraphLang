@@ -195,8 +195,13 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
       this.contextMenuItems["sep2"] = "---------";
 
       for (item of this.constantDatatypesList){
-          this.contextMenuItems[item] = {name: item};
+          let itemDisplayText = item
+              .replaceAll("<", "&lt;")
+              .replaceAll(">", "&gt;");
+
+          this.contextMenuItems[item] = {name: itemDisplayText};
       }
+      this.contextMenuItems["sep3"] = "---------";
 
       /*
        *  Scan all user defined nodes in whoe files even if they are not used
@@ -284,7 +289,7 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
   getVariableValueAsStr: function(){
       let variableValueStr = "";
       if (this.getDatatype().toLowerCase().search("string") > -1) {
-          variableValueStr += "\'" + this.getText() + "\'";
+          variableValueStr += "\"" + this.getText() + "\"";
       }else{
           variableValueStr = this.getText();
       }
@@ -326,12 +331,14 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
    *  @desc Returns constant declaration. NOW INTENTIONALLY SAME AS TRANLSATE TO CPP, BECAUSE it's used during translating function to have translate them before wires declaration
    *  @returns {string} C code string, each line is finished with newline symbol \n
    */
-  translateToCppCodeDeclaration:function(){
+  translateToCppCodeDeclaration:function(funcParams){
+    let translateTerminalsDeclaration =  funcParams instanceof Object && Object.hasOwn(funcParams, "translateTerminalsDeclaration") ? funcParams.translateTerminalsDeclaration : true;
+
     cCode = "";
     var constDatatype = this.getDatatype();
 
     /*
-     *  retrun variable declaration, if terminal translation is forbidden using GLOBAL FLAG translateTerminalsDeclaration then no declaration is created
+     *  return variable declaration, if terminal translation is forbidden using GLOBAL FLAG translateTerminalsDeclaration then no declaration is created
      */
     if (!this.userData.isTerminal || (this.userData.isTerminal && translateTerminalsDeclaration)) {
         cCode += constDatatype + " " + this.getVariableName() + " = " + this.getVariableValueAsStr() + ";\n";

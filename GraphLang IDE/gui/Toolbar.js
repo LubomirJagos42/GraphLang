@@ -229,6 +229,15 @@ example.Toolbar = Class.extend({
 		this.codeRewriteIdFlag  = $("<span>&nbsp; Rewrite ID: <input id=\"codeRewriteIdFlag\" type=\"checkbox\" /></span>");
 		this.html.append(this.codeRewriteIdFlag);
 
+		/**
+		 *	breakpointListToggle Button
+		 */
+		this.rotateSelectedNodeButton  = $("<button id=\"rotateSelectedNodeButton\">rotate selected</button>");
+		this.rotateSelectedNodeButton.button().click($.proxy(function(){
+			GraphLang.Utils.rotateSelectedNodeOnCanvas(appCanvas);
+		}));
+		this.html.append(this.rotateSelectedNodeButton);
+
 	},
 
 	/**

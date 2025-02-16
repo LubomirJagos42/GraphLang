@@ -1808,6 +1808,7 @@ GraphLang.Utils.loadedNodeShapeAndSchematicStr = null;
 /**
  *  @method displayContentsFromClass
  *  @param {String} content String content to display
+ *  @param {Object} canvas  Target canvas where content should be displayed
  *  @description Translates schematic on given canvas to C/C++ code as function which can be called in other diagrams using symbol with assign schematic.
  */
 GraphLang.Utils.displayContentsFromClass = function(contents, canvasObj){
@@ -1935,8 +1936,8 @@ GraphLang.Utils.displayContentsFromClass = function(contents, canvasObj){
 
 /**
  *  @method displayContents2
- *  @param {String} content String content to display
- *  @param {canvas} canvas object where content is displayed
+ *  @param {Object} content JSON object which will be display
+ *  @param {canvas} canvas  Target canvas where content is displayed
  *  @description Translates schematic on given canvas to C/C++ code as function which can be called in other
  *  diagrams using symbol with assign schematic, this function is general one and newer, using also canvas
  *  reference where content is displayed.
@@ -3013,4 +3014,15 @@ GraphLang.Utils.animateBlinkObject = function(canvas, objId, callbackFunction = 
         }
     });
     obj.startTimer(120);
+}
+
+/**
+ * @method rotateSelectedNodeOnCanvas
+ * @description Rotate selected object on provided canvas by angle 15deg or by specified angle
+ * @param canvas            canvas reference
+ * @param angle {double}    rotation angle in degrees
+ */
+GraphLang.Utils.rotateSelectedNodeOnCanvas = function(canvas, angle = 15){
+    let currentRotation = canvas.getSelection().getPrimary().getRotationAngle();
+    canvas.getSelection().getPrimary().setRotationAngle(currentRotation + angle);
 }

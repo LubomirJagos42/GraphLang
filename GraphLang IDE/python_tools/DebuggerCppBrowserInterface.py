@@ -13,7 +13,6 @@ import pprint as pp
 import subprocess
 import json
 import random
-import json
 
 class DebbugerCppBrowserInterface:
     __gdbmi = None
@@ -57,7 +56,7 @@ class DebbugerCppBrowserInterface:
 
             else:
                 #this returns list
-                response = self.__gdbmi.write(message);
+                response = self.__gdbmi.write(message)
             
                 #
                 #   this is possible how to send response to browser

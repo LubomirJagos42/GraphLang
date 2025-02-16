@@ -154,6 +154,27 @@ My Library structure
 	> SPI
 		
 	> I2C
+	
+	> Sound
+		> miniaudio (Windows with MinGW-g++ - OK), (https://github.com/mackron/miniaudio)
+			- init
+			- playFile
+			- playSinewave
+			- close
+
+		> portaudio
+			- openDevice
+			- closeDevice
+			- play
+		
+		> libao (https://xiph.org/ao/doc/)
+			- ao_initialize
+			- ao_default_driver_id
+			- ao_open_live
+			- ao_play
+			- ao_close
+			- ao_shutdown
+		
 
 > HwArduinoNano
 	> Serial

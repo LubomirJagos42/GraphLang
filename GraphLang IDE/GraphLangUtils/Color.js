@@ -58,7 +58,7 @@ GraphLang.Utils.Color = draw2d.util.Color.extend({
     else if (colorName == "qtuiapplication") return "#70db70";    
     else if (colorName == "undefined" || colorName == "unknown") return "#666666";
 
-    else return "#000000";
+    else return "#636363";
   },
 
   /**
@@ -147,7 +147,7 @@ GraphLang.Utils.Color = draw2d.util.Color.extend({
     else if (colorName == "qtuiapplication") return "#FFFFFF";    
     else if (colorName == "undefined" || colorName == "unknown") return "#666666";
 
-    else return "#000000";
+    else return "#636363";
   },
 
   /**

@@ -45,6 +45,10 @@
         GraphLang = {}; //this is used for utils and so, must be here by default
 
         <?php foreach ($nodeDefaultTreeDefinition as $newObjectName){echo("\t\t$newObjectName = {};\n");} ?>
+
+        let global_allNodeCategoriesList = [
+            <?php foreach ($nodeDefaultTreeDefinition as $newObjectName){echo("\t\t\"$newObjectName\",\n");} ?>
+        ];
     </script>
 
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/Application.js"></script>
@@ -212,16 +216,76 @@
             return jsonStr;
         }
 
+        /*****************************************************************************************************************************************
+         *  All nodes in project
+         *****************************************************************************************************************************************/
+        let global_allProjectNodesList = [
+            <?php
+            foreach (array_keys($nodesNamesWithCategories) as $categoryName){
+                foreach ($nodesNamesWithCategories[$categoryName] as $node){
+                    echo("'".$node['className']."',\n");
+                }
+            }
+            ?>
+        ];
+
+        /*****************************************************************************************************************************************
+         *  Obtain list of all user defined node by traversing all categories and look into each node if it has non-empty jsonDocument property
+         *      1. get user defined from DB, et nodes which parent is directly ...UserDefinedNode...
+         *      2. Go through all nodes categories and look if their jsonDocument property is not empty, ie. if they have some schematic inside
+         *      3. Go through all nodes in project and look if their parents are user defined, if yes then add it to list
+         *****************************************************************************************************************************************/
+
+        //  1. step - This will get nodes from DB which are direct descendant of UserDefinedNode
         let global_allUserDefinedNodesList = [
             <?php
             $k = 0;
             foreach ($userDefinedNodesClassNames as $className){
-                if ($k == 0) echo("'$className'\n");
-                else echo("\t, '$className'\n");
-                $k++;
+                echo("'$className',\n");
             }
             ?>
         ];
+
+        //  2. step - Next we iterate over all categories children and look if they are user defined nodes what means they have defined not empty jsonDocument
+        for (let nodeName of global_allProjectNodesList){
+            try{
+                let nodeObj = eval(`new ${nodeName}()`);
+                if (nodeObj.jsonDocument !== undefined &&
+                    nodeObj.jsonDocument instanceof Array &&
+                    nodeObj.jsonDocument.length > 0 &&
+                    !global_allUserDefinedNodesList.includes(nodeName)
+                ){
+                    global_allUserDefinedNodesList.push(nodeName);
+                }
+            }catch(e){
+                console.log(e);
+            }
+        }
+
+        // 3. step - Again going through all project nodes and look if they are not children of some user defined node what means they are also user defined node
+        for (let nodeName of global_allProjectNodesList){
+            try{
+                let nodeObj = eval(`new ${nodeName}()`);
+                if (
+                    !global_allUserDefinedNodesList.includes(nodeName)
+                ){
+                    //traverse object to its top parent and always look into already obtained
+                    //list of user defined nodes, if there is some node from it then also actual node is user defined
+                    let parentNodeObj = nodeObj;
+                    while(parentNodeObj.__proto__){
+                        parentNodeObj = parentNodeObj.__proto__;
+                        if (parentNodeObj.NAME !== undefined &&
+                            global_allUserDefinedNodesList.includes(parentNodeObj.NAME)
+                        ){
+                            global_allUserDefinedNodesList.push(nodeName);
+                            break;  //jump out of while, ends traversing up otherwise it could be added multiple times to user defined list therefore more of its parents could be user defined nodes
+                        }
+                    }
+                }
+            }catch(e){
+                console.log(e);
+            }
+        }
     </script>
 
 </head>

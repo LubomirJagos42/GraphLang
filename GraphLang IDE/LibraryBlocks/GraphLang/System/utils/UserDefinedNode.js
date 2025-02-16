@@ -125,6 +125,21 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
                            if (emitter.getUserData() && emitter.getUserData().hasOwnProperty("isSetBreakpoint")) alert(emitter.getUserData().isSetBreakpoint);
                            else alert("Wire has no breakpoint data.");
                            break;
+                       case "openNodeSchematic":
+                           let params = new URLSearchParams(window.location.search);
+                           let queryParams = {};
+                           params.forEach((value, key) => {
+                               queryParams[key] = value;
+                           });
+
+                           // let targetUrl = window.location.hostname + window.location.pathname + "?";
+                           let targetUrl = "?";
+                           targetUrl += `q=ide`;
+                           targetUrl += `&projectId=` + queryParams.projectId;
+                           targetUrl += `&nodeClassName=` + emitter.NAME;
+
+                           window.open(targetUrl, "_blank");
+                           break;
                        default:
                            break;
                    }
@@ -137,6 +152,7 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
                        "unsetBreakpoint": {name: "Unset breakpoint"},
                        "separator": "--------------",
                        "isBreakpoint": {name: "Show if is breakpoint"},
+                       "openNodeSchematic": {name: "Open node schematic"},
                    }
            });
        };

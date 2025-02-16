@@ -17,7 +17,7 @@ HwRaspiZero.Console.ConsoleLog = GraphLang.UserDefinedNode.extend({
      port.setBackgroundColor("#F300A2");
      port.setName("msgStr");
      port.setMaxFanOut(20);
-     port.userData = {datatype: "String"};
+     port.userData = {datatype: "string"};
      this.persistPorts=false;
    },
 
