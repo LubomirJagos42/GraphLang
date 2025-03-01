@@ -3,7 +3,7 @@
 //                                                        
 // http://www.draw2d.org                                  
 //                                                        
-GraphLang.Math.Basic.Divide = GraphLang.UserDefinedNode.extend({
+GraphLang.Math.Basic.Divide = GraphLang.Math.Basic.CommonParent.extend({
 
    NAME: "GraphLang.Math.Basic.Divide",
 

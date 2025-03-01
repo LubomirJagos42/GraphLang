@@ -9,7 +9,15 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
 
    NAME: "GraphLang.UserDefinedNode",
 
-   init:function(attr, setter, getter)
+   contextMenuItems: {
+       "setBreakpoint": {name: "Set breakpoint"},
+       "unsetBreakpoint": {name: "Unset breakpoint"},
+       "separator": "--------------",
+       "isBreakpoint": {name: "Show if is breakpoint"},
+       "openNodeSchematic": {name: "Open node schematic"},
+   },
+
+   init: function(attr, setter, getter)
    {
         this._super( $.extend({stroke:0, bgColor:null, width: 42, height: 42},attr), setter, getter);
         this.persistPorts=false;
@@ -146,14 +154,7 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
                },emitter),
                x:event.x,
                y:event.y,
-               items:
-                   {
-                       "setBreakpoint": {name: "Set breakpoint"},
-                       "unsetBreakpoint": {name: "Unset breakpoint"},
-                       "separator": "--------------",
-                       "isBreakpoint": {name: "Show if is breakpoint"},
-                       "openNodeSchematic": {name: "Open node schematic"},
-                   }
+               items: emitter.contextMenuItems,
            });
        };
 

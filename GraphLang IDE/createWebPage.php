@@ -301,6 +301,20 @@ def createVariableInitDeclaration(t,s, outStr = ""):
 def fillVariablesJavascriptClassHierarchy():
     '''
     This will search specified folders and fill arrays with blocks paths, parent classes and so...
+    Global variable objectNamesList is filled with array of nodes with this info:
+        [
+            [
+                node directory path,
+                node filename,
+                class name .ie "GraphLang.Core.Math.Add",
+                class parent .ie "GraphLang.Core.UserDefined",
+                html category tab assignment - name of node category,
+                html exclude from tab - node isHidden, if true it's not assigned in html
+            ],
+            [...],
+            [...],
+            ...
+        ]
     '''
 
     global createVariableIniStatement
@@ -373,23 +387,20 @@ def fillVariablesJavascriptClassHierarchy():
     #
     k = 0
     for nodeItem in objectsNamesList:
-        generateHtml = True
 
         #add fields to rows in objectsNamesList to have them at each item and set default values
         objectsNamesList[k].append(None)
         objectsNamesList[k].append(False)
 
+        #set isHidden parameter for node
         for excludeStr in excludeFromHtmlBlockPatterns:
             if (nodeItem[1].replace('\\','/').find(excludeStr) > -1):
-                generateHtml = False
-                objectsNamesList[k][-2] = None
                 objectsNamesList[k][-1] = True
 
-        if generateHtml:
-            for tabDirLocation in blocksToTabsAssignment.keys():
-                if (nodeItem[0].startswith(tabDirLocation)):
-                    objectsNamesList[k][-2] = blocksToTabsAssignment[tabDirLocation]
-                    objectsNamesList[k][-1] = False
+        #set category parameter for node
+        for tabDirLocation in blocksToTabsAssignment.keys():
+            if (nodeItem[0].startswith(tabDirLocation)):
+                objectsNamesList[k][-2] = blocksToTabsAssignment[tabDirLocation]
 
         k += 1
                

@@ -307,7 +307,17 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
 
   /*****************************************************************************************************************************************************
    *    TRANSLATE TO C/C++ functions
-   *****************************************************************************************************************************************************/ 
+   *****************************************************************************************************************************************************/
+
+  translateToCppCodeImport: function(){
+      let cCode = "";
+
+      let constantDatatype = this.getDatatype();
+      if (constantDatatype == "string") cCode += `#include <string>\n`;
+      if (constantDatatype.startsWith("std::complex<")) cCode = `#include <complex>\n`;
+
+      return cCode;
+  },
 
   /**
    *  @method translateToCppCode
@@ -328,7 +338,7 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
 
   /**
    *  @name translateToCppCodeDeclaration
-   *  @desc Returns constant declaration. NOW INTENTIONALLY SAME AS TRANLSATE TO CPP, BECAUSE it's used during translating function to have translate them before wires declaration
+   *  @desc Returns constant declaration. NOW INTENTIONALLY SAME AS TRANSLATE TO CPP, BECAUSE it's used during translating function to have translate them before wires declaration
    *  @returns {string} C code string, each line is finished with newline symbol \n
    */
   translateToCppCodeDeclaration:function(funcParams){

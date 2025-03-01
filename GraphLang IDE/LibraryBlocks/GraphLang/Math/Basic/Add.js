@@ -3,7 +3,7 @@
 //                                                        
 // http://www.draw2d.org                                  
 //                                                        
-GraphLang.Math.Basic.Add = GraphLang.UserDefinedNode.extend({
+GraphLang.Math.Basic.Add = GraphLang.Math.Basic.CommonParent.extend({
 
    NAME: "GraphLang.Math.Basic.Add",
 

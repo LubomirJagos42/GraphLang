@@ -3,7 +3,7 @@
 //                                                        
 // http://www.draw2d.org                                  
 //                                                        
-GraphLang.Math.Basic.Subtract = GraphLang.UserDefinedNode.extend({
+GraphLang.Math.Basic.Subtract = GraphLang.Math.Basic.CommonParent.extend({
 
    NAME: "GraphLang.Math.Basic.Subtract",
 

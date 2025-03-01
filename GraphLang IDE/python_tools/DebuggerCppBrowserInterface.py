@@ -29,10 +29,12 @@ class DebbugerCppBrowserInterface:
         
             print(f"received> {message}")
 
-            if (message == "end debugging"):
-                #
-                # This ends this script.
-                #
+            if message == "end debugging":
+                await websocket.close()
+                
+                #this doesn't seems to finish async loop
+                #return  # Instead of exit(0)
+                
                 exit(0)
 
             elif (message.startswith("get random")):
@@ -40,19 +42,10 @@ class DebbugerCppBrowserInterface:
                  print(f"sending> {numberStr}")
                  await websocket.send(numberStr)
 
-            elif (message.startswith("compile code")):
-                #
-                # Call script to compile CPP code.
-                #
+            elif message.startswith("compile code"):
                 inputFile = message.replace("compile code", "").strip()
-
-                response = subprocess.run(['python', 'compileCppCode.py', inputFile], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-                if (len(response.stdout) > 0):
-                    await websocket.send(response.stdout)
-                elif (len(response.stderr) > 0):
-                    await websocket.send(response.stderr)
-                else:
-                    await websocket.send(json.dumps({"status": -1, "message": "unknown error"}))
+                response = await self.compile_code(inputFile)
+                await websocket.send(response)
 
             else:
                 #this returns list
@@ -70,7 +63,39 @@ class DebbugerCppBrowserInterface:
                 #response = pp.pformat(response)
                 #await websocket.send(response)
 
+                #
+                #   sends data in chunks to not exceeds limit
+                #
                 await websocket.send(json.dumps(response))
+                
+                # NO USING this, due it's not displayed as whole on browser side since it's splitted into chunks
+                #await self.safe_send(websocket, json.dumps(response))
+
+    ##
+    #   Code compile function, call another python script which perform g++ call
+    #
+    async def compile_code(self, inputFile):
+        process = await asyncio.create_subprocess_exec(
+            'python', 'compileCppCode.py', inputFile,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+        
+        if stdout:
+            return stdout.decode()
+        if stderr:
+            return stderr.decode()
+        return json.dumps({"status": -1, "message": "unknown error"})
+    
+    ##
+    #   Send data to websocket to browser in chunks to not overexceed buffer size and not to close socket
+    #       WARNING: I have on web browser side json parse therefore this could be problem
+    #
+    async def safe_send(self, websocket, data):
+        CHUNK_SIZE = 4096  # Adjust as needed
+        for i in range(0, len(data), CHUNK_SIZE):
+            await websocket.send(data[i:i+CHUNK_SIZE])
 
     async def handlerAsyncLoop(self):
         async with websockets.serve(self.processBrowserMessage, self.websocketHost, self.websocketPort):

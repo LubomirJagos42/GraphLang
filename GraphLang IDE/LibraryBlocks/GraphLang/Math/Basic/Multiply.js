@@ -5,7 +5,7 @@
 // Go to the Designer http://www.draw2d.org
 // to design your own shape or download user generated
 //
-GraphLang.Math.Basic.Multiply = draw2d.SetFigure.extend({
+GraphLang.Math.Basic.Multiply = GraphLang.Math.Basic.CommonParent.extend({
 
    NAME: "GraphLang.Math.Basic.Multiply",
 

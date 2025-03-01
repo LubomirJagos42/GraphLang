@@ -3,7 +3,7 @@
 //                                                        
 // http://www.draw2d.org                                  
 //                                                        
-GraphLang.Math.Basic.Abs = GraphLang.UserDefinedNode.extend({
+GraphLang.Math.Basic.Abs = GraphLang.Math.Basic.CommonParent.extend({
 
    NAME: "GraphLang.Math.Basic.Abs",
 
