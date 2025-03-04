@@ -12,6 +12,27 @@ GraphLang.Math.Basic.CommonParent = GraphLang.UserDefinedNode.extend({
         "--> A": {name: "--> A, Item"},
         "--> B": {name: "--> B, Item"},
         "--> C": {name: "--> C, Item"},
+        "--> D": {name: "--> D, Item"},
+    },
+    additionalContextMenuItemsHandlerPreHook: function(emitter, key, options){
+        switch(key){
+            case "--> A":
+                alert(`This is item A, emitter node id: ${emitter.getId()}`);
+                break;
+            default:
+                alert(`${key}, pre hook`);
+                break;
+        }
+    },
+    additionalContextMenuItemsHandlerPostHook: function(emitter, key, options){
+        switch(key){
+            case "--> B":
+                alert(`This is item B, emitter node id: ${emitter.getId()}`);
+                break;
+            default:
+                alert(`${key}, post hook`);
+                break;
+        }
     },
 
     init:function(attr, setter, getter)
@@ -21,41 +42,6 @@ GraphLang.Math.Basic.CommonParent = GraphLang.UserDefinedNode.extend({
             ...this.contextMenuItems,
             ...this.additionalContextMenuItems
         }
-
-        //this is to extend callback function for context menu
-        this.on("contextmenu", function(emitter, event){
-            $.contextMenu({
-                trigger: 'right',
-                selector: 'body',
-                events:
-                    {
-                        hide:function(){ $.contextMenu( 'destroy' ); }
-                    },
-
-                //these functions are run after user click on some context menu option
-                callback: $.proxy(function(key, options)
-                {
-                    switch(key){
-                        case "--> A":
-                            alert("This is item A");
-                            break;
-                        case "--> B":
-                            alert("This is item B");
-                            break;
-                        default:
-                            alert(key);
-                            break;
-                    }
-                },emitter),
-                x:event.x,
-                y:event.y,
-                items: emitter.contextMenuItems,
-            });
-        });
-
-        this.on("contextmenu", function(emitter, event){
-            console.log(`${emitter.NAME} context menu triggered`);
-        });
     },
 
 });

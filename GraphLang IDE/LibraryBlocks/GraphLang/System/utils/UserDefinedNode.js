@@ -114,6 +114,9 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
                //these functions are run after user click on some context menu option
                callback: $.proxy(function(key, options)
                {
+                   //if there are some additional pre hook defined in some node which extend this user defined node run them
+                   if (typeof emitter.additionalContextMenuItemsHandlerPreHook == "function") emitter.additionalContextMenuItemsHandlerPreHook(emitter, key, options);
+
                    switch(key){
                        case "setBreakpoint":
                            emitter.setStroke(3);
@@ -151,6 +154,10 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
                        default:
                            break;
                    }
+
+                   //if there are some additional post hook defined in some node which extend this user defined node run them
+                   if (typeof emitter.additionalContextMenuItemsHandlerPreHook == "function") emitter.additionalContextMenuItemsHandlerPostHook(emitter, key, options);
+
                },emitter),
                x:event.x,
                y:event.y,
