@@ -3,9 +3,9 @@
 //
 // http://www.draw2d.org
 //
-GraphLang.ZeroMQ.send = GraphLang.ZeroMQ.CommonParent.extend({
+GraphLang.ZeroMQ.bind = GraphLang.ZeroMQ.CommonParent.extend({
 
-    NAME: "GraphLang.ZeroMQ.send",
+    NAME: "GraphLang.ZeroMQ.bind",
 
     init:function(attr, setter, getter){
         this._super( $.extend({stroke:0, bgColor:null, width:103.59375, height:84, flagAutoCreatePorts: false},attr), setter, getter);
@@ -25,12 +25,12 @@ GraphLang.ZeroMQ.send = GraphLang.ZeroMQ.CommonParent.extend({
         // message
         port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(4.826546003016591, 69.25485714285734));
         port.setConnectionDirection(3);
-        port.setBackgroundColor("#4dfaff");
-        port.setName("message_in");
+        port.setBackgroundColor("#d54dff");
+        port.setName("bind_str_in");
         port.setMaxFanOut(20);
 
         if (!port.userData) port.userData = {}
-        port.userData.datatype = "zmq::message_t*";
+        port.userData.datatype = "string";
         port.userData.allowMultipleConnections = undefined;
         port.userData.connectionMandatory = undefined;
 
@@ -82,8 +82,8 @@ GraphLang.ZeroMQ.send = GraphLang.ZeroMQ.CommonParent.extend({
         shape.data("name","Rectangle");
         
         // Label
-        shape = this.canvas.paper.text(0,0,'zeromq send');
-        shape.attr({"x":5,"y":13.5,"text-anchor":"start","text":"zeromq send","font-size":16,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape = this.canvas.paper.text(0,0,'zeromq bind');
+        shape.attr({"x":5,"y":13.5,"text-anchor":"start","text":"zeromq bind","font-size":16,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
         
         // Line_shadow
@@ -238,13 +238,13 @@ GraphLang.ZeroMQ.send = GraphLang.ZeroMQ.CommonParent.extend({
 
     translateToCppCode: function(){
         let socketInConnections = this.getInputPort("socket_ref_in").getConnections();
-        let messageInConnections = this.getInputPort("message_in").getConnections();     //TODO: This is socket mode, now hardwired value ZMQ_PUB in code
+        let bindStrInConnections = this.getInputPort("bind_str_in").getConnections();     //TODO: This is socket mode, now hardwired value ZMQ_PUB in code
 
         let cCode = "";
-        if (socketInConnections.getSize() > 0 && messageInConnections.getSize() > 0) {      //TODO: Message schema constant should be input no hardwired
+        if (socketInConnections.getSize() > 0 && bindStrInConnections.getSize() > 0) {      //TODO: Message schema constant should be input no hardwired
             let socketWireName = "wire_" + socketInConnections.first().getId();
-            let messageWireName = "wire_" + messageInConnections.first().getId();
-            cCode += `${socketWireName}->send(*${messageWireName}, zmq::send_flags::none);\n`;  //message wire contains pointer and method argument is its content therefore '*' is put before message wire name
+            let bindStrWireName = "wire_" + bindStrInConnections.first().getId();
+            cCode += `${socketWireName}->bind(${bindStrWireName});\n`;
         }
 
         return cCode;

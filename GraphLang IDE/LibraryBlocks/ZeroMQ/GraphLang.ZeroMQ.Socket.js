@@ -1,27 +1,39 @@
-GraphLang.ZeroMQ.Context = GraphLang.UserDefinedNode.extend({
-NAME: "GraphLang.ZeroMQ.Context",
+GraphLang.ZeroMQ.Socket = GraphLang.UserDefinedNode.extend({
+NAME: "GraphLang.ZeroMQ.Socket",
 
    init:function(attr, setter, getter)
    {
        this._super( $.extend({stroke:0, bgColor:null, width:100.5, height:76.8473596572876, flagAutoCreatePorts: false},attr), setter, getter);
        var port;
-       // context_ref
+       // socket_ref
        port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(104.31681592039844, 41.26488683725774));
        port.setConnectionDirection(1);
        port.setBackgroundColor("#16F3EC");
-       port.setName("context_ref");
+       port.setName("socket_ref_out");
        port.setMaxFanOut(20);
 
        if (!port.userData) port.userData = {}
-       port.userData.datatype = "zmq::context_t*";
+       port.userData.datatype = "zmq::socket_t*";
        port.userData.allowMultipleConnections = undefined;
        port.userData.connectionMandatory = undefined;
 
-       // context_number
+       // context_ref
        port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(15.957333333333745, 45.832986083533754));
        port.setConnectionDirection(3);
        port.setBackgroundColor("#37B1DE");
-       port.setName("context_number");
+       port.setName("context_ref_in");
+       port.setMaxFanOut(20);
+
+       if (!port.userData) port.userData = {}
+       port.userData.datatype = "uint";
+       port.userData.allowMultipleConnections = undefined;
+       port.userData.connectionMandatory = undefined;
+
+       // socket_mode
+       port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(15.957333333333745, 65.832986083533754));
+       port.setConnectionDirection(3);
+       port.setBackgroundColor("#3769de");
+       port.setName("socket_mode_in");
        port.setMaxFanOut(20);
 
        if (!port.userData) port.userData = {}
@@ -79,8 +91,8 @@ NAME: "GraphLang.ZeroMQ.Context",
        shape.data("name","Rectangle");
        
        // Label
-       shape = this.canvas.paper.text(0,0,'zeromq context');
-       shape.attr({"x":4,"y":11,"text-anchor":"start","text":"zeromq context","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+       shape = this.canvas.paper.text(0,0,'zeromq socket');
+       shape.attr({"x":4,"y":11,"text-anchor":"start","text":"zeromq socket","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
        shape.data("name","Label");
        
        // Line_shadow
@@ -219,19 +231,20 @@ setPersistentAttributes: function(memento){
     },
     jsonDocument: [],
     translateToCppCode: function(){
-        let contextNumberConnections = this.getInputPort("context_number").getConnections();
-        let contextOutConnections = this.getOutputPort("context_ref").getConnections();
+        let contextInConnections = this.getInputPort("context_ref_in").getConnections();
+        let socketModeInConnections = this.getInputPort("socket_mode_in").getConnections();     //TODO: This is socket mode, now hardwired value ZMQ_PUB in code
+        let socketOutConnections = this.getOutputPort("socket_ref_out").getConnections();
 
         let cCode = "";
-        let zmqContextVariableName = "zmqContext_" + this.getId();
-        if (contextNumberConnections.getSize() > 0) {
-            let contextNumberWireName = "wire_" + contextNumberConnections.first().getId();
-            cCode += `zmq::context_t* ${zmqContextVariableName} = new zmq::context_t(${contextNumberWireName});\n`;
+        let zmqSocketVariableName = "zmqSocket_" + this.getId();
+        if (contextInConnections.getSize() > 0) {
+            let contextWireName = "wire_" + contextInConnections.first().getId();
+            cCode += `zmq::socket_t* ${zmqSocketVariableName} = new zmq::socket_t(*${contextWireName}, ZMQ_PUB);\n`;     //TODO: Message schema constant should be input no hardwired
         }
 
-        contextOutConnections.each(function(connectionIndex, connectionObj){
-            let contextOutWireName = "wire_" + connectionObj.getId();
-            cCode += `${contextOutWireName} = ${zmqContextVariableName};\n`;
+        socketOutConnections.each(function(connectionIndex, connectionObj){
+            let socketOutWireName = "wire_" + connectionObj.getId();
+            cCode += `${socketOutWireName} = ${zmqSocketVariableName};\n`;
         });
 
         return cCode;
