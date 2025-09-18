@@ -14,6 +14,7 @@ searchDirs = [
 excludeFromHtmlBlockPatterns = [
     "System/utils",
     "Math/Basic/hidden",
+    "hidden",
 ]
 
 #
@@ -35,6 +36,7 @@ blocksToTabsAssignment = {
     os.path.join(blocksRootDir, "PythonQtGuiLib"):                        "Python GUI",
     os.path.join(blocksRootDir, "SignalProcessing"):                      "Signal Proc.",
     os.path.join(blocksRootDir, "UserDefinedNode"):                       "User Nodes",
+    os.path.join(blocksRootDir, "ZeroMQ"):                                "ZeroMQ",
 }
 
 objectsNamesList = []

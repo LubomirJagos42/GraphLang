@@ -148,7 +148,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
    *****************************************************************************************************************************************************/ 
   
   translateToCppCode: function(funcParams = {}){
-    let codesLinesOffset = Object.hasOwn(funcParams, "codesLineOffset") ? funcParams.codesLineOffset : 0;
+    let codesLineOffset = Object.hasOwn(funcParams, "codesLineOffset") ? funcParams.codesLineOffset : 0;
     let compileErrorLines = Object.hasOwn(funcParams, "compileErrorLines") ? funcParams.compileErrorLines : null;
     let breakpointParentId = Object.hasOwn(funcParams, "breakpointParentId") ? funcParams.breakpointParentId : null;
 
@@ -198,7 +198,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
       if (figObj.translateToCppCode){
         cCode += figObj.translateToCppCode({
             nodeId: figObj.getId(),
-            codesLineOffset: codeLinesOffset + lineCountBefore,
+            codesLineOffset: codesLineOffset + lineCountBefore,
             compileErrorLines: compileErrorLines,
             breakpointParentId: breakpointParentId
         }).replaceAll("\n", "\n\t");
@@ -210,7 +210,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
           inputStr: cCode,
           startLine: lineCountBefore,
           errorLines: compileErrorLines,
-          lineOffset: codesLinesOffset,
+          lineOffset: codesLineOffset,
           errorSourceObj: figObj
       });
 

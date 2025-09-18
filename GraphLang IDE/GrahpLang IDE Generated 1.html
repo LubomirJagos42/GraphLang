@@ -50,6 +50,8 @@
 	GraphLangTestShape3 = {};
 	GraphLangTestShape2 = {};
 	GraphLangTestShape = {};
+	Demo = {};
+	Demo.ZeroMQ = {};
 	BlasterPistol = {};
 	SignalProcessing = {};
 	PythonQtGuiLib = {};
@@ -67,6 +69,7 @@
 	shape.composite = {};
 	ConvertDatatype = {};
 	GraphLang = {};
+	GraphLang.ZeroMQ = {};
 	GraphLang.ArduinoLib = {};
 	GraphLang.ArduinoLib.Node = {};
 	GraphLang.Shapes = {};
@@ -99,8 +102,9 @@
 
     <!-- user defined nodes place to insert -->
 	<script src="./LibraryBlocks/GraphLang/System/utils/UserDefinedNode.js"></script>
-	<script src="./LibraryBlocks/GraphLang/Math/Basic/Add.js"></script>
+	<script src="./LibraryBlocks/GraphLang/Math/Basic/hidden/CommonParent.js"></script>
 	<script src="./LibraryBlocks/GraphLang/Math/Basic/Divide.js"></script>
+	<script src="./LibraryBlocks/GraphLang/Math/Basic/Abs.js"></script>
 	<script src="./LibraryBlocks/GraphLang/Math/Basic/Multiply.js"></script>
 	<script src="./LibraryBlocks/GraphLang/Math/Basic/Not.js"></script>
 	<script src="./LibraryBlocks/GraphLang/Math/Basic/Subtract.js"></script>
@@ -135,7 +139,7 @@
 	<script src="./LibraryBlocks/GraphLang/System/utils/Port.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/utils/RightTunnel.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/utils/LeftTunnel.js"></script>
-	<script src="./LibraryBlocks/GraphLang/Math/Basic/Abs.js"></script>
+	<script src="./LibraryBlocks/GraphLang/Math/Basic/Add.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/VectorNode.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/WhileLayer.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/WireConnection.js"></script>
@@ -169,6 +173,7 @@
 	<script src="./LibraryBlocks/PythonQtGuiLib/UiShow.js"></script>
 	<script src="./LibraryBlocks/SignalProcessing/Convolution.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/BlasterPistol.js"></script>
+	<script src="./LibraryBlocks/UserDefinedNode/Demo.ZeroMQ.Server_string_1.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/GraphLangTestShape.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/GraphLangTestShape2.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/GraphLangTestShape3.js"></script>
@@ -180,6 +185,10 @@
 	<script src="./LibraryBlocks/UserDefinedNode/Test.MultipleSerialPrint_1.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/Test.WhileLoop_1.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/UserDefinedExample.js"></script>
+	<script src="./LibraryBlocks/ZeroMQ/hidden/GraphLang.ZeroMQ.CommonParent.js"></script>
+	<script src="./LibraryBlocks/ZeroMQ/GraphLang.ZeroMQ.Message.js"></script>
+	<script src="./LibraryBlocks/ZeroMQ/GraphLang.ZeroMQ.send.js"></script>
+	<script src="./LibraryBlocks/ZeroMQ/GraphLang.ZeroMQ.Context.js"></script>
 
 
  <script type="text/javascript">
@@ -316,13 +325,9 @@ function displayJSON(canvas){
 }
 
     let global_allUserDefinedNodesList = [
-'GraphLang.Math.Basic.Add'
-,'GraphLang.Math.Basic.Divide'
-,'GraphLang.Math.Basic.Not'
-,'GraphLang.Math.Basic.Subtract'
+'GraphLang.Math.Basic.CommonParent'
 ,'ConvertDatatype'
 ,'GraphLang.ArduinoLib.Node.ternarOperator'
-,'GraphLang.Math.Basic.Abs'
 ,'HwArduinoNano.Serial.begin'
 ,'HwArduinoNano.Serial.println'
 ,'HwRaspiZero.Console.ConsoleLog'
@@ -346,6 +351,7 @@ function displayJSON(canvas){
 ,'PythonQtGuiLib.UiShow'
 ,'SignalProcessing.Convolution'
 ,'BlasterPistol'
+,'Demo.ZeroMQ.Server_string_1'
 ,'GraphLangTestShape'
 ,'GraphLangTestShape2'
 ,'GraphLangTestShape3'
@@ -357,6 +363,7 @@ function displayJSON(canvas){
 ,'Test.MultipleSerialPrint_1'
 ,'Test.WhileLoop_1'
 ,'UserDefinedExample'
+,'GraphLang.ZeroMQ.CommonParent'
 ];
 
 
@@ -391,13 +398,14 @@ function displayJSON(canvas){
 		<input type="button" value="Python GUI" onclick="$('#navigation span').hide(); $('#tab12').show();" />
 		<input type="button" value="Signal Proc." onclick="$('#navigation span').hide(); $('#tab13').show();" />
 		<input type="button" value="User Nodes" onclick="$('#navigation span').hide(); $('#tab14').show();" />
+		<input type="button" value="ZeroMQ" onclick="$('#navigation span').hide(); $('#tab15').show();" />
 		<span id="tab0">
-			<div data-shape="GraphLang.Math.Basic.Add" data-label="Add" class="palette_node_element draw2d_droppable">Add</div>
 			<div data-shape="GraphLang.Math.Basic.Divide" data-label="Divide" class="palette_node_element draw2d_droppable">Divide</div>
+			<div data-shape="GraphLang.Math.Basic.Abs" data-label="Abs" class="palette_node_element draw2d_droppable">Abs</div>
 			<div data-shape="GraphLang.Math.Basic.Multiply" data-label="Multiply" class="palette_node_element draw2d_droppable">Multiply</div>
 			<div data-shape="GraphLang.Math.Basic.Not" data-label="Not" class="palette_node_element draw2d_droppable">Not</div>
 			<div data-shape="GraphLang.Math.Basic.Subtract" data-label="Subtract" class="palette_node_element draw2d_droppable">Subtract</div>
-			<div data-shape="GraphLang.Math.Basic.Abs" data-label="Abs" class="palette_node_element draw2d_droppable">Abs</div>
+			<div data-shape="GraphLang.Math.Basic.Add" data-label="Add" class="palette_node_element draw2d_droppable">Add</div>
 		</span>
 		<span id="tab1">
 		</span>
@@ -477,6 +485,7 @@ function displayJSON(canvas){
 		</span>
 		<span id="tab14">
 			<div data-shape="BlasterPistol" data-label="BlasterPistol" class="palette_node_element draw2d_droppable">BlasterPistol</div>
+			<div data-shape="Demo.ZeroMQ.Server_string_1" data-label="Server_string_1" class="palette_node_element draw2d_droppable">Server_string_1</div>
 			<div data-shape="GraphLangTestShape" data-label="GraphLangTestShape" class="palette_node_element draw2d_droppable">GraphLangTestShape</div>
 			<div data-shape="GraphLangTestShape2" data-label="GraphLangTestShape2" class="palette_node_element draw2d_droppable">GraphLangTestShape2</div>
 			<div data-shape="GraphLangTestShape3" data-label="GraphLangTestShape3" class="palette_node_element draw2d_droppable">GraphLangTestShape3</div>
@@ -488,6 +497,11 @@ function displayJSON(canvas){
 			<div data-shape="Test.MultipleSerialPrint_1" data-label="MultipleSerialPrint_1" class="palette_node_element draw2d_droppable">MultipleSerialPrint_1</div>
 			<div data-shape="Test.WhileLoop_1" data-label="WhileLoop_1" class="palette_node_element draw2d_droppable">WhileLoop_1</div>
 			<div data-shape="UserDefinedExample" data-label="UserDefinedExample" class="palette_node_element draw2d_droppable">UserDefinedExample</div>
+		</span>
+		<span id="tab15">
+			<div data-shape="GraphLang.ZeroMQ.Message" data-label="Message" class="palette_node_element draw2d_droppable">Message</div>
+			<div data-shape="GraphLang.ZeroMQ.send" data-label="send" class="palette_node_element draw2d_droppable">send</div>
+			<div data-shape="GraphLang.ZeroMQ.Context" data-label="Context" class="palette_node_element draw2d_droppable">Context</div>
 		</span>
 
 
