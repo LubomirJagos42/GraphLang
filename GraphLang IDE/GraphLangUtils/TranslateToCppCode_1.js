@@ -272,11 +272,19 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
                  *    Getting import statements
                  */
                 if (nodeObj.translateToCppCodeImport){
-                    if (typeof nodeObj.translateToCppCodeImport() === "string") translateToCppCodeImportArray.push(nodeObj.translateToCppCodeImport());
+                    if (typeof nodeObj.translateToCppCodeImport() === "string"){
+                        translateToCppCodeImportArray.push(nodeObj.translateToCppCodeImport());
+                    }
                     if (nodeObj.translateToCppCodeImport().each){
                         nodeObj.translateToCppCodeImport().each(function(strIndex, strObj){
                             if (typeof strObj === "string") translateToCppCodeImportArray.push(strObj);
                         });
+                    }
+                    if(Array.isArray(nodeObj.translateToCppCodeImport())){
+                        for (let strObj of nodeObj.translateToCppCodeImport()){
+                            //if (typeof strObj === "string") translateToCppCodeImportArray.push(strObj);
+                            translateToCppCodeImportArray.push(strObj);
+                        }
                     }
                 }
 

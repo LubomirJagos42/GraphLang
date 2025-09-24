@@ -3,9 +3,9 @@
 //                                                        
 // http://www.draw2d.org                                  
 //                                                        
-GraphLang.SignalProcessing.Convolution = GraphLang.UserDefinedNode.extend({
+GraphLang.Sound.MiniaudioDeviceInitPlayWaveform = GraphLang.UserDefinedNode.extend({
 
-   NAME: "SignalProcessing.Convolution",
+   NAME: "GraphLang.Sound.MiniaudioDeviceInitPlayWaveform",
 
    init:function(attr, setter, getter)
    {
@@ -102,8 +102,8 @@ GraphLang.SignalProcessing.Convolution = GraphLang.UserDefinedNode.extend({
         shape.data("name","Label");
         
         // Label
-        shape = this.canvas.paper.text(0,0,'convolution');
-        shape.attr({"x":14.080288914184507,"y":62.048000381469706,"text-anchor":"start","text":"convolution","font-family":"Arial","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape = this.canvas.paper.text(0,0,'miniaudiodeviceinit');
+        shape.attr({"x":14.080288914184507,"y":62.048000381469706,"text-anchor":"start","text":"miniaudio device init","font-family":"Arial","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
         
         // Line_shadow
@@ -288,9 +288,69 @@ GraphLang.SignalProcessing.Convolution = GraphLang.UserDefinedNode.extend({
     
     jsonDocument: [],
     
-    translateToCppCode: function(){
-        return this.translateToCppCodeTemplate();
+    translateToCppCodeImport: function(){
+        let cCode = "";
+
+cCode += `//miniaudio import part
+#define DEVICE_FORMAT       ma_format_f32
+#define DEVICE_CHANNELS     2
+#define DEVICE_SAMPLE_RATE  48000
+
+void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
+{
+    ma_waveform* pSineWave;
+
+    MA_ASSERT(pDevice->playback.channels == DEVICE_CHANNELS);
+
+    pSineWave = (ma_waveform*)pDevice->pUserData;
+    MA_ASSERT(pSineWave != NULL);
+
+    ma_waveform_read_pcm_frames(pSineWave, pOutput, frameCount, NULL);
+
+    (void)pInput;   /* Unused. */
+}
+`;
+
+        return [
+            "#define MINIAUDIO_IMPLEMENTATION\n#include \"miniaudio.h\"\n",
+            cCode
+        ];
     },
 
+    translateToCppCode: function(){
+        let cCode = "";
+        cCode += `//miniaudio device initialization
+ma_waveform sineWave;
+ma_device_config deviceConfig;
+ma_device device;
+ma_waveform_config sineWaveConfig;
+
+deviceConfig = ma_device_config_init(ma_device_type_playback);
+deviceConfig.playback.format   = DEVICE_FORMAT;
+deviceConfig.playback.channels = DEVICE_CHANNELS;
+deviceConfig.sampleRate        = DEVICE_SAMPLE_RATE;
+deviceConfig.dataCallback      = data_callback;
+deviceConfig.pUserData         = &sineWave;
+
+if (ma_device_init(NULL, &deviceConfig, &device) != MA_SUCCESS) {
+    printf("Failed to open playback device.\\n");
+    return -4;
+}
+
+//printf("Device Name: %s\\n", device.playback.name);    //DISABLED: not used inside code from miniaudio lib
+
+sineWaveConfig = ma_waveform_config_init(device.playback.format, device.playback.channels, device.sampleRate, ma_waveform_type_sine, 0.2, 620);
+ma_waveform_init(&sineWaveConfig, &sineWave);
+
+if (ma_device_start(&device) != MA_SUCCESS) {
+    //printf("Failed to start playback device.\\n");    //DISABLED: not used inside code from miniaudio lib
+    ma_device_uninit(&device);
+    return -5;
+}
+
+//TODO: output wire assignement, assign reference or pointer to initialized device
+`;
+        return cCode;
+    },
 
 });

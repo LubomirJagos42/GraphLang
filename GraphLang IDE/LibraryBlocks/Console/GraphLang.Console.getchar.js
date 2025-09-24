@@ -3,9 +3,9 @@
 //                                                        
 // http://www.draw2d.org                                  
 //                                                        
-GraphLang.SignalProcessing.Convolution = GraphLang.UserDefinedNode.extend({
+GraphLang.Console.getchar = GraphLang.UserDefinedNode.extend({
 
-   NAME: "SignalProcessing.Convolution",
+   NAME: "GraphLang.Console.getchar",
 
    init:function(attr, setter, getter)
    {
@@ -102,8 +102,8 @@ GraphLang.SignalProcessing.Convolution = GraphLang.UserDefinedNode.extend({
         shape.data("name","Label");
         
         // Label
-        shape = this.canvas.paper.text(0,0,'convolution');
-        shape.attr({"x":14.080288914184507,"y":62.048000381469706,"text-anchor":"start","text":"convolution","font-family":"Arial","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape = this.canvas.paper.text(0,0,'getchar');
+        shape.attr({"x":14.080288914184507,"y":62.048000381469706,"text-anchor":"start","text":"getchar","font-family":"Arial","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
         
         // Line_shadow
@@ -288,9 +288,15 @@ GraphLang.SignalProcessing.Convolution = GraphLang.UserDefinedNode.extend({
     
     jsonDocument: [],
     
-    translateToCppCode: function(){
-        return this.translateToCppCodeTemplate();
+    translateToCppCodeImport: function(){
+        let cCode = "#include <stdio.h>";
+        return cCode;
     },
 
+    translateToCppCode: function(){
+        let cCode = "";
+        cCode += "getchar();\n";
+        return cCode;
+    },
 
 });

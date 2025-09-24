@@ -52,8 +52,9 @@
 	GraphLangTestShape = {};
 	Demo = {};
 	Demo.ZeroMQ = {};
+	Demo.SignalProcessing = {};
+	Demo.File = {};
 	BlasterPistol = {};
-	SignalProcessing = {};
 	PythonQtGuiLib = {};
 	HwRaspiZero = {};
 	HwRaspiZero.Time = {};
@@ -69,6 +70,8 @@
 	shape.composite = {};
 	ConvertDatatype = {};
 	GraphLang = {};
+	GraphLang.Sound = {};
+	GraphLang.SignalProcessing = {};
 	GraphLang.ZeroMQ = {};
 	GraphLang.ArduinoLib = {};
 	GraphLang.ArduinoLib.Node = {};
@@ -78,6 +81,7 @@
 	GraphLang.Shapes.Basic.Loop2 = {};
 	GraphLang.Math = {};
 	GraphLang.Math.Basic = {};
+	GraphLang.Console = {};
 
 
     </script>
@@ -103,6 +107,7 @@
     <!-- user defined nodes place to insert -->
 	<script src="./LibraryBlocks/GraphLang/System/utils/UserDefinedNode.js"></script>
 	<script src="./LibraryBlocks/GraphLang/Math/Basic/hidden/CommonParent.js"></script>
+	<script src="./LibraryBlocks/GraphLang/Math/Basic/Add.js"></script>
 	<script src="./LibraryBlocks/GraphLang/Math/Basic/Divide.js"></script>
 	<script src="./LibraryBlocks/GraphLang/Math/Basic/Abs.js"></script>
 	<script src="./LibraryBlocks/GraphLang/Math/Basic/Multiply.js"></script>
@@ -139,7 +144,7 @@
 	<script src="./LibraryBlocks/GraphLang/System/utils/Port.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/utils/RightTunnel.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/utils/LeftTunnel.js"></script>
-	<script src="./LibraryBlocks/GraphLang/Math/Basic/Add.js"></script>
+	<script src="./LibraryBlocks/Console/GraphLang.Console.getchar.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/VectorNode.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/WhileLayer.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/WireConnection.js"></script>
@@ -168,12 +173,23 @@
 	<script src="./LibraryBlocks/HwRaspiZero/String/replace2.js"></script>
 	<script src="./LibraryBlocks/HwRaspiZero/String/toStr.js"></script>
 	<script src="./LibraryBlocks/HwRaspiZero/Time/waitUntilNextMs.js"></script>
+	<script src="./LibraryBlocks/Messaging/ZeroMQ/hidden/GraphLang.ZeroMQ.CommonParent.js"></script>
+	<script src="./LibraryBlocks/Messaging/ZeroMQ/GraphLang.ZeroMQ.Context.js"></script>
+	<script src="./LibraryBlocks/Messaging/ZeroMQ/GraphLang.ZeroMQ.Message.js"></script>
+	<script src="./LibraryBlocks/Messaging/ZeroMQ/GraphLang.ZeroMQ.send.js"></script>
+	<script src="./LibraryBlocks/Messaging/ZeroMQ/GraphLang.ZeroMQ.Socket.js"></script>
+	<script src="./LibraryBlocks/Messaging/ZeroMQ/GraphLang.ZeroMQ.bind.js"></script>
 	<script src="./LibraryBlocks/PythonQtGuiLib/UiExec.js"></script>
 	<script src="./LibraryBlocks/PythonQtGuiLib/UiLoad.js"></script>
 	<script src="./LibraryBlocks/PythonQtGuiLib/UiShow.js"></script>
 	<script src="./LibraryBlocks/SignalProcessing/Convolution.js"></script>
+	<script src="./LibraryBlocks/SignalProcessing/SineGenerator.js"></script>
+	<script src="./LibraryBlocks/Sound/miniaudio/MiniaudioDeviceInitPlayWaveform.js"></script>
+	<script src="./LibraryBlocks/Sound/miniaudio/MiniaudioDeviceUninit.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/BlasterPistol.js"></script>
-	<script src="./LibraryBlocks/UserDefinedNode/Demo.ZeroMQ.Server_string_1.js"></script>
+	<script src="./LibraryBlocks/UserDefinedNode/Demo/Demo.File.WriteToFile.js"></script>
+	<script src="./LibraryBlocks/UserDefinedNode/Demo/Demo.SignalProcessing.SimpleFilter_1.js"></script>
+	<script src="./LibraryBlocks/UserDefinedNode/Demo/Demo.ZeroMQ.Server_string_1.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/GraphLangTestShape.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/GraphLangTestShape2.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/GraphLangTestShape3.js"></script>
@@ -185,12 +201,6 @@
 	<script src="./LibraryBlocks/UserDefinedNode/Test.MultipleSerialPrint_1.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/Test.WhileLoop_1.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/UserDefinedExample.js"></script>
-	<script src="./LibraryBlocks/ZeroMQ/hidden/GraphLang.ZeroMQ.CommonParent.js"></script>
-	<script src="./LibraryBlocks/ZeroMQ/GraphLang.ZeroMQ.Context.js"></script>
-	<script src="./LibraryBlocks/ZeroMQ/GraphLang.ZeroMQ.Message.js"></script>
-	<script src="./LibraryBlocks/ZeroMQ/GraphLang.ZeroMQ.send.js"></script>
-	<script src="./LibraryBlocks/ZeroMQ/GraphLang.ZeroMQ.Socket.js"></script>
-	<script src="./LibraryBlocks/ZeroMQ/GraphLang.ZeroMQ.bind.js"></script>
 
 
  <script type="text/javascript">
@@ -330,6 +340,7 @@ function displayJSON(canvas){
 'GraphLang.Math.Basic.CommonParent'
 ,'ConvertDatatype'
 ,'GraphLang.ArduinoLib.Node.ternarOperator'
+,'GraphLang.Console.getchar'
 ,'HwArduinoNano.Serial.begin'
 ,'HwArduinoNano.Serial.println'
 ,'HwRaspiZero.Console.ConsoleLog'
@@ -348,11 +359,19 @@ function displayJSON(canvas){
 ,'HwRaspiZero.String.replace2'
 ,'HwRaspiZero.String.toStr'
 ,'HwRaspiZero.Time.waitUntilNextMs'
+,'GraphLang.ZeroMQ.CommonParent'
+,'GraphLang.ZeroMQ.Context'
+,'GraphLang.ZeroMQ.Socket'
 ,'PythonQtGuiLib.UiExec'
 ,'PythonQtGuiLib.UiLoad'
 ,'PythonQtGuiLib.UiShow'
-,'SignalProcessing.Convolution'
+,'GraphLang.SignalProcessing.Convolution'
+,'GraphLang.SignalProcessing.SineGenerator'
+,'GraphLang.Sound.MiniaudioDeviceInitPlayWaveform'
+,'GraphLang.Sound.MiniaudioDeviceUninit'
 ,'BlasterPistol'
+,'Demo.File.WriteToFile'
+,'Demo.SignalProcessing.SimpleFilter_1'
 ,'Demo.ZeroMQ.Server_string_1'
 ,'GraphLangTestShape'
 ,'GraphLangTestShape2'
@@ -365,9 +384,6 @@ function displayJSON(canvas){
 ,'Test.MultipleSerialPrint_1'
 ,'Test.WhileLoop_1'
 ,'UserDefinedExample'
-,'GraphLang.ZeroMQ.CommonParent'
-,'GraphLang.ZeroMQ.Context'
-,'GraphLang.ZeroMQ.Socket'
 ];
 
 
@@ -379,8 +395,8 @@ function displayJSON(canvas){
 
    <div id="content">
         <div id="toolbar"></div>
-        <div id="canvas" style="width: 1500px; height: 600px;"></div>
-        <div id="canvas2" style="width: 1500px; height: 600px;"></div> <!-- Size of bottom window is defined in Application.js -->
+        <div id="canvas" style="width: 4000px; height: 3000px;"></div>
+        <div id="canvas2" style="width: 4000px; height: 3000px;"></div> <!-- Size of bottom window is defined in Application.js -->
    </div>
 
    <div id="navigation" class="">
@@ -402,14 +418,17 @@ function displayJSON(canvas){
 		<input type="button" value="Python GUI" onclick="$('#navigation span').hide(); $('#tab12').show();" />
 		<input type="button" value="Signal Proc." onclick="$('#navigation span').hide(); $('#tab13').show();" />
 		<input type="button" value="User Nodes" onclick="$('#navigation span').hide(); $('#tab14').show();" />
-		<input type="button" value="ZeroMQ" onclick="$('#navigation span').hide(); $('#tab15').show();" />
+		<input type="button" value="Demo" onclick="$('#navigation span').hide(); $('#tab15').show();" />
+		<input type="button" value="ZeroMQ" onclick="$('#navigation span').hide(); $('#tab16').show();" />
+		<input type="button" value="Console" onclick="$('#navigation span').hide(); $('#tab17').show();" />
+		<input type="button" value="Sound_miniaudio" onclick="$('#navigation span').hide(); $('#tab18').show();" />
 		<span id="tab0">
+			<div data-shape="GraphLang.Math.Basic.Add" data-label="Add" class="palette_node_element draw2d_droppable">Add</div>
 			<div data-shape="GraphLang.Math.Basic.Divide" data-label="Divide" class="palette_node_element draw2d_droppable">Divide</div>
 			<div data-shape="GraphLang.Math.Basic.Abs" data-label="Abs" class="palette_node_element draw2d_droppable">Abs</div>
 			<div data-shape="GraphLang.Math.Basic.Multiply" data-label="Multiply" class="palette_node_element draw2d_droppable">Multiply</div>
 			<div data-shape="GraphLang.Math.Basic.Not" data-label="Not" class="palette_node_element draw2d_droppable">Not</div>
 			<div data-shape="GraphLang.Math.Basic.Subtract" data-label="Subtract" class="palette_node_element draw2d_droppable">Subtract</div>
-			<div data-shape="GraphLang.Math.Basic.Add" data-label="Add" class="palette_node_element draw2d_droppable">Add</div>
 		</span>
 		<span id="tab1">
 		</span>
@@ -485,10 +504,13 @@ function displayJSON(canvas){
 			<div data-shape="PythonQtGuiLib.UiShow" data-label="UiShow" class="palette_node_element draw2d_droppable">UiShow</div>
 		</span>
 		<span id="tab13">
-			<div data-shape="SignalProcessing.Convolution" data-label="Convolution" class="palette_node_element draw2d_droppable">Convolution</div>
+			<div data-shape="GraphLang.SignalProcessing.Convolution" data-label="Convolution" class="palette_node_element draw2d_droppable">Convolution</div>
+			<div data-shape="GraphLang.SignalProcessing.SineGenerator" data-label="SineGenerator" class="palette_node_element draw2d_droppable">SineGenerator</div>
 		</span>
 		<span id="tab14">
 			<div data-shape="BlasterPistol" data-label="BlasterPistol" class="palette_node_element draw2d_droppable">BlasterPistol</div>
+			<div data-shape="Demo.File.WriteToFile" data-label="WriteToFile" class="palette_node_element draw2d_droppable">WriteToFile</div>
+			<div data-shape="Demo.SignalProcessing.SimpleFilter_1" data-label="SimpleFilter_1" class="palette_node_element draw2d_droppable">SimpleFilter_1</div>
 			<div data-shape="Demo.ZeroMQ.Server_string_1" data-label="Server_string_1" class="palette_node_element draw2d_droppable">Server_string_1</div>
 			<div data-shape="GraphLangTestShape" data-label="GraphLangTestShape" class="palette_node_element draw2d_droppable">GraphLangTestShape</div>
 			<div data-shape="GraphLangTestShape2" data-label="GraphLangTestShape2" class="palette_node_element draw2d_droppable">GraphLangTestShape2</div>
@@ -503,11 +525,23 @@ function displayJSON(canvas){
 			<div data-shape="UserDefinedExample" data-label="UserDefinedExample" class="palette_node_element draw2d_droppable">UserDefinedExample</div>
 		</span>
 		<span id="tab15">
+			<div data-shape="Demo.File.WriteToFile" data-label="WriteToFile" class="palette_node_element draw2d_droppable">WriteToFile</div>
+			<div data-shape="Demo.SignalProcessing.SimpleFilter_1" data-label="SimpleFilter_1" class="palette_node_element draw2d_droppable">SimpleFilter_1</div>
+			<div data-shape="Demo.ZeroMQ.Server_string_1" data-label="Server_string_1" class="palette_node_element draw2d_droppable">Server_string_1</div>
+		</span>
+		<span id="tab16">
 			<div data-shape="GraphLang.ZeroMQ.Context" data-label="Context" class="palette_node_element draw2d_droppable">Context</div>
 			<div data-shape="GraphLang.ZeroMQ.Message" data-label="Message" class="palette_node_element draw2d_droppable">Message</div>
 			<div data-shape="GraphLang.ZeroMQ.send" data-label="send" class="palette_node_element draw2d_droppable">send</div>
 			<div data-shape="GraphLang.ZeroMQ.Socket" data-label="Socket" class="palette_node_element draw2d_droppable">Socket</div>
 			<div data-shape="GraphLang.ZeroMQ.bind" data-label="bind" class="palette_node_element draw2d_droppable">bind</div>
+		</span>
+		<span id="tab17">
+			<div data-shape="GraphLang.Console.getchar" data-label="getchar" class="palette_node_element draw2d_droppable">getchar</div>
+		</span>
+		<span id="tab18">
+			<div data-shape="GraphLang.Sound.MiniaudioDeviceInitPlayWaveform" data-label="MiniaudioDeviceInitPlayWaveform" class="palette_node_element draw2d_droppable">MiniaudioDeviceInitPlayWaveform</div>
+			<div data-shape="GraphLang.Sound.MiniaudioDeviceUninit" data-label="MiniaudioDeviceUninit" class="palette_node_element draw2d_droppable">MiniaudioDeviceUninit</div>
 		</span>
 
 

@@ -3,9 +3,9 @@
 //                                                        
 // http://www.draw2d.org                                  
 //                                                        
-GraphLang.SignalProcessing.Convolution = GraphLang.UserDefinedNode.extend({
+GraphLang.SignalProcessing.SineGenerator = GraphLang.UserDefinedNode.extend({
 
-   NAME: "SignalProcessing.Convolution",
+   NAME: "SignalProcessing.SineGenerator",
 
    init:function(attr, setter, getter)
    {
@@ -102,8 +102,8 @@ GraphLang.SignalProcessing.Convolution = GraphLang.UserDefinedNode.extend({
         shape.data("name","Label");
         
         // Label
-        shape = this.canvas.paper.text(0,0,'convolution');
-        shape.attr({"x":14.080288914184507,"y":62.048000381469706,"text-anchor":"start","text":"convolution","font-family":"Arial","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape = this.canvas.paper.text(0,0,'sinegenerator');
+        shape.attr({"x":14.080288914184507,"y":62.048000381469706,"text-anchor":"start","text":"sinewave generator","font-family":"Arial","font-size":12,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
         
         // Line_shadow
@@ -288,9 +288,90 @@ GraphLang.SignalProcessing.Convolution = GraphLang.UserDefinedNode.extend({
     
     jsonDocument: [],
     
-    translateToCppCode: function(){
-        return this.translateToCppCodeTemplate();
+    translateToCppCodeImport: function(){
+        let cCode = "";
+
+cCode += `#include<cmath>
+
+/**
+*@language: C++
+*@author: LuboJ
+*@description: Continuous sample sinewave generator, each call gives new sinewave sample
+*/
+class SineGenerator {
+public:
+    SineGenerator(
+        double frequency,
+        double sampleRate,
+        double amplitude = 1.0,
+        double initialPhase = 0.0)
+        :
+        freq(frequency),
+        fs(sampleRate),
+        amp(amplitude),
+        phase(initialPhase),
+        phaseIncrement(2.0 * M_PI * frequency / sampleRate)
+    {}
+
+    // Generate the next sample
+    double nextSample() {
+        double value = amp * std::sin(phase);
+        phase += phaseIncrement;
+
+        // Keep phase in [0, 2π) to avoid numeric overflow
+        if (phase >= 2.0 * M_PI) {
+            phase -= 2.0 * M_PI;
+        }
+        return value;
+    }
+
+    private:
+        double freq;            // Frequency in Hz
+        double fs;              // Sampling rate in Hz
+        double amp;             // Amplitude
+        double phase;           // Current phase in radians
+        double phaseIncrement;  // Amount of phase advance per sample
+};
+
+/*
+    //Example usage:
+    //    1 kHz sine,
+    //    48 kHz sample rate,
+    //    amplitude 1.0,
+    //    0 phase
+    double f = 1000.0;
+    double fs = 35.0*f;
+    double dt = 1.0/fs;
+    SineGenerator gen(f, fs, 1.0, 0.0);
+*/
+`;
+/*
+        return [
+            "cmath",
+            cCode
+        ];
+*/
+        return cCode;
     },
 
+    translateToCppCode: function(){
+        let cCode = "";
+        cCode += `//create reference to sinewave generator, now hardwired values for parameters
+#ifndef GRAPHLANG_GENERATED_SINEWAVE_CLASS_PARAMS_FLAG
+#define GRAPHLANG_GENERATED_SINEWAVE_CLASS_PARAMS_FLAG
+double glGenerated_f = 1000.0;
+double glGenerated_fs = 35.0*glGenerated_f;
+double glGenerated_dt = 1.0/glGenerated_fs;
+#endif
+SineGenerator* sineGenerator_${this.getId()} = new SineGenerator(glGenerated_f, glGenerated_fs, 1.0, 0.0);
+`;
+        return cCode;
+    },
+
+    translateToCppCodeClassMethodList: function(){
+        return [
+            "double nextSample()",
+        ];
+    },
 
 });

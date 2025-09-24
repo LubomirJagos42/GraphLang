@@ -25,7 +25,7 @@ NAME: "GraphLang.ZeroMQ.Socket",
        port.setMaxFanOut(20);
 
        if (!port.userData) port.userData = {}
-       port.userData.datatype = "uint";
+       port.userData.datatype = "zmq::context_t*";
        port.userData.allowMultipleConnections = undefined;
        port.userData.connectionMandatory = undefined;
 

@@ -36,7 +36,10 @@ blocksToTabsAssignment = {
     os.path.join(blocksRootDir, "PythonQtGuiLib"):                        "Python GUI",
     os.path.join(blocksRootDir, "SignalProcessing"):                      "Signal Proc.",
     os.path.join(blocksRootDir, "UserDefinedNode"):                       "User Nodes",
-    os.path.join(blocksRootDir, "ZeroMQ"):                                "ZeroMQ",
+    os.path.join(blocksRootDir, "UserDefinedNode", "Demo"):               "Demo",
+    os.path.join(blocksRootDir, "Messaging", "ZeroMQ"):                   "ZeroMQ",
+    os.path.join(blocksRootDir, "Console"):                               "Console",
+    os.path.join(blocksRootDir, "Sound", "miniaudio"):                    "Sound_miniaudio",
 }
 
 objectsNamesList = []
@@ -250,8 +253,8 @@ function displayJSON(canvas){
 
    <div id="content">
         <div id="toolbar"></div>
-        <div id="canvas" style="width: 1500px; height: 600px;"></div>
-        <div id="canvas2" style="width: 1500px; height: 600px;"></div> <!-- Size of bottom window is defined in Application.js -->
+        <div id="canvas" style="width: 4000px; height: 3000px;"></div>
+        <div id="canvas2" style="width: 4000px; height: 3000px;"></div> <!-- Size of bottom window is defined in Application.js -->
    </div>
 
    <div id="navigation" class="">
