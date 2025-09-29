@@ -113,7 +113,10 @@
 	<script src="./LibraryBlocks/GraphLang/Math/Basic/Multiply.js"></script>
 	<script src="./LibraryBlocks/GraphLang/Math/Basic/Not.js"></script>
 	<script src="./LibraryBlocks/GraphLang/Math/Basic/Subtract.js"></script>
+	<script src="./LibraryBlocks/GraphLang/System/ArrayIndex.js"></script>
+	<script src="./LibraryBlocks/GraphLang/System/ArrayInit.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/ArrayNode.js"></script>
+	<script src="./LibraryBlocks/GraphLang/System/ArraySetElement.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/BundleByName.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/Bundle.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/utils/Jailhouse_extended.js"></script>
@@ -124,6 +127,7 @@
 	<script src="./LibraryBlocks/GraphLang/System/Multilayered3.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/Multilayered3_enhanced.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/PointerDatatypeNode.js"></script>
+	<script src="./LibraryBlocks/GraphLang/System/PointerDelete.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/Return.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/Sequence.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/SliderNode.js"></script>
@@ -198,6 +202,7 @@
 	<script src="./LibraryBlocks/UserDefinedNode/GraphLangTestShape59.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/GraphLangTestShape59aaaaaa.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/NestedBlock_1.js"></script>
+	<script src="./LibraryBlocks/UserDefinedNode/Test.ArrayIndex_1.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/Test.MultipleSerialPrint_1.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/Test.WhileLoop_1.js"></script>
 	<script src="./LibraryBlocks/UserDefinedNode/UserDefinedExample.js"></script>
@@ -338,7 +343,11 @@ function displayJSON(canvas){
 
     let global_allUserDefinedNodesList = [
 'GraphLang.Math.Basic.CommonParent'
+,'GraphLang.Shapes.Basic.ArrayIndex'
+,'GraphLang.Shapes.Basic.ArrayInit'
+,'GraphLang.Shapes.Basic.ArraySetElement'
 ,'ConvertDatatype'
+,'GraphLang.Shapes.Basic.PointerDelete'
 ,'GraphLang.ArduinoLib.Node.ternarOperator'
 ,'GraphLang.Console.getchar'
 ,'HwArduinoNano.Serial.begin'
@@ -381,6 +390,7 @@ function displayJSON(canvas){
 ,'GraphLangTestShape59'
 ,'XXddXX'
 ,'SubNodes.Block_1'
+,'Test.ArrayIndex_1'
 ,'Test.MultipleSerialPrint_1'
 ,'Test.WhileLoop_1'
 ,'UserDefinedExample'
@@ -433,7 +443,10 @@ function displayJSON(canvas){
 		<span id="tab1">
 		</span>
 		<span id="tab2">
+			<div data-shape="GraphLang.Shapes.Basic.ArrayIndex" data-label="ArrayIndex" class="palette_node_element draw2d_droppable">ArrayIndex</div>
+			<div data-shape="GraphLang.Shapes.Basic.ArrayInit" data-label="ArrayInit" class="palette_node_element draw2d_droppable">ArrayInit</div>
 			<div data-shape="GraphLang.Shapes.Basic.ArrayNode" data-label="ArrayNode" class="palette_node_element draw2d_droppable">ArrayNode</div>
+			<div data-shape="GraphLang.Shapes.Basic.ArraySetElement" data-label="ArraySetElement" class="palette_node_element draw2d_droppable">ArraySetElement</div>
 			<div data-shape="GraphLang.Shapes.Basic.BundleByName" data-label="BundleByName" class="palette_node_element draw2d_droppable">BundleByName</div>
 			<div data-shape="GraphLang.Shapes.Basic.Bundle" data-label="Bundle" class="palette_node_element draw2d_droppable">Bundle</div>
 			<div data-shape="GraphLang.Shapes.Basic.ConstantNode" data-label="ConstantNode" class="palette_node_element draw2d_droppable">ConstantNode</div>
@@ -442,6 +455,7 @@ function displayJSON(canvas){
 			<div data-shape="GraphLang.Shapes.Basic.Loop2.Multilayered3" data-label="Multilayered3" class="palette_node_element draw2d_droppable">Multilayered3</div>
 			<div data-shape="GraphLang.Shapes.Basic.Loop2.Multilayered3_enhanced" data-label="Multilayered3_enhanced" class="palette_node_element draw2d_droppable">Multilayered3_enhanced</div>
 			<div data-shape="GraphLang.Shapes.Basic.PointerDatatypeNode" data-label="PointerDatatypeNode" class="palette_node_element draw2d_droppable">PointerDatatypeNode</div>
+			<div data-shape="GraphLang.Shapes.Basic.PointerDelete" data-label="PointerDelete" class="palette_node_element draw2d_droppable">PointerDelete</div>
 			<div data-shape="GraphLang.Shapes.Basic.Return" data-label="Return" class="palette_node_element draw2d_droppable">Return</div>
 			<div data-shape="GraphLang.Shapes.Basic.Loop2.Sequence" data-label="Sequence" class="palette_node_element draw2d_droppable">Sequence</div>
 			<div data-shape="GraphLang.Shapes.Basic.SliderNode" data-label="SliderNode" class="palette_node_element draw2d_droppable">SliderNode</div>
@@ -520,6 +534,7 @@ function displayJSON(canvas){
 			<div data-shape="GraphLangTestShape59" data-label="GraphLangTestShape59" class="palette_node_element draw2d_droppable">GraphLangTestShape59</div>
 			<div data-shape="XXddXX" data-label="XXddXX" class="palette_node_element draw2d_droppable">XXddXX</div>
 			<div data-shape="SubNodes.Block_1" data-label="Block_1" class="palette_node_element draw2d_droppable">Block_1</div>
+			<div data-shape="Test.ArrayIndex_1" data-label="ArrayIndex_1" class="palette_node_element draw2d_droppable">ArrayIndex_1</div>
 			<div data-shape="Test.MultipleSerialPrint_1" data-label="MultipleSerialPrint_1" class="palette_node_element draw2d_droppable">MultipleSerialPrint_1</div>
 			<div data-shape="Test.WhileLoop_1" data-label="WhileLoop_1" class="palette_node_element draw2d_droppable">WhileLoop_1</div>
 			<div data-shape="UserDefinedExample" data-label="UserDefinedExample" class="palette_node_element draw2d_droppable">UserDefinedExample</div>

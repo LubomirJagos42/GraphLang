@@ -108,8 +108,10 @@ example.View = draw2d.Canvas.extend({
   			figure.switchActiveLayer();
   		}
   
-  		if (type.toLowerCase().search("array") > -1){
-  			figure.addItem();
+                // LuboJ
+                // If node has in name array it try to run method addItem what means to add item into it when placed on canvas.
+                if (type.toLowerCase().search("array") > -1){
+  			if (figure.addItem !== undefined) figure.addItem();
   		}
   
   		/*
