@@ -5,6 +5,7 @@
 //auxiliary ArrayList store declaration of some variables or something during translation process
 translateToCppCodeFunctionsArray = new draw2d.util.ArrayList();
 translateToCppCodeImportArray = new draw2d.util.ArrayList();
+translateToCppCodeLibrariesList = new draw2d.util.ArrayList();              //additional CPP libraries which must be provided to linker
 translateToCppCodeTypeDefinitionArray = new draw2d.util.ArrayList();
 translateToCppCodeSubnodeArray = new draw2d.util.ArrayList();
 translateToCppCodeSubnodeInputTerminalsDefaultValuesArray = new draw2d.util.ArrayList();
@@ -269,6 +270,25 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
                 nodeObj.NAME.toLowerCase().search("feedbacknode") == -1
             ){
                 /*
+                 *  Collecting libraries list for compiler which needs to be later embedded from DB or external
+                 */
+                if (nodeObj.translateToCppCodeLibraries){
+                    if (typeof nodeObj.translateToCppCodeLibraries() === "string"){
+                        translateToCppCodeLibrariesList.push(nodeObj.translateToCppCodeLibraries());
+                    }
+                    if (nodeObj.translateToCppCodeLibraries().each){
+                        nodeObj.translateToCppCodeLibraries().each(function(strIndex, strObj){
+                            if (typeof strObj === "string") translateToCppCodeLibrariesList.push(strObj);
+                        });
+                    }
+                    if(Array.isArray(nodeObj.translateToCppCodeLibraries())){
+                        for (let strObj of nodeObj.translateToCppCodeLibraries()){
+                            translateToCppCodeLibrariesList.push(strObj);
+                        }
+                    }
+                }
+
+                /*
                  *    Getting import statements
                  */
                 if (nodeObj.translateToCppCodeImport){
@@ -479,6 +499,7 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
                         }
                     });
                 });
+
             }
         });
     }
@@ -502,8 +523,10 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
         }
     });
 
-
-
+    /*********************************************************************************************************
+     *  CPP aditional libs names remove duplicities, these libs are provided by SQL DB
+     *********************************************************************************************************/
+    translateToCppCodeLibrariesList.unique();
 
     /*********************************************************************************************************
      * CANVAS SCHEMATIC VALIDATION
@@ -775,6 +798,7 @@ GraphLang.Utils.initTranslateToCppBuffers = function(){
     translateToCppCodeErrorList.clear();
     translateToCppCodeBreakpointList.clear();
     translateToCppCodeWatchList.clear();
+    translateToCppCodeLibrariesList.clear();
 }
 
 /**
@@ -969,15 +993,14 @@ GraphLang.Utils.getCppCode4 = function(canvas, showCode = true){
      *******************************************************************************/
     var template_cCode = "";
 
-    template_cCode += "//THIS CODE IS GENERATED FROM GraphLang\n";
+    template_cCode += "//THIS CODE IS GENERATED FROM GraphLang -> GraphLang.Utils.getCppCode4()\n";
     template_cCode += "\n";
 
     template_cCode += "//import libraries\n";
     template_cCode += this.getCppCodeImport();
     template_cCode += "\n";
 
-    template_cCode += `
-//type definitions for datatypes in GraphLang -> C++ types        
+    template_cCode += `//type definitions for datatypes in GraphLang -> C++ types        
 typedef int errorDatatype;
 typedef int int32;
 typedef int undefined;

@@ -166,12 +166,17 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
     let nodeCodeContent = GraphLang.Utils.getCppCode4(appCanvas, false);
     nodeCodeContent = GraphLang.Utils.toHex(nodeCodeContent);
 
+    let nodeCodeAdditionalLibraries = "";
+    if (translateToCppCodeLibrariesList){
+        nodeCodeAdditionalLibraries = translateToCppCodeLibrariesList.data.join();
+    }
+
     /*
      *  Send AJAX request to server to compile code
      */
     let ajaxResponse = await GraphLang.Utils.serverAjaxPostSendReceive(
         ["q", "compileProject"],
-        ["projectId", projectId, "outputFileName", outputFileName, "nodeCodeContent", nodeCodeContent],
+        ["projectId", projectId, "outputFileName", outputFileName, "nodeCodeContent", nodeCodeContent, "nodeCodeAdditionalLibraries", nodeCodeAdditionalLibraries],
         function(){
             let outputElement = document.querySelector('#generatedContent');
             let compilationOutput = JSON.parse(GLOBAL_AJAX_RESPONSE.compileCommandOutput);
@@ -524,6 +529,7 @@ GraphLang.Debugger.Cpp.open = function(options = null){
         `<b>Interactive debugger:</b><br/><br />
         <input name="startDebuggerServerButton" type="button" value="START DEBUGGER" onclick="GraphLang.Debugger.Cpp.startDebuggerServer()" />
         <input name="createWebsocketButton" type="button" value="OPEN WEBSOCKET" onclick="GraphLang.Debugger.Cpp.createWebSocket()" />
+        <input name="runCurrentNode" type="button" value="RUN CURRENT" onclick="GraphLang.Debugger.Cpp.runCurrentNode()" />
         <input name="compileCurrentNode" type="button" value="COMPILE" onclick="GraphLang.Debugger.Cpp.compileCurrentNode()" />
         <input id="cmdStr" name="cmdStr" type="text" value="" />
         <input name="sendButton" type="button" value="SEND MESSAGE" onclick="GraphLang.Debugger.Cpp.onclickSendButton()" />
@@ -628,4 +634,50 @@ GraphLang.Debugger.Cpp.readAllWatchValues = async function(funcParams = null) {
     }
 
     GraphLang.Debugger.Cpp.logResponse({data: `> readAllWatchValues - finished`});
+}
+
+/**
+ *  @method runCurrentNode
+ *  @description This will sen AJAX request to PHP server to run compile process of current generated code.
+ */
+GraphLang.Debugger.Cpp.runCurrentNode = async function(options = null){
+    console.log(`run current node button clicked`);
+
+    /*
+     *  TODO getting current node and sent it to server
+     */
+    let url_string = window.location.href;
+    let url = new URL(url_string);
+    let projectId = url.searchParams.get("projectId");
+    let outputFileName = "main.exe";
+
+    /*
+     *  ATTENTION THIS IS USING getCppCode4() which is template for C++ desktop code
+     */
+    let nodeCodeContent = GraphLang.Utils.getCppCode4(appCanvas, false);
+    nodeCodeContent = GraphLang.Utils.toHex(nodeCodeContent);
+
+    let nodeCodeAdditionalLibraries = "";
+    if (translateToCppCodeLibrariesList){
+        nodeCodeAdditionalLibraries = translateToCppCodeLibrariesList.data.join();
+    }
+
+    /*
+     *  Send AJAX request to server to compile code
+     */
+    let outputElement = document.querySelector('#generatedContent');
+    outputElement.insertAdjacentHTML('afterbegin', "<pre/>> run current node button clicked<pre/><hr/>");
+    let ajaxResponse = await GraphLang.Utils.serverAjaxPostSendReceive(
+        ["q", "runProject"],
+        ["projectId", projectId, "outputFileName", outputFileName, "nodeCodeContent", nodeCodeContent, "nodeCodeAdditionalLibraries", nodeCodeAdditionalLibraries],
+        function(){
+            outputElement.insertAdjacentHTML('afterbegin', `<pre/>> message: ${GLOBAL_AJAX_RESPONSE.message}\nerror: ${GLOBAL_AJAX_RESPONSE.errorMsg}\n<pre/><hr/>`);
+        }
+    );
+    console.log(ajaxResponse);
+
+    /*
+     *  Return output
+     */
+    return ajaxResponse;
 }

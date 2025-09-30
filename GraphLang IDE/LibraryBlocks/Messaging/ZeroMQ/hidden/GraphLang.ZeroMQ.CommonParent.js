@@ -158,6 +158,10 @@ GraphLang.ZeroMQ.CommonParent = GraphLang.UserDefinedNode.extend({
 
     jsonDocument: [],
 
+    translateToCppCodeLibraries: function(){
+        return ["zmq"];
+    },
+
     translateToCppCodeImport: function(){
         return "#include <zmq.hpp>\n";
     },
