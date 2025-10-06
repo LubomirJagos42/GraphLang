@@ -288,10 +288,14 @@ GraphLang.Sound.MiniaudioDeviceUninit = GraphLang.UserDefinedNode.extend({
     
     jsonDocument: [],
     
+    translateToCppCodeLibraries: function(){
+        return ["miniaudio"];
+    },
+
     translateToCppCodeImport: function(){
         let cCode = "";
         cCode += "#define MINIAUDIO_IMPLEMENTATION\n";
-        cCode += "#include \"miniaudio.h\"\n";
+        cCode += "#include \"miniaudio.h\"";
         return cCode;
     },
 

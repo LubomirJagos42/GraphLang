@@ -174,13 +174,13 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
     /*
      *  Send AJAX request to server to compile code
      */
+    let outputElement = document.querySelector('#generatedContent');
+    outputElement.insertAdjacentHTML('afterbegin', "<pre/>> compile current node button clicked<pre/><hr/>");
     let ajaxResponse = await GraphLang.Utils.serverAjaxPostSendReceive(
         ["q", "compileProject"],
         ["projectId", projectId, "outputFileName", outputFileName, "nodeCodeContent", nodeCodeContent, "nodeCodeAdditionalLibraries", nodeCodeAdditionalLibraries],
         function(){
-            let outputElement = document.querySelector('#generatedContent');
             let compilationOutput = JSON.parse(GLOBAL_AJAX_RESPONSE.compileCommandOutput);
-            outputElement.insertAdjacentHTML('afterbegin', "<pre/>> compile current node button clicked<pre/><hr/>");
             outputElement.insertAdjacentHTML('afterbegin', `<pre/>> message: ${GLOBAL_AJAX_RESPONSE.message}\nerror: ${GLOBAL_AJAX_RESPONSE.errorMsg}\ncompilation output:\n\tstatus: ${compilationOutput.status}\n\tmessage: ${compilationOutput.message}<pre/><hr/>`);
         }
     );

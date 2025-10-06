@@ -288,6 +288,10 @@ GraphLang.Sound.MiniaudioDeviceInitPlayWaveform = GraphLang.UserDefinedNode.exte
     
     jsonDocument: [],
     
+    translateToCppCodeLibraries: function(){
+        return ["miniaudio"];
+    },
+
     translateToCppCodeImport: function(){
         let cCode = "";
 
@@ -310,9 +314,9 @@ void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uin
     (void)pInput;   /* Unused. */
 }
 `;
-
         return [
-            "#define MINIAUDIO_IMPLEMENTATION\n#include \"miniaudio.h\"\n",
+            "#define MINIAUDIO_IMPLEMENTATION\n#include \"miniaudio.h\"",
+            "#include \"miniaudio.h\"",
             cCode
         ];
     },
