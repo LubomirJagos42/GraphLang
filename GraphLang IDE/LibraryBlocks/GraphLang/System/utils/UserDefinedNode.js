@@ -156,7 +156,7 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
                    }
 
                    //if there are some additional post hook defined in some node which extend this user defined node run them
-                   if (typeof emitter.additionalContextMenuItemsHandlerPreHook == "function") emitter.additionalContextMenuItemsHandlerPostHook(emitter, key, options);
+                   if (typeof emitter.additionalContextMenuItemsHandlerPostHook == "function") emitter.additionalContextMenuItemsHandlerPostHook(emitter, key, options);
 
                },emitter),
                x:event.x,
