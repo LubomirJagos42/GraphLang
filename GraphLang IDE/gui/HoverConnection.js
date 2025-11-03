@@ -8,7 +8,7 @@ HoverConnection = draw2d.Connection.extend({
             source: sourcePort,
             target: targetPort,
             stroke: 1.35,
-            //color: sourcePort == "int32" ? "#0000FF" : "#FFFF00" //LuboJ experiment
+            userData: {},
         });
 
         this.on("dragEnter", function (emitter, event) {
@@ -78,6 +78,35 @@ HoverConnection = draw2d.Connection.extend({
                         case "debugGetValue":
                             GraphLang.Debugger.Cpp.readGdbWatchValueAndDisplayOnScreen({objectId: emitter.getId()});
                             break;
+                        case "setLabel":
+                            let wireLabel = window.prompt("Wire label:");
+                            console.log(`--> wire ${emitter.getId()} label to set: ${wireLabel}`);
+                            if (wireLabel !== ""){
+                                if (emitter.getUserData() === undefined){
+                                    emitter.setUserData({wireLabel: wireLabel});
+                                }else{
+                                    emitter.getUserData().wireLabel = wireLabel;
+                                }
+
+                                emitter.getChildren().each(function(childIndex, childObj){
+                                    if (childObj.getUserData() !== undefined && childObj.getUserData().hasOwnProperty("isWireLabel") && childObj.getUserData().isWireLabel === true){
+                                        childObj.setText(wireLabel);
+                                    }
+                                });
+                            }
+                            break;
+                        case "showLabel":
+                                if (emitter.getUserData() !== undefined){
+                                    let wireLabel = emitter.getUserData().wireLabel;
+                                    if (wireLabel === undefined) wireLabel = "undefined";
+                                    emitter.add(
+                                        // new draw2d.shape.basic.Label({text: wireLabel, stroke:1, color:"#FF0000", fontColor:"#0d0d0d" userData: {isWireLabel: true}}),
+                                        new draw2d.shape.basic.Label({text: wireLabel, stroke:0, fontColor:"#000000", userData: {isWireLabel: true}}),
+                                        new draw2d.layout.locator.ParallelMidpointLocator()
+                                        // new draw2d.layout.locator.ManhattanMidpointLocator() //this label is corssed by wire
+                                    );
+                                }
+                            break;
                         default:
                             break;
                     }
@@ -94,7 +123,10 @@ HoverConnection = draw2d.Connection.extend({
                         "separator2": "--------------",
                         "isBreakpoint": {name: "Show if is breakpoint"},
                         "hasWatch": {name: "Show if is watch"},
-                        "debugGetValue": {name: "Debug get value"}
+                        "debugGetValue": {name: "Debug get value"},
+                        "separator3": "--------------",
+                        "setLabel": {name: "Set Label"},
+                        "showLabel": {name: "Show Label"},
                     }
             });
         });

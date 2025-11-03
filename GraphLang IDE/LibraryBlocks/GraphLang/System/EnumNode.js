@@ -1,20 +1,14 @@
 /**
- *  @class GraphLang.Shapes.Basic.ArrayNode
- *  @descritpition Generic array implementation. It's TableLayout from draw2d.
+ *  @class GraphLang.Shapes.Basic.EnumNode
+ *  @descritpition Generic enum implementation. It's TableLayout from draw2d.
  */
-GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
-  NAME: "GraphLang.Shapes.Basic.ArrayNode",
+GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
+  NAME: "GraphLang.Shapes.Basic.EnumNode",
   init:function(attr, setter, getter){
     this._super($.extend({padding: 10},attr), setter, getter);
     
     this.setPersistPorts(false);
     
-
-    /* THIS DOESN'T RUN
-    this.width = 200;
-    this.height = 500;
-    */
-
     /*
      *  Setting params after node is added to canvas, before it's not possible
      */
@@ -51,37 +45,6 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
     this.userData.nodeLabel = "nodeLabel";
     this.userData.datatype = defaultDatatype + "*"; //array is datatype ofg pointer to its elements datatype therefore needs to add asterix
 
-/*  THIS IS EXAMPLE CODE, BUT IT'S REALLY RUNNING
-    var label1 =  new draw2d.shape.basic.Label({text:"[0,1] with long long long long label", fontColor:"#00AF00"});
-    var label2 =  new draw2d.shape.basic.Label({text:"[1,1] padding:10", fontColor:"#00AF00"});
-    var label3 =  new draw2d.shape.basic.Label({text:"[2,1] align:right", fontColor:"#00AF00"});
-    var label4 =  new draw2d.shape.basic.Label({text:"[3,1] resize:true",resizeable:true, fontColor:"#00AF00"});
-    this.addRow("[0,0]", label1 ,"[0,2] align:center");
-    this.addRow("[1,0] valign:bottom", label2,"[1,2] long long long label");
-    this.addRow("[2,0]", label3,"[2,2]");
-    this.addRow("[3,0]", label4,"[3,2]");
-    this.setPadding(0);
-    this.setCellPadding(1,1, 10);
-    this.setCellAlign(0,2, "center");
-    this.setCellAlign(2,1, "right");
-    this.setCellVerticalAlign(1, 0, "bottom");
-*/
-
-    /**************************************************************************************
-     * DEFAULT value
-     ***************************************************************************************/
-
-    /*
-    var label1 =  new draw2d.shape.basic.Label();    //default datatype is int so value is 0
-    label1.setText(defaultValue);
-    var newColor = new GraphLang.Utils.Color();
-    label1.setColor(newColor.getByName(defaultDatatype));
-    label1.setFontColor(newColor.getByNameFontColor(defaultDatatype));
-    label1.setBackgroundColor(newColor.getByNameBackgroundColor(defaultDatatype));
-    label1.installEditor(new draw2d.ui.LabelInplaceEditor());
-    this.addRow(label1);
-    */
-
     /*****************************************************************************
      *  RIGHT CLICK CONTEXT MENU
      *****************************************************************************/
@@ -99,11 +62,7 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
                 switch(key){
                   case "int":
                   case "uint":
-                  case "float":
-                  case "double":
                   case "bool":
-                  case "string":
-                  case "clusterDatatype":
                       emitter.changeDatatypeAllItems(key);
                       break;
                   case "add item":
@@ -155,11 +114,7 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
               {
                   "int": {name: "int"},
                   "uint":    {name: "uint"},
-                  "float":    {name: "float"},
-                  "double": {name: "double"},
                   "bool": {name: "bool"},
-                  "string": {name: "string"},
-                  "clusterDatatype": {name: "clusterDatatype"},
                   "separator": "--------------",
                   "add item": {name: "Add Item"},
                   "separator2":   "---------",
@@ -173,30 +128,28 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
 
   },
 
-  /*
-   * HACK
-   * There is event to change size fired when items are added and size is adjusted to elements, so for now this method hardwire array size.
-   */
-   /*
-  setDimension: function(w, h){
-    this.width = 400;
-    this.height = 300;
-  },
-  */
-  
   addItem: function(){
     var arrayItemDatatype = this.getOutputPort(0).userData.datatype;
       
     //HERE SHOULD BE CREATING SOME NumericConstant or something MORE SPECIFIC
     //NOW HERE IS JUST CREATED LABEL AND PUSHED INTO ARRAY VERTICAL LAYOUT NEED TO IMPROVE (to be based on datatype of items)!!!
     graphLangColors = new GraphLang.Utils.Color();
-    var arrayItem = new draw2d.shape.basic.Label({
+    let arrayItem = new draw2d.shape.basic.Label({
         resizeable:true,
         bgColor:graphLangColors.getByNameBackgroundColor(arrayItemDatatype),
         fontColor:graphLangColors.getByNameFontColor(arrayItemDatatype),
-        userData: {datatype: arrayItemDatatype}
+        userData: {datatype: arrayItemDatatype, isInternalEnumItem: true}
     });
-    
+
+    let valueItem = new draw2d.shape.basic.Label({
+      resizeable:true,
+      bgColor:"#FFFFFF",
+      fontColor:"#000000",
+      userData: {datatype: arrayItemDatatype, isInternalEnumItem: true}
+    });
+    valueItem.text = "";
+    valueItem.installEditor(new draw2d.ui.LabelInplaceEditor());
+
     if (arrayItemDatatype == "clusterDatatype"){
       arrayItem.text = "null";
       this.getChildren().each(function(childIndex, childObj){
@@ -216,18 +169,20 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
       arrayItem.text = "0";
       arrayItem.installEditor(new draw2d.ui.LabelInplaceEditor());
     }
-    
-    //this.getCanvas().add(arrayItem);                     //DON'T ADD array items to canvas obj, because then they will be saved as separate objects
-    this.addRow(arrayItem);
-    //this.changeDatatypeAllItems(arrayItemDatatype);      //update datatypes of all items to match and also output port
+
+    let itemList = new draw2d.util.ArrayList();
+    itemList.add(valueItem);
+    itemList.add(arrayItem);
+
+    this.addRow(valueItem ,arrayItem);
   },
   
   getDatatype: function(){
     var cCode = "";
-    var arrayDatatype = this.getOutputPort(0).userData.datatype;
-    if (arrayDatatype.toLowerCase().search('cluster') > -1) arrayDatatype = this.getChildren().first().userData.datatype;
-    cCode += arrayDatatype;
-    return cCode;    
+
+    cCode += "enumDatatype_" + this.getId().replaceAll("-", "") + "_" + this.getUserData().nodeLabel;
+
+    return cCode;
   },
   
   getArraySize: function(){
@@ -337,7 +292,7 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
   },
 
   getVariableName: function(){
-      let variableName = "array_" + this.getId();
+      let variableName = "enum_" + this.getId();
       if (this.userData.nodeLabel) variableName += "_" + this.userData.nodeLabel;
       return variableName   
   },
@@ -348,52 +303,59 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
    *    TRANSLATE TO C/C++ code functions
    *************************************************************************************************************************************************************/
 
-  /**
-   *  @name translateToCppCode
-   *  @desc Translate array into its declaration. There should be line declaring appropriate array for this object.
-   */
-  translateToCppCodeDeclaration: function(){
-      var cCode = "";
-      var arrayDatatype = this.getDatatype();    
-      var variableName = this.getVariableName();
+  translateToCppCodeTypeDefinition: function(){
+      let cCode = "";
+      cCode += "enum " + this.getDatatype() + "\n";
+      cCode += "{\n";
 
-      if (arrayDatatype.toLowerCase().search('cluster') > -1){
-        cCode = arrayDatatype + ' ' + variableName + "[" +  this.getArraySize() + "];\n";       //translate as ie. "int array_clusterDatatypeName[42];"
-      }else{
-        cCode = arrayDatatype + " " + this.getVariableName() + "[] = {";             //translate as ie. "int array_5[];"
-        this.getChildren().each(function(childIndex, childObj){
-          /*
-           *    Translation of each array item.
-           *    Translate just datatype children (no cluster indexes or node labels)
-           */
-          if (childObj.userData && childObj.userData.datatype){
-            if (childObj.userData.datatype.toLowerCase().search('string') > -1){
-              cCode += "'" + childObj.getText() + "',";
-            }else if (childObj.userData.datatype.toLowerCase().search('cluster') > -1){
-              /*
-               *    THIS IS IMPROVISATION, there is cluster datatype label, so it has not translateToCpp() and instead there is placed datatype name
-               */
-              if (childObj.translateToCppCode){
-                  cCode += childObj.translateToCppCode() + ",";
-              }else{
-                  cCode += childObj.getText() + ",";
+      let childCounter = 0;
+      let enumItemValue = "";
+      let enumItemName = "";
+      let totalChildrenCount = 0;
+      this.getChildren().each(function(childIndex, childObj){
+              if (
+                  childObj.getUserData() !== undefined &&
+                  childObj.getUserData().isInternalEnumItem !== undefined &&
+                  childObj.getUserData().isInternalEnumItem === true
+              ) {
+                  totalChildrenCount++;
               }
-            }else if (childObj.userData.datatype.toLowerCase().search('executionorder') > -1){
-                  cCode += "";      //PROTECTION TO NOT WRITE CONTENT OF EXECUTION ORDER LABEL
-            }else{
-              if (childObj.getText){
-                  cCode += childObj.getText() + ",";
+      });
+
+      //children should be internaly stored in order: enum value, enum text
+      //they are added at once in this order so this is running and therefore there is MOD 2 which evaluate when to transcript line and buffer variable storing previous child text value
+      this.getChildren().each(function(childIndex, childObj){
+          if (
+            childObj.getUserData() !== undefined &&
+            childObj.getUserData().isInternalEnumItem !== undefined &&
+            childObj.getUserData().isInternalEnumItem === true
+          ){
+              childCounter++;
+              enumItemName = childObj.getText();
+              if (childCounter % 2 == 0){
+                //generate enum item line, if there is value also assign it to it
+                if (enumItemValue !== ""){
+                    cCode += `${enumItemName} = ${enumItemValue}`;
+                }else{
+                    cCode += `${enumItemName}`;
+                }
+
+                if (childIndex !== totalChildrenCount) cCode += ",";  //add colon if not last item
+                cCode += "\n";
               }
-            }
+              enumItemValue = childObj.getText();
           }
-        });
-        cCode = cCode.slice(0,-1);  //remove last ','
-        cCode += "};\n";
-      }
+      });
 
-
+      cCode += "};\n";
       return cCode;
   },
+
+    translateToCppCodeDeclaration: function(){
+        var cCode = "";
+        cCode += this.getDatatype() + " " + this.getVariableName() + ";\n";        //THIS CREATES NEW INSTANCE, SO THAT'S REASON WHY HERE IS ID USED
+        return cCode;
+    },
 
   translateToCppCode: function(){
     cCode = "";
