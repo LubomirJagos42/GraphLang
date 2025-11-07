@@ -6147,6 +6147,7 @@ shape_designer.figure.Image = draw2d.shape.basic.Label.extend({
         this.filters.add( new shape_designer.filter.SizeFilter());
         // this.filters.add( new shape_designer.filter.FontSizeFilter());
         // this.filters.add( new shape_designer.filter.FontColorFilter());
+        this.filters.add( new shape_designer.filter.ImageSourceFilter());
 
         this.installEditor(new draw2d.ui.LabelInplaceEditor());
 
@@ -6288,6 +6289,64 @@ shape_designer.figure.Image = draw2d.shape.basic.Label.extend({
                 this.filters.add(filter);
             },this));
         }
+    }
+});
+
+shape_designer.filter.ImageSourceFilter = shape_designer.filter.Filter.extend({
+    NAME :"shape_designer.filter.ImageSourceFilter",
+
+    init:function(){
+        this._super();
+
+        this.type   =0;
+        this.cssScope = this.NAME.replace(/[.]/g, "_");
+    },
+
+    insertPane: function(figure, $parent){
+        var _this = this;
+        $parent.append(
+            '<div id="'+this.cssScope+'_container" class="panel panel-default">'+
+            '  <form id="imageSourceFileForm">'+
+            '    <input id="imageFigureSourceFileInput" class="imageFigureSourceFileInputClass" type="file" value="select image file" />'+
+            '  </form>'+
+            ''+
+            ''+
+            '</div>'
+        );
+
+        $("#"+_this.cssScope+"_container .imageFigureSourceFileInputClass").on("change", function(){
+            var $this = $(this);
+
+            let inputFileTag = $this[0];
+            console.log("--> image file source change");
+            console.log(inputFileTag);
+            file = inputFileTag.files[0];
+            fr = new FileReader();
+            fr.onload = function(e){
+                base64Image = "data:image/png;base64," + btoa(e.target.result);
+                figure.svgNodes[0].attr("src", base64Image);
+            };
+            // fr.readAsText(file);
+            fr.readAsBinaryString(file);    //this is working
+        });
+    },
+
+    removePane : function() {
+    },
+
+    onInstall : function(figure) {
+    },
+
+    getPersistentAttributes : function(relatedFigure) {
+        var memento = this._super(relatedFigure);
+
+        return memento;
+    },
+
+    setPersistentAttributes : function(relatedFigure, memento) {
+        this._super(relatedFigure, memento);
+
+        return memento;
     }
 });
 
