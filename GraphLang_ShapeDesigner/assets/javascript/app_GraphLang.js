@@ -900,6 +900,7 @@ shape_designer.Toolbar = Class.extend({
                              '       <li class="tool_shape_entry" data-policy="shape_designer.policy.LineToolPolicy"      data-toggle="tooltip" title="Line <span class=\'highlight\'> [ L ]</span>">     <a href="#"><img  src="./assets/images/tools/LINE_032.png">Line</a></li>'+
                              '       <li class="tool_shape_entry" data-policy="shape_designer.policy.TextToolPolicy"      data-toggle="tooltip" title="Text <span class=\'highlight\'> [ T ]</span>">     <a href="#"><img  src="./assets/images/tools/TEXT_032.png">Text</a></li>'+
                              '       <li class="tool_shape_entry" data-policy="shape_designer.policy.PortToolPolicy"      data-toggle="tooltip" title="Port <span class=\'highlight\'> [ P ]</span>">     <a href="#"><img  src="./assets/images/tools/PORT_032.png">Port</a></li>'+
+                             '       <li class="tool_shape_entry" data-policy="shape_designer.policy.ImageToolPolicy"     data-toggle="tooltip" title="Image <span class=\'highlight\'> [ I ]</span>">     <a href="#"><img  src="./assets/images/tools/IMAGE_032.png">Image</a></li>'+
                              '    </ul>'+
                              '</label>'
                           );
@@ -936,6 +937,10 @@ shape_designer.Toolbar = Class.extend({
         },this));
         Mousetrap.bind(["L","l"], $.proxy(function (event) {
             $('*[data-policy="shape_designer.policy.LineToolPolicy"]').click();
+            return false;
+        },this));
+        Mousetrap.bind(["I","i"], $.proxy(function (event) {
+            $('*[data-policy="shape_designer.policy.ImageToolPolicy"]').click();
             return false;
         },this));
 
@@ -5944,6 +5949,347 @@ shape_designer.policy.LineToolPolicy = shape_designer.policy.AbstractToolPolicy.
     }
 });
 
+/********************************************************************************************************************
+ *  LuboJ GraphLang tool functions
+ ********************************************************************************************************************/
+
+/*
+ *  This is overwritten image tool police to have own curso and image and tool tip.
+ */
+shape_designer.policy.ImageToolPolicy = shape_designer.policy.AbstractToolPolicy.extend({
+
+    TITLE: "Image",
+    MESSAGE_STEP1 : "Select location for image",
+    MESSAGE_STEP2 : "Enter Image as base64 encoded text",
+
+    init:function(){
+        this._super();
+
+        this.topLeft = null;
+        this.newFigure = null;
+
+
+        // this.on('added', function(emitter){
+        //     if (emitter.newFigure !== null){
+        //         emitter.on('change:text', alert("image changed"));
+        //     }
+        // });
+
+    },
+
+
+    onInstall: function(canvas){
+        this.setToolHeader(this.TITLE, "IMAGE_064.png");
+        this.setToolText(this.MESSAGE_STEP1);
+        canvas.setCursor("cursor_image.png");
+    },
+
+    onUninstall: function(canvas){
+        canvas.setCursor(null);
+    },
+
+
+    /**
+     * @method
+     *
+     * @param {draw2d.Canvas} canvas
+     * @param {Number} x the x-coordinate of the mouse down event
+     * @param {Number} y the y-coordinate of the mouse down event
+     * @param {Boolean} shiftKey true if the shift key has been pressed during this event
+     * @param {Boolean} ctrlKey true if the ctrl key has been pressed during the event
+     */
+    onMouseDown:function(canvas, x, y, shiftKey, ctrlKey){
+
+    },
+
+    /**
+     * @method
+     *
+     * @param {draw2d.Canvas} canvas
+     * @param {Number} x the x-coordinate of the mouse event
+     * @param {Number} y the y-coordinate of the mouse event
+     * @template
+     */
+    onMouseMove:function(canvas, x, y){
+    },
+
+
+    /**
+     * @method
+     *
+     * @param {draw2d.Canvas} canvas
+     * @param {Number} dx The x diff between start of dragging and this event
+     * @param {Number} dy The y diff between start of dragging and this event
+     * @param {Number} dx2 The x diff since the last call of this dragging operation
+     * @param {Number} dy2 The y diff since the last call of this dragging operation
+     * @template
+     */
+    onMouseDrag:function(canvas, dx, dy, dx2, dy2){
+    },
+
+    /**
+     * @method
+     *
+     * @param {draw2d.Canvas} canvas
+     * @param {Number} x the x-coordinate of the mouse down event
+     * @param {Number} y the y-coordinate of the mouse down event
+     * @template
+     */
+    onMouseUp: function(canvas, x, y){
+        if(this.topLeft===null){
+            this.topLeft = new draw2d.geo.Point(x,y);
+            this.setToolText(this.MESSAGE_STEP2);
+
+            this.newFigure = new shape_designer.figure.Image();
+
+            //this is how now image will be edited, there will be base64 text entered, now hardcoded stuff to display some 64x64px image
+            // this.newFigure.setText("Image base64 Text");
+            this.newFigure.setText("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAqCAYAAAADBl3iAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAI8SURBVGhD7ZoxjsIwEEVzEw5AhcQ5OAItDSU1EhfgEvRcICUVNSUlBaKkokECTYRR/D22xxMSYsSTvrSK5489n1XIRls8akwmk0dRFNlqOp3WxxFRvH9gGuaqFKpqbPALklKg8Vd0PB5xVhY2gBxZLpeqOZwAckYzyz8AjamvaGb5B6Ax9RXNLP8ANCaCvmdTPW2jmUUVAHpIZVliWefgmSQkB7BarZyNpN620ZwnOQCsr2s0GmF5p9TPcrlccJnlowEMBgMsVzObzfBSFHOO+XyOS16SAzgcDs7gUm8Kmp5KT/oQ6CFpXkb4SD2PIbWeUAVg2Gw2H7/7c2+l2qRRAClIe+N5pD4tvQpgu906w5PouhbT43w+41JFJwFI++NZpD4f2IPr03kA9CDFgedA3e93tARBv9FwOMQ6u6ANYnvQcFjDSQr6ONVq+QUpp9MJL1lgf24fXPNJAnpCetW7F6Xs9/uoB/sbjcfj4Dqn6/WK7S2wXij7Qgoxz2KxwM0s3W4351pMPrBOotcHKNuAI+bB3k212+1wi4rQ47lP9OEQ6gAkPqxpKh9YJ1HNyy/EQF/b4qDHcKyLab1eWz1UAWh+5ZqIQ3P/4HqJA8C6rhQCa2PiyDoAAut98tHrAKSgDxVCHEAfoL/ofGfEOaTzZBUA3cFD59TMklUAkrOG1jicAFLMXYPn/MRZ2QC+LXpG58A6oyZUbmz4bfnAOoknxtuJDb8pH1hnFHsnEcLaTfpmpm35MOvS/wCT8AR/rl2k57+89AAAAABJRU5ErkJggg==");
+
+            this.newFigure.setStroke(0);
+            this.newFigure.setPadding(5);
+            this.newFigure.setFontSize(16);
+
+            var command = new draw2d.command.CommandAdd(canvas, this.newFigure, parseInt(x),parseInt(y));
+            canvas.getCommandStack().execute(command);
+            canvas.setCurrentSelection(this.newFigure);
+
+            // start inplace editing
+            //
+            setTimeout($.proxy(function(){this.newFigure.onDoubleClick();},this),100);
+        }
+        else{
+            this.topLeft=null;
+        }
+    }
+});
+
+/*
+ *  This is new image figure. It should:
+ *      - enable edit base64 image and after edit paint it as image using paper image object.
+ *      - after double click enable edit base64 image text
+ */
+shape_designer.figure.Image = draw2d.shape.basic.Label.extend({
+
+    NAME: "shape_designer.figure.Image",
+
+    /*
+     *  This is called when element is created at canvas.
+     */
+    createSet: function()
+    {
+        //original
+        // return this.canvas.paper.text(0, 0, this.text);
+
+        /*************************************************************
+         *  MODIFIED VERSION WHICH SEEMS TO BE PARTIALY WORKING
+         *************************************************************/
+
+        //this is new set with image
+        this.canvas.paper.setStart();
+        shape = this.canvas.paper.image(this.text, 0, 0, 64, 64);
+        shape = this.canvas.paper.text(0, 0, "base64 image text");  //SEEMS LIKE TEXT MUST BE PLACED HERE TO RUN PROPERLY SINCE IMAGE IS EXTENDED LABEL
+
+        // base64Image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAABPCAYAAAAjgM2qAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAABqrSURBVHhe7d0HrC1V1QdwEhISkCIiAQMIhiIgIL2KgIDUoHTpvfemNBUUkN4RlN5Veu+9F6V3RKVJV1QQRdxffjtZ7xs2c+bMnHsfD3PvP9m5cGZmt7X2Wv+19p5546VRjGiMV/4wipGFTgrwxBNPpL/97W/pnXfeSS+88EJ5eRTjGE8//XT6xz/+keXzpz/9qbxci04K8MADD6Rjjz02/eIXv0jPPvvsmN//+9//pp///Odp++23T2+99dbHnvk08dprr6Udd9wx92Vc4PXXX//U23/00UfTtttum6699tr0yCOPpKOOOiqdeOKJ6fnnny9vrUUnBQBC1kgVd999d5pvvvnSeuutl/9utdVWaYsttkgHHXRQOuWUU7LCHHfccemII45Ihx9++JDKkUcemU444YR08skn53r33nvv3NYOO+yQ5p9//rTBBhuk2WefPX3ve99LJ510Ur63rGM4C2FrQ/tf+9rX0oYbbpjmmGOOtM8++6RjjjnmE/cPVyED9U899dRpyy23TLPOOmuWxW677ZbnqC06KcB1112XzjrrrDxomnf//fenO++8M2v+aqutlpZbbrks9OOPPz6ttNJKaYUVVkgbbbRROuSQQ9LFF1+cHn/88fTiiy/mwoI8+eST2a34va649tRTT6Xf//736eWXX05/+MMf0oMPPpjOPPPMtN9++6U11lgjffOb30ybbrppOu200/KkLL/88mnVVVdN3/nOd9Lqq6+eLrroovTHP/4xPffcc41tdSnqscLU+5vf/CatvPLKWfEOPPDAtOKKK6YFFlgg/78xDleb1aJOc7LzzjunRRZZJM8zBbzmmmvSr371q6yQ5GOubrnllmyhe6GTAhCGyt59993061//Ojd2zjnnpMceeyz95S9/yQKt4u9//3u666678mrdd9990w9+8IOsnczVq6+++rF7e0F72r3wwgvT/vvvn370ox9l4ft/Jq8cnD7oC9x6661pp512ykr50ksvfey+oYIAfvzjH+eJv+OOO8b8rq8WBKU37rEF80/h/vOf/+T599fYP/roo8zTLr/88qyc559/fnrooYfKx8egkwJUQbNuvPHGPMlXXXVVebkWr7zySn6OElAIwuEaPP/222/newyAhTBAk7jLLrvke7mSe++9NytVV1CWrbfeOh166KHpz3/+c3m5E1ghgt9kk02ydekFirnHHnukSy+9tLw0ZFx99dVp4403Th988EF5aQzuu+++dM899+QFeMUVV5SXx2BgBWBSTz/99FyeeeaZ8nIr/PWvf83C5zennXbatPnmm2fXMdtss2VrwYRRiOHAv/71r3TuuedmRaB0oXBt8eabb2YOg2+cd9556cMPPyxv+QRYys022yzdfvvt5aWBYbVzqwhvEygqt0g+ZNULAysAqLgaDbTBv//97+yfcAKmmTn/2c9+lv36b3/723TbbbelX/7yl9nc/+QnP8mTzrcZ0HDg/fffz+QRb9BOP4tCSXEak25CKVIXsGZrr732wIukCjzIym875+7jkprQSQEQEP71jTfeaC0QAkdamHQCZRYxd2RS9NAkAOb6+uuvz6Gn5zBcRI/VMBlDgXGwBBRBX/SzCoImcNcpAEUYFBQeUxefDwrx/brrrttoTYL/mLe2eZpOCkCbhCBYZlUAJuunP/1pWn/99XMygoLwj4cddljac889s89EiJj0JoH3g4HdfPPNWQlYCHUTjklhbmm8PuhLW+ircAqjVg+/esMNN2RyR/G6uArEkJC0X7oudauzyW83Ya+99spWswQCKtrhlozfnMsDtCW9nRQA5AGQqSoMTgxOy7/85S+nhRZaKE055ZRpqaWWyitXpwjN3wMOOCALj+lvW9yvcBlcgrr8N38u9p5++unT0ksvnWacccb8mzzAMsssk0mkvvZqz+/cz6mnnppX+njjjZf77q96/O560/MxJqZZ+3Ig8gDbbbfdGBenIL5LLLFEDtma6izrN4bvfve7OdzVVjxHyZQJJ5wwK688AF5ivsdaHoDpveCCC7IPlQMQelx22WU5+7fOOuukRRddNF1yySXZ1DFZzBGygv2PjWL1CnkUfRD2LLnkkjkJRABWowhAf5Tqs8JQ/UPu8A85BRNLmRHQNddcM5NGFsB97q8+rz5tCoPlHHbfffdMuCje4osvnrNzVmHcz2Kqh9C4QM+W4ymLtvVJdrGu/7vuumtWKMrPQmD7og7chtvBP0QCTeikAOFXTLjKhSP8MvChJnNcg1IEQxf/mmy5A/ylhFBJ/2XtsOsq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";
+        // shape.click(function(){
+        //     shape.attr('src', base64Image);
+        // });
+        // console.log("--> added base64 image");
+        // console.log(shape);
+        // shape.attr('src', base64Image);
+
+
+        return this.canvas.paper.setFinish();
+    },
+
+    /*
+     *  NOT WORKING AT PLACEMENT, MAYBE AT CHANGE SIZE OR SOMETHING ELSE
+     */
+    repaint: function(attributes)
+    {
+        if(this.repaintBlocked===true || this.shape===null || (this.parent && this.parent.repaintBlocked===true)){
+            return;
+        }
+
+        // style the label
+        var lattr = this.calculateTextAttr();
+        lattr.text = this.text;
+
+        var attrDiff = draw2d.util.JSON.flatDiff(lattr, this.lastAppliedTextAttributes);
+        this.lastAppliedTextAttributes= lattr;
+
+        // the two "attr" calls takes 2/3 of the complete method call (chrome performance check).
+        // now we check if any changes happens and call this method only if neccessary.
+        if(!$.isEmptyObject(attrDiff)){
+            this.svgNodes.attr(lattr);
+            // set of the x/y must be done AFTER the font-size and bold has been set.
+            // Reason: the getBBox method needs the font attributes for calculation
+            this.svgNodes.attr({
+                x: (this.padding.left+this.stroke),
+                y: (this.svgNodes.getBBox(true).height/2 +this.padding.top + this.getStroke())
+            });
+        }
+        this._super(attributes);
+    },
+
+    init:function()
+    {
+        this.blur = 0;
+        this.isExtFigure = true;
+
+        this._super();
+
+
+        this.setUserData({name:"Label"});
+
+        this.filters   = new draw2d.util.ArrayList();
+        this.filters.add( new shape_designer.filter.PositionFilter());
+        this.filters.add( new shape_designer.filter.SizeFilter());
+        // this.filters.add( new shape_designer.filter.FontSizeFilter());
+        // this.filters.add( new shape_designer.filter.FontColorFilter());
+
+        this.installEditor(new draw2d.ui.LabelInplaceEditor());
+
+        /*
+         *  Example how to change node image when text is changed:
+         *      - text must be part of paper otherwise this is not running (probably not triggering events for text)
+         *      - somehow need to figure out how to disable event triggering when changing text back to some normal string inside this handler
+         */
+        this.on('change:text', function(emitter){
+            console.log("--> change:text triggered");
+            console.log(emitter);
+            if (emitter.svgNodes){
+                console.log("--> svgNodes length " + emitter.svgNodes.length);
+            }
+            if (emitter.svgNodes && emitter.svgNodes.length > 1){
+                // base64Image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAABPCAYAAAAjgM2qAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAABqrSURBVHhe7d0HrC1V1QdwEhISkCIiAQMIhiIgIL2KgIDUoHTpvfemNBUUkN4RlN5Veu+9F6V3RKVJV1QQRdxffjtZ7xs2c+bMnHsfD3PvP9m5cGZmt7X2Wv+19p5546VRjGiMV/4wipGFTgrwxBNPpL/97W/pnXfeSS+88EJ5eRTjGE8//XT6xz/+keXzpz/9qbxci04K8MADD6Rjjz02/eIXv0jPPvvsmN//+9//pp///Odp++23T2+99dbHnvk08dprr6Udd9wx92Vc4PXXX//U23/00UfTtttum6699tr0yCOPpKOOOiqdeOKJ6fnnny9vrUUnBQBC1kgVd999d5pvvvnSeuutl/9utdVWaYsttkgHHXRQOuWUU7LCHHfccemII45Ihx9++JDKkUcemU444YR08skn53r33nvv3NYOO+yQ5p9//rTBBhuk2WefPX3ve99LJ510Ur63rGM4C2FrQ/tf+9rX0oYbbpjmmGOOtM8++6RjjjnmE/cPVyED9U899dRpyy23TLPOOmuWxW677ZbnqC06KcB1112XzjrrrDxomnf//fenO++8M2v+aqutlpZbbrks9OOPPz6ttNJKaYUVVkgbbbRROuSQQ9LFF1+cHn/88fTiiy/mwoI8+eST2a34va649tRTT6Xf//736eWXX05/+MMf0oMPPpjOPPPMtN9++6U11lgjffOb30ybbrppOu200/KkLL/88mnVVVdN3/nOd9Lqq6+eLrroovTHP/4xPffcc41tdSnqscLU+5vf/CatvPLKWfEOPPDAtOKKK6YFFlgg/78xDleb1aJOc7LzzjunRRZZJM8zBbzmmmvSr371q6yQ5GOubrnllmyhe6GTAhCGyt59993061//Ojd2zjnnpMceeyz95S9/yQKt4u9//3u666678mrdd9990w9+8IOsnczVq6+++rF7e0F72r3wwgvT/vvvn370ox9l4ft/Jq8cnD7oC9x6661pp512ykr50ksvfey+oYIAfvzjH+eJv+OOO8b8rq8WBKU37rEF80/h/vOf/+T599fYP/roo8zTLr/88qyc559/fnrooYfKx8egkwJUQbNuvPHGPMlXXXVVebkWr7zySn6OElAIwuEaPP/222/newyAhTBAk7jLLrvke7mSe++9NytVV1CWrbfeOh166KHpz3/+c3m5E1ghgt9kk02ydekFirnHHnukSy+9tLw0ZFx99dVp4403Th988EF5aQzuu+++dM899+QFeMUVV5SXx2BgBWBSTz/99FyeeeaZ8nIr/PWvf83C5zennXbatPnmm2fXMdtss2VrwYRRiOHAv/71r3TuuedmRaB0oXBt8eabb2YOg2+cd9556cMPPyxv+QRYys022yzdfvvt5aWBYbVzqwhvEygqt0g+ZNULAysAqLgaDbTBv//97+yfcAKmmTn/2c9+lv36b3/723TbbbelX/7yl9nc/+QnP8mTzrcZ0HDg/fffz+QRb9BOP4tCSXEak25CKVIXsGZrr732wIukCjzIym875+7jkprQSQEQEP71jTfeaC0QAkdamHQCZRYxd2RS9NAkAOb6+uuvz6Gn5zBcRI/VMBlDgXGwBBRBX/SzCoImcNcpAEUYFBQeUxefDwrx/brrrttoTYL/mLe2eZpOCkCbhCBYZlUAJuunP/1pWn/99XMygoLwj4cddljac889s89EiJj0JoH3g4HdfPPNWQlYCHUTjklhbmm8PuhLW+ircAqjVg+/esMNN2RyR/G6uArEkJC0X7oudauzyW83Ya+99spWswQCKtrhlozfnMsDtCW9nRQA5AGQqSoMTgxOy7/85S+nhRZaKE055ZRpqaWWyitXpwjN3wMOOCALj+lvW9yvcBlcgrr8N38u9p5++unT0ksvnWacccb8mzzAMsssk0mkvvZqz+/cz6mnnppX+njjjZf77q96/O560/MxJqZZ+3Ig8gDbbbfdGBenIL5LLLFEDtma6izrN4bvfve7OdzVVjxHyZQJJ5wwK688AF5ivsdaHoDpveCCC7IPlQMQelx22WU5+7fOOuukRRddNF1yySXZ1DFZzBGygv2PjWL1CnkUfRD2LLnkkjkJRABWowhAf5Tqs8JQ/UPu8A85BRNLmRHQNddcM5NGFsB97q8+rz5tCoPlHHbfffdMuCje4osvnrNzVmHcz2Kqh9C4QM+W4ymLtvVJdrGu/7vuumtWKMrPQmD7og7chtvBP0QCTeikAOFXTLjKhSP8MvChJnNcg1IEQxf/mmy5A/ylhFBJ/2XtsOsqPEsRCBY5LeG6a9///vdzPiKg/X/+85/ZDLMAdSAs8Xk/cHdC5ZKfAOvEHUOEtkEO33vvvZykOuOMM7IyNKGTAlRBw0ycCeB/P8uQe2ARkNDIQuo700kJmiDTyXfLRSC+FgEBqk/E0gT3sQolCEjanIB7gdIJOeuIIyts3sskWAkbQk25ChhYAWg682KVsAj/C0D2vvKVr+Q8w9lnn11eboQVPcsss+TnkeA2YIkoGUtZwqrFO+pCOorGjdVt6Ei8UZ42ZJoCcNFNGFgBAl3j4nEB5vDggw/OBImPt/L4T2SpXzhpEpE8VoAluemmm7JQEbk2W658PS6CM5XglkQt1eykcFPySAavBGVBNvv1OYCjyXs0oZMCCON0loYOR2JjbENfMWeMvkzJCtP4YZGLULIM91g40QYzLIdRwm9WsPrd24QID+sURsgpAxp+Hq+osxj4lfRzHZcJ4CUhnzrLUodOCmAgwhDmsEr4MH7hIQb+u9/97mPPsBBjq5TkiN8Ueto/QH6EZPIP4aKY5Hg2iKIVyjVIR1MIPldiyGQbZ/jgumexeu7AihUN4BPf+ta38lzgRXE/WNGUSXtWZvWaZ4V7itwDVNti7vUncvpxTT1XXnlljr48JzpgmSS42p7L6KQAYHLLPIBkhHMA22yzTfaRa621VvrGN76RJ8Lk2j6O8wBMsU4OUjxrVVqxJt7qE36KrwlQPoCpnnPOObO/pqzu09+yrij6hA+IBsT/nvUXt6EIrpfPRFGv+hFKgv/Sl76Uxyw3wbJwMXGvPpsXIaLnCDuu2ejy7BRTTJHPMMQc+Yvpf/vb385hqjmMZ4xdSDn++ONnQigPQFGMQ91t0UkBaJutXNvAdgKZQUWszxzam3ZmAFERetF4CmOCsFHmCwPGXplg/22l8Ht1xTUhlftpOzMtfYxZ8+FMO6WjFA8//HD27RSPn7Q6TUhZZ7VudVop8hr27614Vs5qkvsXaqnHfU39ZAHdIyog4FVWWSWHb5GncI96ZAEpAoFF3/zG8pgjc0YBjNk1/juSVe6r9p1l0gb3sfDCC2eFMPdS5+ojn9gO9kwvdFKAKlkhTIkOAwqzX5fmRFj4NPchYdK3JhiZ6rejBTac7G3b+44zBRSA1Yl9/yrq+tALlFk4Z8WUqVN+1AqT0DGpbRFm3SKRxKmDlR3hoS1u1ouwLQpCjfBSIoqi1wExPfroo/N/B9GL+VQP+SC/lNpRvl7opAAlVMwqtNkaDZhYCmESJGkIVCZOvE1TDYImM3fMmXu4EOy9rV/rBwJlOQjI3kUTJIgorfspbRdIBBlnCfMlR0A4XFY13HOYhNVklViKOhZPeXopVxUWiZwB69QLAysAlmmbk/8qGXQXMFVM+VRTTZV9nVz8zDPPnFd8NcM2HDAhJpxiNZ2SqQNll5Ll4+tCtF5g9eqiCCT6c5/73CeiExAZTDDBBLV5ANaQlei36MhHipoba5LPwApAq5hNJrqL2dWxMOkmh1mn0QRihbMAfDkWT1B2EpEpZhHLHQTqVpf4vV9uvB/wG25BfW0UFM9xv+cChEeIFo+wr7p1a4y4k61o1tHzAWG4BFEbS0g+3G8/+XRSAGYaSWIWpYJL1JkrJp+bYAoRHQM2cOa0STMDUrcUBtEz6cwxl2A11z1f7YPB8+Pa1PfhBCVlDSioOQnUzQGByd45FwH6FOcF8SekFZFEdtUZHMD2b3AAioHw1eUSPAuUm9Ugn3Jvoxc6KQASaMBCu2r+n+8WpwrHCMuuIR9Fk3Uau+WLnCfAipEUMXww5NitK0uVYVs1fkOaIgrgl7kPZMjgtWs3TkSin5IvYmztIGdIY9nGIEW/9F99BGnnEFMnMO0TKEtGQd1vDCyA/mLr5kYU4HkrXLjJOrGG6qNEnnMttn9ZDKQ1XvxQjIulNO/mmKJZZELXJuZfRScFIAQTX40zaS2f6Ci02NdevNjcFqUEiQFEXEsoOojYdS2eU6r1+d3kayvajjMCCy64YPrhD3+YiZiJLesbjqJe/WCq7dnLgUg+zTTTTFn5bD7FvSzYPPPMk3MMcUjG7yGwySefPE000UR5bqO/hKp4xv6FOqI+SoHPuMYyfvWrX81KgTiWeZomdFIAq5uwxfSICjYf+/8aFv+WpoeCRNw/nKVuJ4xbckZfX9wD5XNjowSM3RzIKVDI6ipkoQiKb8d9Yl5AuEepWbII7eIaBUPkKHM1RcyvUzy/exdBvVwt+ZCJSIq8nIdo2jjqpABVsy+U0oFQgFF8HNK2cVYCD2INI49ixSsgCrKSg9X7b3MKuI54H7gLllXCCyg5xYFQlqp8tCXEZYWaSGMnBagCCRKrOotWZbij+H/IbzD14voy7GTqCVeEUN1X4fe5BVES8loN95Ba1gOJ7HfsSzYRD5GqrtuJDAysANKc4lump+0J4ZEI5wTDElRBOM7zWUAlWAV5gLoj3fYG5Ewi49gLjow5EWSfoxqllBhYAQAj/ayfBhqXsFKlhJnhasIHe8f6+Wgmv5pPkCfxm2siqOpWM7/O7VIaz1f5Rx1i36AJnRRA7C3HLCFRkj0mZ9BEzXCC5uvLuALfy4wjc0I+0B8hYJwt5BLiiLckUBz9sqodEIn7uFn3AvOPXIY/Fy4Gj5ArARtliLDcQtO5gSo6KQAiEmFGNUMlfy3sEQMjJrQuTupSCh2UwBjOIgtpsvVJe/6K+ZdddtmconaP1VM+NzYKc84aWpnad4TbBk+8CU0pCUcWz8rFC/j9eNauHeEKYblU8+ma/ptrFkFUIXlmzOr0l3J4G1rhZsyBPQbhYlU+TeikAMIJxAQBqW4wyLJ5L0AyKM7kzzDDDHmPHGmJPXx/DUhsjuR0KcIh/k8SKvb4Tcrcc8+dY2B77c7jY9v6MM000+Tcve1V95b1DUeJlzD0Y955583nEZht7ROIeYp7rVi5CXG7GD6uGZc6nAWYdNJJ8/gQRNeMF1GMcwqSPjF3cabg85//fN7RNAcUhnIJKfu5h0AnBUD6hCHiTelKhY+jDDojA8dUWfXCIIOUtIhYlmlqikn7wWqxCuwU0nQJE4olxpZ1kwalACZOHwnBxEeqdLjBxxKYLB3ixn9rv24HUN6E/xY+m5MqCNY4WJA4ERQQ55t35t6YShg7ayPeV8jH3Md3G8ilLmcS6KQAVd9qUhGbumPPVfBrJsYgrJhIeYpxmcW6Pf0AM2jCIjtGoCbKy6JtDkbqr/5Zldprmx7tB8rGxxO2UK88mlZCCOiASYR7VjxXCmJ+VjVASVgtCIsHFo72HEztheo+hD5SKJnEJmvQSQFKGFCbFxyqMFnCG9lEZoyJYyGELLJYBE7ITB3tD4G3/aBEHQjepJtAClG3YdMGhCD3wdVRqDbH4R3K4N/LrV0r3WJgDaoWSobPb9xXkMgAy4pHxKZSExB1VgP5bDq0OiQFQPL6vRzRBKtfuBM+DBuWSp1rrrmyL3PIst++dxcwiXgIsmVzqm3dlNZqYkk835RZq4LiERhLV4J1m2yyycZk86qwqTXJJJPUMnnCp4DG0gRjs0AtrCaF76QA1QlrO3lVMNt8OG7ABNpYYkqd9qmaZ5rOnyE7VgLSZMXJaA1H2pk14afrjotXwXcy0e6zGvtNehV4kRVe92YOwajTuBHIaiZVGGdLmA+3q1iXZDOHrFnJ9KsyaTL7VXRSAB2lzUqpncxMeUCCHzIQZpww7YIxocx8k1kqIZNlxTJp/KUEiy1UhKf0v4hm27qtQkka4VT1Oz/A1yJ3+EcX96NPFJ2lwA9KxGGQeM9fX1k+bVBugtUvYAGZ8DoSi1Px78bvtBKuxYXaLld3mafphU4KwJQgYlZtdeLFpb4QZl+aoLF08bD4lKbz88xavLHKL3qxhDmLwwu9io8eiCw8F18JE+8jhXyr9wDE/UypthdbbLF8tMykUByKWtap+F29EjHMuzBSFMPyWHnyGibZdSS2qR7+ndDMizP6jshzF8YYz8WXxeT+hcba9ru6tclVOPrtsIzfXHM/S4VAxlfOok1jsxi0ZcxxsBSJRBzbWuhOCmBFxx44skIzmWurx1k+g/j617+eTR/TzdRLbBgUpTBBfhu0WFXq4A7UK7S0giVKTAbuQCn04Ytf/GJWPiGWvEFZVxTk0ErFQyaeeOKsUPblrdL4JF75TBTX4nMz2hT/E4TzCFwcohf3us+5BZk+LN9YYkxCVd9V8G6AvsY8uaZ/lMlxd+3Fc+5Rv3yL684aUEJWgbtiEciHNRq2Q6HiS9rJ1EhT6gAh0DyD0pHh8NGDQtvMqb4wn1aDFVQe+a7CSmI5TFywa26EALmaMMd1YMkcULGipW8tED69jOUB1+h1kle4xwqZX4urDn5n+UqwkBRQHoJrZTW4XfsGXKaopyk13kkBqprEvJlcJGdcCr0fTCpLoK+RM4f4zh/CZbLq4M1aAiW4KhnjFjxL2eqSMyUsll5v9Mbx70B8BbQEk46rNH3yreqWjU+YTT5N323opABVYMSUgAXo8uLEuAA2bwUioZGOZh3qXsKsg2dNfnxyBg9qih6qsEJxiupLNQFn/LjKquD0lQvlfkqIlLiQurCyBKFrm3yavuM4sALYgOHbxZn9thw/C2AG+U6+1CtskW1rAwLyrFw+kkeJyuijDhZJrzd6sXV8pdfJZu60LutnZbMmTXv8QCbGSD5NCatOClBNKLSZgM8CmF0kC/sOH4ogIVRCLmSyjKcDnkUirWCTyQVaoerzrGt1IRqoE3vnm0vgFSKXple4WQzt1mX98A3tl663Oo628umkABIQCtMVZ9MCyEedxn7akKsIfy28YrrryBOIZAiWya1+SYOQhYDMMytXF1L5jQKIQKqfb5MZJTSuos5fE5IEWJ1gS1AUgq7z4eaaK+IWyERWFTmncFLnde9t1KGTAsgumaw4uRoQowqfmEi+Vedk7cTsGGl8V3i4igETtJ0wbfjrN6EgEy8utj3tq+GEry91fVCHaIGZlAfwKpUYWk7DCo1n3Vf3rGtCSCeRPUMZzINX04WDwuNqn+NMAAWoXutV3CPs9vlcLgOZrF5zBH266abLORf3UFwKHx+PaoNOCoBFY7/CJponi0Xz7HYRPoJif96ny+S5xcbBwJlaE4qUYL7i3baFubbahDQSPlYtZs4XOotvH17iRi7CX8kRoZmt6sgD1BX1Er5CYM7a+ejiF77whTE7fa65r3w2ivr1ieI4/0BxzIUQMv69AsX49UvUgeCV9fQq+oC8elZb0Rd/zYc55ipwE5ts2jXf/D4X1m/XtJMCYM1iagKXIxdi8Id8kV1Be/The5AUTDleZkCiCITfa5unrsKArDgTKfljoCaByY3XopllVqDLDqWMof6ZtEj5iu9lL42HhWkL3KJX+1xKaTm7QDo9toarIGD8Rj9ZCIk5eQzhaRwKrSOagU4KUAVCZOIlUPrlyvk9TJg22+blWyVQ+FfKVEekMGjCNWhmUKaOaaN44vCmQw5tQJmYYqWXkJldZt09dd8KbAscgetsysi1Affa9utm3I1FYg+lyQoMrACET6hSvF3fCxCSISlImpVnpVEKLoKmE7bkiDQoTbYihyrwAPIV3wgsN4B6AX+wKcNS1B3VbgJ+wi01HXxpC/NmteMA/aBd1pICOI3UCwMrAA7AlzHrg5y0seqZKkI3KBs4fB1ig0PEx5ERzKGuHJC0Yq344KYJaYKzC7iBgyrlAY86cIP8c1M6uSvwLoS1/BhXCe4ojon1CnOhkwJUEz5N+eU6CGWsOKuaKcNW+XLhV/nJOQLnGmgw82+1xhaw3bCmAZVg/pBWadu6r213Bf7CxxMsntDL/RmvPEA/QQ0CVghpLY/hV1PNbeXTSQGEMnwws1K+6sRHVieYBjK3VrhNCWYXaWPSy473A/OPPJp4ZJJSIFSUh3uoAjHlXihJvEZeF48PB7TFdVXPBZqD+OB006dghwp5GBYz/uEqiSOcSZ+Q7/JsRi90UgBgrsvXj2mkswCOc4lzab5YWOjCZIoEmKI4SWzvQH6aYNoUiQ1+z8T6K+xCIv1LZV698pUsgtau17TlARwxE5JREm2KYMp6h1LUpz/GJX8gvSyElHvQJyExblQ+N1wFL+HOhNvxinzsI4y1PADSx5wSKCZupTHJMlBVBcBUFZNP0LRSGGQF2/YcSlEHjaflhKBuK901ZIsAfKtA9EBx3FvWMZxF/awaq2js2qeQwmO/lfcPV8G9cBK5B5xAAoq7YW1tWpEPeZFR3S5koJMCSAE7EGnFW8XCJxoXb74I6waJ8YcT+tA1KhlOfNrtiy64VqQ0PrtDPiwlt8wyNpHQTgpQgoZZAV1BYXRWZpHZ6qI0yE3TAY82GLR95JRvtaraPlOHobTP9/fbCQywznWnjqsYkgJIdTb9k2R1QJYQQmaTCcfs+WiRQJA3MawcfYSK1YMc8g51b960xVDaR7i4HqnYtiSrxFDalxxj9h35akOk5VT6yWdICqBzdTtlTaDFBozF89HSldiy6EJoKEzEG0wMshnfxIkQlFYP5V/kHGr7UtLab/OV0zoMtX0mX/jclN0LkE+/7wgMSQEGAULCbfBP0sL+W6jId/p/BFOa1oSI/WmxzaMgMvwZKzAoBm2f68F/ZCgx8Lb77SWG0r5VL/KgNP3+pZO2+NQVAKxiTJYvY9YQSKTFX9dMQvwTLYinyYpsILPYdJCiDQZpn592LxdgxQ6S/QwM2r7zCxESD6qAJcaJAjTBqSN+bmxk0NpgpLX/mVOAUXy6GFWAEY5RBRjhGFWAEY5RBRjhGFWAEY5RBRjhGFWAEY5RBRjhGFWAEY5RBRjh+D8tk5r+eFFpsAAAAABJRU5ErkJggg==";
+                base64Image = emitter.getText();
+                emitter.text = "base64 image text";
+                emitter.svgNodes[1].attr('src', "base64 image text");
+
+                console.log("--> changing image");
+                emitter.svgNodes[0].attr('src', base64Image);
+            }
+        });
+    },
+
+    getPotentialFilters: function(){
+        // return [
+        //     {label:"Opacity", impl:"shape_designer.filter.OpacityFilter"},
+        //     {label:"Blur", impl:"shape_designer.filter.BlurFilter"},
+        //     {label:"Outline", impl:"shape_designer.filter.OutlineStrokeFilter"},
+        //     {label:"Gradient", impl:"shape_designer.filter.TextLinearGradientFilter"},
+        //     {label:"Font Size", impl:"shape_designer.filter.FontSizeFilter"},
+        //     {label:"Font Color", impl:"shape_designer.filter.FontColorFilter"}
+        // ];
+
+        return [];
+    },
+
+    setBlur: function( value){
+        this.blur = value;
+        this.repaint();
+    },
+
+    getBlur: function(){
+        return this.blur;
+    },
+
+    removeFilter:function(filter){
+        this.filters.remove(filter);
+
+        return this;
+    },
+
+    addFilter:function(filter){
+        var alreadyIn = false;
+
+        this.filters.each($.proxy(function(i,e){
+            alreadyIn = alreadyIn || (e.NAME===filter.NAME);
+        },this));
+        if(alreadyIn===true){
+            return; // silently
+        }
+
+        this.filters.add(filter);
+        filter.onInstall(this);
+        this.repaint();
+
+        return this;
+    },
+
+
+    /**
+     * @method
+     * Trigger the repaint of the element.
+     *
+     */
+    repaint:function(attributes)
+    {
+        if(this.shape===null){
+            return;
+        }
+
+        if(typeof attributes === "undefined"){
+            attributes = {};
+        }
+
+        // style the label
+        var lattr = {};
+        lattr.text = this.text;
+        lattr["font-weight"] = (this.bold===true)?"bold":"normal";
+        lattr["text-anchor"] = "start";
+        lattr["font-size"] = this.fontSize;
+        if(this.fontFamily!==null){
+            lattr["font-family"] = this.fontFamily;
+        }
+        lattr.fill = this.fontColor.hash();
+        // since 4.2.1
+        lattr.stroke = this.outlineColor.hash();
+        lattr["stroke-width"] = this.outlineStroke;
+
+        this.filters.each($.proxy(function(i,filter){
+            filter.apply(this, attributes, lattr);
+        },this));
+
+        this.svgNodes.attr(lattr);
+        // set of the x/y must be done AFTER the font-size and bold has been set.
+        // Reason: the getHeight method needs the font-size for calculation because
+        //         it redirects the calculation to the SVG element.
+        this.svgNodes.attr({x:this.padding.left,y: this.getHeight()/2});
+
+        // jump over the normal Label implementation
+        draw2d.SetFigure.prototype.repaint.call(this,attributes);
+    },
+
+    getPersistentAttributes : function()
+    {
+        var memento = this._super();
+
+        memento.filters = [];
+        this.filters.each($.proxy(function(i,e){
+            var filterMemento = e.getPersistentAttributes(this);
+            memento.filters.push(filterMemento);
+        },this));
+
+        return memento;
+    },
+
+    setPersistentAttributes : function( memento)
+    {
+        this._super(memento);
+
+
+        if(typeof memento.filters !=="undefined"){
+            this.filters = new draw2d.util.ArrayList();
+            $.each(memento.filters, $.proxy(function(i,e){
+                var filter = eval("new "+e.name+"()");
+                filter.setPersistentAttributes(this, e);
+                this.filters.add(filter);
+            },this));
+        }
+    }
+});
 
 /********************************************************************************************************************
  *  LuboJ GraphLang functions
