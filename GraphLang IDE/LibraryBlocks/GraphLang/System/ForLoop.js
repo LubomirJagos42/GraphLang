@@ -165,7 +165,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     var iterationCount = "/* forLoop iterationCount value */"
     var iterationTerminal = this.getInputPort("iterationTerminal");
     if (iterationTerminal.getConnections().getSize() > 0){
-      iterationCount = "wire_" + iterationTerminal.getConnections().get(0).getId(); //getting wire name connected to iteration terminal, how many times has this for loop go
+      iterationCount = iterationTerminal.getConnections().get(0).getVariableName(); //getting wire name connected to iteration terminal, how many times has this for loop go
     }
 
     var forLoopIteratorVariable = 'forLoopIterator_' + this.getId();
@@ -177,7 +177,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     cCode += "\t" + this.getLeftTunnelsWiresAssignementCppCode().replaceAll("\n", "\n\t");
 
     this.getOutputPort("iterationTerminalOutput").getConnections().each(function(wireIndex, wireObj){
-      cCode += "\twire_" + wireObj.getId() + " = " + forLoopIteratorVariable + ";\n";
+      cCode += "\t" + wireObj.getVariableName() + " = " + forLoopIteratorVariable + ";\n";
     });
 
     /*  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

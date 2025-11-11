@@ -1405,7 +1405,7 @@ translateToCppCode: function(){
             if (paramsCounter > 0) paramsStr += ', ';
 
             if (connections.getSize() > 0){
-                paramsStr += 'wire_' + connections.first().getId();
+                paramsStr += connections.first().getVariableName();
             }else{
                 paramsStr += 'null';
             }
@@ -1422,7 +1422,7 @@ translateToCppCode: function(){
             let connections = this.getOutputPorts().first().getConnections()
             if (connections.getSize() > 0){
                 connections.each(function(connectionIndex, connectionObj){
-                    cCode += 'wire_' + connectionObj.getId() + ' = ' + functionCallStr + ";\n";
+                    cCode += connectionObj.getVariableName() + ' = ' + functionCallStr + ";\n";
                 });
             }else{
                 cCode += functionCallStr + "; /* output not assigned */ \n";

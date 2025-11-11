@@ -106,7 +106,7 @@ GraphLang.Shapes.Basic.TerminalOutput = draw2d.shape.basic.Label.extend({
 
     let terminalConnections = this.getInputPort(0).getConnections();
     if (terminalConnections.getSize() > 0){
-      cCode += this.getText() + ' = wire_' + terminalConnections.first().getId() + ';\n';
+      cCode += this.getText() + ' = ' + terminalConnections.first().getVariableName() + ';\n';
     }else{
       cCode += '//ERROR: Output terminal has no connection\n';
     }

@@ -353,7 +353,8 @@ GraphLang.Debugger.Cpp.debugGetWireValue = function(options = null){
     return new Promise(async (resolve, reject) => {
         console.log(`debugGetWireValue executed`);
         if (options){
-            let wireName = 'wire_' + options.objectId.replaceAll('-', '_');
+            // let wireName = 'wire_' + options.objectId.replaceAll('-', '_'); //original implementation when wire name is manualy built
+            let wireName = options.objectVariableName; //newer implementation using option parameter with wire name which must be pushed from compiler
 
             /*
              *  This is first way, but this output structure is too complex

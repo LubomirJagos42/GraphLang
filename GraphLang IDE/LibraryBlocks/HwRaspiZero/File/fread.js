@@ -408,15 +408,15 @@ translateToCppCode: function(){
 
         let cCode = "";
         if (connectionsIn.getSize() > 0 && connectionsOut.getSize() > 0){
-            let filePtr = "wire_" + connectionsIn.first().getId();
+            let filePtr = connectionsIn.first().getVariableName();
 
             cCode += "// Allocate a buffer to hold the file content\n";
-            cCode += `char* fileContentBuffer_internal = new char[wire_${this.getInputPort("bytesCountToRead").getConnections().first().getId()} + 1];\n`;
-            cCode += `fileSize = wire_${this.getInputPort("bytesCountToRead").getConnections().first().getId()};\n`;
+            cCode += `char* fileContentBuffer_internal = new char[${this.getInputPort("bytesCountToRead").getConnections().first().getVariableName()} + 1];\n`;
+            cCode += `fileSize = ${this.getInputPort("bytesCountToRead").getConnections().first().getVariableName()};\n`;
             cCode += `// Read the file content into the buffer\n`;
             cCode += `fread(fileContentBuffer_internal, 1, fileSize, ${filePtr});\n`
             this.getOutputPort("fileContent").getConnections().each(function(connIndex, connObj){
-                cCode += `wire_${connObj.getId()} = fileContentBuffer_internal;\n`;
+                cCode += `${connObj.getVariableName()} = fileContentBuffer_internal;\n`;
             });
         }
         return cCode;

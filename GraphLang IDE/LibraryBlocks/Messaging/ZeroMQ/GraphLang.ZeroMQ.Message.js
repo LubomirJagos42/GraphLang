@@ -224,11 +224,11 @@ setPersistentAttributes: function(memento){
         let cCode = "";
         let zmqMessageVariableName = "zmqMessage_" + this.getId();
         if (messagePortConnections.getSize() > 0) {
-            let messageStrWireName = "wire_" + messagePortConnections.first().getId();
+            let messageStrWireName = messagePortConnections.first().getVariableName();
             cCode += `zmq::message_t* ${zmqMessageVariableName} = new zmq::message_t(${messageStrWireName}.begin(), ${messageStrWireName}.end());\n`;
         }
         if (messageOutConnections.getSize() > 0) {
-            let messageOutWireName = "wire_" + messageOutConnections.first().getId();
+            let messageOutWireName = messageOutConnections.first().getVariableName();
             cCode += `${messageOutWireName} = ${zmqMessageVariableName};\n`;                    //TODO: This will create value assignment just for first connected wire, need to be done for each connection
         }
 

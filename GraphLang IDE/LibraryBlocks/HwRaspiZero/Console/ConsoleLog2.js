@@ -184,7 +184,7 @@ HwRaspiZero.Console.output = GraphLang.UserDefinedNode.extend({
     translateToCppCode: function(){
         cCode = "";
         if (this.getInputPort(0).getConnections()) {
-            let wireName = `wire_${this.getInputPort(0).getConnections().first().getId()}`;
+            let wireName = `${this.getInputPort(0).getConnections().first().getVariableName()}`;
             cCode = `std::cout << ${wireName};\n`;
         }
         return cCode;

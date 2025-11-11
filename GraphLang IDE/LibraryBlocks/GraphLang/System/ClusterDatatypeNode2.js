@@ -514,7 +514,7 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
 
     var variableName = this.getVariableName();
     this.getOutputPort(0).getConnections().each(function(connectionIndex, connectionObj){
-        cCode += 'wire_' + connectionObj.getId() + ' = ' + variableName + ";\n";     //writing reference to this cluster to wire
+        cCode += connectionObj.getVariableName() + ' = ' + variableName + ";\n";     //writing reference to this cluster to wire
     });
 
     return cCode;

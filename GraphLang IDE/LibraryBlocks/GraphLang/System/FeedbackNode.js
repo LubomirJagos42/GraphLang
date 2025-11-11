@@ -289,20 +289,20 @@ GraphLang.Shapes.Basic.FeedbackNode = draw2d.SetFigure.extend({
 
         //TODO: this is wrong but still better than nothing
         if (inDefault.getConnections().getSize() > 0) {
-            cCode += "\tfeedBackNode_" + this.getId() + " = wire_" + inDefault.getConnections().get(0).getId() + ";\n";
+            cCode += "\tfeedBackNode_" + this.getId() + " = " + inDefault.getConnections().get(0).getVariableName() + ";\n";
         }else{
             cCode += "\tfeedBackNode_" + this.getId() + " = null;\n";
         }
 
         cCode += "}else{\n";
-        cCode += "\tfeedBackNode_" + this.getId() + " = wire_" + in0.getConnections().get(0).getId() + ";\n"; //assign input value for feedback node value, this makes buffer effect
+        cCode += "\tfeedBackNode_" + this.getId() + " = " + in0.getConnections().get(0).getVariableName() + ";\n"; //assign input value for feedback node value, this makes buffer effect
         cCode += "}\n";
 
         //assign output value to output wire
         feedbackObj = this;
         out0.getConnections().each(function(wireIndex, wireObj){
-            //cCode += "wire_" + out0.getConnections().get(0).getId() + " = feedBackNode_" + feedbackObj.getId() + ";\n";
-            cCode += "wire_" + wireObj.getId() + " = feedBackNode_" + feedbackObj.getId() + ";\n";
+            //cCode += out0.getConnections().get(0).getVariableName() + " = feedBackNode_" + feedbackObj.getId() + ";\n";
+            cCode += wireObj.getVariableName() + " = feedBackNode_" + feedbackObj.getId() + ";\n";
         });
 
         return cCode;

@@ -242,8 +242,8 @@ GraphLang.ZeroMQ.send = GraphLang.ZeroMQ.CommonParent.extend({
 
         let cCode = "";
         if (socketInConnections.getSize() > 0 && messageInConnections.getSize() > 0) {      //TODO: Message schema constant should be input no hardwired
-            let socketWireName = "wire_" + socketInConnections.first().getId();
-            let messageWireName = "wire_" + messageInConnections.first().getId();
+            let socketWireName = socketInConnections.first().getVariableName();
+            let messageWireName = messageInConnections.first().getVariableName();
             cCode += `${socketWireName}->send(*${messageWireName}, zmq::send_flags::none);\n`;  //message wire contains pointer and method argument is its content therefore '*' is put before message wire name
         }
 

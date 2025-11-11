@@ -332,7 +332,7 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
             let connections = portObj.getConnections();
             if (paramsCounter > 0) paramsStr += ', ';
             if (connections.getSize() > 0){
-                paramsStr += 'wire_' + connections.first().getId();
+                paramsStr += connections.first().getVariableName();
             }else{
                 //paramsStr += 'null';      //WRONG, there should be some default value, this is just too simple to be running properly
                 paramsStr += `node_${portOwnerNode.getId()}_inputPort_${portObj.getName()}`;      //default parameter defined before this method call, look for subnode translate where this name is psuhed into array
@@ -359,7 +359,7 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
                 outputPortWiresList[portName] = [];
                 if (connections.getSize() > 0) {
                     connections.each(function (connectionIndex, connectionObj) {
-                        wireName = "wire_" + connectionObj.getId();
+                        wireName = connectionObj.getVariableName();
                         outputPortWiresList[portName].push(wireName);
                     });
                 }

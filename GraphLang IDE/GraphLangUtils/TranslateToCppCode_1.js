@@ -181,7 +181,7 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
              *    when flag isWireOnTopCanvas is still true write wire declaration, otherwise do nothing and continue for next wire
              */
             if (isWireOnTopCanvas){
-                cCode += sourceDatatype + " wire_" + lineObj.getId() + ";\n";
+                cCode += sourceDatatype + " " + lineObj.getVariableName() + ";\n";
                 GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
                     inputStr: cCode,
                     startLine: 0,
@@ -201,7 +201,7 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
             lineObj.getSource().getParent().getParent().getComposite() == null
         ){
             sourceDatatype = lineObj.getSource().getParent().getDatatype();
-            cCode += sourceDatatype + " wire_" + lineObj.getId() + ";\n";
+            cCode += sourceDatatype + " " + lineObj.getVariableName() + ";\n";
             GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
                 inputStr: cCode,
                 startLine: 0,
@@ -486,7 +486,7 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
                          */
                         if (wireObj.getUserData() && wireObj.getUserData().isSetBreakpoint){
                             let currentLineNumber = cCode.split("\n").length - 1;
-                            translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: wireObj.getId(), type: "wire", parentId: null, parentName: null});
+                            translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: wireObj.getId(), objectVariableName: wireObj.getVariableName(), type: "wire", parentId: null, parentName: null});
                         }
 
                         /*
@@ -495,7 +495,7 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
                          */
                         if (wireObj.getUserData() && wireObj.getUserData().isSetWatch){
                             let currentLineNumber = cCode.split("\n").length - 1;
-                            translateToCppCodeWatchList.add({lineNumber: currentLineNumber, objectId: wireObj.getId(), type: "wire", parentId: null, parentName: null});
+                            translateToCppCodeWatchList.add({lineNumber: currentLineNumber, objectId: wireObj.getId(), objectVariableName: wireObj.getVariableName(), type: "wire", parentId: null, parentName: null});
                         }
                     });
                 });

@@ -242,8 +242,8 @@ GraphLang.ZeroMQ.bind = GraphLang.ZeroMQ.CommonParent.extend({
 
         let cCode = "";
         if (socketInConnections.getSize() > 0 && bindStrInConnections.getSize() > 0) {      //TODO: Message schema constant should be input no hardwired
-            let socketWireName = "wire_" + socketInConnections.first().getId();
-            let bindStrWireName = "wire_" + bindStrInConnections.first().getId();
+            let socketWireName = socketInConnections.first().getVariableName();
+            let bindStrWireName = bindStrInConnections.first().getVariableName();
             cCode += `${socketWireName}->bind(${bindStrWireName});\n`;
         }
 

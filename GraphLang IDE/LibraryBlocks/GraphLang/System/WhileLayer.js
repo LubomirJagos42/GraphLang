@@ -160,7 +160,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
     var stopTerminal = this.getInputPort("stopTerminal");
     var wireStop = stopTerminal.getConnections().first();
     if (wireStop != undefined){
-      cCode += wireStop.getSource().userData.datatype + " wire_" + wireStop.getId() + ";\n";
+      cCode += wireStop.getSource().userData.datatype + " " + wireStop.getVariableName() + ";\n";
     }
 
     cCode += this.getTunnelsDeclarationCppCode();
@@ -244,7 +244,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
     var endCondition = "";
     var stopTerminal = this.getInputPort("stopTerminal");
     if (stopTerminal.getConnections().getSize() > 0){
-      endCondition = "wire_" + stopTerminal.getConnections().get(0).getId();
+      endCondition = stopTerminal.getConnections().get(0).getVariableName();
     }
 
     cCode += this.getRightTunnelsAssignementOutputCppCode().replaceAll("\n", "\n\t");
@@ -283,7 +283,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
     var stopTerminal = this.getInputPort("stopTerminal");
 
     if (stopTerminal.getConnections().getSize() > 0){
-      endCondition = "wire_" + stopTerminal.getConnections().get(0).getId();
+      endCondition = stopTerminal.getConnections().get(0).getVariableName();
     }
 
     //pay attention to indentation

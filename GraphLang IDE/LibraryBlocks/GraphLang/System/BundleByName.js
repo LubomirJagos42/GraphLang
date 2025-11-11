@@ -375,9 +375,9 @@ GraphLang.Shapes.Basic.BundleByName = draw2d.shape.layout.FlexGridLayout.extend(
 
         bundleObj.items.getChildren().each(function(itemIndex, itemObj){
             wireInput = itemObj.getInputPort(0).getConnections().first();
-            if (wireInput) cCode +=  'wire_' + inputCluster.getId() + '.' + itemObj.getText() + ' = wire_' + wireInput.getId() + ";\n";
+            if (wireInput) cCode +=  inputCluster.getVariableName() + '.' + itemObj.getText() + ' = ' + wireInput.getVariableName() + ";\n";
         });        
-        if (inputCluster) cCode += 'wire_' + outConnectionObj.getId() + ' = wire_' + inputCluster.getId() + ";\n";     //writing reference to this cluster to wire    
+        if (inputCluster) cCode += outConnectionObj.getVariableName() + ' = ' + inputCluster.getVariableName() + ";\n";     //writing reference to this cluster to wire
     });
     
     

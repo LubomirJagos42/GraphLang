@@ -143,7 +143,7 @@ GraphLang.Shapes.Basic.SliderNode = draw2d.shape.widget.Slider.extend({
         var cCode = "";
         var variableName = this.getVariableName();
         this.getOutputPort(0).getConnections().each(function (connectionIndex, connectionObj) {
-            cCode += "wire_" + connectionObj.getId() + " = " + variableName + ";\n";
+            cCode += connectionObj.getVariableName() + " = " + variableName + ";\n";
         });
 
         return cCode;

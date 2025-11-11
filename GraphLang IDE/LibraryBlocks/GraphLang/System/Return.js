@@ -53,7 +53,7 @@ GraphLang.Shapes.Basic.Return = draw2d.shape.basic.Label.extend({
     cCode = "";
 
     this.getInputPort(0).getConnections().each(function(connectionIndex, connectionObj){
-      cCode += "return wire_" + connectionObj.getId() + ";\n";
+      cCode += "return " + connectionObj.getVariableName() + ";\n";
     });
 
     return cCode;

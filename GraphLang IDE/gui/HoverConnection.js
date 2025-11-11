@@ -78,6 +78,54 @@ HoverConnection = draw2d.Connection.extend({
                         case "debugGetValue":
                             GraphLang.Debugger.Cpp.readGdbWatchValueAndDisplayOnScreen({objectId: emitter.getId()});
                             break;
+                        case "autorouteWire":
+                            /*
+                                TODO: This auto routing doesn't take nodes into consideration figures on canvas, this should be probably done from scratch here to compute points
+                                      through which wire should leads and create new connection through them and copy all attributes from old connection into it.
+                             */
+                            if (emitter.getRouter()){
+                                // /*
+                                //  *  Experiment 1 - using routing hints but this doesn't seems to be working as router auto-update points without figures
+                                //  */
+                                // let routingHints = {};
+                                // routingHints.oldVertices = new draw2d.util.ArrayList();
+                                // routingHints.oldVertices.addAll(emitter.getVertices());
+                                //
+                                // emitter.getRouter().route(emitter, routingHints);   //call router
+
+                                /*
+                                 *  Experiment 2 - change router to VertexRouter, but then autoupdate is done different, still at least it does something
+                                 */
+                                emitter.setRouter(new draw2d.layout.connection.VertexRouter());
+
+                                let sourcePort = emitter.getSource();
+                                let targetPort = emitter.getTarget();
+                                let newVertices = new draw2d.util.ArrayList();
+
+                                let pointList = new draw2d.util.ArrayList();
+                                pointList.add(
+                                    new draw2d.geo.Point(
+                                        sourcePort.getAbsoluteX()+10,
+                                        sourcePort.getAbsoluteY()
+                                    )
+                                );
+                                pointList.add(
+                                    new draw2d.geo.Point(
+                                        targetPort.getAbsoluteX()-10,
+                                        targetPort.getAbsoluteY()
+                                    )
+                                );
+
+                                newVertices.add(sourcePort.getPosition());
+                                newVertices.addAll(pointList);
+                                newVertices.add(targetPort.getPosition());
+
+                                emitter.setVertices(newVertices);
+                            }
+                            break;
+                        case "setManhattenRouter":
+                            emitter.setRouter(new draw2d.layout.connection.InteractiveManhattanConnectionRouter());
+                            break;
                         case "setLabel":
                             let wireLabel = window.prompt("Wire label:");
                             console.log(`--> wire ${emitter.getId()} label to set: ${wireLabel}`);
@@ -125,6 +173,9 @@ HoverConnection = draw2d.Connection.extend({
                         "hasWatch": {name: "Show if is watch"},
                         "debugGetValue": {name: "Debug get value"},
                         "separator3": "--------------",
+                        "autorouteWire": {name: "Auto route"},
+                        "setManhattenRouter": {name: "Set Manhattan router"},
+                        "separator4": "--------------",
                         "setLabel": {name: "Set Label"},
                         "showLabel": {name: "Show Label"},
                     }
@@ -150,7 +201,6 @@ HoverConnection = draw2d.Connection.extend({
 /*********************************************************************************************************************************************
  *    EXPERIMENT SAVING ATTRIBUTES AND RESTORE DIAGRAM FROM FILE
  *********************************************************************************************************************************************/
-
 
   /**
    * @method
@@ -252,7 +302,20 @@ HoverConnection = draw2d.Connection.extend({
        }
 */
 
-  }
+  },
 
+  getVariableName: function(){
+    let wireVariableName = "";
+    wireVariableName += "wire";
+    wireVariableName += "_" + this.getId();
+    if (this.getUserData() && this.getUserData().wireLabel && this.getUserData().wireLabel !== ""){
+        let wireLabel = this.getUserData().wireLabel;
+        wireLabel = wireLabel.replaceAll('-', '_');
+        wireLabel = wireLabel.replaceAll(' ', '_');
+
+        wireVariableName += "_" + wireLabel;
+    }
+    return wireVariableName;
+  }
 
 });

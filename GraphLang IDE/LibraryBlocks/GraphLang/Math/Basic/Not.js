@@ -217,9 +217,9 @@ GraphLang.Math.Basic.Not = GraphLang.Math.Basic.CommonParent.extend({
       cCode = "";
 
       inputVariable = "false";
-      if (this.getInputPort("in1").getConnections().getSize() > 0) inputVariable = "wire_" + this.getInputPort("in1").getConnections().first().getId();
+      if (this.getInputPort("in1").getConnections().getSize() > 0) inputVariable = this.getInputPort("in1").getConnections().first().getVariableName();
       this.getOutputPort("out1").getConnections().each(function(connectionIndex, connectionObj){
-        cCode += "wire_" + connectionObj.getId() + " = !" + inputVariable + ";\n";
+        cCode += connectionObj.getVariableName() + " = !" + inputVariable + ";\n";
       });
 
       return cCode;    

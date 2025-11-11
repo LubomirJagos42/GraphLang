@@ -225,12 +225,12 @@ setPersistentAttributes: function(memento){
         let cCode = "";
         let zmqContextVariableName = "zmqContext_" + this.getId();
         if (contextNumberConnections.getSize() > 0) {
-            let contextNumberWireName = "wire_" + contextNumberConnections.first().getId();
+            let contextNumberWireName = contextNumberConnections.first().getVariableName();
             cCode += `zmq::context_t* ${zmqContextVariableName} = new zmq::context_t(${contextNumberWireName});\n`;
         }
 
         contextOutConnections.each(function(connectionIndex, connectionObj){
-            let contextOutWireName = "wire_" + connectionObj.getId();
+            let contextOutWireName = connectionObj.getVariableName();
             cCode += `${contextOutWireName} = ${zmqContextVariableName};\n`;
         });
 

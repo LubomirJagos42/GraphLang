@@ -118,11 +118,11 @@ GraphLang.Shapes.Basic.ArrayIndex = GraphLang.UserDefinedNode.extend({
     
     translateToCppCode: function(){
         let cCode = "";
-        let arrayName = "wire_" + this.getInputPort("array_in").getConnections().first().getId();    //TODO: takes just first connection
-        let indexVariableName = "wire_" + this.getInputPort("index_in").getConnections().first().getId();    //TODO: takes just first connection
+        let arrayName = this.getInputPort("array_in").getConnections().first().getVariableName();    //TODO: takes just first connection
+        let indexVariableName = this.getInputPort("index_in").getConnections().first().getVariableName();    //TODO: takes just first connection
 
         this.getOutputPort("arrayElement_out").getConnections().each(function(outWireIndex, outWireObj){
-            cCode += `wire_${outWireObj.getId()} = ${arrayName}[${indexVariableName}];\n`;
+            cCode += `${outWireObj.getVariableName()} = ${arrayName}[${indexVariableName}];\n`;
         });
 
         return cCode;

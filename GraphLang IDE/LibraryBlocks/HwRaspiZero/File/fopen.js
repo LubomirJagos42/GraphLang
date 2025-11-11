@@ -396,12 +396,12 @@ translateToCppCode: function(){
 
         let cCode = "";
         if (connectionsIn.getSize() > 0 && connectionsOut.getSize() > 0){
-            let fileName = "wire_" + connectionsIn.first().getId();
-            let filePtr = "filePtr_" + connectionsOut.first().getId();
+            let fileName = connectionsIn.first().getVariableName();
+            let filePtr = "filePtr_" + connectionsOut.first().getVariableName();
             cCode = `FILE* ${filePtr} = fopen(${fileName}.c_str(), "w+");\n`
 
             connections = this.getOutputPort("fileRef").getConnections().each(function(connIndex, connObj){
-                cCode += `wire_${connObj.getId()} = ${filePtr};\n`;
+                cCode += `${connObj.getVariableName()} = ${filePtr};\n`;
             });
         }
         return cCode;

@@ -76,7 +76,7 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
     });
 
   	allConnections.each(function(connectionindex, connectionObj){
-  		cCode += connectionObj.getSource().userData.datatype + " wire_" + connectionObj.getId() + ";\n";
+  		cCode += connectionObj.getSource().userData.datatype + " " + connectionObj.getVariableName() + ";\n";
   	});
 
     //2nd get declaration for wires going from tunnels to figures inside
@@ -93,7 +93,7 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
       }
     
       if (layerFigures.contains(wireTargetFigure)){
-        cCode += "wire_" + connectionObj.getId() + " = tunnel_" + connectionObj.getSource().getParent().getId() + ";\n";  //to get tunnel ID first I got port from wire source and its parent is tunnel
+        cCode += connectionObj.getVariableName() + " = tunnel_" + connectionObj.getSource().getParent().getId() + ";\n";  //to get tunnel ID first I got port from wire source and its parent is tunnel
       }
     });
 
@@ -133,7 +133,7 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
           if (wireSourceFigure.NAME.toLowerCase().search('tunnel') > -1) wireSourceFigure = wireSourceFigure.getParent();
           if (layerFigures.contains(wireSourceFigure)){
             childObj.getOutputPort(0).getConnections().each(function(outputWireIndex, outputWireObj){
-                cCode +=  "wire_" + outputWireObj.getId() + " = wire_" + connectionObj.getId() + ";\n";
+                cCode +=  outputWireObj.getVariableName() + " = " + connectionObj.getVariableName() + ";\n";
             });
           }
         });
@@ -164,7 +164,7 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
       }
     
       if (layerFigures.contains(wireTargetFigure)){
-        pythonCode += "wire_" + connectionObj.getId() + " = tunnel_" + connectionObj.getSource().getParent().getId() + ";\n";  //to get tunnel ID first I got port from wire source and its parent is tunnel
+        pythonCode += connectionObj.getVariableName() + " = tunnel_" + connectionObj.getSource().getParent().getId() + ";\n";  //to get tunnel ID first I got port from wire source and its parent is tunnel
       }
     });
 
@@ -193,7 +193,7 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
           if (wireSourceFigure.NAME.toLowerCase().search('tunnel') > -1) wireSourceFigure = wireSourceFigure.getParent();
           if (layerFigures.contains(wireSourceFigure)){
             childObj.getOutputPort(0).getConnections().each(function(outputWireIndex, outputWireObj){
-                pythonCode +=  "wire_" + outputWireObj.getId() + " = wire_" + connectionObj.getId() + ";\n";
+                pythonCode +=  outputWireObj.getVariableName() + " = " + connectionObj.getVariableName() + ";\n";
             });
           }
         });

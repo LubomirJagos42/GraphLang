@@ -20,16 +20,16 @@ GraphLang.Shapes.Basic.UserCodeBlock = draw2d.shape.basic.Label.extend({
     port.setName("out1");
     port.setMaxFanOut(20);
     port.userData = {};
-    port.userData.datatype = "String"
+    port.userData.datatype = "string"
     
     this.userData = {};
   },
   
   translateToCppCode: function(){
-    cCode = '/*** user code block ****/';
+    cCode = `/*** user code block ****/\n`;
     nodeText = this.getText();
     this.getOutputPort(0).getConnections().each(function(connectionIndex, connectionObj){
-        cCode += "wire_" + connectionObj.getId() + " = '" +  nodeText + "';\n";
+        cCode += connectionObj.getVariableName() + " = '" +  nodeText + "';\n";
     });
     return cCode;
   }

@@ -238,12 +238,12 @@ setPersistentAttributes: function(memento){
         let cCode = "";
         let zmqSocketVariableName = "zmqSocket_" + this.getId();
         if (contextInConnections.getSize() > 0) {
-            let contextWireName = "wire_" + contextInConnections.first().getId();
+            let contextWireName = contextInConnections.first().getVariableName();
             cCode += `zmq::socket_t* ${zmqSocketVariableName} = new zmq::socket_t(*${contextWireName}, ZMQ_PUB);\n`;     //TODO: Message schema constant should be input no hardwired
         }
 
         socketOutConnections.each(function(connectionIndex, connectionObj){
-            let socketOutWireName = "wire_" + connectionObj.getId();
+            let socketOutWireName = connectionObj.getVariableName();
             cCode += `${socketOutWireName} = ${zmqSocketVariableName};\n`;
         });
 

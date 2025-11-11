@@ -360,7 +360,7 @@ translateToCppCode: function(){
 
         let cCode = "";
         if (connections.getSize() > 0){
-            let fileRef = "wire_" + connections.first().getId();
+            let fileRef = connections.first().getVariableName();
             cCode = `
 // Determine the file size
 fseek(${fileRef}, 0, SEEK_END);
@@ -369,7 +369,7 @@ rewind(${fileRef});
 `;
 
             connections = this.getOutputPort("fileSize").getConnections().each(function(connIndex, connObj){
-                cCode += `wire_${connObj.getId()} = fileSize;\n`;
+                cCode += `${connObj.getVariableName()} = fileSize;\n`;
             });
         }
         return cCode;

@@ -669,9 +669,9 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
         this.getAllLayers().each(function (layerIndex, layerObj) {
             if (selectorPortWires != null && selectorPortWires.getSize() > 0) {
                 if (selectorPortDatatype == "String") {
-                    cCode += "if(wire_" + selectorPortWires.first().getId() + " == \"" + layerObj.userData.layerText + "\"){\n";
+                    cCode += "if(" + selectorPortWires.first().getVariableName() + " == \"" + layerObj.userData.layerText + "\"){\n";
                 } else {
-                    cCode += "if(wire_" + selectorPortWires.first().getId() + " == " + layerObj.userData.layerText + "){\n";
+                    cCode += "if(" + selectorPortWires.first().getVariableName() + " == " + layerObj.userData.layerText + "){\n";
                 }
             } else {
                 cCode += "if(/* selectorPort not connected*/){\n";
@@ -699,7 +699,7 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
         selectorWireName = "/* selectorPort not connected*/";
         let selectorDatatype = "undefined";
         if (selectorPortWires != null && selectorPortWires.getSize() > 0) {
-            selectorWireName = "wire_" + selectorPortWires.first().getId();
+            selectorWireName = selectorPortWires.first().getVariableName();
             selectorDatatype = selectorPortWires.first().getSource().userData.datatype;
         }
 

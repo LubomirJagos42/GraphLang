@@ -400,7 +400,7 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
     variableName = this.getVariableName(); 
 
     this.getOutputPort(0).getConnections().each(function(connectionIndex, connectionObj){
-      cCode += "wire_" + connectionObj.getId() + " = " + variableName + ";\n";
+      cCode += connectionObj.getVariableName() + " = " + variableName + ";\n";
     });
     return cCode;
   }

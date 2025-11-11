@@ -372,8 +372,8 @@ HwRaspiZero.File.fwrite = GraphLang.UserDefinedNode.extend({
 
 translateToCppCode: function(){
         let cCode = "";
-        let filePtr = "wire_" + this.getInputPort("fileRef").getConnections().first().getId();
-        let stringIn = "wire_" + this.getInputPort("stringToWrite").getConnections().first().getId();
+        let filePtr = this.getInputPort("fileRef").getConnections().first().getVariableName();
+        let stringIn = this.getInputPort("stringToWrite").getConnections().first().getVariableName();
 
         cCode += `fwrite(${stringIn}.data(), sizeof(char), ${stringIn}.length(), ${filePtr});\n`
 

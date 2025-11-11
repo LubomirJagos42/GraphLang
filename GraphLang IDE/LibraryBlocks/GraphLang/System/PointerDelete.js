@@ -257,7 +257,7 @@ GraphLang.Shapes.Basic.PointerDelete = GraphLang.UserDefinedNode.extend({
     translateToCppCode: function(){
         let cCode = "";
         this.getInputPort("pointerIn").getConnections().each(function(connectionIndex, connectionObj){
-          cCode += `delete wire_${connectionObj.getId()};\n`;
+          cCode += `delete ${connectionObj.getVariableName()};\n`;
         });
 
         /*

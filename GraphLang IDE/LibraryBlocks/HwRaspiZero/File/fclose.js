@@ -358,7 +358,7 @@ translateToCppCode: function(){
 
         let cCode = "";
         connections = this.getInputPort("fileRef").getConnections().each(function(connIndex, connObj){
-            cCode += `fclose(wire_${connObj.getId()});\n`;
+            cCode += `fclose(${connObj.getVariableName()});\n`;
         });
         return cCode;
     },

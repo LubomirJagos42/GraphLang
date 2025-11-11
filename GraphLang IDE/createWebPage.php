@@ -89,6 +89,7 @@ htmlTemplate = """
     <script src="./gui/View.js"></script>
     <script src="./gui/Toolbar.js"></script>
     <script src="./gui/HoverConnection.js"></script>
+    <script src="./gui/MultilineInplaceEditor.js"></script>
 
     <script src="./GraphLangUtils/Utils.js"></script>
     <script src="./GraphLangUtils/Debugger.js"></script>

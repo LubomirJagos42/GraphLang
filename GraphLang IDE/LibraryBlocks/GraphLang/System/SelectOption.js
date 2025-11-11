@@ -162,7 +162,7 @@ GraphLang.Shapes.Basic.SelectOption = GraphLang.UserDefinedNode.extend({
         cCode = "";
         let outputPort = this.getOutputPort("out1");
         outputPort.getConnections().each(function(wireIndex, wireObj){
-            cCode += "wire_" + wireObj.getId() + " = \" HARDCODED VALUE OF SELECT OPTION ID: " + outputPort.getId() + "\"";
+            cCode += wireObj.getVariableName() + " = \" HARDCODED VALUE OF SELECT OPTION ID: " + outputPort.getId() + "\"";
         });
         return cCode;
     },

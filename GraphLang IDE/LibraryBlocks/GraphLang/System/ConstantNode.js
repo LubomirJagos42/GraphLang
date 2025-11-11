@@ -330,7 +330,7 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
 
     let variableName = this.getVariableName();
     this.getOutputPort(0).getConnections().each(function(connectionIndex, connectionObj){
-        cCode += "wire_" + connectionObj.getId() + " = " + variableName + ";\n";
+        cCode += connectionObj.getVariableName() + " = " + variableName + ";\n";
     });
 
     return cCode;
@@ -387,7 +387,7 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
 
     var variableName = this.getVariableName();
     this.getOutputPort(0).getConnections().each(function(connectionIndex, connectionObj){
-      pythonCode += "wire_" + connectionObj.getId() + " = " + variableName + "\n";
+      pythonCode += connectionObj.getVariableName() + " = " + variableName + "\n";
     });
 
     return pythonCode;
