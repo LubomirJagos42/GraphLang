@@ -3,180 +3,217 @@
  *  @descritpition Generic enum implementation. It's TableLayout from draw2d.
  */
 GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
-  NAME: "GraphLang.Shapes.Basic.EnumNode",
-  init:function(attr, setter, getter){
-    this._super($.extend({padding: 10},attr), setter, getter);
-    
-    this.setPersistPorts(false);
-    
-    /*
-     *  Setting params after node is added to canvas, before it's not possible
-     */
-    this.on('added', function(emitter, event){
-        emitter.setResizeable(true);
-        emitter.setWidth(50);
-        emitter.setHeight(30);
-    });
+    NAME: "GraphLang.Shapes.Basic.EnumNode",
+    init: function (attr, setter, getter) {
+        this._super($.extend({padding: 10}, attr), setter, getter);
 
-    /*****************************************************************************
-     *  DEFAULT PARAMS
-     *****************************************************************************/
-    var defaultDatatype = "int";
-    var defaultValue = "0";
+        this.setPersistPorts(false);
 
-    /*****************************************************************************
-     *  OUTPUT PORT
-     *****************************************************************************/
-    port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(100, 50));
-    port.setConnectionDirection(1);
-    port.setBackgroundColor("#37B1DE");
-    port.setName("out1");
-    port.setMaxFanOut(20);
-    port.userData = {};
-    port.userData.datatype = defaultDatatype;
+        /*
+         *  Setting params after node is added to canvas, before it's not possible
+         */
+        this.on('added', function (emitter, event) {
+            emitter.setResizeable(true);
+            emitter.setWidth(50);
+            emitter.setHeight(30);
+        });
 
-    //port is pushed little away not to be inside outline, otherwise tunnels would be detected
-    //due wire are crossing or touching outline
+        /*****************************************************************************
+         *  DEFAULT PARAMS
+         *****************************************************************************/
+        var defaultDatatype = "int";
+        var defaultValue = "0";
 
-    //default values for array, each cell is separate Label for now, userData of array is based on datatype of port,
-    //so here are userData just created as empty object.
-    this.userData = {};
-    this.userData.isTerminal = false;
-    this.userData.nodeLabel = "nodeLabel";
-    this.userData.datatype = defaultDatatype + "*"; //array is datatype ofg pointer to its elements datatype therefore needs to add asterix
+        /*****************************************************************************
+         *  OUTPUT PORT
+         *****************************************************************************/
+        port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(100, 50));
+        port.setConnectionDirection(1);
+        port.setBackgroundColor("#37B1DE");
+        port.setName("out1");
+        port.setMaxFanOut(20);
+        port.userData = {};
+        port.userData.datatype = defaultDatatype;
 
-    /*****************************************************************************
-     *  RIGHT CLICK CONTEXT MENU
-     *****************************************************************************/
-      this.on("contextmenu", function(emitter, event){
-          $.contextMenu({
-              selector: 'body',
-              events:
-              {
-                  hide:function(){ $.contextMenu( 'destroy' ); }
-              },
+        //port is pushed little away not to be inside outline, otherwise tunnels would be detected
+        //due wire are crossing or touching outline
 
-              //these functions are run after user click on some context menu option
-              callback: $.proxy(function(key, options)
-              {
-                switch(key){
-                  case "int":
-                  case "uint":
-                  case "bool":
-                      emitter.changeDatatypeAllItems(key);
-                      break;
-                  case "add item":
-                      emitter.addItem();
-                      break;
-                 case "setTerminal":
-                     emitter.setStroke(3);
-                     emitter.setColor("#DD2241");
-                     emitter.setDashArray("-");
-                     emitter.userData.isTerminal = true;
-                     break;
-                 case "unsetTerminal":
-                     emitter.setStroke(1);
-                     emitter.setColor("#000000");
-                     emitter.setDashArray("");
-                     emitter.userData.isTerminal = false;
-                     break;
-                 case "showNodeLabel":
-                      if (emitter.userData.nodeLabel != null) labelText = emitter.userData.nodeLabel;
-                      else{
-                          labelText = GraphLang.Utils.getUniqueNodeLabel(emitter.getCanvas(), 'nodeLabel');
-                          emitter.userData.nodeLabel = labelText;
-                      }
-  
-                      emitter.nodeLabel = new GraphLang.Shapes.Basic.Label({bgColor: '#000000', fontColor: '#FFFFFF', text: labelText});
-                      emitter.nodeLabel.userData = {};
-                      emitter.nodeLabel.userData.type = "nodeLabel";
-                      emitter.add(emitter.nodeLabel, new draw2d.layout.locator.TopLocator());
-                      emitter.nodeLabel.installEditor(new draw2d.ui.LabelInplaceEditor());
-                      emitter.nodeLabel.on('change:text', function(nodeEmitter, event){
-                        labelText = nodeEmitter.getText();
-                        labelText = labelText.replaceAll(" ","_"); 
-                        if (labelText != nodeEmitter.getParent().userData.nodeLabel) labelText = GraphLang.Utils.getUniqueNodeLabel(emitter.getCanvas(), labelText); 
-                        nodeEmitter.getParent().userData.nodeLabel = labelText;                  //when text change do this also in userData
-                        nodeEmitter.text = labelText;                                                   //this will not fire another event!
-                      });
-                      break;
-                  default:
-                      alert(JSON.stringify(emitter))
-                      emitter.setColor(new draw2d.util.Color("#979595"));
-                      emitter.userData.datatype = "unknown";
-                      //emitter.getOutputPort(0).userData.datatype = "unknown";
-                      break;
+        //default values for array, each cell is separate Label for now, userData of array is based on datatype of port,
+        //so here are userData just created as empty object.
+        this.userData = {};
+        this.userData.isTerminal = false;
+        this.userData.nodeLabel = "nodeLabel";
+        this.userData.datatype = defaultDatatype + "*"; //array is datatype ofg pointer to its elements datatype therefore needs to add asterix
+
+        /*****************************************************************************
+         *  RIGHT CLICK CONTEXT MENU
+         *****************************************************************************/
+        this.on("contextmenu", function (emitter, event) {
+            $.contextMenu({
+                selector: 'body',
+                events:
+                    {
+                        hide: function () {
+                            $.contextMenu('destroy');
+                        }
+                    },
+
+                //these functions are run after user click on some context menu option
+                callback: $.proxy(function (key, options) {
+                    switch (key) {
+                        case "int":
+                        case "uint":
+                        case "bool":
+                            emitter.changeDatatypeAllItems(key);
+                            break;
+                        case "add item":
+                            emitter.addItem();
+                            break;
+                        case "setTerminal":
+                            emitter.setStroke(3);
+                            emitter.setColor("#DD2241");
+                            emitter.setDashArray("-");
+                            emitter.userData.isTerminal = true;
+                            break;
+                        case "unsetTerminal":
+                            emitter.setStroke(1);
+                            emitter.setColor("#000000");
+                            emitter.setDashArray("");
+                            emitter.userData.isTerminal = false;
+                            break;
+                        case "showNodeLabel":
+                            if (emitter.userData.nodeLabel != null) labelText = emitter.userData.nodeLabel;
+                            else {
+                                labelText = GraphLang.Utils.getUniqueNodeLabel(emitter.getCanvas(), 'nodeLabel');
+                                emitter.userData.nodeLabel = labelText;
+                            }
+
+                            emitter.nodeLabel = new GraphLang.Shapes.Basic.Label({
+                                bgColor: '#000000',
+                                fontColor: '#FFFFFF',
+                                text: labelText
+                            });
+                            emitter.nodeLabel.userData = {};
+                            emitter.nodeLabel.userData.type = "nodeLabel";
+                            emitter.add(emitter.nodeLabel, new draw2d.layout.locator.TopLocator());
+                            emitter.nodeLabel.installEditor(new draw2d.ui.LabelInplaceEditor());
+                            emitter.nodeLabel.on('change:text', function (nodeEmitter, event) {
+                                labelText = nodeEmitter.getText();
+                                labelText = labelText.replaceAll(" ", "_");
+                                if (labelText != nodeEmitter.getParent().userData.nodeLabel) labelText = GraphLang.Utils.getUniqueNodeLabel(emitter.getCanvas(), labelText);
+                                nodeEmitter.getParent().userData.nodeLabel = labelText;                  //when text change do this also in userData
+                                nodeEmitter.text = labelText;                                                   //this will not fire another event!
+                            });
+                            break;
+                        default:
+                            alert(JSON.stringify(emitter))
+                            emitter.setColor(new draw2d.util.Color("#979595"));
+                            emitter.userData.datatype = "unknown";
+                            //emitter.getOutputPort(0).userData.datatype = "unknown";
+                            break;
+                    }
+                }, this),
+                x: event.x,
+                y: event.y,
+                items:
+                    {
+                        "int": {name: "int"},
+                        "uint": {name: "uint"},
+                        "bool": {name: "bool"},
+                        "separator": "--------------",
+                        "add item": {name: "Add Item"},
+                        "separator2": "---------",
+                        "setTerminal": {name: "Set as terminal"},
+                        "unsetTerminal": {name: "Unset terminal"},
+                        "separator3": "---------",
+                        "showNodeLabel": {name: "Show node label"}
+                    }
+            });
+        });
+
+    },
+
+    addItem: function () {
+        var arrayItemDatatype = this.getOutputPort(0).userData.datatype;
+
+        //HERE SHOULD BE CREATING SOME NumericConstant or something MORE SPECIFIC
+        //NOW HERE IS JUST CREATED LABEL AND PUSHED INTO ARRAY VERTICAL LAYOUT NEED TO IMPROVE (to be based on datatype of items)!!!
+        graphLangColors = new GraphLang.Utils.Color();
+        let arrayItem = new draw2d.shape.basic.Label({
+            resizeable: true,
+            bgColor: graphLangColors.getByNameBackgroundColor(arrayItemDatatype),
+            fontColor: graphLangColors.getByNameFontColor(arrayItemDatatype),
+            userData: {datatype: arrayItemDatatype, isInternalEnumItem: true}
+        });
+
+        let valueItem = new draw2d.shape.basic.Label({
+            resizeable: true,
+            bgColor: "#FFFFFF",
+            fontColor: "#000000",
+            userData: {datatype: arrayItemDatatype, isInternalEnumItem: true}
+        });
+        valueItem.text = "";
+        valueItem.installEditor(new draw2d.ui.LabelInplaceEditor());
+
+        if (arrayItemDatatype == "clusterDatatype") {
+            arrayItem.text = "null";
+            this.getChildren().each(function (childIndex, childObj) {
+                if (childObj.userData && childObj.userData.datatype && childObj.userData.datatype.toLowerCase().search('cluster') > -1) {
+                    arrayItem.text = childObj.text;
                 }
-              },this),
-              x:event.x,
-              y:event.y,
-              items:
-              {
-                  "int": {name: "int"},
-                  "uint":    {name: "uint"},
-                  "bool": {name: "bool"},
-                  "separator": "--------------",
-                  "add item": {name: "Add Item"},
-                  "separator2":   "---------",
-                  "setTerminal": {name: "Set as terminal"},
-                  "unsetTerminal": {name: "Unset terminal"},
-                  "separator3":   "---------",
-                  "showNodeLabel": {name: "Show node label"}
-              }
-          });
-      });
+            });
+            arrayItem.userData.datatype = "clusterDatatype";
 
-  },
+            arrayItem.installEditor(new GraphLang.Utils.ArrayClusterInPlaceEditor());
+        } else if (arrayItemDatatype.toLowerCase().search("bool") > -1) {
+            arrayItem.setText('false')
+            arrayItem.on('click', function (emitter) {
+                emitter.setText(emitter.text == 'false' ? 'true' : 'false');
+            });
+        } else {
+            arrayItem.text = "0";
+            arrayItem.installEditor(new draw2d.ui.LabelInplaceEditor());
+        }
 
-  addItem: function(){
-    var arrayItemDatatype = this.getOutputPort(0).userData.datatype;
-      
-    //HERE SHOULD BE CREATING SOME NumericConstant or something MORE SPECIFIC
-    //NOW HERE IS JUST CREATED LABEL AND PUSHED INTO ARRAY VERTICAL LAYOUT NEED TO IMPROVE (to be based on datatype of items)!!!
-    graphLangColors = new GraphLang.Utils.Color();
-    let arrayItem = new draw2d.shape.basic.Label({
-        resizeable:true,
-        bgColor:graphLangColors.getByNameBackgroundColor(arrayItemDatatype),
-        fontColor:graphLangColors.getByNameFontColor(arrayItemDatatype),
-        userData: {datatype: arrayItemDatatype, isInternalEnumItem: true}
-    });
+        let itemList = new draw2d.util.ArrayList();
+        itemList.add(valueItem);
+        itemList.add(arrayItem);
 
-    let valueItem = new draw2d.shape.basic.Label({
-      resizeable:true,
-      bgColor:"#FFFFFF",
-      fontColor:"#000000",
-      userData: {datatype: arrayItemDatatype, isInternalEnumItem: true}
-    });
-    valueItem.text = "";
-    valueItem.installEditor(new draw2d.ui.LabelInplaceEditor());
+        this.addRow(valueItem, arrayItem);
+    },
 
-    if (arrayItemDatatype == "clusterDatatype"){
-      arrayItem.text = "null";
-      this.getChildren().each(function(childIndex, childObj){
-          if (childObj.userData && childObj.userData.datatype && childObj.userData.datatype.toLowerCase().search('cluster') > -1){
-              arrayItem.text = childObj.text;
-          }
-      });
-      arrayItem.userData.datatype = "clusterDatatype";
-      
-      arrayItem.installEditor(new GraphLang.Utils.ArrayClusterInPlaceEditor());
-    }else if(arrayItemDatatype.toLowerCase().search("bool") > -1){
-      arrayItem.setText('false')
-      arrayItem.on('click', function(emitter){
-          emitter.setText(emitter.text == 'false' ? 'true' : 'false');
-      });
-    }else{
-      arrayItem.text = "0";
-      arrayItem.installEditor(new draw2d.ui.LabelInplaceEditor());
-    }
+    getNodeLabelText: function () {
+        if (this.userData && this.userData.nodeLabel) return this.userData.nodeLabel;
+        return "";
+    },
 
-    let itemList = new draw2d.util.ArrayList();
-    itemList.add(valueItem);
-    itemList.add(arrayItem);
+    getOptionArray: function(){
+        let optionArray = [];
+        let childCounter = 0;
+        let enumItemValue = "";
+        let enumItemName = "";
 
-    this.addRow(valueItem ,arrayItem);
-  },
-  
+        this.getChildren().each(function (childIndex, childObj) {
+            if (
+                childObj.getUserData() !== undefined &&
+                childObj.getUserData().isInternalEnumItem !== undefined &&
+                childObj.getUserData().isInternalEnumItem === true
+            ){
+                childCounter++
+                enumItemName = childObj.getText();
+                if (childCounter % 2 == 0) {
+                    if (enumItemValue !== "") {
+                        optionArray.push({value: enumItemValue, name: enumItemName});
+                    } else {
+                        optionArray.push({value: null, name: enumItemName});
+                    }
+                }
+                enumItemValue = childObj.getText();
+            }
+        });
+        return optionArray;
+    },
+
   getDatatype: function(){
     var cCode = "";
 

@@ -56,6 +56,7 @@
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/Toolbar.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/HoverConnection.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/MultilineInplaceEditor.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/SelectOptionInplaceEditor.js"></script>
 
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Utils.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Debugger.js"></script>
