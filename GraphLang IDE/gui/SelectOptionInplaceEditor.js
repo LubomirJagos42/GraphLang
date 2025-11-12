@@ -24,7 +24,13 @@ draw2d.ui.SelectOptionInplaceEditor =  draw2d.ui.LabelInplaceEditor.extend({
 
         //modified implementation
         let optionHtmlStr = "";
-        for (let k = 0; k < this.optionArray.length-1; k++) optionHtmlStr += `<option value="${this.optionArray[k].value}">${this.optionArray[k].name}</option>`;
+        console.log(`--> SelectOptionInplaceEditor fillin select options using internal array:`);
+        console.log(this.optionArray);
+        for (let k = 0; k < this.optionArray.length; k++){
+            optionHtmlStr += `<option value="${this.optionArray[k].value}">${this.optionArray[k].name}</option>`;
+        }
+        console.log(`--> option string used for <select>`);
+        console.log(optionHtmlStr);
         this.html = $('<select id="inplaceeditor">' +
             optionHtmlStr +
             '</select>>');
