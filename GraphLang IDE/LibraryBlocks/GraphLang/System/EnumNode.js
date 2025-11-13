@@ -308,23 +308,32 @@ GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
 
       return memento;
   },
-  
+
   setPersistentAttributes : function(memento)
   {
-      this._super(memento);           //CALLING PARENT METHOD, these will rerecreate this showSelectedObjExecutionOrder
+      this._super(memento);
 
-      // and add all children of the JSON document.
+      let itemList = new draw2d.util.ArrayList();
+      let internalEnumItemCounter = 0;
       $.each(memento.labels, $.proxy(function(i,json){
-          //FOR TUNNELS THERE IS NEEDED FOR THEIR RESTORE ALSO READ LOCATORS POSITION which is stored in previous function getPers...
-          curDatatype = json.type;
+          if (json.userData && json.userData.isInternalEnumItem && json.userData.isInternalEnumItem == true) {
+              internalEnumItemCounter++;
 
-          //this condition here to differ elements of array from label maybe wrong but seems to be running
-          if (json.userData && json.userData.datatype && json.userData.type != "nodeLabel") {
-              var figure = eval("new " + json.type + "({id: '" + json.id + "'})"); // create the figure stored in the JSON, SET SAME ID AS SAVED IN FILE, THIS IS IMPORTANT!!! (for tunnels, look at its init() function)
+              var figure = eval("new " + json.type + "({id: '" + json.id + "'})");
               figure.attr(json);
-              this.addRow(figure);    // add the new figure as child to this figure
-          }
+              itemList.add(figure);
+              // console.log(`--> enum node loading item id: ${json.id}, type: ${json.type}, text: ${json.text}`);
 
+              //ENUM ROW IS COMPLETE - KEY, VALUE WERE FOUND
+              if (internalEnumItemCounter % 2 == 0){
+                  this.addRow(
+                      itemList.get(itemList.getSize()-2),
+                      itemList.get(itemList.getSize()-1)
+                  );
+                  itemList.clear();
+              }
+
+          }
       },this));
   },
 

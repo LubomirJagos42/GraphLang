@@ -1,213 +1,393 @@
-// Generated Code for the GraphLang
-// special thanks to Draw2D touch HTML5 lib
-//                                                        
-// http://www.draw2d.org                                  
-//                                                        
-XXddXX = GraphLang.UserDefinedNode.extend({            
-
-   NAME: "XXddXX",
-
-   init:function(attr, setter, getter)
-   {
-     this._super( $.extend({stroke:0, bgColor:null, width:73, height:53, flagAutoCreatePorts: false},attr), setter, getter);
-     var port;
-     // Port
-     port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(95.8904109589041, 41.509433962264154));
-     port.setConnectionDirection();
-     port.setBackgroundColor("#37B1DE");
-     port.setName("Port");
-     port.setMaxFanOut(20);
-
-     if (!port.userData) port.userData = {}
-     port.userData.datatype = "undefined";
-     port.userData.allowMultipleConnections = undefined;
-     port.userData.connectionMandatory = undefined;
-
-     // Port
-     port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(63.013698630136986, 86.79245283018868));
-     port.setConnectionDirection();
-     port.setBackgroundColor("#37B1DE");
-     port.setName("Port");
-     port.setMaxFanOut(20);
-
-     if (!port.userData) port.userData = {}
-     port.userData.datatype = "undefined";
-     port.userData.allowMultipleConnections = undefined;
-     port.userData.connectionMandatory = undefined;
-
-     // Port
-     port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(36.986301369863014, 41.509433962264154));
-     port.setConnectionDirection();
-     port.setBackgroundColor("#37B1DE");
-     port.setName("Port");
-     port.setMaxFanOut(20);
-
-     if (!port.userData) port.userData = {}
-     port.userData.datatype = "undefined";
-     port.userData.allowMultipleConnections = undefined;
-     port.userData.connectionMandatory = undefined;
-
-     this.persistPorts=false;
-   },
-
-   createShapeElement : function()
-   {
-      var shape = this._super();
-      this.originalWidth = 73;
-      this.originalHeight= 53;
-      return shape;
-   },
-
-   createSet: function()
-   {
-       this.canvas.paper.setStart();
-
-        // BoundingBox
-        shape = this.canvas.paper.path("M0,0 L73,0 L73,53 L0,53");
-        shape.attr({"stroke":"none","stroke-width":0,"fill":"none"});
-        shape.data("name","BoundingBox");
-        
-        // Rectangle
-        shape = this.canvas.paper.path('M0 0L58 0L58 53L0 53Z');
-        shape.attr({"stroke":"#303030","stroke-width":1,"fill":"#FFFFFF","dasharray":null,"opacity":1});
-        shape.data("name","Rectangle");
-        
-        // Rectangle
-        shape = this.canvas.paper.path('M73 29L51 29L51 9L73 9Z');
-        shape.attr({"stroke":"#303030","stroke-width":1,"fill":"#FFFFFF","dasharray":null,"opacity":1});
-        shape.data("name","Rectangle");
-        
-
-        return this.canvas.paper.setFinish();
-   },
-
-   applyAlpha: function()
-   {
-   },
-
-   layerGet: function(name, attributes)
-   {
-      if(this.svgNodes===null) return null;
-
-      var result=null;
-      this.svgNodes.some(function(shape){
+GraphLangTestShape = GraphLang.UserDefinedNode.extend({
+NAME: "GraphLangTestShape",
+init: function(attr)
+{
+    this._super($.extend({width: 42, height: 42, flagAutoCreatePorts: true}, attr));
+},
+jsonDocument: [
+  {
+    "type": "GraphLang.Shapes.Basic.EnumNode",
+    "id": "ce9034e8-9382-1d6b-2893-01cf6b7a2380",
+    "x": 345,
+    "y": 155,
+    "width": 91.048828125,
+    "height": 89,
+    "alpha": 1,
+    "angle": 0,
+    "userData": {
+      "isTerminal": false,
+      "nodeLabel": "COLORS",
+      "datatype": "int*",
+      "executionOrder": -1
+    },
+    "cssClass": "GraphLang_Shapes_Basic_EnumNode",
+    "bgColor": "none",
+    "color": "#1B1B1B",
+    "stroke": 1,
+    "radius": 0,
+    "dasharray": null,
+    "labels": [
+      {
+        "type": "draw2d.shape.basic.Label",
+        "id": "7b772fc2-2b6e-2d8c-cbd1-65a62de4f907",
+        "x": 10,
+        "y": 10,
+        "width": 30.03125,
+        "height": 24,
+        "alpha": 1,
+        "angle": 0,
+        "userData": {
+          "datatype": "int",
+          "isInternalEnumItem": true
+        },
+        "cssClass": "draw2d_shape_basic_Label",
+        "ports": [],
+        "bgColor": "#FFFFFF",
+        "color": "#1B1B1B",
+        "stroke": 1,
+        "radius": 0,
+        "dasharray": null,
+        "text": "101",
+        "outlineStroke": 0,
+        "outlineColor": "none",
+        "fontSize": 12,
+        "fontColor": "#000000",
+        "fontFamily": null,
+        "editor": "draw2d.ui.LabelInplaceEditor"
+      },
+      {
+        "type": "draw2d.shape.basic.Label",
+        "id": "0a1f9073-163f-488c-e386-b5d1b0b33b96",
+        "x": 40.03125,
+        "y": 10,
+        "width": 41.017578125,
+        "height": 24,
+        "alpha": 1,
+        "angle": 0,
+        "userData": {
+          "datatype": "int",
+          "isInternalEnumItem": true
+        },
+        "cssClass": "draw2d_shape_basic_Label",
+        "ports": [],
+        "bgColor": "#0000FF",
+        "color": "#1B1B1B",
+        "stroke": 1,
+        "radius": 0,
+        "dasharray": null,
+        "text": "red",
+        "outlineStroke": 0,
+        "outlineColor": "none",
+        "fontSize": 12,
+        "fontColor": "#FFFFFF",
+        "fontFamily": null,
+        "editor": "draw2d.ui.LabelInplaceEditor"
+      },
+      {
+        "type": "draw2d.shape.basic.Label",
+        "id": "8625189e-5089-4bb9-8bd1-d35bd95b1620",
+        "x": 10,
+        "y": 34,
+        "width": 30.03125,
+        "height": 24,
+        "alpha": 1,
+        "angle": 0,
+        "userData": {
+          "datatype": "int",
+          "isInternalEnumItem": true
+        },
+        "cssClass": "draw2d_shape_basic_Label",
+        "ports": [],
+        "bgColor": "#FFFFFF",
+        "color": "#1B1B1B",
+        "stroke": 1,
+        "radius": 0,
+        "dasharray": null,
+        "text": "",
+        "outlineStroke": 0,
+        "outlineColor": "none",
+        "fontSize": 12,
+        "fontColor": "#000000",
+        "fontFamily": null,
+        "editor": "draw2d.ui.LabelInplaceEditor"
+      },
+      {
+        "type": "draw2d.shape.basic.Label",
+        "id": "9b18bfcf-786e-3371-7b61-9cd693dab1e0",
+        "x": 40.03125,
+        "y": 34,
+        "width": 41.017578125,
+        "height": 24,
+        "alpha": 1,
+        "angle": 0,
+        "userData": {
+          "datatype": "int",
+          "isInternalEnumItem": true
+        },
+        "cssClass": "draw2d_shape_basic_Label",
+        "ports": [],
+        "bgColor": "#0000FF",
+        "color": "#1B1B1B",
+        "stroke": 1,
+        "radius": 0,
+        "dasharray": null,
+        "text": "green",
+        "outlineStroke": 0,
+        "outlineColor": "none",
+        "fontSize": 12,
+        "fontColor": "#FFFFFF",
+        "fontFamily": null,
+        "editor": "draw2d.ui.LabelInplaceEditor"
+      },
+      {
+        "type": "draw2d.shape.basic.Label",
+        "id": "77b3a174-24c4-c955-faa0-f0b337500e5c",
+        "x": 10,
+        "y": 58,
+        "width": 30.34765625,
+        "height": 24,
+        "alpha": 1,
+        "angle": 0,
+        "userData": {
+          "datatype": "int",
+          "isInternalEnumItem": true
+        },
+        "cssClass": "draw2d_shape_basic_Label",
+        "ports": [],
+        "bgColor": "#FFFFFF",
+        "color": "#1B1B1B",
+        "stroke": 1,
+        "radius": 0,
+        "dasharray": null,
+        "text": "303",
+        "outlineStroke": 0,
+        "outlineColor": "none",
+        "fontSize": 12,
+        "fontColor": "#000000",
+        "fontFamily": null,
+        "editor": "draw2d.ui.LabelInplaceEditor"
+      },
+      {
+        "type": "draw2d.shape.basic.Label",
+        "id": "103b949f-ddb7-0f29-8aef-82a3b8f91d52",
+        "x": 40.03125,
+        "y": 58,
+        "width": 41.017578125,
+        "height": 24,
+        "alpha": 1,
+        "angle": 0,
+        "userData": {
+          "datatype": "int",
+          "isInternalEnumItem": true
+        },
+        "cssClass": "draw2d_shape_basic_Label",
+        "ports": [],
+        "bgColor": "#0000FF",
+        "color": "#1B1B1B",
+        "stroke": 1,
+        "radius": 0,
+        "dasharray": null,
+        "text": "blue",
+        "outlineStroke": 0,
+        "outlineColor": "none",
+        "fontSize": 12,
+        "fontColor": "#FFFFFF",
+        "fontFamily": null,
+        "editor": "draw2d.ui.LabelInplaceEditor"
+      },
+      {
+        "type": "GraphLang.Shapes.Basic.Label",
+        "id": "4768d5da-f49a-b617-1f3e-07c69d4a0021",
+        "x": 15.1806640625,
+        "y": -26,
+        "width": 56.71875,
+        "height": 21,
+        "alpha": 1,
+        "angle": 0,
+        "userData": {
+          "type": "nodeLabel"
+        },
+        "cssClass": "GraphLang_Shapes_Basic_Label",
+        "ports": [],
+        "bgColor": "#000000",
+        "color": "#1B1B1B",
+        "stroke": 1,
+        "radius": 0,
+        "dasharray": null,
+        "text": "COLORS",
+        "outlineStroke": 0,
+        "outlineColor": "none",
+        "fontSize": 12,
+        "fontColor": "#FFFFFF",
+        "fontFamily": null,
+        "editor": "draw2d.ui.LabelInplaceEditor",
+        "locator": "draw2d.layout.locator.TopLocator"
+      }
+    ]
+  },
+  {
+    "type": "GraphLang.Math.Basic.Add",
+    "id": "905b04fc-482a-6e92-9172-0f077602c058",
+    "x": 757,
+    "y": 282,
+    "width": 123.40234375,
+    "height": 78,
+    "alpha": 1,
+    "angle": 0,
+    "userData": {
+      "executionOrder": -1
+    },
+    "cssClass": "GraphLang_Math_Basic_Add",
+    "bgColor": "none",
+    "color": "#1B1B1B",
+    "stroke": 0,
+    "radius": 0,
+    "dasharray": null,
+    "labels": []
+  },
+  {
+    "type": "GraphLang.Shapes.Basic.EnumSelectOption",
+    "id": "b6619d4a-806e-cc48-504c-8ac6d79bdead",
+    "x": 529,
+    "y": 316,
+    "width": 93.8173828125,
+    "height": 21,
+    "alpha": 1,
+    "angle": 0,
+    "userData": {
+      "nodeLabel": "enumValue",
+      "executionOrder": -1,
+      "sourceFigureId": "ce9034e8-9382-1d6b-2893-01cf6b7a2380"
+    },
+    "cssClass": "GraphLang_Shapes_Basic_EnumSelectOption",
+    "bgColor": "none",
+    "color": "#1B1B1B",
+    "stroke": 1,
+    "radius": 0,
+    "dasharray": null,
+    "text": "blue",
+    "outlineStroke": 0,
+    "outlineColor": "none",
+    "fontSize": 12,
+    "fontColor": "#080808",
+    "fontFamily": null,
+    "editor": "draw2d.ui.SelectOptionInplaceEditor"
+  },
+  {
+    "type": "HoverConnection",
+    "id": "dacfb7b9-10a6-3409-dd26-3aa1afb6f9d3",
+    "alpha": 1,
+    "angle": 0,
+    "userData": {},
+    "cssClass": "HoverConnection",
+    "stroke": 1.35,
+    "color": "#636363",
+    "outlineStroke": 0,
+    "outlineColor": "none",
+    "policy": "draw2d.policy.line.OrthogonalSelectionFeedbackPolicy",
+    "vertex": [
+      {
+        "x": 562.1338928476599,
+        "y": 326.60043356950547
+      },
+      {
+        "x": 676.2935089238299,
+        "y": 326.60043356950547
+      },
+      {
+        "x": 676.2935089238299,
+        "y": 303.5
+      },
+      {
+        "x": 790.453125,
+        "y": 303.5
+      }
+    ],
+    "router": "draw2d.layout.connection.InteractiveManhattanConnectionRouter",
+    "radius": 5,
+    "routingMetaData": {
+      "routedByUserInteraction": false,
+      "fromDir": 1,
+      "toDir": 3
+    },
+    "source": {
+      "node": "b6619d4a-806e-cc48-504c-8ac6d79bdead",
+      "port": "out1"
+    },
+    "target": {
+      "node": "905b04fc-482a-6e92-9172-0f077602c058",
+      "port": "in1"
+    }
+  }
+],
+applyAlpha: function(){},
+layerGet: function(name, attributes){
+  if(this.svgNodes===null) return null;
+  var result=null;
+  this.svgNodes.some(function(shape){
+     if(shape.data("name")===name){
+        result=shape;
+     }
+     return result!==null;
+  });
+  return result;
+},
+layerAttr: function(name, attributes){
+ if(this.svgNodes===null) return;
+ this.svgNodes.forEach(function(shape){
          if(shape.data("name")===name){
-            result=shape;
+              shape.attr(attributes);
          }
-         return result!==null;
-      });
-
-      return result;
-   },
-
-   layerAttr: function(name, attributes)
-   {
-     if(this.svgNodes===null) return;
-
-     this.svgNodes.forEach(function(shape){
-             if(shape.data("name")===name){
-                  shape.attr(attributes);
-             }
-     });
-   },
-
-   layerShow: function(name, flag, duration)
-   {
-      if(this.svgNodes===null) return;
-
-      if(duration){
-        this.svgNodes.forEach(function(node){
-            if(node.data("name")===name){
-                if(flag){
-                    node.attr({ opacity : 0 }).show().animate({ opacity : 1 }, duration);
-                }
-                else{
-                    node.animate({ opacity : 0 }, duration, function () { this.hide() });
-                }
+ });
+},
+layerShow: function(name, flag, duration){
+  if(this.svgNodes===null) return;
+  if(duration){
+    this.svgNodes.forEach(function(node){
+        if(node.data("name")===name){
+            if(flag){
+                node.attr({ opacity : 0 }).show().animate({ opacity : 1 }, duration);
             }
-        });
-      }
-      else{
-          this.svgNodes.forEach(function(node){
-              if(node.data("name")===name){
-                   if(flag){node.show();}
-                   else{node.hide();}
-               }
-           });
-      }
-   },
-
-    getParameterSettings: function()
-    {
-        return [];
-    },
-
-    /**
-     * @method
-     */
-    addPort: function(port, locator)
-    {
-        this._super(port, locator);
-        return port;
-    },
-
-    /**
-     * @method
-     * Return an objects with all important attributes for XML or JSON serialization
-     *
-     * @returns {Object}
-     */
-    getPersistentAttributes : function()
-    {
-        var memento = this._super();
-
-        // add all decorations to the memento
-        //
-        memento.labels = [];
-        this.children.each(function(i,e){
-            var labelJSON = e.figure.getPersistentAttributes();
-            labelJSON.locator=e.locator.NAME;
-            memento.labels.push(labelJSON);
-        });
-
-        return memento;
-    },
-
-    /**
-     * @method
-     * Read all attributes from the serialized properties and transfer them into the shape.
-     *
-     * @param {Object} memento
-     * @returns
-     */
-    setPersistentAttributes : function(memento)
-    {
-        this._super(memento);
-
-        // remove all decorations created in the constructor of this element
-        //
-        this.resetChildren();
-
-        // and add all children of the JSON document.
-        //
-        $.each(memento.labels, $.proxy(function(i,json){
-            // create the figure stored in the JSON
-            var figure =  eval("new "+json.type+"()");
-
-            // apply all attributes
-            figure.attr(json);
-
-            // instantiate the locator
-            var locator =  eval("new "+json.locator+"()");
-
-            // add the new figure as child to this figure
-            this.add(figure, locator);
-        },this));
-    },
-    
-    symbolPicture: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAF0AAABJCAYAAABfNipOAAAAAXNSR0IArs4c6QAAA1hJREFUeF7t3L9vEmEYB/CHaNTJzcQfuywdGBzUPwAW4+DmWBMCUcLmogmeTdrFjaABGTrqZEzjAnHQpXWAhKELGINGuWpME6MmtijWHHrmoHA8770v99D2y0Thvfd578PDc+/deyVCeIQuEAk9IgIS0AWSAOhAFxAQCIlMB7qAgEBIZDrQBQQEQrIyPRaLWQJjc0PuEA1Mbb1/D783apjc9v/bNRqNqe4vGz2VSt0RhA8tdKlUujtT6Ol0OrSdlwhULBYJ6CHLAz1kcCcc0IEes5wDKWq6mUxQmr0AHehmBDy9oKYbJ/3boQM77lGr1aher78gopeeNs5Jk/NwqoL73Pu3+3q/anDm+AeuvPih637O3Dn+gUU3fXxSKU1A103vf9sD3QfSLS/IdEPZxukG6Bwlw22AbhiU0x3Qh5QqlQo1m83+q9FolBKJBMdRqY0p9OGxtttt9mXhmZi9VKtVupWz6NCJ09Q9dbaPeGSjRb3PNi0tWBSPx5Vg/Rrroo8b67d3r6m3vfW41WpdnTRYcXRnJ9I3MnR83qJjcxcGxru1vkZfly0q3i8Yg9dBnzTWzYe3e79/dq/Ytr3iBy+Ofu78Rfp1ObML3B20A394pUC1V6uTEoj1vg46Z6yb5Zz94e2bMzOL7tTFXKFMkeQ9X7Cd8k1ayCSN1Pig6Nyxflq6ttF937pu2/bTcTslmun5fJ6W1z/S0UtJX/TtZ2WanztJ2WyWlc3TqOncsX558uDH9+ePFjudziLQPafrzlPVM9J9g879yqK8aH/BBzvgHJxwIDWMPmkahinjlG42wsnRiEx27mUM424AXAbw4IeFbrhyjewOy3VhKA/FCLAwrTRKLEwrceG2OkUuM81V1jl1IopeBtAZ+DS2Bfo0VCf0CXSghzNPF3AeCIlMF/gEgA50lBeTOYApo0cT5UUztYJcPAN6QHSdy8RAD4CuuyAC9ADoukt/QFdEN7HIDXRFdO4tEn730AAd6LN/coTyopilpprjQGpKUqEfTBkVsEw2xcmRSU3FvvbNZQDF/d6Tzbn/aq6zc+yrjDpBDG3r/poc5xfqvCE57Qf65ty7orNPLHSdANh2twDQBbIC6EAXEBAIiUwHuoCAQEhkOtAFBARCItMF0P8AR/jQdwDJ5xIAAAAASUVORK5CYII=",
-    
-    jsonDocument: [],
-    
-    
+            else{
+                node.animate({ opacity : 0 }, duration, function () { this.hide() });
+            }
+        }
+    });
+  }
+  else{
+      this.svgNodes.forEach(function(node){
+          if(node.data("name")===name){
+               if(flag){node.show();}
+               else{node.hide();}
+           }
+       });
+  }
+},
+getParameterSettings: function(){
+    return [];
+},
+addPort: function(port, locator){
+    this._super(port, locator);
+    return port;
+},
+getPersistentAttributes : function(){
+    var memento = this._super();
+    memento.labels = [];
+    this.children.each(function(i,e){
+        var labelJSON = e.figure.getPersistentAttributes();
+        labelJSON.locator=e.locator.NAME;
+        memento.labels.push(labelJSON);
+    });
+    return memento;
+},
+setPersistentAttributes : function(memento){
+    this._super(memento);
+    this.resetChildren();
+    $.each(memento.labels, $.proxy(function(i,json){
+        var figure =  eval("new "+json.type+"()");
+        figure.attr(json);
+        var locator =  eval("new "+json.locator+"()");
+        this.add(figure, locator);
+    },this));
+}
 });

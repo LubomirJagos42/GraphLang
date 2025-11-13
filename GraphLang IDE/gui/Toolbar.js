@@ -226,7 +226,7 @@ example.Toolbar = Class.extend({
 		/**
 		 *	codeRewriteIdFlag checkbox to change internal IDs in generated code to human readible counting from 1..inf
 		 */
-		this.codeRewriteIdFlag  = $("<span>&nbsp; Rewrite ID: <input id=\"codeRewriteIdFlag\" type=\"checkbox\" /></span>");
+		this.codeRewriteIdFlag  = $("<span>&nbsp; Rewrite ID: <input id=\"codeRewriteIdFlag\" type=\"checkbox\" checked/></span>");
 		this.html.append(this.codeRewriteIdFlag);
 
 		/**
