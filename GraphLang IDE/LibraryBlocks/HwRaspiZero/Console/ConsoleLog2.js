@@ -1,57 +1,62 @@
-// Generated Code for the GraphLang
-// special thanks to Draw2D touch HTML5 lib
-//                                                        
-// http://www.draw2d.org                                  
-//                                                        
 HwRaspiZero.Console.output = GraphLang.UserDefinedNode.extend({
+NAME: "HwRaspiZero.Console.output",
 
-    NAME: "HwRaspiZero.Console.output",
+   init:function(attr, setter, getter)
+   {
+       this._super( $.extend({stroke:0, bgColor:null, width:69, height:55, flagAutoCreatePorts: false},attr), setter, getter);
+       var port;
+       // Port
+       port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(-0.7246376811594203, 49.090909090909086));
+       port.setConnectionDirection(3);
+       port.setBackgroundColor("#CA00F3");
+       port.setName("Port");
+       port.setMaxFanOut(20);
 
-    init:function(attr, setter, getter)
+       if (!port.userData) port.userData = {}
+       port.userData.datatype = "string";
+       port.userData.allowMultipleConnections = undefined;
+       port.userData.connectionMandatory = undefined;
+
+       this.persistPorts=false;
+   },
+
+   createShapeElement : function()
+   {
+       var shape = this._super();
+       this.originalWidth = 69;
+       this.originalHeight= 55;
+       return shape;
+   },
+
+   createSet: function()
+   {
+       this.canvas.paper.setStart();
+
+       // BoundingBox
+       shape = this.canvas.paper.path("M0,0 L69,0 L69,55 L0,55");
+       shape.attr({"stroke":"none","stroke-width":0,"fill":"none"});
+       shape.data("name","BoundingBox");
+       
+       // Rectangle
+       shape = this.canvas.paper.path('M0 0L69 0L69 55L0 55Z');
+       shape.attr({"stroke":"#303030","stroke-width":1,"fill":"#FFFFFF","dasharray":null,"opacity":1});
+       shape.data("name","Rectangle");
+       
+       // Label
+       shape = this.canvas.paper.image();
+       shape.attr({"x":11.005024000000049,"y":3,"width":48,"height":48,"src":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAASPSURBVHhe7VtHS2tBFL5gF125EXtHsSti7yAWLOjKpSD4H8RfoOJSXOhKxIJtI250IShuRRA7KqIgCPaC7Ty+keTFM7l5luSZ3MkHXxJmJjdzvjNMZs6Z0UhxaLxANbgF4AWqQVeAp6cnur29pZubG7q+vpZ4dXXlFOT9MvHu7o7u7+/p8fGRXl5euHlmSAJMTU1Ra2srJScnU2RkJIWHh1NYWBiFhoZKDAkJ+VXy/oDoKxgVFUVxcXGUmJhImZmZ1NTURGNjY9zcvwIcHh5SRUUFaZpmaJaVldHBwcFHAU5OToRavLFRGRMTQ8fHx38FqKurkxoZnVVVVe8CrK6uSpWqcHl5mbSOjg6pQhW2t7eTVl1dLVWowsrKStIwK/IKVVhYWEhaUVGRVKEKc3NzScvPz5cqVGF2djZpQgUrlSoQK0RNqGClUgUKAcSLRWFwcDDNzMzQ/Pw8zc3NGYKwZXZ2VuwVLG1NTU2VBYiNjTWvk40GbIwsbU1JSZEFiI6OFltJo+Hh4YESEhLcArgF4AKkpaWpLYB4sSiMiIgQYTCjAU5FHODbAiBGODExQcPDwzQ6OvqBZ2dnvLnTAQJgdH9bgNfXVxocHPzQ1sSMjAw6PT3lX3Eq/FgAE+BxDw8PlxPBbgIAiBx7eXlJIqSnpzutCHYVABgfHydPT09JBGcdCXYXAJicnHSZkeAQAQCMBFeYExwmAOAKc4JDBQCmp6cpKChIEgErzc3NTd78v8PhAgB60aWhoSHe9L/DoQIgA1tfXy8ZDvb09PDmvwJkupEw/acAyAYjvfxZIAVdW1srGQ729vby5r8GOBXOtasA8LxeXvEznsfvHB0d0d7eHu3s7NDW1hZtb2/T7u6umfv7+yJzDSKri/fvwO4CwPN6xn/G893d3SKP7+fnRz4+PuTt7S3+SUB8NtHX15f8/f0F0RZsbm6mi4sL/kibsKsAP/X8ysqK9L2vsquriz/WJuwmwE89D/T390vf/SpbWlr4Y23CLgKcn59TaWmp1Bnws8YDGxsbYtjzZ3yFAwMD/LE2oSsAD4npCYCASGdnJ8XHx1NWVpaZWPL29fXx5v/EwsICNTQ0iARlQUGBWEPk5OQI5uXlmcvxXlxcTCUlJVReXk41NTXi997e3vgjbUJXAB4UxcRkTQAERFCOE1f4bElXAPoO535bAFeHWwC3AG4BJAFEcpSnx1USQDifb2GVE4AfkUEO/fLykn/f5QEB4FxLW8Xo54ekVBJAjH6+tMUwQSLRaMAGjq8ExTE5flAyICBArNWNBsQaAgMDP9gqDkqK46IWhSCiuWtra0I17P4QT3NFmi5MrK+vi30Lt7OtrY20paUlqQJEMAJBRMTRcHHCFYm+wwa9nefi4uL7cXkxFKw0MDJxRBgQAuDyALa5vJFRiYMSiEWaBQBQoMLBafzrSVdmTECQAfn/xsZGMREmJSWJczVQzHQZyZkuTZlo7dIU+oy+wwbYguDLyMiIFEiRbo2Z8Pz8LGZQrAkwo2IhYUl+fe23yfuHPqPvsAG26EFXAFXgFoAXqAblBfgDQN9UZPZsj8wAAAAASUVORK5CYII=","stroke-scale":true,"opacity":1,"stroke-width":1,"transform":"t11.005024000000049,3s0.75,0.75,0,0"});
+       shape.data("name","Label");
+       
+
+       return this.canvas.paper.setFinish();
+   },
+
+   symbolPicture: "data:image/png;base64,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",
+
+applyAlpha: function()
     {
-        this._super( $.extend({stroke:0, bgColor:null, width:69, height:55, flagAutoCreatePorts: false},attr), setter, getter);
-        var port;
-        // Port
-        port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(-17.391304347826086, 47.27272727272727));
-        port.setConnectionDirection(3);
-        port.setBackgroundColor("#CA00F3");
-        port.setName("Port");
-        port.setMaxFanOut(20);
-        port.userData = {datatype: "string"};
-        this.persistPorts=false;
     },
-
-    createShapeElement : function()
-    {
-        var shape = this._super();
-        this.originalWidth = 69;
-        this.originalHeight= 55;
-        return shape;
-    },
-
-    createSet: function()
-    {
-        this.canvas.paper.setStart();
-
-        // BoundingBox
-        shape = this.canvas.paper.path("M0,0 L69,0 L69,55 L0,55");
-        shape.attr({"stroke":"none","stroke-width":0,"fill":"none"});
-        shape.data("name","BoundingBox");
-
-        // Rectangle
-        shape = this.canvas.paper.path('M0 0L69 0L69 55L0 55Z');
-        shape.attr({"stroke":"#303030","stroke-width":1,"fill":"#FFFFFF","dasharray":null,"opacity":1});
-        shape.data("name","Rectangle");
-
-
-        return this.canvas.paper.setFinish();
-    },
-
-    applyAlpha: function()
-    {
-    },
-
-    layerGet: function(name, attributes)
+layerGet: function(name, attributes)
     {
         if(this.svgNodes===null) return null;
 
@@ -65,8 +70,7 @@ HwRaspiZero.Console.output = GraphLang.UserDefinedNode.extend({
 
         return result;
     },
-
-    layerAttr: function(name, attributes)
+layerAttr: function(name, attributes)
     {
         if(this.svgNodes===null) return;
 
@@ -76,8 +80,7 @@ HwRaspiZero.Console.output = GraphLang.UserDefinedNode.extend({
             }
         });
     },
-
-    layerShow: function(name, flag, duration)
+layerShow: function(name, flag, duration)
     {
         if(this.svgNodes===null) return;
 
@@ -102,28 +105,16 @@ HwRaspiZero.Console.output = GraphLang.UserDefinedNode.extend({
             });
         }
     },
-
-    getParameterSettings: function()
+getParameterSettings: function()
     {
         return [];
     },
-
-    /**
-     * @method
-     */
-    addPort: function(port, locator)
+addPort: function(port, locator)
     {
         this._super(port, locator);
         return port;
     },
-
-    /**
-     * @method
-     * Return an objects with all important attributes for XML or JSON serialization
-     *
-     * @returns {Object}
-     */
-    getPersistentAttributes : function()
+getPersistentAttributes: function()
     {
         var memento = this._super();
 
@@ -138,15 +129,7 @@ HwRaspiZero.Console.output = GraphLang.UserDefinedNode.extend({
 
         return memento;
     },
-
-    /**
-     * @method
-     * Read all attributes from the serialized properties and transfer them into the shape.
-     *
-     * @param {Object} memento
-     * @returns
-     */
-    setPersistentAttributes : function(memento)
+setPersistentAttributes: function(memento)
     {
         this._super(memento);
 
@@ -170,24 +153,34 @@ HwRaspiZero.Console.output = GraphLang.UserDefinedNode.extend({
             this.add(figure, locator);
         },this));
     },
-
-    symbolPicture: "data:image/png;base64,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",
-
     jsonDocument: [],
 
     translateToCppCodeImport: function(){
-        let cCode = "";
-        cCode = `#include <iostream>\n`;
-        return cCode;
+            let cCode = "";
+            cCode = `#include <iostream>\n`;
+            return cCode;
     },
 
     translateToCppCode: function(){
         cCode = "";
-        if (this.getInputPort(0).getConnections()) {
-            let wireName = `${this.getInputPort(0).getConnections().first().getVariableName()}`;
-            cCode = `std::cout << ${wireName};\n`;
-        }
+        this.getInputPort(0).getConnections().each(function(wireIndex, wireObj){
+            let wireName = wireObj.getVariableName();
+            /*
+             *  TODO: Check if wire is enumeration should be redone more general to use some wire function or something else, but this checking datatype string is ok for now if
+             *        generated code will keep name them starts with enumDatatype_...
+             *        Also enum datatype could be different than int and here should be figuring what is it to make static_cast<T>() right.
+             */
+            if (wireObj.getSource().userData.datatype.startsWith("enumDatatype_")){
+                /*
+                 *  Enumeration is declared as enum type and they are not typed implictly, therefore to be printed to terminal they need to be casted to have some type for compiler.
+                 *  If there is no cast then there is looooong error from compiler.
+                 */
+                cCode += `std::cout << static_cast<int>(${wireName});\n`;
+            }else{
+                cCode += `std::cout << ${wireName};\n`;
+            }
+        });
         return cCode;
     },
 
-});        
+});

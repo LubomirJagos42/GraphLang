@@ -5,9 +5,22 @@
 GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
     NAME: "GraphLang.Shapes.Basic.EnumNode",
     init: function (attr, setter, getter) {
-        this._super($.extend({padding: 10}, attr), setter, getter);
+        this._super($.extend({
+            padding: 10,
+            minWidth: 60,
+            minHeight: 30,
+            bgColor: "#f5dba1",
+        }, attr), setter, getter);
 
         this.setPersistPorts(false);
+
+        /*
+         *  Add text "enum" on bottom of figure to distinguished it better from other nodes
+         */
+        this.add(
+            new draw2d.shape.basic.Label({text: "enum", stroke: 0}),
+            new draw2d.layout.locator.XYRelPortLocator(0, 100.0)
+        );
 
         /*
          *  Setting params after node is added to canvas, before it's not possible
@@ -24,24 +37,11 @@ GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
         var defaultDatatype = "int";
         var defaultValue = "0";
 
-        /*****************************************************************************
-         *  OUTPUT PORT
-         *****************************************************************************/
-        port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(100, 50));
-        port.setConnectionDirection(1);
-        port.setBackgroundColor("#37B1DE");
-        port.setName("out1");
-        port.setMaxFanOut(20);
-        port.userData = {};
-        port.userData.datatype = defaultDatatype;
-
-        //port is pushed little away not to be inside outline, otherwise tunnels would be detected
-        //due wire are crossing or touching outline
-
         //default values for array, each cell is separate Label for now, userData of array is based on datatype of port,
         //so here are userData just created as empty object.
         this.userData = {};
         this.userData.isTerminal = false;
+        this.userData.isEnumeration = true;
         this.userData.nodeLabel = "nodeLabel";
         this.userData.datatype = defaultDatatype + "*"; //array is datatype ofg pointer to its elements datatype therefore needs to add asterix
 
@@ -109,7 +109,6 @@ GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
                             alert(JSON.stringify(emitter))
                             emitter.setColor(new draw2d.util.Color("#979595"));
                             emitter.userData.datatype = "unknown";
-                            //emitter.getOutputPort(0).userData.datatype = "unknown";
                             break;
                     }
                 }, this),
@@ -134,7 +133,7 @@ GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
     },
 
     addItem: function () {
-        var arrayItemDatatype = this.getOutputPort(0).userData.datatype;
+        var arrayItemDatatype = this.userData.datatype;
 
         //HERE SHOULD BE CREATING SOME NumericConstant or something MORE SPECIFIC
         //NOW HERE IS JUST CREATED LABEL AND PUSHED INTO ARRAY VERTICAL LAYOUT NEED TO IMPROVE (to be based on datatype of items)!!!
@@ -150,7 +149,7 @@ GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
             resizeable: true,
             bgColor: "#FFFFFF",
             fontColor: "#000000",
-            userData: {datatype: arrayItemDatatype, isInternalEnumItem: true}
+            userData: {datatype: arrayItemDatatype, isInternalEnumItem: true},
         });
         valueItem.text = "";
         valueItem.installEditor(new draw2d.ui.LabelInplaceEditor());
@@ -171,13 +170,16 @@ GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
                 emitter.setText(emitter.text == 'false' ? 'true' : 'false');
             });
         } else {
-            arrayItem.text = "0";
+            arrayItem.text = "item_name";
             arrayItem.installEditor(new draw2d.ui.LabelInplaceEditor());
         }
 
         let itemList = new draw2d.util.ArrayList();
         itemList.add(valueItem);
         itemList.add(arrayItem);
+
+        valueItem.on("contextmenu", (emitter, event) => this.createEnumItemContextMenu(emitter, event));
+        arrayItem.on("contextmenu", (emitter, event) => this.createEnumItemContextMenu(emitter, event));
 
         this.addRow(valueItem, arrayItem);
     },
@@ -195,9 +197,9 @@ GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
 
         this.getChildren().each(function (childIndex, childObj) {
             if (
-                childObj.getUserData() !== undefined &&
-                childObj.getUserData().isInternalEnumItem !== undefined &&
-                childObj.getUserData().isInternalEnumItem === true
+                childObj.userData  &&
+                childObj.userData.isInternalEnumItem &&
+                childObj.userData.isInternalEnumItem === true
             ){
                 childCounter++
                 enumItemName = childObj.getText();
@@ -240,48 +242,111 @@ GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
   changeDatatypeAllItems: function(newDatatype){
         var newColor = new GraphLang.Utils.Color();
         
+        let enumItemCounter = 0;
         this.getChildren().each(function(childIndex, childObj){
-          if (childObj.userData && childObj.userData.datatype){
-            childObj.setColor(newColor.getByName(newDatatype));
-            childObj.setFontColor(newColor.getByNameFontColor(newDatatype));
-            childObj.setBackgroundColor(newColor.getByNameBackgroundColor(newDatatype));
-  
-            //uninstall all previous editors
-            childObj.off('click');    //uninstall changing value for boolean, THIS IS UNIVERSAL THERE IS NO OTHER EDITOR USING CLICK EVENT
-            childObj.installEditor(null);   //uninstall editor
-  
-            if (childObj.userData.datatype.toLowerCase().search("executionorder") == -1){
-              childObj.userData.datatype = newDatatype;
+          if (
+              childObj.userData &&
+              childObj.userData.isInternalEnumItem
+          ){
+            enumItemCounter++;
+
+            //change 'look' of items just on right side, left item which is actual item value still be number
+            if (enumItemCounter % 2 == 0) {
+                childObj.setColor(newColor.getByName(newDatatype));
+                childObj.setFontColor(newColor.getByNameFontColor(newDatatype));
+                childObj.setBackgroundColor(newColor.getByNameBackgroundColor(newDatatype));
+
+                //uninstall all previous editors
+                childObj.off('click');    //uninstall changing value for boolean, THIS IS UNIVERSAL THERE IS NO OTHER EDITOR USING CLICK EVENT
+                childObj.installEditor(null);   //uninstall editor
+
+                if (childObj.userData.datatype.toLowerCase().search("executionorder") == -1) {
+                    childObj.userData.datatype = newDatatype;
+                }
+
+                /*
+                 *    For cluster there will be editor with available cluster datatypes to change.
+                 *    For normal number there will be in place editor.
+                 */
+                if (newDatatype.toLowerCase().search("cluster") > -1) {
+                    childObj.installEditor(new GraphLang.Utils.ArrayClusterInPlaceEditor());
+                } else if (newDatatype.toLowerCase().search("bool") > -1) {
+                    childObj.setText("false");
+                    childObj.on('click', function (emitter) {
+                        emitter.setText(emitter.text == 'false' ? 'true' : 'false');
+                    });
+                } else {
+                    // childObj.setText("0");
+                    childObj.installEditor(new draw2d.ui.LabelInplaceEditor());
+                }
+
+                if (childObj.userData == undefined) childObj.userData = {};
+                childObj.userData.datatype = newDatatype;
             }
-              
-            /*
-             *    For cluster there will be editor with available cluster datatypes to change.
-             *    For normal number there will be in place editor.
-             */
-            if (newDatatype.toLowerCase().search("cluster") > -1){
-              // childObj.setText("null");
-              childObj.installEditor(new GraphLang.Utils.ArrayClusterInPlaceEditor());
-            }else if(newDatatype.toLowerCase().search("bool") > -1){
-              childObj.setText("false");
-              childObj.on('click', function(emitter){
-                  emitter.setText(emitter.text == 'false' ? 'true' : 'false');
-              });
-            }else{
-              // childObj.setText("0");
-              childObj.installEditor(new draw2d.ui.LabelInplaceEditor());
-            }
-  
-            if (childObj.userData == undefined) childObj.userData = {};
-            childObj.userData.datatype = newDatatype;
           }
         });
 
-        this.userData.datatype = newDatatype + "*"; //array is datatype ofg pointer to its elements datatype therefore needs to add asterix
-        this.getOutputPort(0).userData.datatype = newDatatype;
-        //this.fireEvent("resize");
+        this.userData.datatype = newDatatype;
     },
-  
-    /**
+
+    createEnumItemContextMenu: function (emitter, event) {
+        $.contextMenu({
+            selector: 'body',
+            events:
+                {
+                    hide: function () {
+                        $.contextMenu('destroy');
+                    }
+                },
+
+            //these functions are run after user click on some context menu option
+            callback: $.proxy(function (key, options) {
+                switch (key) {
+                    case "int":
+                    case "uint":
+                    case "char":
+                    case "bool":
+                        emitter.getParent().userData.datatype = key;
+                        emitter.getParent().changeDatatypeAllItems(key);
+                        break;
+                    case "removeRow":
+                        let parentEnumNode = emitter.getParent();
+                        let itemCounter = 0;
+                        parentEnumNode.getChildren().each(function(childIndex, childObj){
+                            if (childObj.userData && childObj.userData.isInternalEnumItem && childObj == emitter){
+                                itemCounter++;
+                                parentEnumNode.removeRow(itemCounter/2);
+                            }
+                        });
+
+                        //when all items were removed at least se size to something to not be too small
+                        let enumItemsCount = 0;
+                        parentEnumNode.getChildren().each(function(childIndex, childObj){
+                            if (childObj.userData && childObj.userData.isInternalEnumItem) enumItemsCount++;
+                        });
+                        if (enumItemsCount == 0){
+                            parentEnumNode.attr({width: 60, height: 30});
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }, this),
+            x: event.x,
+            y: event.y,
+            items:
+                {
+                    "int": {name: "int"},
+                    "uint": {name: "uint"},
+                    "char": {name: "char"},
+                    "bool": {name: "bool"},
+                    "separator": "---------------",
+                    "removeRow": {name: "Remove Row"},
+                }
+        });
+    },
+
+  /**
    * @method getPersistentAttributes
    * @description Return an objects with all important attributes for XML or JSON serialization.
    * This is used when file IS SAVED.
@@ -321,6 +386,7 @@ GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
 
               var figure = eval("new " + json.type + "({id: '" + json.id + "'})");
               figure.attr(json);
+              figure.on("contextmenu", (emitter, event) => this.createEnumItemContextMenu(emitter, event));
               itemList.add(figure);
               // console.log(`--> enum node loading item id: ${json.id}, type: ${json.type}, text: ${json.text}`);
 
@@ -351,7 +417,7 @@ GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
 
   translateToCppCodeTypeDefinition: function(){
       let cCode = "";
-      cCode += "enum " + this.getDatatype() + "\n";
+      cCode += "enum class " + this.getDatatype() + "\n";
       cCode += "{\n";
 
       let childCounter = 0;
@@ -360,9 +426,9 @@ GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
       let totalChildrenCount = 0;
       this.getChildren().each(function(childIndex, childObj){
               if (
-                  childObj.getUserData() !== undefined &&
-                  childObj.getUserData().isInternalEnumItem !== undefined &&
-                  childObj.getUserData().isInternalEnumItem === true
+                  childObj.userData &&
+                  childObj.userData.isInternalEnumItem &&
+                  childObj.userData.isInternalEnumItem === true
               ) {
                   totalChildrenCount++;
               }
@@ -372,18 +438,17 @@ GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
       //they are added at once in this order so this is running and therefore there is MOD 2 which evaluate when to transcript line and buffer variable storing previous child text value
       this.getChildren().each(function(childIndex, childObj){
           if (
-            childObj.getUserData() !== undefined &&
-            childObj.getUserData().isInternalEnumItem !== undefined &&
-            childObj.getUserData().isInternalEnumItem === true
+              childObj.userData &&
+              childObj.userData.isInternalEnumItem
           ){
               childCounter++;
               enumItemName = childObj.getText();
               if (childCounter % 2 == 0){
                 //generate enum item line, if there is value also assign it to it
                 if (enumItemValue !== ""){
-                    cCode += `${enumItemName} = ${enumItemValue}`;
+                    cCode += `\t${enumItemName} = ${enumItemValue}`;
                 }else{
-                    cCode += `${enumItemName}`;
+                    cCode += `\t${enumItemName}`;
                 }
 
                 if (childIndex !== totalChildrenCount) cCode += ",";  //add colon if not last item
@@ -396,21 +461,5 @@ GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
       cCode += "};\n";
       return cCode;
   },
-
-    translateToCppCodeDeclaration: function(){
-        var cCode = "";
-        cCode += this.getDatatype() + " " + this.getVariableName() + ";\n";        //THIS CREATES NEW INSTANCE, SO THAT'S REASON WHY HERE IS ID USED
-        return cCode;
-    },
-
-  translateToCppCode: function(){
-    cCode = "";
-    variableName = this.getVariableName(); 
-
-    this.getOutputPort(0).getConnections().each(function(connectionIndex, connectionObj){
-      cCode += connectionObj.getVariableName() + " = " + variableName + ";\n";
-    });
-    return cCode;
-  }
 
 });

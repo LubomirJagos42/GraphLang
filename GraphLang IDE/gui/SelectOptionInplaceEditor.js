@@ -23,24 +23,17 @@ draw2d.ui.SelectOptionInplaceEditor =  draw2d.ui.LabelInplaceEditor.extend({
         //
         $("body").bind("click",this.commitCallback);
 
-        //TODO: LIVE REFRESH ITEMS FROM CURRENT CANVAS!!!
-        console.log(`--> select option inplace editor sourceFigureId:`);
-        console.log(this.sourceFigureId);
-        if (this.sourceFigureId){
-            console.log(`--> select option inplace editor live refresh data`);
-            let optionArray = this.getCanvas().getFigure(this.sourceFigureId).getOptionArray();
+        if (label.userData && label.userData.sourceFigureId){
+            let sourceFigureId = label.userData.sourceFigureId;
+            let optionArray = label.getCanvas().getFigure(sourceFigureId).getOptionArray();
             this.setOptions(optionArray)
         }
 
         //modified implementation
         let optionHtmlStr = "";
-        console.log(`--> SelectOptionInplaceEditor fillin select options using internal array:`);
-        console.log(this.optionArray);
         for (let k = 0; k < this.optionArray.length; k++){
             optionHtmlStr += `<option value="${this.optionArray[k].value}">${this.optionArray[k].name}</option>`;
         }
-        console.log(`--> option string used for <select>`);
-        console.log(optionHtmlStr);
         this.html = $('<select id="inplaceeditor">' +
             optionHtmlStr +
             '</select>>');
@@ -102,7 +95,6 @@ draw2d.ui.SelectOptionInplaceEditor =  draw2d.ui.LabelInplaceEditor.extend({
     },
 
     setSourceFigureId: function(figureId){
-        console.log(`----> inplace select option editor setSourceFigureId trigered`);
         this.sourceFigureId = figureId;
     }
 

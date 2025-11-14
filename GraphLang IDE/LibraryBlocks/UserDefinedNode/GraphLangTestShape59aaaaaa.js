@@ -1,5 +1,5 @@
 GraphLangTestShape = GraphLang.UserDefinedNode.extend({
-NAME: "GraphLangTestShape",
+NAME: 'GraphLangTestShape',
 init: function(attr)
 {
     this._super($.extend({width: 42, height: 42, flagAutoCreatePorts: true}, attr));
@@ -10,12 +10,13 @@ jsonDocument: [
     "id": "ce9034e8-9382-1d6b-2893-01cf6b7a2380",
     "x": 345,
     "y": 155,
-    "width": 91.048828125,
-    "height": 89,
+    "width": 91.365234375,
+    "height": 92,
     "alpha": 1,
     "angle": 0,
     "userData": {
       "isTerminal": false,
+      "isEnumeration": true,
       "nodeLabel": "COLORS",
       "datatype": "int*",
       "executionOrder": -1
@@ -32,7 +33,7 @@ jsonDocument: [
         "id": "7b772fc2-2b6e-2d8c-cbd1-65a62de4f907",
         "x": 10,
         "y": 10,
-        "width": 30.03125,
+        "width": 26.6875,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -58,9 +59,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "0a1f9073-163f-488c-e386-b5d1b0b33b96",
-        "x": 40.03125,
+        "x": 40.34765625,
         "y": 10,
-        "width": 41.017578125,
+        "width": 24.8916015625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -88,7 +89,7 @@ jsonDocument: [
         "id": "8625189e-5089-4bb9-8bd1-d35bd95b1620",
         "x": 10,
         "y": 34,
-        "width": 30.03125,
+        "width": 10,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -114,9 +115,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "9b18bfcf-786e-3371-7b61-9cd693dab1e0",
-        "x": 40.03125,
+        "x": 40.34765625,
         "y": 34,
-        "width": 41.017578125,
+        "width": 36.0146484375,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -144,7 +145,7 @@ jsonDocument: [
         "id": "77b3a174-24c4-c955-faa0-f0b337500e5c",
         "x": 10,
         "y": 58,
-        "width": 30.34765625,
+        "width": 27.123046875,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -170,9 +171,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "103b949f-ddb7-0f29-8aef-82a3b8f91d52",
-        "x": 40.03125,
+        "x": 40.34765625,
         "y": 58,
-        "width": 41.017578125,
+        "width": 29.3447265625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -194,56 +195,8 @@ jsonDocument: [
         "fontColor": "#FFFFFF",
         "fontFamily": null,
         "editor": "draw2d.ui.LabelInplaceEditor"
-      },
-      {
-        "type": "GraphLang.Shapes.Basic.Label",
-        "id": "4768d5da-f49a-b617-1f3e-07c69d4a0021",
-        "x": 15.1806640625,
-        "y": -26,
-        "width": 56.71875,
-        "height": 21,
-        "alpha": 1,
-        "angle": 0,
-        "userData": {
-          "type": "nodeLabel"
-        },
-        "cssClass": "GraphLang_Shapes_Basic_Label",
-        "ports": [],
-        "bgColor": "#000000",
-        "color": "#1B1B1B",
-        "stroke": 1,
-        "radius": 0,
-        "dasharray": null,
-        "text": "COLORS",
-        "outlineStroke": 0,
-        "outlineColor": "none",
-        "fontSize": 12,
-        "fontColor": "#FFFFFF",
-        "fontFamily": null,
-        "editor": "draw2d.ui.LabelInplaceEditor",
-        "locator": "draw2d.layout.locator.TopLocator"
       }
     ]
-  },
-  {
-    "type": "GraphLang.Math.Basic.Add",
-    "id": "905b04fc-482a-6e92-9172-0f077602c058",
-    "x": 757,
-    "y": 282,
-    "width": 123.40234375,
-    "height": 78,
-    "alpha": 1,
-    "angle": 0,
-    "userData": {
-      "executionOrder": -1
-    },
-    "cssClass": "GraphLang_Math_Basic_Add",
-    "bgColor": "none",
-    "color": "#1B1B1B",
-    "stroke": 0,
-    "radius": 0,
-    "dasharray": null,
-    "labels": []
   },
   {
     "type": "GraphLang.Shapes.Basic.EnumSelectOption",
@@ -274,8 +227,28 @@ jsonDocument: [
     "editor": "draw2d.ui.SelectOptionInplaceEditor"
   },
   {
+    "type": "HwRaspiZero.Console.output",
+    "id": "26435177-df74-3265-94c5-c05387101c91",
+    "x": 735,
+    "y": 250,
+    "width": 69,
+    "height": 55,
+    "alpha": 1,
+    "angle": 0,
+    "userData": {
+      "executionOrder": -1
+    },
+    "cssClass": "HwRaspiZero_Console_output",
+    "bgColor": "none",
+    "color": "#1B1B1B",
+    "stroke": 0,
+    "radius": 0,
+    "dasharray": null,
+    "labels": []
+  },
+  {
     "type": "HoverConnection",
-    "id": "dacfb7b9-10a6-3409-dd26-3aa1afb6f9d3",
+    "id": "c179931c-c99f-34d2-7dad-1509b081b28b",
     "alpha": 1,
     "angle": 0,
     "userData": {},
@@ -291,16 +264,16 @@ jsonDocument: [
         "y": 326.60043356950547
       },
       {
-        "x": 676.2935089238299,
+        "x": 642.5669464238299,
         "y": 326.60043356950547
       },
       {
-        "x": 676.2935089238299,
-        "y": 303.5
+        "x": 642.5669464238299,
+        "y": 276
       },
       {
-        "x": 790.453125,
-        "y": 303.5
+        "x": 723,
+        "y": 276
       }
     ],
     "router": "draw2d.layout.connection.InteractiveManhattanConnectionRouter",
@@ -315,8 +288,8 @@ jsonDocument: [
       "port": "out1"
     },
     "target": {
-      "node": "905b04fc-482a-6e92-9172-0f077602c058",
-      "port": "in1"
+      "node": "26435177-df74-3265-94c5-c05387101c91",
+      "port": "Port"
     }
   }
 ],
@@ -370,7 +343,7 @@ addPort: function(port, locator){
     this._super(port, locator);
     return port;
 },
-getPersistentAttributes : function(){
+getPersistentAttributes: function(){
     var memento = this._super();
     memento.labels = [];
     this.children.each(function(i,e){
@@ -380,7 +353,7 @@ getPersistentAttributes : function(){
     });
     return memento;
 },
-setPersistentAttributes : function(memento){
+setPersistentAttributes: function(memento){
     this._super(memento);
     this.resetChildren();
     $.each(memento.labels, $.proxy(function(i,json){
@@ -389,5 +362,5 @@ setPersistentAttributes : function(memento){
         var locator =  eval("new "+json.locator+"()");
         this.add(figure, locator);
     },this));
-}
+},
 });

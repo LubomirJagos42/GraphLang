@@ -8,12 +8,14 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
     this._super($.extend({padding: 10},attr), setter, getter);
     
     this.setPersistPorts(false);
-    
 
-    /* THIS DOESN'T RUN
-    this.width = 200;
-    this.height = 500;
-    */
+    /*
+     *  Add text "array" on bottom of figure to distinguished it better from other nodes
+     */
+    this.add(
+        new draw2d.shape.basic.Label({text: "array", stroke: 0}),
+        new draw2d.layout.locator.XYRelPortLocator(0, 100.0)
+    );
 
     /*
      *  Setting params after node is added to canvas, before it's not possible

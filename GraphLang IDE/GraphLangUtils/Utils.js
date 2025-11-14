@@ -3023,6 +3023,10 @@ GraphLang.Utils.animateBlinkObject = function(canvas, objId, callbackFunction = 
  * @param angle {double}    rotation angle in degrees
  */
 GraphLang.Utils.rotateSelectedNodeOnCanvas = function(canvas, angle = 15){
-    let currentRotation = canvas.getSelection().getPrimary().getRotationAngle();
-    canvas.getSelection().getPrimary().setRotationAngle(currentRotation + angle);
+    let firstSelectedFigure = canvas.getSelection().getPrimary();
+    let currentRotation = firstSelectedFigure.getRotationAngle();
+    firstSelectedFigure.setRotationAngle(currentRotation + angle);
+    firstSelectedFigure.getChildren().each(function(childIndex, childObj){
+        childObj.setRotationAngle(currentRotation + angle);
+    });
 }
