@@ -16,7 +16,7 @@ jsonDocument: [
     "angle": 0,
     "userData": {
       "isTerminal": false,
-      "isEnumeration": true,
+      "isEnum": true,
       "nodeLabel": "COLORS",
       "datatype": "int*",
       "executionOrder": -1

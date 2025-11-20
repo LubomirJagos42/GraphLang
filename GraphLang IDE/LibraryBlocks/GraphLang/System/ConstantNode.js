@@ -310,13 +310,13 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
    *****************************************************************************************************************************************************/
 
   translateToCppCodeImport: function(){
-      let cCode = "";
+      let importItemArray = new draw2d.util.ArrayList();
 
       let constantDatatype = this.getDatatype();
-      if (constantDatatype == "string") cCode += `#include <string>\n`;
-      if (constantDatatype.startsWith("std::complex<")) cCode = `#include <complex>\n`;
+      if (constantDatatype == "string") importItemArray.push(`#include <string>`);
+      if (constantDatatype.startsWith("std::complex<")) importItemArray.push(`#include <complex>`);
 
-      return cCode;
+      return importItemArray;
   },
 
   /**

@@ -76,7 +76,7 @@ HoverConnection = draw2d.Connection.extend({
                             else alert("Wire has no breakpoint data.");
                             break;
                         case "debugGetValue":
-                            GraphLang.Debugger.Cpp.readGdbWatchValueAndDisplayOnScreen({objectId: emitter.getId()});
+                            GraphLang.Debugger.Cpp.readGdbWatchValueAndDisplayOnScreen({objectId: emitter.getId(), objectVariableName: emitter.getVariableName()});
                             break;
                         case "autorouteWire":
                             /*
@@ -306,8 +306,7 @@ HoverConnection = draw2d.Connection.extend({
 
   getVariableName: function(){
     let wireVariableName = "";
-    wireVariableName += "wire";
-    wireVariableName += "_" + this.getId();
+    wireVariableName += "wire_" + this.getId();
     if (this.getUserData() && this.getUserData().wireLabel && this.getUserData().wireLabel !== ""){
         let wireLabel = this.getUserData().wireLabel;
         wireLabel = wireLabel.replaceAll('-', '_');
@@ -315,7 +314,19 @@ HoverConnection = draw2d.Connection.extend({
 
         wireVariableName += "_" + wireLabel;
     }
+    wireVariableName = wireVariableName.replaceAll('-', '_');
+
     return wireVariableName;
-  }
+  },
+
+  getDatatype: function(){
+      let resultDatatype = "";
+      let wireSourcePort = this.getSource();
+
+      if (wireSourcePort.getDatatype === "function") resultDatatype = wireSourcePort.getDatatype()
+      else if (wireSourcePort.userData && wireSourcePort.userData.datatype) resultDatatype = wireSourcePort.userData.datatype;
+
+      return resultDatatype;
+  },
 
 });

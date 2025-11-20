@@ -1280,53 +1280,41 @@ GraphLang.Utils.setWiresColorByPorts = function setWiresColorByPorts(canvas){
 /**
  * @method getCanvasJson
  * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
- * @returns {String} jsonStr
+ * @returns {object} JSON which should go to output: file or server sql
  * @description For selected loop show number of tunnels.
  */
 GraphLang.Utils.getCanvasJson = function (canvas) {
     var writer = new draw2d.io.json.Writer();
-    var jsonStr = '';
-    writer.marshal(canvas, function (json) {
-        var clearedJson = [];
-        var wrongJson = [];
-        for (var k = 0; k < json.length; k++) {
-            if (json[k].type != undefined && json[k].type.toLowerCase().search("multilayered") > -1) {
-                var multilayeredJson = canvas.getFigure(json[k].id);
-                var multilayerChooser = multilayeredJson.getChildren().get(0);
+    var jsonObj = {};
 
-                var chooserObj = new draw2d.shape.basic.Label(multilayerChooser);
-                //clearedJson.push(chooserObj);
-                clearedJson.push(json[k]);
-                // alert(multilayerChooser.text);
-            } else if (json[k].type != undefined && json[k].type.toLowerCase().search("connection") > -1) {
-                //alert("connection");
-                clearedJson.push(json[k]);
-            } else if (json[k].type != undefined && json[k].type.toLowerCase().search("terminaloutput") > -1) {
+    writer.marshal(canvas, function (json) {
+
+        var clearedJson = [];   // STORES ELEMENTS WHICH GO TO OUTPUT OF THIS FUNCTION
+        var wrongJson = [];     // STORES OTHER WRONG ELEMENTS WHICH GO NOWHERE
+
+        for (var k = 0; k < json.length; k++) {
+
+            if (json[k].type != undefined && json[k].type.toLowerCase().search("terminaloutput") > -1) {
                 let outputTerminalObj = canvas.getFigure(json[k].id);
                 json[k].userData.datatype = outputTerminalObj.getDatatype();
 
                 clearedJson.push(json[k]);
             } else if (json[k].type != undefined && json[k].type.toLowerCase().search("tunnel") == -1) {
+                /*
+                 *  TODO: This case is to save normal nodes except tunnels, it was written in beginning therefore need to be checked
+                 *  if still there is problem with tunnels as now they are children of nodes not directly on canvas but can happen
+                 *  after move they will stay on canvas so this could be good to left it for now.
+                 */
                 clearedJson.push(json[k]);
             } else {
                 wrongJson.push(json[k]);
             }
         }
 
-        jsonStr = JSON.stringify(clearedJson, null, 2);
-        // jsonStr = JSON.stringify(wrongJson, null, 2);
-
-        var copyElement = document.createElement('textarea');
-
-        copyElement.innerHTML = "var jsonDocument = " + jsonStr + ";";
-        jsonStr = copyElement.innerHTML;
-        copyElement = document.body.appendChild(copyElement);
-        copyElement.select();
-        document.execCommand('copy');
-        copyElement.remove();
+        jsonObj = clearedJson;  // <---- ASSIGN right JSON to output element
     });
 
-    return jsonStr;
+    return jsonObj;
 }
 
 /**
@@ -1634,17 +1622,29 @@ GraphLang.Utils.rewriteIDtoNumbers = function(canvas, cCode, additionalIdList = 
   if (additionalIdList) allIdList.addAll(additionalIdList);
   if (additionalIdNoHyphenList) allIdNoHyphenList.addAll(additionalIdNoHyphenList);
 
-  //replace IDs with their order for more human readible code
-  var counter = 0;
+  /*
+   *  Replace IDs with their order for more human readible code
+   */
+  let counter = 0;
   allIdList.each(function(IdIndex, IdObj){
-    var regExpression = new RegExp(IdObj, 'g');
+    let regExpression = new RegExp(IdObj, 'g');
+    let regExpressionAllUnderscore = new RegExp(IdObj.replaceAll('-', '_'), 'g');   //use also version with replaceall - to _ because wire variable names are now all with _
 
-    if (codeRewriteIdFlag) cCode = cCode.replace(regExpression, counter++);    //this replace id with number
+    if (codeRewriteIdFlag){
+        //this replace id with number
+        counter++;
+
+        cCode = cCode.replace(regExpression, counter);
+        cCode = cCode.replace(regExpressionAllUnderscore, counter);
+    }
     cCode = cCode.replace(regExpression, IdObj.replaceAll('-', '_'));    //replace id with - replaced to _
   });
 
-  //replace IDs without hyphen - this is mainly for clusters
-  var counter = 0;
+  /*
+   *  Replace IDs without hyphen - this is mainly for clusters
+   *  TODO: Maybe this could be somehow merged with previous replace - to _
+   */
+  counter = 0;
   allIdNoHyphenList.each(function(IdIndex, IdObj){
       var regExpression = new RegExp(IdObj, 'g');
 
@@ -1985,14 +1985,14 @@ GraphLang.Utils.displayContents2 = function (jsonDocument, canvasObj) {
 }
 
 /**
- *  @method saveSchematic
+ *  @method `saveSchemati`c
  *  @param {draw2d.canvas} canvas - Canvas where schematic is located.
  *  @param {String} filename
  *  @param {String} type
  *  @description Download current schematic as txt file with provided name.
  */
 GraphLang.Utils.saveSchematic = function(canvas, filename, type) {
-    data = GraphLang.Utils.getCanvasJson(canvas);
+    let data = "var jsonDocument = " + JSON.stringify(GraphLang.Utils.getCanvasJson(canvas)) + ";\n";
 
     var file = new Blob([data], {type: type});
     if (window.navigator.msSaveOrOpenBlob) // IE10+
@@ -2476,6 +2476,14 @@ GraphLang.Utils.toHex = function (str) {
     return result;
 }
 
+GraphLang.Utils.hex2ascii = function(hexx) {
+    var hex = hexx.toString();//force conversion
+    var str = '';
+    for (var i = 0; i < hex.length; i += 2)
+        str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+    return str;
+}
+
 /**
  * @method GraphLang.Utils.serverSendReceive
  * @param operationStr
@@ -2660,15 +2668,16 @@ GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(paramete
                 nodeContent = GraphLang.Utils.hex_to_ascii(nodeContent);
                 GLOBAL_NODE_CONTENT = nodeContent;
                 //console.log(GLOBAL_NODE_CONTENT);
-                console.log(`ajax response saved in GLOBAL_AJAX_RESPONSE variable`);
-                console.log(`node content saved in GLOBAL_NODE_CONTENT variable`);
-
-                eval(GraphLang.Utils.getCanvasJson(appCanvas)); //this will create jsonDocument variable
+                console.log(`> GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram: ajax response saved in GLOBAL_AJAX_RESPONSE variable`);
+                console.log(`> GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram: node content saved in GLOBAL_NODE_CONTENT variable`);
 
                 GLOBAL_HELPER_VARIABLE_1 = {};
                 GLOBAL_HELPER_VARIABLE_2 = {};
+                GLOBAL_HELPER_VARIABLE_3 = {};
+
                 let codeToRun = "";
-                codeToRun += `GLOBAL_HELPER_VARIABLE_1 = ${nodeClassParent}.extend;\n`;
+                codeToRun += `GLOBAL_HELPER_VARIABLE_3 = ${nodeClassName};\n`;
+
                 codeToRun += `${nodeClassParent}.extend = function(obj){this.extendObj = obj;}\n`;
                 codeToRun += `${nodeContent}`;
                 codeToRun += `GLOBAL_HELPER_VARIABLE_2 = "";\n`;
@@ -2684,20 +2693,22 @@ GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(paramete
                 codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '"' + objItem.toString() + '"';\n`;
                 codeToRun += `\t\t\t\t}\n`;
                 codeToRun += `\t\t}else{\n`;
-                codeToRun += `\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '${JSON.stringify(jsonDocument)}';\n`;    // <--- HERE jsonDocument canvas schematic is injected and replaced
+                // codeToRun += `\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '${JSON.stringify(jsonDocument)}';\n`;    // <--- HERE jsonDocument canvas schematic is injected and replaced
+                codeToRun += `\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '`+JSON.stringify(GraphLang.Utils.getCanvasJson(appCanvas))+`';\n`;    // <--- HERE jsonDocument canvas schematic is injected and replaced
                 codeToRun += `\t\t}\n`;
                 codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += ",\\n";\n`;
                 codeToRun += `}\n`;
 
+                //return back original node functionality
                 codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "});\\n"\n`;
-                codeToRun += `${nodeClassParent}.extend = GLOBAL_HELPER_VARIABLE_1;\n`;
+                codeToRun += `${nodeClassName} = GLOBAL_HELPER_VARIABLE_3;\n`;
 
                 console.log(`Going eval() this code:`);
                 console.log(`${codeToRun}`);
                 eval(codeToRun);
                 GLOBAL_HELPER_VARIABLE_1 = codeToRun;
-                console.log(`JS code which run in eval() available in GLOBAL_HELPER_VARIABLE_1`);
-                console.log(`node class code available in GLOBAL_HELPER_VARIABLE_2`);
+                console.log(`> GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram: JS code which run in eval() available in GLOBAL_HELPER_VARIABLE_1`);
+                console.log(`> GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram: node class code available in GLOBAL_HELPER_VARIABLE_2`);
 
                 nodeContent = GLOBAL_HELPER_VARIABLE_2;
             }else{
@@ -2705,7 +2716,7 @@ GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(paramete
             }
             nodeContent = GraphLang.Utils.toHex(nodeContent);
 
-            console.log(`start saving this for porjectId:${projectId}, nodeClassName:${nodeClassName}`);
+            console.log(`start saving this for projectId:${projectId}, nodeClassName:${nodeClassName}`);
 
             // newer function for node upload doing also rename, create, update
             GraphLang.Utils.serverAjaxPostSendReceive(
@@ -2975,28 +2986,41 @@ GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject = function(funcParams){
 
 /**
  * @method animateBlinkObject
- * @param {Canvas}   canvas           - canvas object where to look for object
+ * @param {Canvas}   canvasOrOwnerObj - canvas object where to look for object
  * @param {String}   objId            - object id
+ * @param {Object}   attributes       - attributes objet which will be modified to these values
  * @param {function} callbackFunction - this function is called at the end, there was sometimes incorrect end of animation so here you can put object into default state
  */
-GraphLang.Utils.animateBlinkObject = function(canvas, objId, callbackFunction = null){
+GraphLang.Utils.animateBlinkObject = function(canvasOrOwnerObj, objId, attributes = {}, callbackFunction = null){
     let MAX_TOGGLE_COUNT = 6;
     let errorOpacityToggle = true;
     let errorOpacityToggleCounter = 0;
 
-    //try to find figure by ID, if nothing found try to find connection
-    let obj = canvas.getFigure(objId);
-    let objType = "figure";
-    if (obj){
-        callbackFunction = (canvasObj) => canvasObj.setStroke(0);
-    }else if (obj == null || obj == undefined){
-        obj = canvas.getLine(objId)
-        objType = "wire";
-        callbackFunction = (canvasObj) => canvasObj.setStroke(2.0);
+    let objType = null;
+    let obj = null;
+
+    if (canvasOrOwnerObj.NAME === "draw2d.Canvas") {
+        //try to find figure by ID, if nothing found try to find connection
+        obj = canvasOrOwnerObj.getFigure(objId);
+        if (obj) {
+            objType = "figure";
+            callbackFunction = (canvasObj) => canvasObj.setStroke(0);
+        } else if (obj == null || obj == undefined) {
+            obj = canvasOrOwnerObj.getLine(objId)
+            objType = "wire";
+            callbackFunction = (canvasObj) => canvasObj.setStroke(2.0);
+        }
+    }else{
+        //searching for some child figure therefore needs to be used iteration over all children of some figure
+        canvasOrOwnerObj.getChildren().each(function(childIndex, childObj){
+            if (childObj.getId() === objId) obj = childObj;
+        });
     }
+
     if (obj == null || obj == undefined) return;
 
-    obj.setColor("#b43500");
+    let originalObjectAttributes = obj.attr();      //save attributes before any change
+    obj.attr(attributes);                           //set additional attributes
 
     obj.on("timer", function(emitter){
         obj.attr({opacity: (errorOpacityToggle ? 0.1 : 1)});
@@ -3006,14 +3030,57 @@ GraphLang.Utils.animateBlinkObject = function(canvas, objId, callbackFunction = 
         errorOpacityToggleCounter++;
         if (errorOpacityToggleCounter > MAX_TOGGLE_COUNT){
             obj.stopTimer();
-            obj.attr({opacity: 1});
-            obj.setStroke(objType == "wire" ? 1.0 : 0.0);   //wire at end must be visible therefore stroke is 1.0, for node stroke must dissapear therefore 0.0
+            obj.attr(originalObjectAttributes); //set object attributes to previous values
 
             errorOpacityToggleCounter = 0;  //erase toggle counter
             if (typeof callbackFunction === "function") callbackFunction(obj);             //call callback function
         }
     });
     obj.startTimer(120);
+}
+
+/**
+ * @method animateDotAlongWire
+ * @param {Connection}   wireObj        - wire object along which red circle is moving
+ * @description This will put filled red circle on wire and move along it. This is to signalized during breakpoint on which wires are at actual step in program for user to be
+ * better visible at which step program si actualy paused.
+ */
+GraphLang.Utils.animateDotAlongWire = function(wireObj, attributes = {}){
+    let totalAnimationTimeMilliseconds = 3000;
+    let stepDelayTimeMilliseconds = 30;
+    let totalStepsCount = totalAnimationTimeMilliseconds / stepDelayTimeMilliseconds;
+    let currentStepCounter = 0;
+
+    // Check if wire exists
+    if (!(typeof wireObj === "object" && typeof wireObj.getId === "function" && wireObj.getId())){
+        console.log(`> GraphLang.Utils.animateDotAlongWire() wire doesn't seems to be object, ID: ${wireObj.getId()}`);
+        return;
+    }
+
+    // CREATES OBJET WHICH WILL BE MOVED ALONG PATH
+    let objToMove = new draw2d.shape.basic.Circle({
+        x: wireObj.getStartPoint().getX(),
+        y: wireObj.getStartPoint().getY(),
+        radius: 4,
+        stroke: "none",
+        color: "#FF0000",
+        bgColor: "#FF0000",
+    });
+    objToMove.attr(attributes);
+    wireObj.add(objToMove, new draw2d.layout.locator.ConnectionLocator());  //object is child of wire, therefore if wire deleted also object is deleted
+
+    // SET TIMER TO MOVE OBJECT ALONG PATH
+    objToMove.on("timer", function(emitter){
+        currentStepCounter++;
+        let pos = wireObj.lerp(currentStepCounter / totalStepsCount);
+
+        objToMove.attr({x: pos.x, y: pos.y});
+        if (currentStepCounter >= totalStepsCount){
+            // obj.stopTimer();
+            currentStepCounter = 0;
+        }
+    });
+    objToMove.startTimer(stepDelayTimeMilliseconds);
 }
 
 /**

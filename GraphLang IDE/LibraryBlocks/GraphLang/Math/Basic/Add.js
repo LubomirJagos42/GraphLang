@@ -41,8 +41,19 @@ GraphLang.Math.Basic.Add = GraphLang.Math.Basic.CommonParent.extend({
      port.setMaxFanOut(20);
 
      if (!port.userData) port.userData = {}
-     port.userData.datatype = "float";
+     port.userData.datatype = "polymorphic";
      port.userData.connectionMandatory = true;
+     port.getDatatype = function(){
+         let resultDatatype = this.userData.datatype;
+
+         let inputWire = null;
+         this.getParent().getInputPorts().each((index, inPort) => {
+             if (inputWire == null && inPort.getConnections().getSize() > 0) inputWire = inPort.getConnections().first();    //set input wire as first connected wire
+         });
+         if (inputWire) resultDatatype = inputWire.getDatatype();
+
+         return resultDatatype;
+     };
 
      this.persistPorts=false;
    },
@@ -275,6 +286,7 @@ GraphLang.Math.Basic.Add = GraphLang.Math.Basic.CommonParent.extend({
        cCode = "";
        var in1 = this.getInputPort("in1"); if (in1.getConnections().getSize() > 0) in1 = in1.getConnections().get(0).getVariableName(); else in1 = "/*in1 default value*/";
        var in2 = this.getInputPort("in2"); if (in2.getConnections().getSize() > 0) in2 = in2.getConnections().get(0).getVariableName(); else in2 = "/*in2 default value*/";
+
        var out1 = this.getOutputPort("out1");
        if (out1.getConnections().getSize() > 0){
            out1.getConnections().each(function(connIndex, connObj){

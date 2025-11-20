@@ -145,7 +145,7 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
                     nodeObj.getDatatype &&
                     nodeObj.getDatatype().startsWith("enumDatatype_") &&
                     nodeObj.userData &&
-                    nodeObj.userData.isEnumeration === true &&
+                    nodeObj.userData.isEnum === true &&
                     !uniqueDatatypes.contains(nodeObj.getDatatype())
                 ) {
                     uniqueDatatypes.add(nodeObj.getDatatype());

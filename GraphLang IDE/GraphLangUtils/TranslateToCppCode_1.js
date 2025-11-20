@@ -1006,7 +1006,7 @@ typedef int int32;
 typedef int undefined;
 typedef unsigned int uint;
 typedef float numeric;
-    `;
+typedef int polymorphic;  //THIS IS NOT EXACTLY RIGHT but usable for now\n\n`;
 
     template_cCode += "using namespace std;\n";
     template_cCode += "\n";
@@ -1056,6 +1056,9 @@ typedef float numeric;
      *******************************************************************************/
     cCode = this.rewriteIDtoNumbers(canvas, cCode, translateToCppCodeAdditionalId, translateToCppCodeAdditionalIdNoHyphen);
 
+    /*
+     *  Copy code into clipboard
+     */
     var copyElement = document.createElement('textarea');
     copyElement.innerHTML = cCode;
     copyElement = document.body.appendChild(copyElement);

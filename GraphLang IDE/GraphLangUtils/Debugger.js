@@ -178,7 +178,7 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
     outputElement.insertAdjacentHTML('afterbegin', "<pre/>> compile current node button clicked<pre/><hr/>");
     let ajaxResponse = await GraphLang.Utils.serverAjaxPostSendReceive(
         ["q", "compileProject"],
-        ["projectId", projectId, "outputFileName", outputFileName, "nodeCodeContent", nodeCodeContent, "nodeCodeAdditionalLibraries", nodeCodeAdditionalLibraries],
+        ["projectId", projectId, "outputFileName", outputFileName, "nodeCodeAdditionalLibraries", nodeCodeAdditionalLibraries, "nodeCodeContent", nodeCodeContent],
         function(){
             let compilationOutput = JSON.parse(GLOBAL_AJAX_RESPONSE.compileCommandOutput);
             outputElement.insertAdjacentHTML('afterbegin', `<pre/>> message: ${GLOBAL_AJAX_RESPONSE.message}\nerror: ${GLOBAL_AJAX_RESPONSE.errorMsg}\ncompilation output:\n\tstatus: ${compilationOutput.status}\n\tmessage: ${compilationOutput.message}<pre/><hr/>`);
@@ -282,7 +282,7 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
                      */
                     for (let errorCanvasObj of errorObj["sourceObjects"]){
                         // errorCanvasObj.setStroke(4).setColor("#b43500");                         //this will set stroke for each error object in stacktrace
-                        outputMsg += `<span onclick="GraphLang.Utils.animateBlinkObject(appCanvas, '${errorCanvasObj.getId()}', (obj) => obj.setStroke(0))">&nbsp;&nbsp;&nbsp;&nbsp;${errorCanvasObj.NAME}&nbsp;&nbsp;-->&nbsp;&nbsp;${errorCanvasObj.getId()}</span><br/>`;
+                        outputMsg += `<span onclick="GraphLang.Utils.animateBlinkObject(appCanvas, '${errorCanvasObj.getId()}', {color: '#b43500'}, (obj) => obj.setStroke(0))">&nbsp;&nbsp;&nbsp;&nbsp;${errorCanvasObj.NAME}&nbsp;&nbsp;-->&nbsp;&nbsp;${errorCanvasObj.getId()}</span><br/>`;
                     }
                 }
             }
@@ -351,9 +351,8 @@ GraphLang.Debugger.Cpp.debugSchematic = async function(options = null){
  */
 GraphLang.Debugger.Cpp.debugGetWireValue = function(options = null){
     return new Promise(async (resolve, reject) => {
-        console.log(`debugGetWireValue executed`);
+        console.log(`> GraphLang.Debugger.Cpp.debugGetWireValue - executed`);
         if (options){
-            // let wireName = 'wire_' + options.objectId.replaceAll('-', '_'); //original implementation when wire name is manualy built
             let wireName = options.objectVariableName; //newer implementation using option parameter with wire name which must be pushed from compiler
 
             /*
@@ -412,7 +411,7 @@ GraphLang.Debugger.Cpp.debugGetWireValue = function(options = null){
 
             resolve(wireValue);  //return received data
         }else{
-            console.log(`no options provided`);
+            console.log(`> GraphLang.Debugger.Cpp.debugGetWireValue - no input options provided`);
             reject("no options provided");
         }
     });
@@ -420,38 +419,37 @@ GraphLang.Debugger.Cpp.debugGetWireValue = function(options = null){
 
 /**
  *  @method putWireValueOnScreen
+ *  @param {Object}   watchObj    - info about breakpoint which should contain these attributes: objectId {String}
+ *  @param {string}   wireValue   - value which will be placed as label on wire
+ *  @param {boolean}  doAnimation - default true, indicate if label after placement on wire should blink for moment to be more easily recognized
  *  @description Put label on wire on screen if node is opened on main screen.
  */
 GraphLang.Debugger.Cpp.putWireValueOnScreen = function(watchObj, wireValue, doAnimation = true) {
-    //TODO: check if watchObj for wire is valid, ie. contains all necessary info
-    console.log(`> putWireValueOnScreen - entered - ${watchObj.objectId}`);
-    function animateBlinkObject(obj){
-        let errorOpacityToggle = true;
-        let errorOpacityToggleCounter = 0;
-        obj.on("timer", function(emitter){
-            obj.attr({opacity: (errorOpacityToggle ? 0.1 : 1)});
-            errorOpacityToggle = !errorOpacityToggle;
-            errorOpacityToggleCounter++;
-            if (errorOpacityToggleCounter > 6){
-                obj.stopTimer();
-                obj.attr({opacity: 1});
-                errorOpacityToggleCounter = 0;
-            }
-        });
-        obj.startTimer(120);
+    //check input watch object if is right and if wire was found
+    if (watchObj === null || !(typeof watchObj === "object" && typeof watchObj.objectId === "string")){
+        console.log(`> putWireValueOnScreen - entered - input parameter watchObj is not object or watchObj.objectId is not string`);
+        return;
+    }
+    console.log(`> putWireValueOnScreen - entered - using appCanvas to search object id: ${watchObj.objectId}`);
+    let wireObj = appCanvas.getLine(watchObj.objectId);
+    if (wireObj === undefined || wireObj === null){
+        console.log(`> putWireValueOnScreen - entered - wire not found`);
+        return;
     }
 
-    wireObj = appCanvas.getLine(watchObj.objectId);
-
-    //delete all labels placed on wire
+    //delete all watch labels placed on wire, they are recognized based on userData.isDebugWatchObject flag
     wireObj.getChildren().each(function(childIndex, childObj){
-        if (childObj.NAME && childObj.NAME == "draw2d.shape.basic.Label"){
+        if (childObj.userData && childObj.userData.isDebugWatchObject){
             wireObj.remove(childObj);
         }
     });
 
     //add new label with current value
-    let labelWithWireValueRef = new draw2d.shape.basic.Label({text: wireValue});
+    let labelWithWireValueRef = new draw2d.shape.basic.Label({
+        text: wireValue,
+        color: "#63a1ff",
+        userData: {isDebugWatchObject: true}    //this indicates that this object is for watch
+    });
     wireObj.add(
         labelWithWireValueRef,
         new draw2d.layout.locator.ManhattanMidpointLocator()
@@ -459,8 +457,51 @@ GraphLang.Debugger.Cpp.putWireValueOnScreen = function(watchObj, wireValue, doAn
 
     //if flag set to do animation there will be blinking of text label
     if (doAnimation){
-        animateBlinkObject(labelWithWireValueRef);
+        GraphLang.Utils.animateBlinkObject(wireObj, labelWithWireValueRef.getId());
     }
+},
+
+/**
+ *  @method breakpointAnimateDotAlongWire
+ *  @param {Object}   breakpointObj - info about breakpoint which should contain these attributes: objectId {String}
+ *  @description Infinite animation of dot along wire, this will highlight wire during debugging when breakpoint was reached. Breakpoint object must be set on wire, this will do nothing
+ *  in case that breakpoint is set on figure.
+ */
+GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWire = function(breakpointObj) {
+    //check input breakpoint object if is right and if wire was found
+    if (breakpointObj === null || !(typeof breakpointObj === "object" && typeof breakpointObj.objectId === "string")){
+        console.log(`> breakpointAnimateDotAlongWire - entered - input parameter breakpointObj is not object or breakpointObj.objectId is not ID string`);
+        return;
+    }
+    console.log(`> breakpointAnimateDotAlongWire - entered - ${breakpointObj.objectId}`);
+    let wireObj = appCanvas.getLine(breakpointObj.objectId);
+    if (wireObj === undefined || wireObj === null){
+        console.log(`> breakpointAnimateDotAlongWire - entered - wire not found`);
+        return;
+    }
+
+    wireObj = appCanvas.getLine(breakpointObj.objectId);
+    GraphLang.Utils.animateDotAlongWire(wireObj, {userData: {isDebugBreakpointAnimatedDot: true}});
+},
+
+/**
+ *  @method breakpointAnimateDotAlongWireDeleteAll
+ *  @param {Object}   wireObj - wire connection object
+ *  @description Delete all red dots assigned to wire which are moving along wire from source to target
+ */
+GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWireDeleteAll = function(wireObj) {
+    if (wireObj === undefined || wireObj === null){
+        console.log(`> breakpointAnimateDotAlongWireDeleteAll - entered - wire not found`);
+        return;
+    }
+
+    //find all debug red dots on wires and stops them
+    wireObj.getChildren().each(function(childIndex, childObj){
+        if (childObj.userData && childObj.userData.isDebugBreakpointAnimatedDot){
+            // childObj.off("timer");
+            wireObj.remove(childObj);
+        }
+    });
 },
 
 /**
@@ -491,6 +532,12 @@ GraphLang.Debugger.Cpp.getCodeLocation = function(){
         //log info
         GraphLang.Debugger.Cpp.logResponse({data: `code current line: ${lineNumber}, breakpoint: ${JSON.stringify(breakpointInfo)}`});
 
+        //delete animated dots from all wires
+        appCanvas.getLines().each((wireIndex, wireObj) => {
+            console.log(`> remove animated dot for wire id: ${wireObj.getId()}`);
+            GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWireDeleteAll(wireObj);
+        });
+
         // line number -1 means program is not executed
         if (lineNumber == -1){
             GraphLang.Debugger.Cpp.logResponse({data: `PROGRAM NOT EXECUTED`});
@@ -510,8 +557,8 @@ GraphLang.Debugger.Cpp.getCodeLocation = function(){
             GraphLang.Utils.displayContents(nodeWithBreakpointObj.jsonDocument);                //this will load schematic into main appCanvas
         }
 
-        let currentObj = appCanvas.getFigure(breakpointInfo.objectId);
-        GraphLang.Utils.animateBlinkObject(appCanvas, breakpointInfo.objectId); //animate node to make visible where is breakpoint or scroll to it to make it visible
+        GraphLang.Utils.animateBlinkObject(appCanvas, breakpointInfo.objectId);          //animate node to make visible where is breakpoint or scroll to it to make it visible
+        GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWire(breakpointInfo); //animate dot along wire
     });
 }
 

@@ -41,7 +41,7 @@ GraphLang.Shapes.Basic.EnumNode = draw2d.shape.layout.TableLayout.extend({
         //so here are userData just created as empty object.
         this.userData = {};
         this.userData.isTerminal = false;
-        this.userData.isEnumeration = true;
+        this.userData.isEnum = true;
         this.userData.nodeLabel = "nodeLabel";
         this.userData.datatype = defaultDatatype + "*"; //array is datatype ofg pointer to its elements datatype therefore needs to add asterix
 
