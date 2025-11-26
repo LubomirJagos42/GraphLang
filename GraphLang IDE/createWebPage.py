@@ -67,6 +67,9 @@ htmlTemplate = """
       .palette_node_element img{
         max-width: 60px;
       }
+	  .node_category_buttons{
+		  display: none;
+	  }
     </style>
 
     <script src="./lib/jquery.js"></script>
@@ -254,6 +257,48 @@ function displayJSON(canvas){
 }
 
     /* here insert all user defined nodes list */
+
+function navigationShowCategory(categoryName, emitter) {
+	$('#navigation span.nodes_tab').hide();
+	$('#navigation span.node_category_buttons').hide();
+	$('#navigation input[type=\\'button\\']').hide();
+
+	//if going to parent need to get it name
+	if (categoryName === "parent"){
+		categoryName = "all";
+		console.log(`> going to parent figuring name`);
+		for (let className of emitter.parentNode.parentNode.className.split(" ")){
+			console.log(`> class name: ${className}`);
+			if (className.startsWith("category_")) categoryName = className;
+		}
+	}
+
+	if (categoryName === "all"){
+		$('#navigation span.nodes_tab').show();
+		$('#navigation input[type="button"]').show();
+	}else if (categoryName.startsWith("category_")){
+		let counter = 0;
+		let MAX_GOING_TOP = 20;
+		let currentElement = emitter;
+		while(currentElement.id !== "navigation"){
+			counter++;
+			currentElement = currentElement.parentNode;
+			$(currentElement).show();
+			if (counter > MAX_GOING_TOP) break;
+		}
+		if (counter > MAX_GOING_TOP) console.log(`> GOING TOP MORE THAN 10 AND NO NAVIGATION REACHED!!!`);
+
+		$(`.${categoryName}`).show();
+		$(`.${categoryName} > *`).show();
+		$(`.${categoryName} > input[type='button']`).show();
+	}else{
+		//SHOW ALL IN DEFUALT CASE
+		$('#navigation span.nodes_tab').show();
+		$('#navigation input[type="button"]').show();
+	}
+
+	$('#navigation input.always_visible').show();
+}
 
 </script>
 
@@ -467,14 +512,19 @@ if __name__ == "__main__":
     #
     htmlNodeMenuItem = ""
     tabIndex = 0
-    htmlNodeMenuItem += f'\t\t<input type="button" value="All" onclick="$(\'#navigation span\').show();" />\n'
+    htmlNodeMenuItem += f'\t\t<input type="button" class="always_visible" value="all" onclick="navigationShowCategory(\'all\', this)" />\n'
     for tabCategory in tabList:
-        htmlNodeMenuItem += f'\t\t<input type="button" value="{blocksToTabsAssignment[list(blocksToTabsAssignment.keys())[tabIndex]]}" onclick="$(\'#navigation span\').hide(); $(\'#tab{tabIndex}\').show();" />\n'
+        htmlNodeMenuItem += f'\t\t<input type="button" value="{blocksToTabsAssignment[list(blocksToTabsAssignment.keys())[tabIndex]]}" onclick="navigationShowCategory(\'category_{tabIndex}\', this)" />\n'
+        htmlNodeMenuItem += f'\t\t<span class="node_category_buttons category_{tabIndex}">\n'
+        htmlNodeMenuItem += f'\t\t\t<input type="button" value=".." onclick="navigationShowCategory(\'parent\', this)" />\n'
+        htmlNodeMenuItem += f'\t\t</span>\n'
         tabIndex += 1
         
+    htmlNodeMenuItem += f'\n\n\n'
+
     tabIndex = 0
     for tabCategory in tabList:
-        htmlNodeMenuItem += f'\t\t<span id="tab{tabIndex}">\n'
+        htmlNodeMenuItem += f'\t\t<span class="nodes_tab category_{tabIndex}">\n'
         for tabBlockHtmlLine in tabCategory:
             htmlNodeMenuItem += tabBlockHtmlLine 
         htmlNodeMenuItem += '\t\t</span>\n'

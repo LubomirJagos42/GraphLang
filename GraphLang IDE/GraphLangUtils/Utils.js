@@ -2675,37 +2675,50 @@ GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(paramete
                 GLOBAL_HELPER_VARIABLE_2 = {};
                 GLOBAL_HELPER_VARIABLE_3 = {};
 
-                let codeToRun = "";
-                codeToRun += `GLOBAL_HELPER_VARIABLE_3 = ${nodeClassName};\n`;
+                    /*
+                     *  This JS code here copy all attributes and methods from its previous version which comes from server
+                     *  and then replace just jsonDocument (canvas content) with current one.
+                     *  This way if user define new attributes or whatever in object these values are automaticaly preserved.
+                     */
+                    let codeToRun = "";
+                    codeToRun += `GLOBAL_HELPER_VARIABLE_3 = ${nodeClassName};\n`;
 
-                codeToRun += `${nodeClassParent}.extend = function(obj){this.extendObj = obj;}\n`;
-                codeToRun += `${nodeContent}`;
-                codeToRun += `GLOBAL_HELPER_VARIABLE_2 = "";\n`;
-                codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "${nodeClassName} = ${nodeClassParent}.extend({\\n"\n`;
+                    //redefine .extend() to our own method which stores its params into object internal variable
+                    codeToRun += `${nodeClassParent}.extend = function(obj){this.extendObj = obj;}\n`;
 
-                codeToRun += `for (m in ${nodeClassParent}.extendObj){\n`;
-                codeToRun += `\t\tlet objItem = ${nodeClassParent}.extendObj[m];\n`;
-                codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += m + ": ";\n`;
-                codeToRun += `\t\tif (m != 'jsonDocument'){\n`;
-                codeToRun += `\t\t\t\tif (typeof objItem != 'string'){\n`;
-                codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += (typeof objItem == 'Object' || Array.isArray(objItem)) ? JSON.stringify(objItem) : objItem.toString();\n`;
-                codeToRun += `\t\t\t\t}else{\n`;
-                codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '"' + objItem.toString() + '"';\n`;
-                codeToRun += `\t\t\t\t}\n`;
-                codeToRun += `\t\t}else{\n`;
-                // codeToRun += `\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '${JSON.stringify(jsonDocument)}';\n`;    // <--- HERE jsonDocument canvas schematic is injected and replaced
-                codeToRun += `\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '`+JSON.stringify(GraphLang.Utils.getCanvasJson(appCanvas))+`';\n`;    // <--- HERE jsonDocument canvas schematic is injected and replaced
-                codeToRun += `\t\t}\n`;
-                codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += ",\\n";\n`;
-                codeToRun += `}\n`;
+                    //execute node with redefined .extend() which perform storing object attributes and methods into its internal variable extendObj
+                    codeToRun += `${nodeContent}`;
 
-                //return back original node functionality
-                codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "});\\n"\n`;
-                codeToRun += `${nodeClassName} = GLOBAL_HELPER_VARIABLE_3;\n`;
+                    //this create JS code which copy objects methods and attributes into global string variable all as string so it can be stored in DB
+                    //  - if attribute is jsonDocument skip it and use current one from curent canvas
+                    //  - if attribute is object or string copy it
+                    //
+                    codeToRun += `GLOBAL_HELPER_VARIABLE_2 = "";\n`;
+                    codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "${nodeClassName} = ${nodeClassParent}.extend({\\n"\n`;
+                    codeToRun += `for (m in ${nodeClassParent}.extendObj){\n`;
+                    codeToRun += `\t\tlet objItem = ${nodeClassParent}.extendObj[m];\n`;
+                    codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += m + ": ";\n`;
+                    codeToRun += `\t\tif (m != 'jsonDocument'){\n`;
+                    codeToRun += `\t\t\t\tif (typeof objItem != 'string'){\n`;
+                    codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += (typeof objItem == 'Object' || Array.isArray(objItem)) ? JSON.stringify(objItem) : objItem.toString();\n`;
+                    codeToRun += `\t\t\t\t}else{\n`;
+                    codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '"' + objItem.toString() + '"';\n`;
+                    codeToRun += `\t\t\t\t}\n`;
+                    codeToRun += `\t\t}else{\n`;
+                    codeToRun += `\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '`+JSON.stringify(GraphLang.Utils.getCanvasJson(appCanvas))+`';\n`;    // <--- HERE jsonDocument canvas schematic is injected and replaced
+                    codeToRun += `\t\t}\n`;
+                    codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += ",\\n";\n`;
+                    codeToRun += `}\n`;
 
+                    //return back original node functionality
+                    codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "});\\n"\n`;
+                    codeToRun += `${nodeClassName} = GLOBAL_HELPER_VARIABLE_3;\n`;
+
+                //evaluate js code which stores string content of updated node js code into global helper variable
                 console.log(`Going eval() this code:`);
                 console.log(`${codeToRun}`);
                 eval(codeToRun);
+
                 GLOBAL_HELPER_VARIABLE_1 = codeToRun;
                 console.log(`> GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram: JS code which run in eval() available in GLOBAL_HELPER_VARIABLE_1`);
                 console.log(`> GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram: node class code available in GLOBAL_HELPER_VARIABLE_2`);

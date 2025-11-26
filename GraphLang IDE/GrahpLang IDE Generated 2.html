@@ -21,6 +21,7 @@
       .palette_node_element img{
         max-width: 60px;
       }
+
 	  .node_category_buttons{
 		  display: none;
 	  }
@@ -128,7 +129,6 @@
 	<script src="./LibraryBlocks/GraphLang/System/ConstantNode.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/ConvertDatatype.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/EnumNode.js"></script>
-	<script src="./LibraryBlocks/GraphLang/System/EnumSelectOption.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/FeedbackNode.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/utils/Loop2.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/Multilayered3.js"></script>
@@ -136,6 +136,7 @@
 	<script src="./LibraryBlocks/GraphLang/System/PointerDatatypeNode.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/PointerDelete.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/Return.js"></script>
+	<script src="./LibraryBlocks/GraphLang/System/EnumSelectOption.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/Sequence.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/SliderNode.js"></script>
 	<script src="./LibraryBlocks/GraphLang/System/TerminalOutput.js"></script>
@@ -367,6 +368,7 @@ function displayJSON(canvas){
 ,'GraphLang.Shapes.Basic.ArraySetElement'
 ,'ConvertDatatype'
 ,'GraphLang.Shapes.Basic.PointerDelete'
+,'GraphLang.Shapes.Basic.EnumSelectOption'
 ,'GraphLang.ArduinoLib.Node.ternarOperator'
 ,'GraphLang.Console.getchar'
 ,'HwArduinoNano.Serial.begin'
@@ -408,7 +410,6 @@ function displayJSON(canvas){
 ,'GraphLangTestShape'
 ,'GraphLangTestShape57'
 ,'GraphLangTestShape59'
-,'GraphLangTestShape'
 ,'SubNodes.Block_1'
 ,'Test.ArrayIndex_1'
 ,'Test.MultipleSerialPrint_1'
@@ -417,7 +418,6 @@ function displayJSON(canvas){
 ,'UserDefined.ImageNode_2'
 ,'UserDefinedExample'
 ];
-
 
 function navigationShowCategory(categoryName, emitter) {
 	$('#navigation span.nodes_tab').hide();
@@ -441,9 +441,11 @@ function navigationShowCategory(categoryName, emitter) {
 		let counter = 0;
 		let MAX_GOING_TOP = 20;
 		let currentElement = emitter;
+		console.log(`> going to top to make span visible`);
 		while(currentElement.id !== "navigation"){
 			counter++;
 			currentElement = currentElement.parentNode;
+			console.log(currentElement);
 			$(currentElement).show();
 			if (counter > MAX_GOING_TOP) break;
 		}
@@ -452,6 +454,7 @@ function navigationShowCategory(categoryName, emitter) {
 		$(`.${categoryName}`).show();
 		$(`.${categoryName} > *`).show();
 		$(`.${categoryName} > input[type='button']`).show();
+		console.log(`> another, navigation show category: ${categoryName}`);
 	}else{
 		//SHOW ALL IN DEFUALT CASE
 		$('#navigation span.nodes_tab').show();
@@ -475,87 +478,112 @@ function navigationShowCategory(categoryName, emitter) {
 
    <div id="navigation" class="">
 
-        <!-- user defined nodes menu place to insert -->
+	   	<input id="menu_node_search" type="text" value="...some text..." />
+
+	   <!--
+           MENU FOR NODE CATEGORIES BELOW
+       -->
+	   <!-- user defined nodes menu place to insert -->
 		<input type="button" class="always_visible" value="all" onclick="navigationShowCategory('all', this)" />
+
 		<input type="button" value="GL_Math_Basic" onclick="navigationShowCategory('category_0', this)" />
 		<span class="node_category_buttons category_0">
-			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
+			<input type="button" value=".." onclick="navigationShowCategory('all', this)" />
+
+			<input type="button" value="GL_Math_Trigon" onclick="navigationShowCategory('category_1', this)" />
+			<span class="node_category_buttons category_1">
+				<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
+			</span>
+
+			<input type="button" value="GL_System" onclick="navigationShowCategory('category_2', this)" />
+			<span class="node_category_buttons category_2">
+				<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
+			</span>
 		</span>
-		<input type="button" value="GL_Math_Trigon" onclick="navigationShowCategory('category_1', this)" />
-		<span class="node_category_buttons category_1">
-			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
-		</span>
-		<input type="button" value="GL_System" onclick="navigationShowCategory('category_2', this)" />
-		<span class="node_category_buttons category_2">
-			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
-		</span>
+
 		<input type="button" value="GL_Experimental" onclick="navigationShowCategory('category_3', this)" />
 		<span class="node_category_buttons category_3">
-			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
+			<input type="button" value=".." onclick="navigationShowCategory('all', this)" />
+
+			<input type="button" value="ArduinoNano_Serial" onclick="navigationShowCategory('category_4', this)" />
+			<span class="node_category_buttons category_4">
+				<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
+			</span>
 		</span>
-		<input type="button" value="ArduinoNano_Serial" onclick="navigationShowCategory('category_4', this)" />
-		<span class="node_category_buttons category_4">
-			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
-		</span>
+
 		<input type="button" value="RaspiZero_Console" onclick="navigationShowCategory('category_5', this)" />
 		<span class="node_category_buttons category_5">
 			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
+
+			<input type="button" value="RaspiZero_File" onclick="navigationShowCategory('category_6', this)" />
+			<span class="node_category_buttons category_6">
+				<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
+			</span>
+
+			<input type="button" value="RaspiZero_Analog" onclick="navigationShowCategory('category_7', this)" />
+			<span class="node_category_buttons category_7">
+				<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
+			</span>
+
+			<input type="button" value="RaspiZero_Digital" onclick="navigationShowCategory('category_8', this)" />
+			<span class="node_category_buttons category_8">
+				<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
+
+				<input type="button" value="RaspiZero_Constants" onclick="navigationShowCategory('category_9', this)" />
+				<span class="node_category_buttons category_9">
+					<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
+				</span>
+
+				<input type="button" value="RaspiZero_String" onclick="navigationShowCategory('category_10', this)" />
+				<span class="node_category_buttons category_10">
+					<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
+				</span>
+
+				<input type="button" value="RaspiZero_Time" onclick="navigationShowCategory('category_11', this)" />
+				<span class="node_category_buttons category_11">
+					<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
+				</span>
+			</span>
 		</span>
-		<input type="button" value="RaspiZero_File" onclick="navigationShowCategory('category_6', this)" />
-		<span class="node_category_buttons category_6">
-			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
-		</span>
-		<input type="button" value="RaspiZero_Analog" onclick="navigationShowCategory('category_7', this)" />
-		<span class="node_category_buttons category_7">
-			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
-		</span>
-		<input type="button" value="RaspiZero_Digital" onclick="navigationShowCategory('category_8', this)" />
-		<span class="node_category_buttons category_8">
-			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
-		</span>
-		<input type="button" value="RaspiZero_Constants" onclick="navigationShowCategory('category_9', this)" />
-		<span class="node_category_buttons category_9">
-			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
-		</span>
-		<input type="button" value="RaspiZero_String" onclick="navigationShowCategory('category_10', this)" />
-		<span class="node_category_buttons category_10">
-			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
-		</span>
-		<input type="button" value="RaspiZero_Time" onclick="navigationShowCategory('category_11', this)" />
-		<span class="node_category_buttons category_11">
-			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
-		</span>
+
 		<input type="button" value="Python GUI" onclick="navigationShowCategory('category_12', this)" />
 		<span class="node_category_buttons category_12">
 			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
 		</span>
+
 		<input type="button" value="Signal Proc." onclick="navigationShowCategory('category_13', this)" />
 		<span class="node_category_buttons category_13">
 			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
+
+			<input type="button" value="User Nodes" onclick="navigationShowCategory('category_14', this)" />
+			<span class="node_category_buttons category_14">
+				<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
+
+				<input type="button" value="Demo" onclick="navigationShowCategory('category_15', this)" />
+				<span class="node_category_buttons category_15">
+					<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
+				</span>
+			</span>
 		</span>
-		<input type="button" value="User Nodes" onclick="navigationShowCategory('category_14', this)" />
-		<span class="node_category_buttons category_14">
-			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
-		</span>
-		<input type="button" value="Demo" onclick="navigationShowCategory('category_15', this)" />
-		<span class="node_category_buttons category_15">
-			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
-		</span>
+
 		<input type="button" value="ZeroMQ" onclick="navigationShowCategory('category_16', this)" />
 		<span class="node_category_buttons category_16">
 			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
 		</span>
+
 		<input type="button" value="Console" onclick="navigationShowCategory('category_17', this)" />
 		<span class="node_category_buttons category_17">
 			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
 		</span>
+
 		<input type="button" value="Sound_miniaudio" onclick="navigationShowCategory('category_18', this)" />
 		<span class="node_category_buttons category_18">
 			<input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
 		</span>
 
-
-
+		<!--
+			TABS FOR NODES BELOW
+		-->
 		<span class="nodes_tab category_0">
 			<div data-shape="GraphLang.Math.Basic.Add" data-label="Add" class="palette_node_element draw2d_droppable">Add</div>
 			<div data-shape="GraphLang.Math.Basic.Divide" data-label="Divide" class="palette_node_element draw2d_droppable">Divide</div>
@@ -576,13 +604,13 @@ function navigationShowCategory(categoryName, emitter) {
 			<div data-shape="GraphLang.Shapes.Basic.ConstantNode" data-label="ConstantNode" class="palette_node_element draw2d_droppable">ConstantNode</div>
 			<div data-shape="ConvertDatatype" data-label="ConvertDatatype" class="palette_node_element draw2d_droppable">ConvertDatatype</div>
 			<div data-shape="GraphLang.Shapes.Basic.EnumNode" data-label="EnumNode" class="palette_node_element draw2d_droppable">EnumNode</div>
-			<div data-shape="GraphLang.Shapes.Basic.EnumSelectOption" data-label="EnumSelectOption" class="palette_node_element draw2d_droppable">EnumSelectOption</div>
 			<div data-shape="GraphLang.Shapes.Basic.FeedbackNode" data-label="FeedbackNode" class="palette_node_element draw2d_droppable">FeedbackNode</div>
 			<div data-shape="GraphLang.Shapes.Basic.Loop2.Multilayered3" data-label="Multilayered3" class="palette_node_element draw2d_droppable">Multilayered3</div>
 			<div data-shape="GraphLang.Shapes.Basic.Loop2.Multilayered3_enhanced" data-label="Multilayered3_enhanced" class="palette_node_element draw2d_droppable">Multilayered3_enhanced</div>
 			<div data-shape="GraphLang.Shapes.Basic.PointerDatatypeNode" data-label="PointerDatatypeNode" class="palette_node_element draw2d_droppable">PointerDatatypeNode</div>
 			<div data-shape="GraphLang.Shapes.Basic.PointerDelete" data-label="PointerDelete" class="palette_node_element draw2d_droppable">PointerDelete</div>
 			<div data-shape="GraphLang.Shapes.Basic.Return" data-label="Return" class="palette_node_element draw2d_droppable">Return</div>
+			<div data-shape="GraphLang.Shapes.Basic.EnumSelectOption" data-label="EnumSelectOption" class="palette_node_element draw2d_droppable">EnumSelectOption</div>
 			<div data-shape="GraphLang.Shapes.Basic.Loop2.Sequence" data-label="Sequence" class="palette_node_element draw2d_droppable">Sequence</div>
 			<div data-shape="GraphLang.Shapes.Basic.SliderNode" data-label="SliderNode" class="palette_node_element draw2d_droppable">SliderNode</div>
 			<div data-shape="GraphLang.Shapes.Basic.TerminalOutput" data-label="TerminalOutput" class="palette_node_element draw2d_droppable">TerminalOutput</div>
@@ -660,7 +688,6 @@ function navigationShowCategory(categoryName, emitter) {
 			<div data-shape="GraphLangTestShape" data-label="GraphLangTestShape" class="palette_node_element draw2d_droppable">GraphLangTestShape</div>
 			<div data-shape="GraphLangTestShape57" data-label="GraphLangTestShape57" class="palette_node_element draw2d_droppable">GraphLangTestShape57</div>
 			<div data-shape="GraphLangTestShape59" data-label="GraphLangTestShape59" class="palette_node_element draw2d_droppable">GraphLangTestShape59</div>
-			<div data-shape="GraphLangTestShape" data-label="GraphLangTestShape" class="palette_node_element draw2d_droppable">GraphLangTestShape</div>
 			<div data-shape="SubNodes.Block_1" data-label="Block_1" class="palette_node_element draw2d_droppable">Block_1</div>
 			<div data-shape="Test.ArrayIndex_1" data-label="ArrayIndex_1" class="palette_node_element draw2d_droppable">ArrayIndex_1</div>
 			<div data-shape="Test.MultipleSerialPrint_1" data-label="MultipleSerialPrint_1" class="palette_node_element draw2d_droppable">MultipleSerialPrint_1</div>
