@@ -279,7 +279,10 @@ function navigationShowCategory(categoryName, emitter) {
 	}else if (categoryName.startsWith("category_")){
 		let counter = 0;
 		let MAX_GOING_TOP = 20;
-		let currentElement = emitter;
+
+        // let currentElement = emitter;   //THIS IS NOT EXACTLY CORRECT, this starts at <input type="button"... but button can be anywhere
+        let currentElement = $("span.node_category_buttons."+categoryName).get(0);  //RIGHT SOLUTION, looking for span with categories buttons
+
 		while(currentElement.id !== "navigation"){
 			counter++;
 			currentElement = currentElement.parentNode;

@@ -331,7 +331,10 @@ function navigationShowCategory(categoryName, emitter) {
     }else if (categoryName.startsWith("category_")){
         let counter = 0;
         let MAX_GOING_TOP = 20;
-        let currentElement = emitter;
+
+        // let currentElement = emitter;   //THIS IS NOT EXACTLY CORRECT, this starts at <input type="button"... but button can be anywhere
+        let currentElement = $("span.node_category_buttons."+categoryName).get(0);  //RIGHT SOLUTION, looking for span with categories buttons
+
         while(currentElement.id !== "navigation"){
             counter++;
             currentElement = currentElement.parentNode;
@@ -369,64 +372,65 @@ function navigationShowCategory(categoryName, emitter) {
        <!-- buttons to display nodes in some category-->
        <input type="button" class="always_visible" value="all" onclick="navigationShowCategory('all', this);" />
        <input type="button" value="others" onclick="navigationShowCategory('category_0', this);" />
+       <span class="node_category_buttons category_0">
+           <input type="button" value=".." onclick="navigationShowCategory('parent', this)" />
+       </span>
 
-
-
-
-
-       <?php
+        <?php
+        $categoryIdToNumberForViewList = array();
         $k = 1;
-        foreach (array_keys($nodesNamesWithCategories) as $categoryName){
-//            break;  //DISABLE FOR NOW THIS
-
+        foreach (array_keys($nodesNamesWithCategories) as $categoryName) {
             if ($categoryName != "0"){
-       ?>
-            <input type='button' value='<?php echo($categoryName); ?>' onclick="navigationShowCategory('category_<?= $k ?>', this);" />
-            <span class="node_category_buttons category_<?= $k ?>">
-			    <input type="button" value=".." onclick="navigationShowCategory('all', this)" />
-            </span>
-       <?php
+                $categoryId = $nodesNamesWithCategories[$categoryName][0]["categoryId"];
+                $categoryIdToNumberForViewList[$categoryId] = $k;
                 $k++;
             }
-       }
-
-       foreach ($emptyCategories as $category){
-//           break;  //DISABLE FOR NOW THIS
-       ?>
-
-           <input type='button' value='<?php echo($category['name']); ?>' onclick="navigationShowCategory('category_<?= $k ?>', this);" />
-           <span class="node_category_buttons category_<?= $k ?>">
-			    <input type="button" value=".." onclick="navigationShowCategory('all', this)" />
-            </span>
-       <?php
-           $k++;
-       }?>
-
-
-
-
-
-        <!--
-            CATEORIES BUTTONS
-        -->
-        <?php
-        foreach ($categoryChildTree as $category){
-            //TODO: This needs to be done to created NESTED BUTTON MENU
         }
+        foreach ($emptyCategories as $category){
+            $categoryIdToNumberForViewList[$category['id']] = $k;
+            $k++;
+        }
+
+        define("MAX_RECURSION_DEPTH", 10);
+        $visitedCategoriesIdList = array();
+        global $recursiveCounter;
+        $recursiveCounter = 0;
+        function recursivePrintCategoryTree($currentParentId = null, &$categoryTree, &$visitedCategoriesIdList, &$categoryIdToNumberForViewList){
+            global $recursiveCounter;
+
+            $lineIndentation = str_repeat("\t", $recursiveCounter+2);
+            foreach ($categoryTree as $categoryId => $categoryProperties) {
+                foreach ($categoryProperties["parent_id"] as $categoryParentId) {
+                    if ($recursiveCounter > MAX_RECURSION_DEPTH) {
+                        echo($lineIndentation."<span>...WARNING: Max recursion depth ".MAX_RECURSION_DEPTH." reached, not continue next!...</span><br />\n");
+                        return;
+                    }
+
+                    if ($categoryParentId == $currentParentId) {
+                        $category_group_number = $categoryIdToNumberForViewList[$categoryId];
+
+                        echo($lineIndentation.'<input type="button" value="'.$categoryProperties['child_name'].'" onclick="navigationShowCategory(\'category_'.$category_group_number.'\', this);" />'."\n");
+                        if (in_array($categoryId, $visitedCategoriesIdList) == false){
+                            $recursiveCounter++;
+                            array_push($visitedCategoriesIdList, $categoryId);
+
+                            echo($lineIndentation.'<span class="node_category_buttons category_'.$category_group_number.'">'."\n");
+                            echo($lineIndentation."\t<input type=\"button\" value=\"..\" onclick=\"navigationShowCategory('parent', this)\" />"."\n");
+                            recursivePrintCategoryTree($categoryId, $categoryTree, $visitedCategoriesIdList, $categoryIdToNumberForViewList);
+                            echo("$lineIndentation</span>\n");
+
+                            $recursiveCounter--;
+                        }
+                    }
+                }
+            }
+        }
+        echo("\n");
+        recursivePrintCategoryTree(null, $categoryChildTree, $visitedCategoriesIdList, $categoryIdToNumberForViewList);
         ?>
-
-
-
-
-
-
-
-
-
 
        <!-- user defined nodes menu place to insert -->
         <span class="nodes_tab category_0">
-		    <input type="button" value=".." onclick="navigationShowCategory('all', this)" />
         <?php
         foreach ($nodesNamesWithCategories[0] as $nodeWithoutCategory){?>
             <div data-shape="<?php echo($nodeWithoutCategory['className']); ?>" data-label="<?php echo($nodeWithoutCategory['displayName']); ?>" class="palette_node_element draw2d_droppable"><?php echo($nodeWithoutCategory['displayName']); ?></div>

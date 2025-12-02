@@ -6052,6 +6052,7 @@ shape_designer.figure.ImageObject = draw2d.SetFigure.extend({
     NAME: "shape_designer.figure.ImageObject",
 
     base64ImageDefault: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAR+SURBVHhe7Zu7LzVBGMZPkEgQhUQoNILCLUFcGtdeVAqF2u0PEBIaoVfq9KIQhRBaSsQ1RCkRJO7XuLxfnklmc867M7uzvu/bM2ePJ3mC2dnszG/fmXl3dsUozRXjBemmXwC8IN30C4AXpJu0AF5eXmhmZoYmJyfp6emJH46MtACmp6cpFosJd3R00MPDA68SCWkBjI+POwDg9vZ2ur+/59VSXloANzc34s5zCHd3d7xqSksLAMIdR6ejDMETAITOekXC19cXPT8/89NSRr4AIHSWRwKgIEIAYHh4mEpLS6m6ujpprq+vp4WFBd50XxkBgHQQHh8f6erqihoaGhKOJcNVVVW82b4yBgCpIHR2dtL7+7vIG7q6uigzMzM0Z2VlUUZGRngAICRFHAIi4e3tjb6/v+ng4CA0Hx0d0dLSkgOhpqaGN9dXgQB8fHyIn7jjqokRURC2zs7OwgOA2X5wcJBub28FBIQ/hxD2Erm/vx8eAKioqEjMuIABqyIhTAihA8CSg4u1tbWJkMdS+K8hYGzv7u6KecVPSQMA7+3tiTLV6gAoQSHs7OwIsLJDuNby8jKvlqCkAcAyhJlYSgUhyAPU+fm5GF7x58vrbG1t8eqOrAEAqSCYPkpPTU25Oi/d29vLqzuyCgCkeoAygdDX1+fquHRdXR2v7sg6ABA6q5oYvYYD33+Id3d3N6/uyEoAkA6CbmI8OTmhnJwcV+fh1dVVXt2RtQAg1XDwgrC2tkYVFRVO3cLCQpqbm+PVEmQ1AAi5QpBIQORsbGyIu35xccEPu2Q1ACQy8kmRR8JP8gSVrAbQ399PjY2N9Pr6qoTgNzGayFoAs7OzCR1FNKggmCyRXrISwMrKitMoaaS4gIBo+JcQrANwfHxMBQUFCR2Ubm1tFVGg20/wGg64FlLiy8vLhHKrAKAD8Q9LKgMCHqNN9xO2t7dFOa6HOlgax8bG6PPzUxy3CkBPT4+rwypjOAAChoQqEiSE09NTbXI0MDAg6hweHtoBYHR01NVIL0sIujwB0XR9fU0tLS2uc6XX19dFrpB0APPz867GmVhuquhWB7nrhHr8XBhZ4+bmJuXm5oq/QwUA6qCPTYzs7GxX40yNjuryBBzDMPGC0NzcTPn5+eL3UAHk5eWJlLW8vNzVqKD2yhPi3zvoIEiHCgCTU0lJiasRP7WEoMsTTCCECuB/WM4JujwBcACJA5JOeQBwPARVnoBjOgiRAAD75QmAgGjgxyIDAPbLE+TyGT8nRAoA7JcnoDx+iYwcANg0T8D3CcXFxby5vrIeAGySJ+D5YWhoSNQJopQAAJvkCZB8SjRVygCA/fKEn3zRGhhAZWWlq2Fh2i9P4PsJfko5ADC+T8DOED7QUkVCEAiBASwuLlJTUxPV1tYmzWVlZTQyMiI+0fvb7xMCA7BFmAwBANK9lTaBkLIAuFQQ8LfXRisUGQCQCgIiAR9+6xQpAJDqhSxevesUOQAQfzWP/3zRKZIAICRFExMTovOYMHWKLABT/QLgBemmXwC8IN2U9gD+AMNkpU/nN6DpAAAAAElFTkSuQmCC",
+    base64ImageSrc: "",
     defaultWidth: 64,
     defaultHeight: 64,
 
@@ -6061,20 +6062,27 @@ shape_designer.figure.ImageObject = draw2d.SetFigure.extend({
     createSet: function()
     {
         this.canvas.paper.setStart();
-        shape = this.canvas.paper.image(this.base64ImageDefault, 0, 0, this.defaultWidth, this.defaultHeight);
+
+        shape = this.canvas.paper.image(
+            this.userData.base64ImageSrc ? this.userData.base64ImageSrc : this.base64ImageDefault,
+            0,  // WRONG, this will move element out of view, this.attr("x") ? this.attr("x") : 0,
+            0,  // WRONG, this will move element out of view, this.attr("y") ? this.attr("y") : 0,
+            this.attr("width") ? this.attr("width") : this.defaultWidth,
+            this.attr("height") ? this.attr("height") : this.defaultHeight
+        );
+
         return this.canvas.paper.setFinish();
     },
 
-    init:function()
+    init:function(attr, setter, getter)
     {
         this.blur = 0;
         this.isExtFigure = true;
 
-        this._super();
+        this._super(attr, setter, getter);
 
-        this.setUserData({name:"Label"});
-        this.setWidth(this.defaultWidth);
-        this.setHeight(this.defaultHeight);
+        if (typeof this.userData !== "object" || this.userData === null) this.userData = {};
+        if (typeof attr == "object" && attr.src !== undefined && attr.src != "") this.userData.base64ImageSrc = attr.src;
 
         this.filters   = new draw2d.util.ArrayList();
         this.filters.add( new shape_designer.filter.PositionFilter());
@@ -6809,8 +6817,7 @@ shape_designer.loadSymbolFromGraphLangClass = function(contents, appCanvas, appC
 
     }else if (element.type == 'image'){
 
-        let imageFigure = new shape_designer.figure.ImageObject();
-        imageFigure.attr(element.attrs);
+        let imageFigure = new shape_designer.figure.ImageObject(element.attr());
 
         var command = new draw2d.command.CommandAdd(
             canvas,
