@@ -199,6 +199,10 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
     // console.log(compileCommandOutputObj);
     if (compileCommandOutputObj.status == -1){
         /*
+         *  This was for previous g++ compile whne used as:
+         *      > g++ -fdiagnostic-fomrat=json
+         *  Now there is used cmake so this need to be re-done.
+         *
          *  If there is status -1 it means there is whole error obj str in output json format
          *  Error object structure:
          *      - array[0..n]
@@ -355,60 +359,98 @@ GraphLang.Debugger.Cpp.debugGetWireValue = function(options = null){
         if (options){
             let wireName = options.objectVariableName; //newer implementation using option parameter with wire name which must be pushed from compiler
 
-            /*
+            /*  WAY 0 - Intial experiment, this will not be used, left it here for now just to show how to obtain wire value from GDB
              *  This is first way, but this output structure is too complex
              */
             // GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`print ${wireName}`);
 
-            /*
-             *  This will evaluate expression and return address where variable is stored along its value
-             *  Here try to extract value from output payload and put it's value on screen on wire
-             *  This is example output from GDB from python:
-                    [
-                      {
-                        "type": "result",
-                        "message": "done",
-                        "payload": {
-                          "value": "{_M_dataplus = {> = {> = {}, }, _M_p = 0x5ffda0 \"AAABBB\"}, _M_string_length = 6, {_M_local_buf = \"AAABBB\\000\\000\\\"\\322`\\254\\376\\177\\000\", _M_allocated_capacity = 72852346847553}}"
-                        },
-                        "token": null,
-                        "stream": "stdout"
-                      }
-                    ]
-
-             *  Output parsing is done in provided callback function.
-             *  TODO: now gdb response EXPECT STRING, need to add case for number or else, datatype can be got from wiretype
-             */
-            let gdbOutputStr = await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`-data-evaluate-expression ${wireName}`)
-
-            console.log(`> parsing gdb output`);
-            console.log(gdbOutputStr);
-
-            let wireDatatype = appCanvas.getLine(options.objectId).getSource().getUserData().datatype;
-
-            let gdbOutputJson = JSON.parse(gdbOutputStr);
-            if (gdbOutputJson[0].payload.value === undefined){ resolve("__undefined__"); }
-
-            const valueString = gdbOutputJson[0].payload.value;
             let wireValue = "NOT EVALUATED!";
+            // let wireDatatype = appCanvas.getLine(options.objectId).getSource().getUserData().datatype;
+            let wireDatatype = appCanvas.getLine(options.objectId).getDatatype();
 
             //extract wire value from response based on its datatype, for number it's easy for string little more complicated
             if (wireDatatype === "string"){
-                // Use a regular expression to match the string inside the quotes
-                const regex = /"([^"]*)"/; // This will match the string between quotes
-                const match = valueString.match(regex);
 
-                if (match && match[1]) {
-                    wireValue = match[1]; // "AAABBB"
-                    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>>" + wireValue + "<pre/><hr/>");
-                } else {
-                    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>> no wire value extracted!<pre/><hr/>");
+                // /*
+                //  *  WAY 1 - using too complex output for string
+                //  *  This is example output from GDB from python:
+                //         [
+                //           {
+                //             "type": "result",
+                //             "message": "done",
+                //             "payload": {
+                //               "value": "{_M_dataplus = {> = {> = {}, }, _M_p = 0x5ffda0 \"AAABBB\"}, _M_string_length = 6, {_M_local_buf = \"AAABBB\\000\\000\\\"\\322`\\254\\376\\177\\000\", _M_allocated_capacity = 72852346847553}}"
+                //             },
+                //             "token": null,
+                //             "stream": "stdout"
+                //           }
+                //         ]
+                //  *
+                //  */
+                //
+                //     /*
+                //      *  This will evaluate expression and return address where variable is stored along its value
+                //      *  Here try to extract value from output payload and put it's value on screen on wire
+                //      *
+                //      *  Output parsing is done in provided callback function.
+                //      */
+                //     let gdbOutputStr = await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`-data-evaluate-expression ${wireName}`)
+                //
+                //     console.log(`> parsing gdb output`);
+                //     console.log(gdbOutputStr);
+                //
+                //     let gdbOutputJson = JSON.parse(gdbOutputStr);
+                //     if (gdbOutputJson[0].payload.value === undefined){ resolve("__undefined__"); }
+                //
+                //     const valueString = gdbOutputJson[0].payload.value;
+                //     let wireValue = "NOT EVALUATED!";
+                //
+                //     // Use a regular expression to match the string inside the quotes
+                //     const regex = /"([^"]*)"/; // This will match the string between quotes
+                //     const match = valueString.match(regex);
+                //
+                //     if (match && match[1]) {
+                //         wireValue = match[1]; // "AAABBB"
+                //         document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>>" + wireValue + "<pre/><hr/>");
+                //     } else {
+                //         document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>> no wire value extracted!<pre/><hr/>");
+                //     }
+
+                /*  WAY 2 - most simplest way to get string value only directly from gdb using command
+                 *        - this will print just string value also char[] value, tested in msys2 in gdb
+                 */
+                let gdbOutputStr = await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`printf "%s",${wireName}.c_str()`);
+                let gdbOutputJson = JSON.parse(gdbOutputStr);
+                for (const key in gdbOutputJson){
+                    if (gdbOutputJson[key].type == "console"){
+                        wireValue = gdbOutputJson[key].payload;
+                    }
                 }
+
             }else{
+                /*
+                 *  This will evaluate expression and return address where variable is stored along its value
+                 *  Here try to extract value from output payload and put it's value on screen on wire
+                 *
+                 *  Output parsing is done in provided callback function.
+                 */
+                let gdbOutputStr = await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`-data-evaluate-expression ${wireName}`)
+
+                console.log(`> parsing gdb output`);
+                console.log(gdbOutputStr);
+
+                let gdbOutputJson = JSON.parse(gdbOutputStr);
+                if (gdbOutputJson[0].payload.value === undefined){ resolve("__undefined__"); }
+
+                const valueString = gdbOutputJson[0].payload.value;
+
                 wireValue = valueString;
                 document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>> no wire datatype recognized, gdb value response:\n" + wireValue + "<pre/><hr/>");
             }
 
+            /*
+             *  RESULT - resolve with string value which will be displayed on wire in GraphLang Schematic Editor
+             */
             resolve(wireValue);  //return received data
         }else{
             console.log(`> GraphLang.Debugger.Cpp.debugGetWireValue - no input options provided`);
@@ -509,9 +551,9 @@ GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWireDeleteAll = function(wireObj
  *  @description ???This will blink on current code location, it scans source code, ask debugger
  *  on which line it is and find it in schematic and focus screen on it, should work on nested nodes.
  */
-GraphLang.Debugger.Cpp.getCodeLocation = function(){
+GraphLang.Debugger.Cpp.getCodeLocation = async function(){
 
-    GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`frame`, function(response) {
+    await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`frame`, function(response) {
         let gdbMessages = JSON.parse(response);
         let lineNumber = -1;
         let breakpointInfo = {};
@@ -591,6 +633,7 @@ GraphLang.Debugger.Cpp.open = function(options = null){
         <input name="randomNumberButton" type="button" value="test random number" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('get random number')" />
         <input name="codeBreakpointListButton" type="button" value="breakpoint list" onclick="GraphLang.Debugger.Cpp.refreshBreakpointList()" />
         <input name="codeWatchListButton" type="button" value="watch list" onclick="GraphLang.Debugger.Cpp.refreshWatchList()" />
+        <input name="stepForwardButton" type="button" value="step >" onclick="GraphLang.Debugger.Cpp.stepForward()" />
         <hr/>
         <div id="generatedContent"></div>`
     );
@@ -728,4 +771,23 @@ GraphLang.Debugger.Cpp.runCurrentNode = async function(options = null){
      *  Return output
      */
     return ajaxResponse;
+}
+
+/**
+ *  @method stepForward
+ *  @description Do step in GDB and try to animate where application is at moment.
+ */
+GraphLang.Debugger.Cpp.stepForward = async function(options = null) {
+    let stepUntilBreakpoint = true;
+
+    if (typeof options === "object" && Object.hasOwnProperty("stepUntilBreakpoint")) stepUntilBreakpoint = options.stepUntilBreakpoint;
+
+    if (stepUntilBreakpoint === true){
+        await GraphLang.Debugger.Cpp.sendMessageAndAddToLog('c');
+    }else{
+        await GraphLang.Debugger.Cpp.sendMessageAndAddToLog('s');
+    }
+
+    await GraphLang.Debugger.Cpp.getCodeLocation();
+    await GraphLang.Debugger.Cpp.readAllWatchValues();
 }

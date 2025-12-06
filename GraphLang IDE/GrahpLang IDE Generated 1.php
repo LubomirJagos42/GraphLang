@@ -315,6 +315,8 @@ function navigationShowCategory(categoryName, emitter) {
     $('#navigation span.node_category_buttons').hide();
     $('#navigation input[type=\'button\']').hide();
 
+    $(".palette_node_element").show();  //set all nodes to be visible, just their parent tab are hiddend, nodes are hidden when context search is used
+
     //if going to parent need to get it name
     if (categoryName === "parent"){
         categoryName = "all";
@@ -355,6 +357,21 @@ function navigationShowCategory(categoryName, emitter) {
     $('#navigation input.always_visible').show();
 }
 
+function menu_node_search_oninput(eventObj, emitterObj){
+    let menuNodesFilterStr = emitterObj.value.toLowerCase();
+    if (menuNodesFilterStr.length < 3) return;  //filter nodes when at least 3 letters are entered into text input
+
+    let filteredNodeList = [];
+    for (let menuNode of $(".palette_node_element")){
+        if (menuNode.dataset.label.toLowerCase().search(menuNodesFilterStr) > -1) filteredNodeList.push(menuNode);
+    }
+
+    $(".palette_node_element").hide();
+    for (let menuNode of filteredNodeList) {
+        // console.log(`--> menu node: ${menuNode.dataset.label}`);
+        $(menuNode).show();
+    }
+}
 </script>
 
 </head>
@@ -363,11 +380,13 @@ function navigationShowCategory(categoryName, emitter) {
 
    <div id="content">
         <div id="toolbar"></div>
-        <div id="canvas" style="width: 1500px; height: 600px;"></div>
+        <div id="canvas" style="width: 4500px; height: 4500px;"></div>
         <div id="canvas2" style="width: 1500px; height: 600px;"></div> <!-- Size of bottom window is defined in Application.js -->
    </div>
 
    <div id="navigation" class="">
+
+       <input id="menu_node_search" type="text" placeholder="...some text..." oninput="menu_node_search_oninput(event, this)" />
 
        <!-- buttons to display nodes in some category-->
        <input type="button" class="always_visible" value="all" onclick="navigationShowCategory('all', this);" />

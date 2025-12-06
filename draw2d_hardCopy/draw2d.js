@@ -28743,7 +28743,7 @@ _packages2.default.policy.EditPolicy = Class.extend({
    *
    */
   init: function init(attr, setter, getter) {
-    this.setterWhitelist = (0, _extend2.default)({}, setter);
+          this.setterWhitelist = (0, _extend2.default)({}, setter);
 
     this.getterWhitelist = (0, _extend2.default)({}, getter);
 

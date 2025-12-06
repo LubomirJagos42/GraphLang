@@ -24,6 +24,7 @@ translateToCppCodeBreakpointList = new draw2d.util.ArrayList();
 translateToCppCodeWatchList = new draw2d.util.ArrayList();
 
 GLOBAL_CODE_LINE_OFFSET = 0;
+GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = null;
 
 GraphLang.Utils.getCppCodeImport = function(){
     var cCode = "";
@@ -66,6 +67,8 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
 
     let codeLinesOffset = Object.hasOwn(funcParams, "codeLinesOffset") ? funcParams.codeLinesOffset : 0;
     let compileErrorLines = Object.hasOwn(funcParams, "compileErrorLines") ? funcParams.compileErrorLines : null;
+
+    let lineNumberToFind = Object.hasOwn(funcParams, "lineNumberToFind") ? funcParams.lineNumberToFind : null;
 
     //check canvas variable, if not defined use main canvas
     if (canvas === null){
@@ -414,6 +417,7 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
                  */
                 if (nodeObj.translateToCppCode){
                     let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
+
                     cCode += nodeObj.translateToCppCode({
                         nodeId: nodeObj.getId(),
                         codesLineOffset: codeLinesOffset + lineCountBefore,
@@ -429,6 +433,14 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
                         lineOffset: codeLinesOffset,
                         errorSourceObj: nodeObj
                     });
+
+                    /*
+                     *  If searching for some object which generates code line at some specific line check here if line was already generated
+                     *  if yes store it in global variable
+                     */
+                    if (GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null && lineCountBefore > lineNumberToFind){
+                        GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = nodeObj;
+                    }
                 }
 
                 /*
@@ -962,6 +974,28 @@ SerialClass Serial;
 
     this.initAllPortToDefault(canvas);
     return cCode; //return C/C++ code as string
+}
+
+/**
+ * @method getObjectWhichGenerateCodeAtLine
+ * @param {integer} lineNumberToFind - code line which is going to be find which object generates its code
+ * @returns {figure} canvas figure responsible for specified code line number
+ * @description Transcript code and when line which is specified is generated returns object from canvas which generates it.
+ */
+GraphLang.Utils.getObjectWhichGenerateCodeAtLine = function(lineNumberToFind){
+    GraphLang.Utils.getCppCode4(appCanvas, false);
+    let codeStartLineOffset = GLOBAL_CODE_LINE_OFFSET;
+    let lineNumberWithoutOffset = lineNumberToFind - codeStartLineOffset;
+
+    GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = null;
+
+    GraphLang.Utils.translateCanvasToCppCode({
+        canvas: appCanvas,
+        translateTerminalsDeclaration: true,
+        lineNumberToFind: lineNumberWithoutOffset
+    });
+
+    return GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE;
 }
 
 /**

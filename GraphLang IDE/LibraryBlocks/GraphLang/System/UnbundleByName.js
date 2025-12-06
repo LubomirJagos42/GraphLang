@@ -431,13 +431,13 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
 
       },this));
 
-      this.getOutputPort("clusterInput").getDatatype = this.getDatatype;     //set function for datatype obtaining during load from file
+      this.getInputPort("clusterInput").getDatatype = this.getDatatype;     //set function for datatype obtaining during load from file
 
       this.updateAllItemsOncontext();
    },
    
    /*
-    *   IMRPOTANT
+    *   IMPORTANT
     *   Overloaded function to also return ports of items, must be to return all ports to have defined wires
     *   inside layer when this node is part of multilayered structure
     */

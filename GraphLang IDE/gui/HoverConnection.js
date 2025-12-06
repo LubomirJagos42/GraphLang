@@ -323,7 +323,7 @@ HoverConnection = draw2d.Connection.extend({
       let resultDatatype = "";
       let wireSourcePort = this.getSource();
 
-      if (wireSourcePort.getDatatype === "function") resultDatatype = wireSourcePort.getDatatype()
+      if (typeof wireSourcePort.getDatatype === "function") resultDatatype = wireSourcePort.getDatatype()
       else if (wireSourcePort.userData && wireSourcePort.userData.datatype) resultDatatype = wireSourcePort.userData.datatype;
 
       return resultDatatype;
