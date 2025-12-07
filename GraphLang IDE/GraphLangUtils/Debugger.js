@@ -62,14 +62,55 @@ GraphLang.Debugger.Cpp.createWebSocket = function(options = null){
 GraphLang.Debugger.Cpp.logResponse = function(event){
     console.log(event.data);
 
-    //document.querySelector('#generatedContent').append(event.data);
-    //document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', event.data.replaceAll("\n","<br/>\n") + "<hr />");
-
-    // document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre>" + event.data + "<pre/><hr/>");
-
     try {
         let jsonMsg = JSON.parse(event.data);
-        document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre>" + JSON.stringify(jsonMsg, undefined, 2) + "<pre/><hr/>");
+
+        /*
+         *  WAY 1 - print raw data JSON response, this is quite long
+         */
+        // document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre>" + JSON.stringify(jsonMsg, undefined, 2) + "<pre/><hr/>");
+
+        /*
+         *  WAY 2 - evaluate response from gdb and try to print it on one line
+         */
+        let msgColor = "";
+        let msgPrefix = "";
+        let msgContent = "";
+        for (let gdbLine of jsonMsg){
+            if (gdbLine.type == "log"){
+                msgColor = "rgb(255,238,192)";
+            }else if (gdbLine.type == "console"){
+                msgColor = "#b8d2ff";
+            }else if (gdbLine.type == "notify"){
+                msgColor = "#ffcca9";
+            }else if (gdbLine.type == "result") {
+                msgColor = "#bbfff4";
+            }
+
+            if (["console", "log", "result"].includes(gdbLine.type)){
+                msgContent += `<span style="font-color: #000000; background-color: ${msgColor}">`;
+                msgContent += `${msgPrefix}`;
+
+                //correct text output, if there is "some text...\\n" remove ending newline symbol as it is at the end of text inside apostophes
+                //replace newline symbol in gdb text output \\n -> <br /> as br tag is one which is displayed in html as newline
+                if (gdbLine.message !== null) msgContent += `message: ${JSON.stringify(gdbLine.message, undefined, 2)}<br />`.replace(/(\\n")/g, '"').replaceAll('\\n','<br />');
+                msgContent += `${JSON.stringify(gdbLine.payload, undefined, 2)}`.replace(/(\\n")/g, '"').replaceAll('\\n','<br />');
+
+                msgContent += `</span>`;
+                msgContent += `<br />`;
+                // msgContent += `</hr>`;
+            }else{
+                msgContent += `<pre style="font-color: #000000; background-color: ${msgColor}">`;
+                msgContent += `${msgPrefix}`;
+                if (gdbLine.message !== null) msgContent += `message: ${JSON.stringify(gdbLine.message, undefined, 2)}\n`;
+                msgContent += `${JSON.stringify(gdbLine.payload, undefined, 2)}`;
+                msgContent += `</pre>`;
+                // msgContent += `</hr>`;
+            }
+
+            document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', msgContent);
+        }
+
     }catch(e){
         document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre>" + event.data + "<pre/><hr/>");
     }
@@ -489,6 +530,7 @@ GraphLang.Debugger.Cpp.putWireValueOnScreen = function(watchObj, wireValue, doAn
     //add new label with current value
     let labelWithWireValueRef = new draw2d.shape.basic.Label({
         text: wireValue,
+        bgColor: "#ffffff",
         color: "#63a1ff",
         userData: {isDebugWatchObject: true}    //this indicates that this object is for watch
     });
@@ -633,7 +675,7 @@ GraphLang.Debugger.Cpp.open = function(options = null){
         <input name="randomNumberButton" type="button" value="test random number" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('get random number')" />
         <input name="codeBreakpointListButton" type="button" value="breakpoint list" onclick="GraphLang.Debugger.Cpp.refreshBreakpointList()" />
         <input name="codeWatchListButton" type="button" value="watch list" onclick="GraphLang.Debugger.Cpp.refreshWatchList()" />
-        <input name="stepForwardButton" type="button" value="step >" onclick="GraphLang.Debugger.Cpp.stepForward()" />
+        <input name="stepForwardButton" type="button" value="step >" onclick="GraphLang.Debugger.Cpp.stepForward({stepUntilBreakpoint: false})" />
         <hr/>
         <div id="generatedContent"></div>`
     );
@@ -776,16 +818,20 @@ GraphLang.Debugger.Cpp.runCurrentNode = async function(options = null){
 /**
  *  @method stepForward
  *  @description Do step in GDB and try to animate where application is at moment.
+ *  In GDB stepping is done:
+ *      step (s) - step to next instruction, stepping into subroutines
+ *      next (n) - step over soubroutines
  */
 GraphLang.Debugger.Cpp.stepForward = async function(options = null) {
     let stepUntilBreakpoint = true;
 
-    if (typeof options === "object" && Object.hasOwnProperty("stepUntilBreakpoint")) stepUntilBreakpoint = options.stepUntilBreakpoint;
+    if (typeof options === "object" && Object.hasOwn(options, "stepUntilBreakpoint")) stepUntilBreakpoint = options.stepUntilBreakpoint;
 
-    if (stepUntilBreakpoint === true){
+    if (stepUntilBreakpoint === true || (typeof stepUntilBreakpoint == "string" && (stepUntilBreakpoint.toLowerCase() === "t" || stepUntilBreakpoint == "true"))){
         await GraphLang.Debugger.Cpp.sendMessageAndAddToLog('c');
     }else{
-        await GraphLang.Debugger.Cpp.sendMessageAndAddToLog('s');
+        // await GraphLang.Debugger.Cpp.sendMessageAndAddToLog('s');
+        await GraphLang.Debugger.Cpp.sendMessageAndAddToLog('next');
     }
 
     await GraphLang.Debugger.Cpp.getCodeLocation();

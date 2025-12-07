@@ -2659,6 +2659,9 @@ GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(paramete
             let nodeClassName = parametersObj.nodeClassName;
             let nodeDisplayName = parametersObj.nodeDisplayName;
 
+            let doNodeUploadToServer = true;
+            if (Object.hasOwn(parametersObj, "doNodeUploadToServer")) doNodeUploadToServer = parametersObj.doNodeUploadToServer;
+
             /*
              *  There are 2 cases:
              *      1. nodeContent from server not empty, need to just modify JS class code
@@ -2731,89 +2734,20 @@ GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(paramete
 
             console.log(`start saving this for projectId:${projectId}, nodeClassName:${nodeClassName}`);
 
-            // newer function for node upload doing also rename, create, update
-            GraphLang.Utils.serverAjaxPostSendReceive(
-                ["q", "nodeUpload"],
-                ["projectId", projectId, "nodeId", nodeId, "nodeClassName", nodeClassName, "nodeDisplayName", nodeDisplayName, "nodeCodeContent", nodeContent],
-                function () {
-                    console.log(JSON.stringify(GLOBAL_AJAX_RESPONSE));
-                }
-            )
-                .then(response => alert(JSON.stringify(response)))
-                .catch(response => alert(JSON.stringify(response)));
+            if (doNodeUploadToServer) {
+                // newer function for node upload doing also rename, create, update
+                GraphLang.Utils.serverAjaxPostSendReceive(
+                    ["q", "nodeUpload"],
+                    ["projectId", projectId, "nodeId", nodeId, "nodeClassName", nodeClassName, "nodeDisplayName", nodeDisplayName, "nodeCodeContent", nodeContent],
+                    function () {
+                        console.log(JSON.stringify(GLOBAL_AJAX_RESPONSE));
+                    }
+                )
+                    .then(response => alert(JSON.stringify(response)))
+                    .catch(response => alert(JSON.stringify(response)));
+            }
         }
     )
-
-    // GraphLang.Utils.serverSendReceive(
-    //     'getNodeJavascriptCode',
-    //     projectId,
-    //     `&nodeClassName=${nodeClassName}`,
-    //     function(){
-    //         /*
-    //          *  Extract variables from ajax answer
-    //          */
-    //         nodeClassName = GLOBAL_AJAX_RESPONSE.nodeClassName;
-    //         nodeClassParent = GLOBAL_AJAX_RESPONSE.nodeClassParent;
-    //         nodeContent = GLOBAL_AJAX_RESPONSE.nodeContent;
-    //         nodeDisplayName = GLOBAL_AJAX_RESPONSE.nodeDisplayName;
-    //
-    //         GLOBAL_NODE_CONTENT = GraphLang.Utils.hex_to_ascii(nodeContent);
-    //         //console.log(GLOBAL_NODE_CONTENT);
-    //         console.log(`ajax response saved in GLOBAL_AJAX_RESPONSE variable`);
-    //         console.log(`node content saved in GLOBAL_NODE_CONTENT variable`);
-    //
-    //         //getting input params from global variables, this is not ideal but it will run smoothly
-    //         let projectId = GLOBAL_HELPER_VARIABLE_1;
-    //         let nodeClassName = GLOBAL_HELPER_VARIABLE_2;
-    //
-    //         //GraphLang.UserDefinedNode.extend = function(obj){this.extendObj = obj;}
-    //         //...run node code content...
-    //         //for (m in GraphLang.UserDefinedNode.extendObj){console.log(GraphLang.UserDefinedNode.extendObj[m].toString())}
-    //
-    //         eval(GraphLang.Utils.getCanvasJson(appCanvas)); //this will create jsonDocument variable
-    //
-    //         GLOBAL_HELPER_VARIABLE_1 = {};
-    //         GLOBAL_HELPER_VARIABLE_2 = {};
-    //         let codeToRun = "";
-    //         codeToRun += `GLOBAL_HELPER_VARIABLE_1 = ${nodeClassParent}.extend;\n`;
-    //         codeToRun += `${nodeClassParent}.extend = function(obj){this.extendObj = obj;}\n`;
-    //         codeToRun += `${nodeContent}`;
-    //         codeToRun += `GLOBAL_HELPER_VARIABLE_2 = "";\n`;
-    //         codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "${nodeClassName} = ${nodeClassParent}.extend({\\n"\n`;
-    //
-    //         codeToRun += `for (m in ${nodeClassParent}.extendObj){\n`;
-    //         codeToRun += `\t\tlet objItem = ${nodeClassParent}.extendObj[m];\n`;
-    //         codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += m + ": ";\n`;
-    //         codeToRun += `\t\tif (m != 'jsonDocument'){\n`;
-    //         codeToRun += `\t\t\t\tif (typeof objItem != 'string'){\n`;
-    //         codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += (typeof objItem == 'Object' || Array.isArray(objItem)) ? JSON.stringify(objItem) : objItem.toString();\n`;
-    //         codeToRun += `\t\t\t\t}else{\n`;
-    //         codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '"' + objItem.toString() + '"';\n`;
-    //         codeToRun += `\t\t\t\t}\n`;
-    //         codeToRun += `\t\t}else{\n`;
-    //         codeToRun += `\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '${JSON.stringify(jsonDocument)}';\n`;    // <--- HERE jsonDocument canvas schematic is injected and replaced
-    //         codeToRun += `\t\t}\n`;
-    //         codeToRun += `\t\tGLOBAL_HELPER_VARIABLE_2 += ",\\n";\n`;
-    //         codeToRun += `}\n`;
-    //
-    //         codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "});\\n"\n`;
-    //         codeToRun += `${nodeClassParent}.extend = GLOBAL_HELPER_VARIABLE_1;\n`;
-    //
-    //         console.log(`Going eval() this code:`);
-    //         console.log(`${codeToRun}`);
-    //         eval(codeToRun);
-    //         GLOBAL_HELPER_VARIABLE_1 = codeToRun;
-    //         console.log(`JS code which run in eval() available in GLOBAL_HELPER_VARIABLE_1`);
-    //         console.log(`node class code available in GLOBAL_HELPER_VARIABLE_2`);
-    //
-    //         let nodeContent = GraphLang.Utils.toHex(GLOBAL_HELPER_VARIABLE_2);
-    //
-    //         console.log(`start saving this for porjectId:${projectId}, nodeClassName:${nodeClassName}`);
-    //
-    //         // OLD WAY USING update function, this is not able to create new schematic just update
-    //         GraphLang.Utils.serverUpdateNodeCodeContent(projectId, nodeClassName, nodeContent);
-    //     }
-    // );
 
 }
 
