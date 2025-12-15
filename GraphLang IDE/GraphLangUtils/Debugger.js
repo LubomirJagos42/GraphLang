@@ -301,7 +301,7 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
             canvas: appCanvas,
             translateTerminalsDeclaration: true,
             compileErrorLines: errorLinesByLineNumbers,
-            codeLinesOffset: GLOBAL_CODE_LINE_OFFSET,
+            codeLinesOffset: GraphLang.Utils.TranslateToGeneralCodeObj.GLOBAL_CODE_LINE_OFFSET,
         });
 
         /*

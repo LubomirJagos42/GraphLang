@@ -37,8 +37,8 @@ class TranslateToGeneralCode_1 {
         this.getCppCode = this.getCppCode.bind(this);
         this.getCppCodeTypeDefinition = this.getCppCodeTypeDefinition.bind(this);
         this.getCppCodeImport = this.getCppCodeImport.bind(this);
-        this.getCppCode4 = this.getCppCode4.bind(this);
-        this.getCppCode3 = this.getCppCode3.bind(this);
+        this.getCppCodeUsingTemplate4 = this.getCppCodeUsingTemplate4.bind(this);
+        this.getCppCodeUsingTemplate3 = this.getCppCodeUsingTemplate3.bind(this);
         this.initTranslateToCppBuffers = this.initTranslateToCppBuffers.bind(this);
         this.translateCanvasToCppCode = this.translateCanvasToCppCode.bind(this);
         this.translateToCppCodeSubNode = this.translateToCppCodeSubNode.bind(this);
@@ -87,7 +87,7 @@ class TranslateToGeneralCode_1 {
 
     getCppCode(canvas, showCode = true) {
         let cCode = "";
-        cCode = this.getCppCode4(canvas, showCode, this.translateCanvasToCppCode);
+        cCode = this.getCppCodeUsingTemplate4(canvas, showCode, this.translateCanvasToCppCode);
         return cCode;
     }
 
@@ -571,7 +571,7 @@ class TranslateToGeneralCode_1 {
             let definition = definitionStr.split("->");
             let className = definition[0].trim();
             let clusterName = definition[1].trim();
-            GraphLang.Utils.translateToCppCodeClusterTypeDefinitionFromNode(className, clusterName);
+            translatorObj.translateToCppCodeClusterTypeDefinitionFromNode(className, clusterName);
         });
 
         /* erase flag for for loops at the end of this operation, to be able run again correctly, otherwise
@@ -847,7 +847,7 @@ class TranslateToGeneralCode_1 {
      */
     getObjectWhichGenerateCodeAtLine(lineNumberToFind) {
         this.getCppCode(appCanvas, false);
-        let codeStartLineOffset = GLOBAL_CODE_LINE_OFFSET;
+        let codeStartLineOffset = this.GLOBAL_CODE_LINE_OFFSET;
         let lineNumberWithoutOffset = lineNumberToFind - codeStartLineOffset;
 
         this.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = null;
@@ -862,13 +862,13 @@ class TranslateToGeneralCode_1 {
     }
 
     /**
-     * @method getCppCode3
+     * @method getCppCodeUsingTemplate3
      * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
      * @param {bool} showCode - if true there is code showed in alert message after click on button
      * @returns {String} C/C++ code as string
      * @description Generate C/C++ code using template written in this function.
      */
-    getCppCode3(canvas, showCode = true, translateCanvasToCodeFunction){
+    getCppCodeUsingTemplate3(canvas, showCode = true, translateCanvasToCodeFunction){
 
         /******************************************************************************
          * Init buffers needed for translation process
@@ -1025,13 +1025,13 @@ SerialClass Serial;
     }
 
     /**
-     * @method getCppCode4
+     * @method getCppCodeUsingTemplate4
      * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
      * @param {bool} showCode - if true there is code showed in alert message after click on button
      * @returns {String} C/C++ code as string
      * @description Generate C/C++ code for desktop.
      */
-    getCppCode4(canvas, showCode = true, translateCanvasToCodeFunction){
+    getCppCodeUsingTemplate4(canvas, showCode = true, translateCanvasToCodeFunction){
 
         /******************************************************************************
          * Init buffers needed for translation process
