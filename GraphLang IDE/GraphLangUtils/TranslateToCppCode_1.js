@@ -790,7 +790,7 @@ GraphLang.Utils.translateToCppCodeSubNode = function(funcParams){
         $("canvas").remove("#"+canvasObjArray[0]);
         canvasObjArray[1].destroy();
     });
-},
+}
 
 /**
  *  Init buffers which collects information about current diagram which is translated.

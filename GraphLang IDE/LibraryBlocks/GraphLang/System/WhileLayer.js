@@ -148,6 +148,8 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
    *****************************************************************************************************************************************************/ 
   
   translateToCppCode: function(funcParams = {}){
+    let loopObj = this;
+
     let codesLineOffset = Object.hasOwn(funcParams, "codesLineOffset") ? funcParams.codesLineOffset : 0;
     let compileErrorLines = Object.hasOwn(funcParams, "compileErrorLines") ? funcParams.compileErrorLines : null;
     let breakpointParentId = Object.hasOwn(funcParams, "breakpointParentId") ? funcParams.breakpointParentId : null;
@@ -182,10 +184,10 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
     this.getAssignedFigures().each(function(figIndex, figObj){
         //Getting import statements
         if (figObj.translateToCppCodeImport){
-            if (typeof figObj.translateToCppCodeImport() === "string") this.translateToCppCodeImportArray.push(figObj.translateToCppCodeImport());
+            if (typeof figObj.translateToCppCodeImport() === "string") loopObj.translateToCppCodeImportArray.push(figObj.translateToCppCodeImport());
             if (figObj.translateToCppCodeImport().each){
                 figObj.translateToCppCodeImport().each(function(strIndex, strObj){
-                    if (typeof strObj === "string") this.translateToCppCodeImportArray.push(strObj);
+                    if (typeof strObj === "string") loopObj.translateToCppCodeImportArray.push(strObj);
                 });
             }
         }
@@ -217,18 +219,18 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
       //BREAKPOINT - ADD NODE into list
       if (figObj.getUserData() && figObj.getUserData().isSetBreakpoint){
           let currentLineNumber = GraphLang.Utils.getLineCount(cCode);
-          this.translateToCppCodeBreakpointList.add({
+          loopObj.translateToCppCodeBreakpointList.add({
               lineNumber: currentLineNumber + codesLinesOffset,
               objectId: figObj.getId(),
               type: figObj.NAME.search('HoverConnection') == -1 ? "node" : "wire",
-              parentId: (Object.hasOwn(funcParams, "breakpointParentId")?funcParams.breakpointParentId:null), parentName: this.NAME
+              parentId: (Object.hasOwn(funcParams, "breakpointParentId")?funcParams.breakpointParentId:null), parentName: loopObj.NAME
           });
       }
       if (figObj.getBreakpointList){
           let lineNumberOffset = cCode.split("\n").length - 1;
           figObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
               breakpointObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
-              this.translateToCppCodeBreakpointList.add(breakpointObj);
+              loopObj.translateToCppCodeBreakpointList.add(breakpointObj);
           });
       }
 

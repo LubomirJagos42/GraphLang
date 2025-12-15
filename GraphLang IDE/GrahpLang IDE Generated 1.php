@@ -63,7 +63,7 @@
 
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Utils.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Debugger.js"></script>
-    <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToCppCode_1.js"></script>
+<!--    <script src="<?php //echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToCppCode_1.js"></script>--> <!-- OBSOLETE, REPLACED BY GENERAL TRANSCRIPTOR CLASS -->
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToPythonCode_1.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToGeneralCode_1.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/RightRelPortLocator.js"></script>

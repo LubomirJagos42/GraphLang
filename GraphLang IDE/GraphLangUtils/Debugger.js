@@ -204,12 +204,12 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
     /*
      *  ATTENTION THIS IS USING getCppCode4() which is template for C++ desktop code
      */
-    let nodeCodeContent = GraphLang.Utils.getCppCode4(appCanvas, false);
+    let nodeCodeContent = GraphLang.Utils.TranslateToGeneralCodeObj.getCppCode(appCanvas, false);
     nodeCodeContent = GraphLang.Utils.toHex(nodeCodeContent);
 
     let nodeCodeAdditionalLibraries = "";
-    if (translateToCppCodeLibrariesList){
-        nodeCodeAdditionalLibraries = translateToCppCodeLibrariesList.data.join();
+    if (GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeLibrariesList){
+        nodeCodeAdditionalLibraries = GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeLibrariesList.data.join();
     }
 
     /*
@@ -296,8 +296,8 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
         }
 
         //ASSIGN OBJECTS ON CANVAS TO EACH ERROR
-        GraphLang.Utils.initTranslateToCppBuffers();
-        GraphLang.Utils.translateCanvasToCppCode({
+        GraphLang.Utils.TranslateToGeneralCodeObj.initTranslateToCppBuffers();
+        GraphLang.Utils.TranslateToGeneralCodeObj.translateCanvasToCppCode({
             canvas: appCanvas,
             translateTerminalsDeclaration: true,
             compileErrorLines: errorLinesByLineNumbers,
@@ -381,8 +381,8 @@ GraphLang.Debugger.Cpp.debugSchematic = async function(options = null){
     /*
      *  Check there is breakpoint list variable from CPP translate process.
      */
-    if (translateToCppCodeBreakpointList){
-        translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObj){
+    if (GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeBreakpointList){
+        GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObj){
             GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`b ${breakpointObj.lineNumber}`);
         });
     }
@@ -607,7 +607,7 @@ GraphLang.Debugger.Cpp.getCodeLocation = async function(){
         }
 
         //check if current line is on some breakpoint
-        translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObj){
+        GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObj){
             if (breakpointObj.lineNumber == lineNumber){
                 breakpointInfo = breakpointObj;
             }
@@ -691,7 +691,7 @@ GraphLang.Debugger.Cpp.open = function(options = null){
 
 GraphLang.Debugger.Cpp.refreshBreakpointList = function(funcParams){
     console.log(`REFRESHING BREAKPOINT LIST obtained during C++ code translation, breakpoint list content:`);
-    console.log(translateToCppCodeBreakpointList);
+    console.log(GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeBreakpointList);
     document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>&gt; breakpoint list button clicked</span><br/><hr/>\n");
 
     let outputElement = document.querySelector("#breakpointList");
@@ -702,7 +702,7 @@ GraphLang.Debugger.Cpp.refreshBreakpointList = function(funcParams){
 
     outputElement.innerHTML = "<b>Code breakpoint list:</b><br /><br/>";
 
-    translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObj){
+    GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObj){
         outputElement.insertAdjacentHTML("beforeend", `<span onclick="GraphLang.Utils.animateBlinkObject(appCanvas, '${breakpointObj.objectId}')">${JSON.stringify(breakpointObj)}</span><br /><hr />`)
     });
 }
@@ -725,14 +725,14 @@ GraphLang.Debugger.Cpp.toggleVariablesWatch = function(funcParams = null){
 
 GraphLang.Debugger.Cpp.refreshWatchList = function(funcParams = null){
     console.log(`REFRESHING WATCH LIST obtained during C++ code translation, watch list content:`);
-    console.log(translateToCppCodeWatchList);
+    console.log(GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeWatchList);
     document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>&gt; watch list button clicked</span><br/><hr/>\n");
 
     let outputElement = document.querySelector("#variablesWatch");
 
     outputElement.innerHTML = "<b>Variables watch list:</b>&nbsp;&nbsp;&nbsp;&nbsp;<input name='readAllWatchButton' type='button' value='READ ALL WATCH' onclick='GraphLang.Debugger.Cpp.readAllWatchValues()' /><br /><br/>";
 
-    translateToCppCodeWatchList.each(function(watchIndex, watchObj){
+    GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeWatchList.each(function(watchIndex, watchObj){
         outputElement.insertAdjacentHTML("beforeend", `<span onclick='GraphLang.Debugger.Cpp.readGdbWatchValueAndDisplayOnScreen(${JSON.stringify(watchObj)})'>${JSON.stringify(watchObj)}</span><br /><hr />`)
     });
 }
@@ -762,7 +762,7 @@ GraphLang.Debugger.Cpp.readAllWatchValues = async function(funcParams = null) {
     GraphLang.Debugger.Cpp.logResponse({data: `> readAllWatchValues - entered`});
 
     //there is await used and each() doesn't support await therefore it must be done using for cycle
-    for (const watchObj of translateToCppCodeWatchList.asArray()){
+    for (const watchObj of GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeWatchList.asArray()){
         await GraphLang.Debugger.Cpp.readGdbWatchValueAndDisplayOnScreen(watchObj, true);
     }
 
@@ -787,12 +787,12 @@ GraphLang.Debugger.Cpp.runCurrentNode = async function(options = null){
     /*
      *  ATTENTION THIS IS USING getCppCode4() which is template for C++ desktop code
      */
-    let nodeCodeContent = GraphLang.Utils.getCppCode4(appCanvas, false);
+    let nodeCodeContent = GraphLang.Utils.TranslateToGeneralCodeObj.getCppCode(appCanvas, false);
     nodeCodeContent = GraphLang.Utils.toHex(nodeCodeContent);
 
     let nodeCodeAdditionalLibraries = "";
-    if (translateToCppCodeLibrariesList){
-        nodeCodeAdditionalLibraries = translateToCppCodeLibrariesList.data.join();
+    if (GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeLibrariesList){
+        nodeCodeAdditionalLibraries = GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeLibrariesList.data.join();
     }
 
     /*

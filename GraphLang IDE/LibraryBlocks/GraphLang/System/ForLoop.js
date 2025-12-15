@@ -152,6 +152,8 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
   symbolPicture: " data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFYAAABSCAIAAABBpbS2AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAGSSURBVHhe7dw/SwJxHMdxUfyHwyG4hSL0QBxtaxAdBIXWpp5A2z2Lc2lxcQ7aFHKwVdpuiWaDzClL6iP+Og4hiuuG++X7zXdSvOP74tBz0NT64IMAAggUBBBAoCD4BcFg8G71+P6b2eSbfiBYrVbt9kO1uqzVNjZOKvURnWAymbRa3aOvms3T0Wj0bFXz+Ut0As/ztHa5fJHP32Yyj7ncneNc6hHXdc3hbSg6wXQ61bal0pVeH55i8VqPD4dDc4bEF52g1zurVM7DywfjOG6jcWLOkPiiE9Trx4XCTXjzYLLZe10Ivu+bkyS7iASLxUJLatXw5sGk00s9O5vNzEmSHVcB7wV/IeATYduh3xfsGo/HB313GLT7jtDpPJmjWlU8BKrf33S7r+aoVgUBBBAoCCCAQEEAAQQKAgggUBBAAIGCAAIIFAQQQKAggAACBQEEECgIIIBAQQABBAoCCCBQEEAAgYIAAggUBBBAoCCAAAIVJ8Hez8EtmngI9v4OwLqJgeDfBwEEECgIIIBAQQDBev0J+WznB2v5Ek4AAAAASUVORK5CYII=",
 
   translateToCppCode: function(funcParams = {}){
+    let loopObj = this;
+
     let codesLinesOffset = Object.hasOwn(funcParams, "codesLineOffset") ? funcParams.codesLineOffset : 0;
     let compileErrorLines = Object.hasOwn(funcParams, "compileErrorLines") ? funcParams.compileErrorLines : null;
     let breakpointParentId = Object.hasOwn(funcParams, "breakpointParentId") ? funcParams.breakpointParentId : null;
@@ -192,10 +194,10 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     this.getAssignedFigures().each(function(figIndex, figObj){
       //Getting import statements
       if (figObj.translateToCppCodeImport){
-        if (typeof figObj.translateToCppCodeImport() === "string") this.translateToCppCodeImportArray.push(figObj.translateToCppCodeImport());
+        if (typeof figObj.translateToCppCodeImport() === "string") loopObj.translateToCppCodeImportArray.push(figObj.translateToCppCodeImport());
         if (figObj.translateToCppCodeImport().each){
           figObj.translateToCppCodeImport().each(function(strIndex, strObj){
-            if (typeof strObj === "string") this.translateToCppCodeImportArray.push(strObj);
+            if (typeof strObj === "string") loopObj.translateToCppCodeImportArray.push(strObj);
           });
         }
       }
@@ -230,7 +232,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
       if (figObj.getUserData() && figObj.getUserData().isSetBreakpoint){
         let currentLineNumber = GraphLang.Utils.getLineCount(cCode) + 2;
         console.log(`--> for loop assign breakpoint line: ${currentLineNumber}, offset: ${codesLinesOffset}`);
-        this.translateToCppCodeBreakpointList.add({
+        loopObj.translateToCppCodeBreakpointList.add({
           lineNumber: currentLineNumber + codesLinesOffset,
           objectId: figObj.getId(),
           type: figObj.NAME.search('HoverConnection') == -1 ? "node" : "wire",
@@ -242,7 +244,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
         let lineNumberOffset = cCode.split("\n").length - 1;
         figObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
           breakpointObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
-          this.translateToCppCodeBreakpointList.add(breakpointObj);
+          loopObj.translateToCppCodeBreakpointList.add(breakpointObj);
         });
       }
 
@@ -250,7 +252,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
       if (figObj.getUserData() && figObj.getUserData().isSetWatch){
         let currentLineNumber = GraphLang.Utils.getLineCount(cCode) + 2;
         console.log(`--> for loop assign watch variable: ${currentLineNumber}, offset: ${codesLinesOffset}`);
-        this.translateToCppCodeWatchList.add({
+        loopObj.translateToCppCodeWatchList.add({
           lineNumber: currentLineNumber + codesLinesOffset,
           objectId: figObj.getId(),
           type: figObj.NAME.search('HoverConnection') == -1 ? "node" : "wire",
@@ -262,7 +264,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
         let lineNumberOffset = GraphLang.Utils.getLineCount(cCode) - 1;
         figObj.getWatchList().each(function(watchIndex, watchObj){
           watchObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
-          this.translateToCppCodeWatchList.add(watchObj);
+          loopObj.translateToCppCodeWatchList.add(watchObj);
         });
       }
 
