@@ -456,7 +456,8 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
         //if (connectionObj.getSource().getDatatype) datatypeStr = connectionObj.getSource().getDatatype();    //use getDatatype function if available
 
         try {
-            datatypeStr = connectionObj.getSource().getParent().getDatatype();    //use getDatatype function if available
+            // datatypeStr = connectionObj.getSource().getParent().getDatatype();    //use getDatatype function if available
+            datatypeStr = connectionObj.getSource().getDatatype();                   //this is better as each port have function to return datatype
         }catch(e){
             datatypeStr = datatypeStr_orig;
         }

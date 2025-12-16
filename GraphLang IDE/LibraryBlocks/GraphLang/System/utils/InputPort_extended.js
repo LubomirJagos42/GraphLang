@@ -49,4 +49,18 @@ draw2d.InputPort = draw2d.InputPort.extend({
     });
 
   },
+
+  getDatatype: function(){
+    let datatypeStr = "undefined";
+
+    if (this.getConnections().getSize() > 0){
+      let wireSourcePort = this.getConnections().get(0).getSource();
+      datatypeStr = wireSourcePort.getDatatype();
+    }else if (this.userData && this.userData.datatype){
+      datatypeStr = this.userData.datatype;
+    }
+
+    return datatypeStr;
+  },
+
 });

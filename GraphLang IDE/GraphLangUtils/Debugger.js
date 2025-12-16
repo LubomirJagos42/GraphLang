@@ -57,6 +57,12 @@ GraphLang.Debugger.Cpp.createWebSocket = function(options = null){
         console.log(event);
         document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>CONNECTION CLOSED</span><br/><hr/>\n");
     };
+
+    GraphLang.Debugger.websocket.onerror = function(event){
+        console.log(`Connection ERROR`);
+        console.log(event);
+        document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>CONNECTION ERROR</span><br/><hr/>\n");
+    };
 }
 
 GraphLang.Debugger.Cpp.logResponse = function(event){
@@ -107,9 +113,8 @@ GraphLang.Debugger.Cpp.logResponse = function(event){
                 msgContent += `</pre>`;
                 // msgContent += `</hr>`;
             }
-
-            document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', msgContent);
         }
+        document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', msgContent);
 
     }catch(e){
         document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre>" + event.data + "<pre/><hr/>");

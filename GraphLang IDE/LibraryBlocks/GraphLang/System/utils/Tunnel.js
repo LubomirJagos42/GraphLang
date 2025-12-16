@@ -197,6 +197,11 @@ GraphLang.Shapes.Basic.Tunnel = draw2d.shape.node.Between.extend({
 
             else if (
                 wireSource.getParent().NAME.toLowerCase().search('tunnel') == -1 &&
+                wireSource.getDatatype
+            ) {
+                return wireSource.getDatatype();
+            }else if (
+                wireSource.getParent().NAME.toLowerCase().search('tunnel') == -1 &&
                 wireSource.userData &&
                 wireSource.userData.datatype
             ){

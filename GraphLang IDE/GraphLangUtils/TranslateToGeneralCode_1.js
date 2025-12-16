@@ -224,6 +224,9 @@ class TranslateToGeneralCode_1 {
                     //this is case when wires are connected to bundlers, unbundlers and so
                     sourceDatatype = lineObj.getSource().getParent().getConnectedCluster().getDatatype();
                 }
+                else if (lineObj.getSource().getDatatype) {
+                    sourceDatatype = lineObj.getSource().getDatatype();
+                }
                 else{
                     sourceDatatype = lineObj.getSource().getUserData().datatype;
                 }
@@ -268,7 +271,7 @@ class TranslateToGeneralCode_1 {
          *  Going through diagram and translate each graphical node into its text representation.
          ****************************************************************/
 
-            //obtain list of top level figures, their getComposite() returns null
+        //obtain list of top level figures, their getComposite() returns null
         let allNodes = new draw2d.util.ArrayList()
         canvas.getFigures().each(function(figureIndex, figureObj){
             if (figureObj.getComposite() == null &&
@@ -441,7 +444,7 @@ class TranslateToGeneralCode_1 {
                         nodeObj.getInputPorts().each(function(portIndex, portObj){
                             if (portObj.getConnections().getSize() == 0){
                                 console.log(`getting default port value: translateToCppCodeSubnodeInputTerminalsDefaultValuesArray["${nodeObj.NAME}"]["${portObj.getName()}"]`);
-                                let defaultPortValues = translateTerminalsDeclaration.translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[`${nodeObj.NAME}`][portObj.getName()];
+                                let defaultPortValues = translatorObj.translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[`${nodeObj.NAME}`][portObj.getName()];
                                 let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
                                 if (defaultPortValues.variableValue){
                                     cCode += `${defaultPortValues.datatype} node_${nodeObj.getId()}_inputPort_${defaultPortValues.variableName} = ${defaultPortValues.variableValue};\n`;
@@ -473,7 +476,7 @@ class TranslateToGeneralCode_1 {
                             breakpointParentId: null
                         });
 
-                        console.log("--> ERROR SEARCHING NORMAL TRANSLATION NODE: " + nodeObj.NAME);
+                        //console.log("--> ERROR SEARCHING NORMAL TRANSLATION NODE: " + nodeObj.NAME);  //TODO: This log message seems to be strange, needs to be check
                         GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
                             inputStr: cCode,
                             startLine: lineCountBefore,
@@ -486,8 +489,8 @@ class TranslateToGeneralCode_1 {
                          *  If searching for some object which generates code line at some specific line check here if line was already generated
                          *  if yes store it in global variable
                          */
-                        if (translateTerminalsDeclaration.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null && lineCountBefore > lineNumberToFind){
-                            translateTerminalsDeclaration.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = nodeObj;
+                        if (translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null && lineCountBefore > lineNumberToFind){
+                            translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = nodeObj;
                         }
                     }
 
@@ -498,13 +501,13 @@ class TranslateToGeneralCode_1 {
                      */
                     if (nodeObj.getUserData() && nodeObj.getUserData().isSetBreakpoint){
                         let currentLineNumber = cCode.split("\n").length - 1;
-                        translateTerminalsDeclaration.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "node", parentId: null, parentName: null});
+                        translatorObj.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "node", parentId: null, parentName: null});
                     }
                     if (nodeObj.getBreakpointList){
                         let lineNumberOffset = cCode.split("\n").length - 1;
                         nodeObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
                             breakpointObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
-                            translateTerminalsDeclaration.translateToCppCodeBreakpointList.add(breakpointObj);
+                            translatorObj.translateToCppCodeBreakpointList.add(breakpointObj);
                         });
                     }
 
@@ -516,7 +519,7 @@ class TranslateToGeneralCode_1 {
                         let lineNumberOffset = cCode.split("\n").length - 1;
                         nodeObj.getWatchList().each(function(watchIndex, watchObj){
                             watchObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
-                            translateTerminalsDeclaration.translateToCppCodeWatchList.add(watchObj);
+                            translatorObj.translateToCppCodeWatchList.add(watchObj);
                         });
                     }
 

@@ -51,4 +51,10 @@ draw2d.OutputPort = draw2d.OutputPort.extend({
 
   },
 
+  getDatatype: function(){
+    let datatypeStr = "undefined";
+    if (this.userData && this.userData.datatype) datatypeStr = this.userData.datatype;
+    return datatypeStr;
+  },
+
 });
