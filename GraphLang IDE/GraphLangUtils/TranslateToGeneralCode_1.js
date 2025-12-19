@@ -87,7 +87,8 @@ class TranslateToGeneralCode_1 {
 
     getCppCode(canvas, showCode = true) {
         let cCode = "";
-        cCode = this.getCppCodeUsingTemplate4(canvas, showCode, this.translateCanvasToCppCode);
+        cCode = this.getCppCodeUsingTemplate3(canvas, showCode, this.translateCanvasToCppCode);
+        // cCode = this.getCppCodeUsingTemplate4(canvas, showCode, this.translateCanvasToCppCode);
         return cCode;
     }
 
