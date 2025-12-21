@@ -103,6 +103,11 @@ class DebbugerCppBrowserInterface:
                          print(f"sending> {numberStr}")
                          await websocket.send(numberStr)
 
+                    elif (message.startswith("test echo")):
+                         replyStr = message[len("test echo"):].strip()
+                         print(f"sending> {replyStr}")
+                         await websocket.send(replyStr)
+
                     elif message.startswith("compile code"):
                         inputFile = message.replace("compile code", "").strip()
                         response = await self.compile_code(inputFile)

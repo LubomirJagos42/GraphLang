@@ -52,17 +52,25 @@ GraphLang.Debugger.Cpp.createWebSocket = function(options = null){
         };
     }
 
-    GraphLang.Debugger.websocket.onclose = function(event){
-        console.log(`Connection is CLOSED`);
-        console.log(event);
-        document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>CONNECTION CLOSED</span><br/><hr/>\n");
-    };
+    if (options != null && Object.getOwnPropertyNames(options).includes('onerror')){
+        GraphLang.Debugger.websocket.onerror = options.onerror;
+    }else{
+        GraphLang.Debugger.websocket.onerror = function(event){
+            console.log(`Connection ERROR`);
+            console.log(event);
+            document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>CONNECTION ERROR</span><br/><hr/>\n");
+        };
+    }
 
-    GraphLang.Debugger.websocket.onerror = function(event){
-        console.log(`Connection ERROR`);
-        console.log(event);
-        document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>CONNECTION ERROR</span><br/><hr/>\n");
-    };
+    if (options != null && Object.getOwnPropertyNames(options).includes('onclose')){
+        GraphLang.Debugger.websocket.onclose = options.onclose;
+    }else{
+        GraphLang.Debugger.websocket.onclose = function(event){
+            console.log(`Connection is CLOSED`);
+            console.log(event);
+            document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>CONNECTION CLOSED</span><br/><hr/>\n");
+        };
+    }
 }
 
 GraphLang.Debugger.Cpp.logResponse = function(event){
@@ -142,6 +150,11 @@ GraphLang.Debugger.Cpp.sendMessageAndAddToLog = async function(message = null, c
             resolve(event.data);
         }
 
+        GraphLang.Debugger.websocket.onerror = (event) => {
+            GraphLang.Debugger.Cpp.logResponse(event);
+            reject(event.data);
+        }
+
         GLOBAL_DEBUGGER_CPP_WEBSOCKET_CALLBACK = callbackFunction;
         if (typeof GraphLang.Debugger.websocket.send === "function"){
             GraphLang.Debugger.websocket.send(message);
@@ -179,7 +192,7 @@ GraphLang.Debugger.Cpp.onclickSendButton = function(options = null){
 
 /**
  *  @method startDebuggerServer
- *  @description This will start python script which acts as debugger server, aking interface between GDB and websocket and send and receive messages betweeen them.
+ *  @description This will start python script which acts as debugger server, asking interface between GDB and websocket and send and receive messages betweeen them.
  */
 GraphLang.Debugger.Cpp.startDebuggerServer = async function(options = null){
     return new Promise(async (resolve, reject) => {
@@ -191,10 +204,19 @@ GraphLang.Debugger.Cpp.startDebuggerServer = async function(options = null){
         document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>> start debugger server button clicked<pre/><hr/>");
 
         /*
+         *  End debugger if there is some previously running.
+         */
+        await GraphLang.Debugger.Cpp.endDebuggerServer();
+
+        /*
+         *  Rerecreate websocket as in endDebuggerServer there is created customized websocket.
+         */
+        GraphLang.Debugger.Cpp.createWebSocket();
+
+        /*
          *  Writing message while waiting for server debugger python interface to start
          */
         let intervalIdentifierForServerDebuggerToStart;
-        GraphLang.Debugger.Cpp.createWebSocket();
 
         intervalIdentifierForServerDebuggerToStart = setInterval(async () => {
             let currTime = (new Date()).toLocaleTimeString('eo', { hour12: false });
@@ -251,10 +273,44 @@ GraphLang.Debugger.Cpp.startDebuggerServer = async function(options = null){
     });
 }
 
+/**
+ * @method GraphLang.Debugger.Cpp.endDebuggerServer
+ * @param options
+ * @param options.onopen - function(event) to be called when websocket opens
+ * @param options.onerror - function(event) to be called when websocket error occures
+ * @param options.close - function(event) to be called when websocket closes
+ * @returns {Promise<unknown>}
+ * @description This safely finish python script which create layer between browser and gdb, it sends string "end debugging" which
+ * indicates python script to close and close websocket. This method calls at beginning to createWebsocket() to be sure that websocket
+ * is created (even in case user just opened page and there is no websocket at beginning). Please call this method with "await... " as
+ * it is asynchronous method returning Promise<>.
+ */
 GraphLang.Debugger.Cpp.endDebuggerServer = async function(options = null) {
     return new Promise(async (resolve, reject) => {
-        await GraphLang.Debugger.Cpp.sendMessageAndAddToLog('end debugging');    //TODO: Think how to ensure that connection is established in right mode
-        resolve("python debugger end");
+        let PYTHON_LAYER_DEBUGGER_END_COMMAND = "end debugging";
+        let debuggerLayerResponse = "";
+        GraphLang.Debugger.Cpp.createWebSocket({
+            onopen: async (event) => {
+                let debuggerLayerResponse = await GraphLang.Debugger.Cpp.sendMessageAndAddToLog("test echo debug layer is running");
+                if (debuggerLayerResponse === "debug layer is running"){
+                    await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(PYTHON_LAYER_DEBUGGER_END_COMMAND);
+                }
+            },
+            onerror: async (event) => {
+                if (debuggerLayerResponse === "debug layer is running") {
+                    reject("python debugger still running");
+                }else{
+                    resolve("python debugger end");
+                }
+            },
+            onclose: async (event) => {
+                if (debuggerLayerResponse === "debug layer is running") {
+                    reject("python debugger still running");
+                }else{
+                    resolve("python debugger end");
+                }
+            },
+        });
     });
 }
 
@@ -460,9 +516,9 @@ GraphLang.Debugger.Cpp.debugSchematic = async function(options = null){
      */
     let currentCodeTemplate = await GraphLang.Utils.getProjectCodeTemplate();
     if (currentCodeTemplate === "desktop"){
-        GraphLang.Debugger.Cpp.debugSchematicDesktop(options);
+        await GraphLang.Debugger.Cpp.debugSchematicDesktop(options);
     }else if (currentCodeTemplate === "embedded"){
-        GraphLang.Debugger.Cpp.debugSchematicEmbedded(options)
+        await GraphLang.Debugger.Cpp.debugSchematicEmbedded(options)
     }else{
         document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `<span>ERROR: Unknown code template "${currentCodeTemplate}", cannot debug schematic!</span><br/><hr/>\n`);
     }
@@ -498,31 +554,33 @@ GraphLang.Debugger.Cpp.debugSchematicDesktop = async function(options = null){
 }
 
 GraphLang.Debugger.Cpp.debugSchematicEmbedded = async function(options = null){
-    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `START DEBUGGING EMBEDDED APP<hr/>`);
+    return new Promise(async (resolve, reject) => {
+        document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `START DEBUGGING EMBEDDED APP<hr/>`);
 
-    /*
-     *  First compile current schematic
-     */
-    let ajaxResponse = await GraphLang.Debugger.Cpp.compileCurrentNode();
+        /*
+         *  First compile current schematic
+         */
+        let ajaxResponse = await GraphLang.Debugger.Cpp.compileCurrentNode();
 
-    /*
-     *  Here MUST BE WAITING TILL GDB is fully initialized, it takes time!
-     */
-    let platformioResult = await GraphLang.Debugger.Cpp.startDebuggerServer();
-    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `Platformio result: ${platformioResult}<hr/>`);
+        /*
+         *  Here MUST BE WAITING TILL GDB is fully initialized, it takes time!
+         */
+        let platformioResult = await GraphLang.Debugger.Cpp.startDebuggerServer();
+        document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `Platformio result: ${platformioResult}<hr/>`);
 
-    /*
-     *  Check there is breakpoint list variable from CPP translate process.
-     */
-    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>Start setting breakpoints to code<pre/><hr/>");
-    if (GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList()){
-        GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
-            let gdbCommand = `b main.cpp:${breakpointObj.lineNumber}`;  //main.cpp:lineNumber IS SUPER IMPORTANT, tried without it but it put breakpoint into arduino mangled main.cpp file, this is working
+        /*
+         *  Check there is breakpoint list variable from CPP translate process.
+         */
+        document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>Start setting breakpoints to code<pre/><hr/>");
+        if (GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList()){
+            GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
+                let gdbCommand = `b main.cpp:${breakpointObj.lineNumber}`;  //main.cpp:lineNumber IS SUPER IMPORTANT, tried without it but it put breakpoint into arduino mangled main.cpp file, this is working
 
-            document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `<pre>automatic set breakpoint using command: ${gdbCommand}</pre><hr/>`);
-            GraphLang.Debugger.Cpp.sendMessageAndAddToLog(gdbCommand);
-        });
-    }
+                document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `<pre>automatic set breakpoint using command: ${gdbCommand}</pre><hr/>`);
+                GraphLang.Debugger.Cpp.sendMessageAndAddToLog(gdbCommand);
+            });
+        }
+    });
 }
 
 /**
