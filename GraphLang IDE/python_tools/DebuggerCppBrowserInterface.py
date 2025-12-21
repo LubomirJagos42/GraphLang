@@ -80,7 +80,8 @@ class DebbugerCppBrowserInterface:
             async for message in websocket:
 
                 print(f"received> {message}")
-                logger.info(f"Received: {message[:100]}")
+                if ENABLE_LOGGING:
+                    logger.info(f"Received: {message[:100]}")
                 response = ""
 
                 try:
@@ -118,7 +119,8 @@ class DebbugerCppBrowserInterface:
                         #response = self.__gdbmi.write(message)
 
                         # Run blocking GDB operation in thread pool
-                        logger.debug("Executing GDB command in thread...")
+                        if ENABLE_LOGGING:
+                            logger.debug("Executing GDB command in thread...")
                         loop = asyncio.get_event_loop()
                         response = await loop.run_in_executor(
                             self.executor,

@@ -361,8 +361,14 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
             ["projectId", projectId, "outputFileName", outputFileName, "nodeCodeAdditionalLibraries", nodeCodeAdditionalLibraries, "nodeCodeContent", nodeCodeContent],
             function () {
                 clearTimeout(intervalIdentifierForServerToCompile);
+
+                if (GLOBAL_AJAX_RESPONSE.errorMsg && GLOBAL_AJAX_RESPONSE.errorMsg.toLowerCase().search("not logged") > -1){
+                    outputElement.insertAdjacentHTML('afterbegin', `<pre/>> message: ${GLOBAL_AJAX_RESPONSE.message}\nerror: ${GLOBAL_AJAX_RESPONSE.errorMsg}<pre/><hr/>`);
+                    throw new Error(GLOBAL_AJAX_RESPONSE.errorMsg);
+                }
+
                 let compilationOutput = JSON.parse(GLOBAL_AJAX_RESPONSE.compileCommandOutput);
-                outputElement.insertAdjacentHTML('afterbegin', `<pre/>> message: ${GLOBAL_AJAX_RESPONSE.message}\nerror: ${GLOBAL_AJAX_RESPONSE.errorMsg}\ncompilation output:\n\tstatus: ${compilationOutput.status}\n\tmessage: ${compilationOutput.message}<pre/><hr/>`);
+                outputElement.insertAdjacentHTML('afterbegin', `<pre/>error: ${GLOBAL_AJAX_RESPONSE.errorMsg}\ncompilation output:\n\tstatus: ${compilationOutput.status}\n\tmessage: ${compilationOutput.message}<pre/><hr/>`);
             }
         );
 
