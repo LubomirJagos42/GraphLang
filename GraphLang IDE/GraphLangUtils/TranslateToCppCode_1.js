@@ -420,7 +420,7 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
 
                     cCode += nodeObj.translateToCppCode({
                         nodeId: nodeObj.getId(),
-                        codesLineOffset: codeLinesOffset + lineCountBefore,
+                        codeLinesOffset: codeLinesOffset + lineCountBefore,
                         compileErrorLines: compileErrorLines,
                         breakpointParentId: null
                     });

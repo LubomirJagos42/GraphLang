@@ -3,9 +3,9 @@
 //                                                        
 // http://www.draw2d.org                                  
 //                                                        
-HwArduinoNano.Serial.println = GraphLang.UserDefinedNode.extend({
+HwArduino.Serial.println = HwArduino.CommonParent.extend({
 
-   NAME: "HwArduinoNano.Serial.println",
+   NAME: "HwArduino.Serial.println",
 
    init:function(attr, setter, getter)
    {

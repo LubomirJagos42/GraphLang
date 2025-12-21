@@ -154,7 +154,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
   translateToCppCode: function(funcParams = {}){
     let loopObj = this;
 
-    let codesLinesOffset = Object.hasOwn(funcParams, "codesLineOffset") ? funcParams.codesLineOffset : 0;
+    let codeLinesOffset = Object.hasOwn(funcParams, "codeLinesOffset") ? funcParams.codeLinesOffset : 0;
     let compileErrorLines = Object.hasOwn(funcParams, "compileErrorLines") ? funcParams.compileErrorLines : null;
     let breakpointParentId = Object.hasOwn(funcParams, "breakpointParentId") ? funcParams.breakpointParentId : null;
 
@@ -211,7 +211,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
       if (figObj.translateToCppCode){
         cCode += figObj.translateToCppCode({
           nodeId: figObj.getId(),
-          codesLineOffset: codesLinesOffset + lineCountBefore,
+          codeLinesOffset: codeLinesOffset + lineCountBefore,
           compileErrorLines: compileErrorLines,
           breakpointParentId: breakpointParentId
         }).replaceAll("\n", "\n\t");
@@ -223,7 +223,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
         inputStr: cCode,
         startLine: lineCountBefore,
         errorLines: compileErrorLines,
-        lineOffset: codesLinesOffset,
+        lineOffset: codeLinesOffset,
         errorSourceObj: figObj
       });
 
@@ -231,9 +231,9 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
       //CHECK IF IT'S CONNECTION (wire) if yes don't do breakpoint assignment for it
       if (figObj.getUserData() && figObj.getUserData().isSetBreakpoint){
         let currentLineNumber = GraphLang.Utils.getLineCount(cCode) + 2;
-        console.log(`--> for loop assign breakpoint line: ${currentLineNumber}, offset: ${codesLinesOffset}`);
+        console.log(`--> for loop assign breakpoint line: ${currentLineNumber}, offset: ${codeLinesOffset}`);
         loopObj.translateToCppCodeBreakpointList.add({
-          lineNumber: currentLineNumber + codesLinesOffset,
+          lineNumber: currentLineNumber + codeLinesOffset,
           objectId: figObj.getId(),
           type: figObj.NAME.search('HoverConnection') == -1 ? "node" : "wire",
           parentId: breakpointParentId,
@@ -251,9 +251,9 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
       //FILL WATCH LIST
       if (figObj.getUserData() && figObj.getUserData().isSetWatch){
         let currentLineNumber = GraphLang.Utils.getLineCount(cCode) + 2;
-        console.log(`--> for loop assign watch variable: ${currentLineNumber}, offset: ${codesLinesOffset}`);
+        console.log(`--> for loop assign watch variable: ${currentLineNumber}, offset: ${codeLinesOffset}`);
         loopObj.translateToCppCodeWatchList.add({
-          lineNumber: currentLineNumber + codesLinesOffset,
+          lineNumber: currentLineNumber + codeLinesOffset,
           objectId: figObj.getId(),
           type: figObj.NAME.search('HoverConnection') == -1 ? "node" : "wire",
           parentId: breakpointParentId,

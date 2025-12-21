@@ -102,7 +102,8 @@ htmlTemplate = """
 
     <script src="./GraphLangUtils/Utils.js"></script>
     <script src="./GraphLangUtils/Debugger.js"></script>
-    <script src="./GraphLangUtils/TranslateToCppCode_1.js"></script>
+    <!-- <script src="./GraphLangUtils/TranslateToCppCode_1.js"></script> --><!-- obsolete, replaced by 2nd translator which is object -->
+    <script src="./GraphLangUtils/TranslateToCppCode_2_TranslatorObject.js"></script>
     <script src="./GraphLangUtils/TranslateToPythonCode_1.js"></script>
     <script src="./GraphLangUtils/TranslateToGeneralCode_1.js"></script>
     <script src="./GraphLangUtils/RightRelPortLocator.js"></script>

@@ -22,16 +22,27 @@ import argparse
 parser = argparse.ArgumentParser(description='GDB WebSocket Debugger')
 parser.add_argument('--stdout', action='store_true', help='Enable stdout output')
 parser.add_argument('--logging', action='store_true', help='Enable logging to log file tmp/gdb_websocket.log')
-args = parser.parse_args()
+parser.add_argument('--embedded', action='store_true', help='Use platformio gdb instead of installed in OS')
+parser.add_argument('--projectDir', help='Path to project, this is for embedded')
+args, unknown = parser.parse_known_args()
 
 ENABLE_STDOUT = False
 ENABLE_LOGGING = False
+ENABLE_EMBEDDED = False
+PROJECT_DIR = ""
 
 if args.stdout:
     ENABLE_STDOUT = True
 
 if args.logging:
     ENABLE_LOGGING = True
+
+if args.embedded:
+    ENABLE_EMBEDDED = True
+
+if args.projectDir:
+    PROJECT_DIR = args.projectDir
+    print(f"...using project dir: {PROJECT_DIR}")
 
 if ENABLE_LOGGING:
     if not os.path.exists('tmp'):
@@ -46,7 +57,17 @@ class DebbugerCppBrowserInterface:
     websocketPort = 8888
     
     def __init__(self):
-        self.__gdbmi = GdbController()
+        if ENABLE_EMBEDDED == False:
+            self.__gdbmi = GdbController()
+        else:
+            #
+            # platformio debugger is using this command to start and stops at beginning of mangled arduino code:
+            #   > pio -d <PROJECT_DIR> debug --interface=gdb -- -x .pioinit
+            #
+            self.__gdbmi = GdbController(
+                command=['pio', 'debug', '-d', PROJECT_DIR, '--interface=gdb', '--', '-x', '.pioinit'],
+            )
+
         self.executor = ThreadPoolExecutor(max_workers=1)
         pass
 
@@ -64,6 +85,12 @@ class DebbugerCppBrowserInterface:
 
                 try:
                     if message == "end debugging":
+
+                        #for embedded there is platformio debugger running what is python process therefore it needs to be terminated this way
+                        if ENABLE_EMBEDDED:
+                           await websocket.send(f"GDB process terminate() was called")
+                           self.__gdbmi.gdb_process.terminate()
+
                         await websocket.close()
 
                         #this doesn't seems to finish async loop

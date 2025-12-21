@@ -2573,7 +2573,7 @@ GraphLang.Utils.serverAjaxPostSendReceive = function(getParams = [], postParams 
                 console.log(response);
 
                 GLOBAL_AJAX_RESPONSE = response; //to have access to response in browser
-                if (callbackFunction) callbackFunction();   //RUN CALLBACK FUNCTION IF PROVIDED
+                if (callbackFunction) callbackFunction(response);   //RUN CALLBACK FUNCTION IF PROVIDED and pass json object response into it
 
                 resolve(response);  //resolve promise with response from server
             }else if (xhr.readyState == 4 && xhr.status >= 300){
@@ -2759,9 +2759,7 @@ GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(paramete
  */
 GraphLang.Utils.serverUpdateNodeCodeContent = function(projectId, nodeClassName, nodeCodeContent){
     if (projectId == null || projectId == ""){
-        let currUrl = window.location.href;
-        const urlParams = new URLSearchParams(currUrl);
-        projectId = urlParams.get('projectId');
+        projectId = GraphLang.Utils.getCurrentProjectId();
     }
 
     GraphLang.Utils.serverSendReceive(
@@ -3043,4 +3041,28 @@ GraphLang.Utils.rotateSelectedNodeOnCanvas = function(canvas, angle = 15){
     firstSelectedFigure.getChildren().each(function(childIndex, childObj){
         childObj.setRotationAngle(currentRotation + angle);
     });
+}
+
+GraphLang.Utils.getCurrentProjectId = function(){
+    let currUrl = window.location.href;
+    const urlParams = new URLSearchParams(currUrl);
+    let projectId = urlParams.get('projectId');
+
+    return projectId;
+}
+
+GraphLang.Utils.getProjectCodeTemplate = async function(projectId = null){
+    if (GLOBAL_PROJECT_INFO_CODE_TEMPLATE && GLOBAL_PROJECT_INFO_CODE_TEMPLATE !== "") return GLOBAL_PROJECT_INFO_CODE_TEMPLATE;
+
+    if (projectId){
+        let response = await GraphLang.Utils.serverAjaxPostSendReceive(
+            ["q", "getProjectInfo"],
+            ["projectId", projectId]
+        );
+        if (response.hasOwnProperty("status") && response.status !== -1 && response.hasOwnProperty("project_code_template")){
+            return response.project_code_template;
+        }
+    }
+
+    return "desktop";   //default return value
 }

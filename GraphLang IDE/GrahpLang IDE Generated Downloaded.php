@@ -60,7 +60,8 @@
 
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Utils.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Debugger.js"></script>
-    <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToCppCode_1.js"></script>
+<!--    <script src="--><?php //echo $htmlIncludeDirPrefix; ?><!--/GraphLangUtils/TranslateToCppCode_1.js"></script>--><!-- obsolete, replaced by 2nd translator which is object -->
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToCppCode_2_TranslatorObject.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToPythonCode_1.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToGeneralCode_1.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/RightRelPortLocator.js"></script>

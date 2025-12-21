@@ -150,7 +150,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
   translateToCppCode: function(funcParams = {}){
     let loopObj = this;
 
-    let codesLineOffset = Object.hasOwn(funcParams, "codesLineOffset") ? funcParams.codesLineOffset : 0;
+    let codeLinesOffset = Object.hasOwn(funcParams, "codeLinesOffset") ? funcParams.codeLinesOffset : 0;
     let compileErrorLines = Object.hasOwn(funcParams, "compileErrorLines") ? funcParams.compileErrorLines : null;
     let breakpointParentId = Object.hasOwn(funcParams, "breakpointParentId") ? funcParams.breakpointParentId : null;
 
@@ -200,7 +200,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
       if (figObj.translateToCppCode){
         cCode += figObj.translateToCppCode({
             nodeId: figObj.getId(),
-            codesLineOffset: codesLineOffset + lineCountBefore,
+            codeLinesOffset: codeLinesOffset + lineCountBefore,
             compileErrorLines: compileErrorLines,
             breakpointParentId: breakpointParentId
         }).replaceAll("\n", "\n\t");
@@ -212,7 +212,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
           inputStr: cCode,
           startLine: lineCountBefore,
           errorLines: compileErrorLines,
-          lineOffset: codesLineOffset,
+          lineOffset: codeLinesOffset,
           errorSourceObj: figObj
       });
 
@@ -220,7 +220,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
       if (figObj.getUserData() && figObj.getUserData().isSetBreakpoint){
           let currentLineNumber = GraphLang.Utils.getLineCount(cCode);
           loopObj.translateToCppCodeBreakpointList.add({
-              lineNumber: currentLineNumber + codesLinesOffset,
+              lineNumber: currentLineNumber + codeLinesOffset + 1,
               objectId: figObj.getId(),
               type: figObj.NAME.search('HoverConnection') == -1 ? "node" : "wire",
               parentId: (Object.hasOwn(funcParams, "breakpointParentId")?funcParams.breakpointParentId:null), parentName: loopObj.NAME
@@ -229,7 +229,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
       if (figObj.getBreakpointList){
           let lineNumberOffset = cCode.split("\n").length - 1;
           figObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
-              breakpointObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
+              breakpointObj.lineNumber += lineNumberOffset + 1;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
               loopObj.translateToCppCodeBreakpointList.add(breakpointObj);
           });
       }

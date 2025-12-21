@@ -1,25 +1,41 @@
 import requests
 import hashlib
 import time
+import argparse
 
 URL = 'http://localhost/GraphLangServerApp/?q=userLogin'
 
-#USERNAME = "lubomir.jagos@hidden-mail.com"
-#USERPASSWORD = hashlib.md5('heslo123'.encode()).hexdigest()
+USERNAME = ""
+USERPASSWORD = ""
+
+def parseNamePasswordFromArguments():
+    USERNAME = ""
+    USERPASSWORD = ""
+
+    parser = argparse.ArgumentParser(
+        description='GraphLang LoginClient argument parser'
+    )
+    parser.add_argument('--user', type=str, help='Username')
+    parser.add_argument('--password', type=str, help='Password')
+
+    # Parse
+    args, unknown = parser.parse_known_args()
+    print(args)
+    if args.user:
+        USERNAME = args.user
+    if args.password:
+        USERPASSWORD = hashlib.md5(args.password.encode()).hexdigest()
+
+    return USERNAME, USERPASSWORD
 
 def loginUsingNamePassword(USERNAME = "", PASSWORD = ""):
-    try:
-        USERNAME
-        if (not USERPASSWORD):
-            raise "";
-    except:
+
+    USERNAME, USERPASSWORD = parseNamePasswordFromArguments()
+
+    if USERNAME == "":
         USERNAME = input("username (email): ")
     
-    try:
-        
-        if (not USERPASSWORD):
-            raise "";
-    except:
+    if USERPASSWORD == "":
         USERPASSWORD = input("password: ")
         USERPASSWORD = hashlib.md5(USERPASSWORD.encode()).hexdigest()
 
@@ -40,18 +56,13 @@ def loginUsingNamePassword(USERNAME = "", PASSWORD = ""):
     return response, USERNAME, USERPASSWORD
 
 def loginUsingNameToken(USERNAME = "", USERPASSWORD = "", USERTOKEN = ""):
-    try:
-        USERNAME
-        if (not USERPASSWORD):
-            raise "";
-    except:
+
+    USERNAME, USERPASSWORD = parseNamePasswordFromArguments()
+
+    if USERNAME == "":
         USERNAME = input("username (email): ")
-    
-    try:
-        USERPASSWORD
-        if (not USERPASSWORD):
-            raise "";
-    except:
+
+    if USERPASSWORD == "":
         USERPASSWORD = input("password: ")
         USERPASSWORD = hashlib.md5(USERPASSWORD.encode()).hexdigest()
 
@@ -75,18 +86,12 @@ def loginUsingNameToken(USERNAME = "", USERPASSWORD = "", USERTOKEN = ""):
 
 if __name__ == "__main__":
 
-    try:
-        USERNAME
-        if (not USERPASSWORD):
-            raise "";
-    except:
+    USERNAME, USERPASSWORD = parseNamePasswordFromArguments()
+
+    if USERNAME == "":
         USERNAME = input("username (email): ")
-    
-    try:
-        
-        if (not USERPASSWORD):
-            raise "";
-    except:
+
+    if USERPASSWORD == "":
         USERPASSWORD = input("password: ")
         USERPASSWORD = hashlib.md5(USERPASSWORD.encode()).hexdigest()
 

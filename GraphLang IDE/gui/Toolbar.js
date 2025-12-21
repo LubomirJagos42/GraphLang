@@ -86,7 +86,7 @@ example.Toolbar = Class.extend({
 		*/
 		this.getCppCode3Button  = $("<button id=\"getCppCode3Button\">C/C++</button>");
 		this.getCppCode3Button.button().click($.proxy(function(){
-			GraphLang.Utils.TranslateToGeneralCodeObj.getCppCode(appCanvas);
+			GraphLang.Utils.TranslateToGeneralCodeObj.getCode(appCanvas);
 		}));
 		this.html.append(this.getCppCode3Button);
 

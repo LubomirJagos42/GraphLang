@@ -6,6 +6,7 @@ import math
 import LoginClient as login
 import hashlib
 import re
+import argparse
 
 import createWebPage as localNodesHelper
 
@@ -22,8 +23,22 @@ if __name__ == "__main__":
         print("user not logged, exit")
         exit(0)
 
-    NODE_PROJECT = input("project id: ")
+    parser = argparse.ArgumentParser(
+        description='GraphLang uploadNodesToServer argument parser'
+    )
+    parser.add_argument('--projectId', type=int, help='Project ID')
+
+    # Parse
+    args, unknown = parser.parse_known_args()
+    print(args)
+    NODE_PROJECT = -1
+    if args.projectId:
+        NODE_PROJECT = args.projectId
+    else:
+        NODE_PROJECT = input("project id: ")
+
     NODE_PROJECT = abs(int(NODE_PROJECT))
+    print(NODE_PROJECT)
     
     start_time = time.time()
     

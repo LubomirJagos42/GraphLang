@@ -143,7 +143,13 @@ GraphLang.Debugger.Cpp.sendMessageAndAddToLog = async function(message = null, c
         }
 
         GLOBAL_DEBUGGER_CPP_WEBSOCKET_CALLBACK = callbackFunction;
-        GraphLang.Debugger.websocket.send(message);
+        if (typeof GraphLang.Debugger.websocket.send === "function"){
+            GraphLang.Debugger.websocket.send(message);
+        }else{
+            document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "Error: websocket not created, can't send message<hr/>");
+            //reject("GraphLang.Debugger.Cpp.sendMessageAndAddToLog(): message not sent");
+            resolve("GraphLang.Debugger.Cpp.sendMessageAndAddToLog(): message not sent");
+        }
 
         document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>>" + message + "<pre/><hr/>");
     });
@@ -175,188 +181,262 @@ GraphLang.Debugger.Cpp.onclickSendButton = function(options = null){
  *  @method startDebuggerServer
  *  @description This will start python script which acts as debugger server, aking interface between GDB and websocket and send and receive messages betweeen them.
  */
-GraphLang.Debugger.Cpp.startDebuggerServer = function(options = null){
-    let url_string = window.location.href;
-    let url = new URL(url_string);
-    let projectId = url.searchParams.get("projectId");
+GraphLang.Debugger.Cpp.startDebuggerServer = async function(options = null){
+    return new Promise(async (resolve, reject) => {
+        let url_string = window.location.href;
+        let url = new URL(url_string);
+        let projectId = url.searchParams.get("projectId");
 
-    console.log(`start CPP debugger button clicked, projectId: ${projectId}`);
-    GraphLang.Utils.serverAjaxPostSendReceive(
-        ["q", "runPythonCppDebugServer", "projectId", projectId],
-        null,
-        function(){
-            document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>> start debugger server button clicked<pre/><hr/>");
+        console.log(`start CPP debugger button clicked, projectId: ${projectId}`);
+        document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>> start debugger server button clicked<pre/><hr/>");
+
+        /*
+         *  Writing message while waiting for server debugger python interface to start
+         */
+        let intervalIdentifierForServerDebuggerToStart;
+        GraphLang.Debugger.Cpp.createWebSocket();
+
+        intervalIdentifierForServerDebuggerToStart = setInterval(async () => {
+            let currTime = (new Date()).toLocaleTimeString('eo', { hour12: false });
+            document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `<pre/>${currTime} -> waiting to start debugger python layer<pre/><hr/>`);
+        }, 2000);
+
+        await GraphLang.Utils.serverAjaxPostSendReceive(
+            ["q", "runPythonCppDebugServer", "projectId", projectId],
+            null,
+            function () {
+                clearInterval(intervalIdentifierForServerDebuggerToStart);
+                document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>>debugger server RUNNING<pre/><hr/>");
+            }
+        );
+
+        //For embedded target wait here till there is message from gdb: "PlatformIO: Initialization completed"
+        let codeTemplate = await GraphLang.Utils.getProjectCodeTemplate();
+        if (codeTemplate === "embedded") {
+            GraphLang.Debugger.Cpp.createWebSocket();
+
+            let timeoutResponsesCounter = 0;
+            let MAX_INTERVAL_TIMEOUTS_COUNT = 3;
+            let intervalIdentifier = setInterval(async () => {
+                let gdbResponse = await GraphLang.Debugger.Cpp.sendMessageAndAddToLog('.');
+                try {
+                    let parsedJsonGdbResponse = JSON.parse(gdbResponse);
+                    if (
+                        gdbResponse.search("PlatformIO: Initialization completed") > -1 ||
+                        (parsedJsonGdbResponse.hasOwnProperty("error") && parsedJsonGdbResponse.error.length > 0)
+                    ) {
+                        timeoutResponsesCounter++;
+                        if (gdbResponse.search("PlatformIO: Initialization completed") > -1 || timeoutResponsesCounter > MAX_INTERVAL_TIMEOUTS_COUNT) {
+                            if (gdbResponse.search("PlatformIO: Initialization completed") > -1) {
+                                document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `<pre/>DEBUG PLATFORMIO INITIALIZATION COMPLETE<pre/><hr/>`);
+                                resolve("platformio init finished");
+                            } else {
+                                document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `<pre/>intervalIdentifier reach max consecutive timeouts (${MAX_INTERVAL_TIMEOUTS_COUNT}), stopping refresh<pre/><hr/>`);
+                                reject("platformio init fail, max timeouts reached");
+                            }
+                            clearInterval(intervalIdentifier);
+                        } else {
+                            if (gdbResponse.toLowerCase().search("undefined command") === -1) timeoutResponsesCounter = 0;  //"undefined command" is response for gdb command "."
+                        }
+                    }
+                } catch (e) {
+                    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>${e.message}<pre/><hr/>");
+                }
+            }, 2000);
+        } else if (codeTemplate === "desktop") {
+            resolve("debbuger running for desktop app");
+        } else {
+            reject(`undefined codeTemplate: ${codeTemplate}, python debugger layer running`);
         }
-    );
+    });
+}
+
+GraphLang.Debugger.Cpp.endDebuggerServer = async function(options = null) {
+    return new Promise(async (resolve, reject) => {
+        await GraphLang.Debugger.Cpp.sendMessageAndAddToLog('end debugging');    //TODO: Think how to ensure that connection is established in right mode
+        resolve("python debugger end");
+    });
 }
 
 /**
  *  @method compileCurrentNode
- *  @description This will sen AJAX request to PHP server to run compile process of current generated code.
+ *  @description This will send AJAX request to PHP server to run compile process of current generated code.
  */
 GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
-    console.log(`compile current node button clicked`);
+    return new Promise(async(resolve, reject) => {
+        console.log(`compile current node button clicked`);
 
-    /*
-     *  TODO getting current node and sent it to server
-     */
-    let url_string = window.location.href;
-    let url = new URL(url_string);
-
-    let projectId = url.searchParams.get("projectId");
-    let outputFileName = "main.exe";
-
-    /*
-     *  ATTENTION THIS IS USING getCppCode4() which is template for C++ desktop code
-     */
-    let nodeCodeContent = GraphLang.Utils.TranslateToGeneralCodeObj.getCppCode(appCanvas, false);
-    nodeCodeContent = GraphLang.Utils.toHex(nodeCodeContent);
-
-    let nodeCodeAdditionalLibraries = "";
-    if (GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeLibrariesList){
-        nodeCodeAdditionalLibraries = GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeLibrariesList.data.join();
-    }
-
-    /*
-     *  Send AJAX request to server to compile code
-     */
-    let outputElement = document.querySelector('#generatedContent');
-    outputElement.insertAdjacentHTML('afterbegin', "<pre/>> compile current node button clicked<pre/><hr/>");
-    let ajaxResponse = await GraphLang.Utils.serverAjaxPostSendReceive(
-        ["q", "compileProject"],
-        ["projectId", projectId, "outputFileName", outputFileName, "nodeCodeAdditionalLibraries", nodeCodeAdditionalLibraries, "nodeCodeContent", nodeCodeContent],
-        function(){
-            let compilationOutput = JSON.parse(GLOBAL_AJAX_RESPONSE.compileCommandOutput);
-            outputElement.insertAdjacentHTML('afterbegin', `<pre/>> message: ${GLOBAL_AJAX_RESPONSE.message}\nerror: ${GLOBAL_AJAX_RESPONSE.errorMsg}\ncompilation output:\n\tstatus: ${compilationOutput.status}\n\tmessage: ${compilationOutput.message}<pre/><hr/>`);
-        }
-    );
-
-    /*
-     *  Evaluate compilation output
-     */
-    let compileErrorLines = new draw2d.util.ArrayList();
-    let errorLinesByLineNumbers = [];
-
-    let compileCommandOutputStr = ajaxResponse.compileCommandOutput;
-    // console.log(`--> compileCommandOutputStr:`);
-    // console.log(compileCommandOutputStr);
-    let compileCommandOutputObj = JSON.parse(compileCommandOutputStr);
-    // console.log(`--> compileCommandOutputObj:`);
-    // console.log(compileCommandOutputObj);
-    if (compileCommandOutputObj.status == -1){
         /*
-         *  This was for previous g++ compile whne used as:
-         *      > g++ -fdiagnostic-fomrat=json
-         *  Now there is used cmake so this need to be re-done.
-         *
-         *  If there is status -1 it means there is whole error obj str in output json format
-         *  Error object structure:
-         *      - array[0..n]
-         *        |__children: array[0..n]
-         *           |__locations: array[0..n]
-         *              |__caret:
-         *                 |__line: number
-         *
-         *  This will extract just caret object information into array:
-         *      - array[lineNumber]
-         *        |__array["...error message..."]
-         *           |__array[0..n]
-         *              |__byte-column
-         *              |__column
-         *              |__display-column
-         *              |__file
-         *              |__line
+         *  TODO getting current node and sent it to server
          */
-        let compileErrorStr = compileCommandOutputObj.errorMsg;//.replaceAll('\\"', '"'); //.replaceAll('\\n', '\n').split('\n'); //THIS DOESN'T HAVE TO BE USED
+        let url_string = window.location.href;
+        let url = new URL(url_string);
 
-        let compileErrorObj = null;
-        try {
-            compileErrorObj = JSON.parse(compileErrorStr);
-            console.log(`--> compileErrorObj json answer from G++:`);
-            console.log(compileErrorObj);
-        }catch (e){
-            console.warn(`Error parsing compile error message: ${e.message}`);
+        let projectId = url.searchParams.get("projectId");
+        let outputFileName = "main.exe";
+
+        /*
+         *  ATTENTION THIS IS USING getCppCode4() which is template for C++ desktop code
+         */
+        let nodeCodeContent = await GraphLang.Utils.TranslateToGeneralCodeObj.getCode(appCanvas, false);
+        nodeCodeContent = GraphLang.Utils.toHex(nodeCodeContent);
+
+        let nodeCodeAdditionalLibraries = "";
+        if (GraphLang.Utils.TranslateToGeneralCodeObj.getLibrariesList()) {
+            nodeCodeAdditionalLibraries = GraphLang.Utils.TranslateToGeneralCodeObj.getLibrariesList().data.join();
         }
 
-        for (let errorObj of compileErrorObj){
-            // console.log(`----> compileErrorObj one:`);
-            for (let errorLocation of errorObj.locations){
-                // console.log(errorLocation);
-                compileErrorLines.add(errorLocation.caret);
+        /*
+         *  TODO: Experimental message while waiting to compile code, it takes time!
+         */
+        let intervalIdentifierForServerToCompile;
+        intervalIdentifierForServerToCompile = setInterval(async () => {
+            let currTime = (new Date()).toLocaleTimeString('eo', { hour12: false });
+            document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `<pre/>${currTime} -> waiting for server to compile codebase<pre/><hr/>`);
+        }, 2000);
 
-                //create new array at line number key
-                let arrayKey = String(errorLocation.caret.line);    //output of this is object with properties, NO ARRAY
-                if (!errorLinesByLineNumbers[arrayKey]){
-                    errorLinesByLineNumbers[arrayKey] = [];
-                }
-
-                //this will group message into
-                let lineError = errorLocation.caret;
-                let lineErrorMessage = errorObj.message;
-                if (!errorLinesByLineNumbers[arrayKey][lineErrorMessage]){
-                    errorLinesByLineNumbers[arrayKey][lineErrorMessage] = [];
-                }
-                errorLinesByLineNumbers[arrayKey][lineErrorMessage].push(errorLocation.caret);  //add line error into array under line number and error message key
+        /*
+         *  Send AJAX request to server to compile code
+         */
+        let outputElement = document.querySelector('#generatedContent');
+        outputElement.insertAdjacentHTML('afterbegin', "<pre/>> compile current node button clicked<pre/><hr/>");
+        let ajaxResponse = await GraphLang.Utils.serverAjaxPostSendReceive(
+            ["q", "compileProject"],
+            ["projectId", projectId, "outputFileName", outputFileName, "nodeCodeAdditionalLibraries", nodeCodeAdditionalLibraries, "nodeCodeContent", nodeCodeContent],
+            function () {
+                clearTimeout(intervalIdentifierForServerToCompile);
+                let compilationOutput = JSON.parse(GLOBAL_AJAX_RESPONSE.compileCommandOutput);
+                outputElement.insertAdjacentHTML('afterbegin', `<pre/>> message: ${GLOBAL_AJAX_RESPONSE.message}\nerror: ${GLOBAL_AJAX_RESPONSE.errorMsg}\ncompilation output:\n\tstatus: ${compilationOutput.status}\n\tmessage: ${compilationOutput.message}<pre/><hr/>`);
             }
-        }
-
-        //ASSIGN OBJECTS ON CANVAS TO EACH ERROR
-        GraphLang.Utils.TranslateToGeneralCodeObj.initTranslateToCppBuffers();
-        GraphLang.Utils.TranslateToGeneralCodeObj.translateCanvasToCppCode({
-            canvas: appCanvas,
-            translateTerminalsDeclaration: true,
-            compileErrorLines: errorLinesByLineNumbers,
-            codeLinesOffset: GraphLang.Utils.TranslateToGeneralCodeObj.GLOBAL_CODE_LINE_OFFSET,
-        });
+        );
 
         /*
-         *  I wanted to use for (let obj in ...) but it doesn't seems to get indexes as line number, don't know why in Utils this is running and here no.
-         *      - therefore using this approach using normal loop to index array, non defined elements are undefined
+         *  Evaluate compilation output
          */
-        for(let k = 0; k < errorLinesByLineNumbers.length; k++){
-            errorObj = errorLinesByLineNumbers[k];
-            if (errorObj === null || errorObj === undefined) continue;
+        let compileErrorLines = new draw2d.util.ArrayList();
+        let errorLinesByLineNumbers = [];
 
-            let outputMsg= "";
-            let errorMessages = Object.getOwnPropertyNames(errorObj);
-            for (let message of errorMessages){
-                if (message == "length") continue;
-                if (message !== "sourceObjects"){
-                    /*
-                     *  This will put together message for user
-                     */
-                    outputMsg += `<b>compile error (line ${k}):</b>&nbsp;${message}<br/>`;
-                }else{
-                    /*
-                     *  Here are accessed problematic objects
-                     */
-                    for (let errorCanvasObj of errorObj["sourceObjects"]){
-                        // errorCanvasObj.setStroke(4).setColor("#b43500");                         //this will set stroke for each error object in stacktrace
-                        outputMsg += `<span onclick="GraphLang.Utils.animateBlinkObject(appCanvas, '${errorCanvasObj.getId()}', {color: '#b43500'}, (obj) => obj.setStroke(0))">&nbsp;&nbsp;&nbsp;&nbsp;${errorCanvasObj.NAME}&nbsp;&nbsp;-->&nbsp;&nbsp;${errorCanvasObj.getId()}</span><br/>`;
+        let compileCommandOutputStr = ajaxResponse.compileCommandOutput;
+        // console.log(`--> compileCommandOutputStr:`);
+        // console.log(compileCommandOutputStr);
+        let compileCommandOutputObj = JSON.parse(compileCommandOutputStr);
+        // console.log(`--> compileCommandOutputObj:`);
+        // console.log(compileCommandOutputObj);
+        if (compileCommandOutputObj.status == -1) {
+            /*
+             *  This was for previous g++ compile whne used as:
+             *      > g++ -fdiagnostic-fomrat=json
+             *  Now there is used cmake so this need to be re-done.
+             *
+             *  If there is status -1 it means there is whole error obj str in output json format
+             *  Error object structure:
+             *      - array[0..n]
+             *        |__children: array[0..n]
+             *           |__locations: array[0..n]
+             *              |__caret:
+             *                 |__line: number
+             *
+             *  This will extract just caret object information into array:
+             *      - array[lineNumber]
+             *        |__array["...error message..."]
+             *           |__array[0..n]
+             *              |__byte-column
+             *              |__column
+             *              |__display-column
+             *              |__file
+             *              |__line
+             */
+            let compileErrorStr = compileCommandOutputObj.errorMsg;//.replaceAll('\\"', '"'); //.replaceAll('\\n', '\n').split('\n'); //THIS DOESN'T HAVE TO BE USED
+
+            let compileErrorObj = null;
+            try {
+                compileErrorObj = JSON.parse(compileErrorStr);
+                console.log(`--> compileErrorObj json answer from G++:`);
+                console.log(compileErrorObj);
+            } catch (e) {
+                console.warn(`Error parsing compile error message: ${e.message}`);
+            }
+
+            for (let errorObj of compileErrorObj) {
+                // console.log(`----> compileErrorObj one:`);
+                for (let errorLocation of errorObj.locations) {
+                    // console.log(errorLocation);
+                    compileErrorLines.add(errorLocation.caret);
+
+                    //create new array at line number key
+                    let arrayKey = String(errorLocation.caret.line);    //output of this is object with properties, NO ARRAY
+                    if (!errorLinesByLineNumbers[arrayKey]) {
+                        errorLinesByLineNumbers[arrayKey] = [];
+                    }
+
+                    //this will group message into
+                    let lineError = errorLocation.caret;
+                    let lineErrorMessage = errorObj.message;
+                    if (!errorLinesByLineNumbers[arrayKey][lineErrorMessage]) {
+                        errorLinesByLineNumbers[arrayKey][lineErrorMessage] = [];
+                    }
+                    errorLinesByLineNumbers[arrayKey][lineErrorMessage].push(errorLocation.caret);  //add line error into array under line number and error message key
+                }
+            }
+
+            //ASSIGN OBJECTS ON CANVAS TO EACH ERROR
+            GraphLang.Utils.TranslateToGeneralCodeObj.initTranslateBuffers();
+            GraphLang.Utils.TranslateToGeneralCodeObj.translateCanvasToCode({
+                canvas: appCanvas,
+                translateTerminalsDeclaration: true,
+                compileErrorLines: errorLinesByLineNumbers,
+                codeLinesOffset: GraphLang.Utils.TranslateToGeneralCodeObj.getCurrentTranslateLineOffset(),
+            });
+
+            /*
+             *  I wanted to use for (let obj in ...) but it doesn't seems to get indexes as line number, don't know why in Utils this is running and here no.
+             *      - therefore using this approach using normal loop to index array, non defined elements are undefined
+             */
+            for (let k = 0; k < errorLinesByLineNumbers.length; k++) {
+                errorObj = errorLinesByLineNumbers[k];
+                if (errorObj === null || errorObj === undefined) continue;
+
+                let outputMsg = "";
+                let errorMessages = Object.getOwnPropertyNames(errorObj);
+                for (let message of errorMessages) {
+                    if (message == "length") continue;
+                    if (message !== "sourceObjects") {
+                        /*
+                         *  This will put together message for user
+                         */
+                        outputMsg += `<b>compile error (line ${k}):</b>&nbsp;${message}<br/>`;
+                    } else {
+                        /*
+                         *  Here are accessed problematic objects
+                         */
+                        for (let errorCanvasObj of errorObj["sourceObjects"]) {
+                            // errorCanvasObj.setStroke(4).setColor("#b43500");                         //this will set stroke for each error object in stacktrace
+                            outputMsg += `<span onclick="GraphLang.Utils.animateBlinkObject(appCanvas, '${errorCanvasObj.getId()}', {color: '#b43500'}, (obj) => obj.setStroke(0))">&nbsp;&nbsp;&nbsp;&nbsp;${errorCanvasObj.NAME}&nbsp;&nbsp;-->&nbsp;&nbsp;${errorCanvasObj.getId()}</span><br/>`;
+                        }
                     }
                 }
+                document.querySelector("#generatedContent").insertAdjacentHTML(
+                    'afterbegin',
+                    `<span>${outputMsg}</span><hr/>`
+                );
             }
-            document.querySelector("#generatedContent").insertAdjacentHTML(
-                'afterbegin',
-                `<span>${outputMsg}</span><hr/>`
-            );
-        }
-    }   //end compile error lines evaluation
+        }   //end compile error lines evaluation
 
-    //put extracted information into output ajax structure
-    ajaxResponse.compileErrorByLineNumbers = errorLinesByLineNumbers;
-    console.log(ajaxResponse);
+        //put extracted information into output ajax structure
+        ajaxResponse.compileErrorByLineNumbers = errorLinesByLineNumbers;
+        console.log(ajaxResponse);
 
-    /*********************************************************************************************************
-     *  REFRESH BREAKPOINTS and WATCH from code into #breakpointList, #variablesWatch
-     *********************************************************************************************************/
-    GraphLang.Debugger.Cpp.refreshBreakpointList();
-    GraphLang.Debugger.Cpp.refreshWatchList();
+        /*********************************************************************************************************
+         *  REFRESH BREAKPOINTS and WATCH from code into #breakpointList, #variablesWatch
+         *********************************************************************************************************/
+        GraphLang.Debugger.Cpp.refreshBreakpointList();
+        GraphLang.Debugger.Cpp.refreshWatchList();
 
-    /*
-     *  Return output
-     */
-    return ajaxResponse;
+        /*
+         *  Return output
+         */
+        resolve(ajaxResponse);
+    });
 }
 
 /**
@@ -373,26 +453,76 @@ GraphLang.Debugger.Cpp.debugSchematic = async function(options = null){
     if (codeRewriteIdHtmlElement) codeRewriteIdHtmlElement.checked = false;
 
     /*
+     *  ATTENTION, WE SUPPOSE THAT Compile button was clicked first.
+     *  This will run debugger, there are 2 different platforms:
+     *      - desktop run: gdb <filename>  ...run gdb through python layer
+     *      - embedded run platformio debugger
+     */
+    let currentCodeTemplate = await GraphLang.Utils.getProjectCodeTemplate();
+    if (currentCodeTemplate === "desktop"){
+        GraphLang.Debugger.Cpp.debugSchematicDesktop(options);
+    }else if (currentCodeTemplate === "embedded"){
+        GraphLang.Debugger.Cpp.debugSchematicEmbedded(options)
+    }else{
+        document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `<span>ERROR: Unknown code template "${currentCodeTemplate}", cannot debug schematic!</span><br/><hr/>\n`);
+    }
+}
+
+GraphLang.Debugger.Cpp.debugSchematicDesktop = async function(options = null){
+    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `START DEBUGGING DESKTOP APP<hr/>`);
+
+    /*
      *  First compile current schematic
      */
     let ajaxResponse = await GraphLang.Debugger.Cpp.compileCurrentNode();
 
     /*
-     *  ATTENTION, WE SUPPOSE THAT Compile button was clicked first.
+     *  Here MUST BE WAITING TILL GDB is fully initialized, it takes time!
      */
+    let startDebuggerServerResult = await GraphLang.Debugger.Cpp.startDebuggerServer();
+    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `start desktop debugger server result: ${startDebuggerServerResult}<hr/>`);
+
     let compiledFileFullPath = ajaxResponse.outputFileAbsolutePath.replaceAll('\\', '\\\\');
     GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`file ${compiledFileFullPath}`);
 
     /*
      *  Check there is breakpoint list variable from CPP translate process.
      */
-    if (GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeBreakpointList){
-        GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObj){
+    if (GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList()){
+        GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
             GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`b ${breakpointObj.lineNumber}`);
         });
     }
 
     GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`start`);
+}
+
+GraphLang.Debugger.Cpp.debugSchematicEmbedded = async function(options = null){
+    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `START DEBUGGING EMBEDDED APP<hr/>`);
+
+    /*
+     *  First compile current schematic
+     */
+    let ajaxResponse = await GraphLang.Debugger.Cpp.compileCurrentNode();
+
+    /*
+     *  Here MUST BE WAITING TILL GDB is fully initialized, it takes time!
+     */
+    let platformioResult = await GraphLang.Debugger.Cpp.startDebuggerServer();
+    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `Platformio result: ${platformioResult}<hr/>`);
+
+    /*
+     *  Check there is breakpoint list variable from CPP translate process.
+     */
+    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>Start setting breakpoints to code<pre/><hr/>");
+    if (GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList()){
+        GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
+            let gdbCommand = `b main.cpp:${breakpointObj.lineNumber}`;  //main.cpp:lineNumber IS SUPER IMPORTANT, tried without it but it put breakpoint into arduino mangled main.cpp file, this is working
+
+            document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `<pre>automatic set breakpoint using command: ${gdbCommand}</pre><hr/>`);
+            GraphLang.Debugger.Cpp.sendMessageAndAddToLog(gdbCommand);
+        });
+    }
 }
 
 /**
@@ -612,7 +742,7 @@ GraphLang.Debugger.Cpp.getCodeLocation = async function(){
         }
 
         //check if current line is on some breakpoint
-        GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObj){
+        GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
             if (breakpointObj.lineNumber == lineNumber){
                 breakpointInfo = breakpointObj;
             }
@@ -681,6 +811,7 @@ GraphLang.Debugger.Cpp.open = function(options = null){
         <input name="codeBreakpointListButton" type="button" value="breakpoint list" onclick="GraphLang.Debugger.Cpp.refreshBreakpointList()" />
         <input name="codeWatchListButton" type="button" value="watch list" onclick="GraphLang.Debugger.Cpp.refreshWatchList()" />
         <input name="stepForwardButton" type="button" value="step >" onclick="GraphLang.Debugger.Cpp.stepForward({stepUntilBreakpoint: false})" />
+        <input name="gdbBreakpointListButton" type="button" value="info breakpoint" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('info breakpoint')" />
         <hr/>
         <div id="generatedContent"></div>`
     );
@@ -696,7 +827,7 @@ GraphLang.Debugger.Cpp.open = function(options = null){
 
 GraphLang.Debugger.Cpp.refreshBreakpointList = function(funcParams){
     console.log(`REFRESHING BREAKPOINT LIST obtained during C++ code translation, breakpoint list content:`);
-    console.log(GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeBreakpointList);
+    console.log(GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList());
     document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>&gt; breakpoint list button clicked</span><br/><hr/>\n");
 
     let outputElement = document.querySelector("#breakpointList");
@@ -707,7 +838,7 @@ GraphLang.Debugger.Cpp.refreshBreakpointList = function(funcParams){
 
     outputElement.innerHTML = "<b>Code breakpoint list:</b><br /><br/>";
 
-    GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObj){
+    GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
         outputElement.insertAdjacentHTML("beforeend", `<span onclick="GraphLang.Utils.animateBlinkObject(appCanvas, '${breakpointObj.objectId}')">${JSON.stringify(breakpointObj)}</span><br /><hr />`)
     });
 }
@@ -730,14 +861,14 @@ GraphLang.Debugger.Cpp.toggleVariablesWatch = function(funcParams = null){
 
 GraphLang.Debugger.Cpp.refreshWatchList = function(funcParams = null){
     console.log(`REFRESHING WATCH LIST obtained during C++ code translation, watch list content:`);
-    console.log(GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeWatchList);
+    console.log(GraphLang.Utils.TranslateToGeneralCodeObj.getWatchList());
     document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>&gt; watch list button clicked</span><br/><hr/>\n");
 
     let outputElement = document.querySelector("#variablesWatch");
 
     outputElement.innerHTML = "<b>Variables watch list:</b>&nbsp;&nbsp;&nbsp;&nbsp;<input name='readAllWatchButton' type='button' value='READ ALL WATCH' onclick='GraphLang.Debugger.Cpp.readAllWatchValues()' /><br /><br/>";
 
-    GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeWatchList.each(function(watchIndex, watchObj){
+    GraphLang.Utils.TranslateToGeneralCodeObj.getWatchList().each(function(watchIndex, watchObj){
         outputElement.insertAdjacentHTML("beforeend", `<span onclick='GraphLang.Debugger.Cpp.readGdbWatchValueAndDisplayOnScreen(${JSON.stringify(watchObj)})'>${JSON.stringify(watchObj)}</span><br /><hr />`)
     });
 }
@@ -767,7 +898,7 @@ GraphLang.Debugger.Cpp.readAllWatchValues = async function(funcParams = null) {
     GraphLang.Debugger.Cpp.logResponse({data: `> readAllWatchValues - entered`});
 
     //there is await used and each() doesn't support await therefore it must be done using for cycle
-    for (const watchObj of GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeWatchList.asArray()){
+    for (const watchObj of GraphLang.Utils.TranslateToGeneralCodeObj.getWatchList().asArray()){
         await GraphLang.Debugger.Cpp.readGdbWatchValueAndDisplayOnScreen(watchObj, true);
     }
 
@@ -792,12 +923,12 @@ GraphLang.Debugger.Cpp.runCurrentNode = async function(options = null){
     /*
      *  ATTENTION THIS IS USING getCppCode4() which is template for C++ desktop code
      */
-    let nodeCodeContent = GraphLang.Utils.TranslateToGeneralCodeObj.getCppCode(appCanvas, false);
+    let nodeCodeContent = GraphLang.Utils.TranslateToGeneralCodeObj.getCode(appCanvas, false);
     nodeCodeContent = GraphLang.Utils.toHex(nodeCodeContent);
 
     let nodeCodeAdditionalLibraries = "";
-    if (GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeLibrariesList){
-        nodeCodeAdditionalLibraries = GraphLang.Utils.TranslateToGeneralCodeObj.translateToCppCodeLibrariesList.data.join();
+    if (GraphLang.Utils.TranslateToGeneralCodeObj.getLibrariesList()){
+        nodeCodeAdditionalLibraries = GraphLang.Utils.TranslateToGeneralCodeObj.getLibrariesList().data.join();
     }
 
     /*

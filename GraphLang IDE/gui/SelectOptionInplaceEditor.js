@@ -23,16 +23,30 @@ draw2d.ui.SelectOptionInplaceEditor =  draw2d.ui.LabelInplaceEditor.extend({
         //
         $("body").bind("click",this.commitCallback);
 
+        //if sourceFigureId is set then add values from it
         if (label.userData && label.userData.sourceFigureId){
             let sourceFigureId = label.userData.sourceFigureId;
             let optionArray = label.getCanvas().getFigure(sourceFigureId).getOptionArray();
             this.setOptions(optionArray)
         }
 
+        //if edited label has userData.optionEditorValues set append values from it
+        if (label.userData && label.userData.optionEditorValues) {
+            if (label.userData.sourceFigureId){
+                this.appendOptions(label.userData.optionEditorValues);
+            }else{
+                this.setOptions(label.userData.optionEditorValues);
+            }
+        }
+
         //modified implementation
         let optionHtmlStr = "";
         for (let k = 0; k < this.optionArray.length; k++){
-            optionHtmlStr += `<option value="${this.optionArray[k].value}">${this.optionArray[k].name}</option>`;
+            let optionValue = this.optionArray[k].value;
+            let optionName = this.optionArray[k].name;
+            if (optionName === undefined || optionName === "") optionName = optionValue;   //use key as display name if name not defined
+
+            optionHtmlStr += `<option value="${optionValue}">${optionName}</option>`;
         }
         this.html = $('<select id="inplaceeditor">' +
             optionHtmlStr +
@@ -90,8 +104,12 @@ draw2d.ui.SelectOptionInplaceEditor =  draw2d.ui.LabelInplaceEditor.extend({
         },this));
     },
 
+    //set option values expected input array in form: [{value: "value_1", name: "name_1"}, {value: "value_2", name: "name_2"}, ...]
     setOptions: function(optionArray){
         this.optionArray = optionArray;
+    },
+    appendOptions: function(optionArray){
+        this.optionArray.push(...optionArray);  //operator ... must be used to unpack array
     },
 
     setSourceFigureId: function(figureId){

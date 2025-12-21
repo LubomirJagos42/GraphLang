@@ -3,9 +3,9 @@
 //                                                        
 // http://www.draw2d.org                                  
 //                                                        
-HwArduinoNano.Serial.begin = GraphLang.UserDefinedNode.extend({
+HwArduino.Serial.begin = HwArduino.CommonParent.extend({
 
-   NAME: "HwArduinoNano.Serial.begin",
+   NAME: "HwArduino.Serial.begin",
 
    init:function(attr, setter, getter)
    {
