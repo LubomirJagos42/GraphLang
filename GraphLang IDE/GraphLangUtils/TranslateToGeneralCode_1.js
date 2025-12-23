@@ -7,14 +7,24 @@ class TranslateToGeneralCode_1 {
 
     language = "cpp";
     translatorObj = {};
+    translatorCanvasObj = {};
 
     constructor(paramsObj) {
         if (typeof paramsObj === "object" && Object.hasOwn(paramsObj, "language")) this.language = paramsObj.language;
+        if (Object.keys(paramsObj).includes(paramsObj.canvasObj) && typeof paramsObj.canvasObj === "object") this.translatorCanvasObj = paramsObj.canvasObj;
 
         if (this.language === "cpp"){
-            this.translatorObj = new TranslateToCppCode_2_TranslatorObject();
+            this.translatorObj = new TranslateToCppCode_2_TranslatorObject({canvasObj: this.translatorCanvasObj});
         }else{
             throw new Error("Translator language not defined, cannot create its instance!");
+        }
+    }
+
+    setCanvas = (canvasObj) => {
+        if (this.translatorObj !== null && this.translatorObj !== undefined && Object.keys(this.translatorObj).length > 0){
+            this.translatorObj.setCanvas(canvasObj);
+        }else{
+            throw new Error("Internal translator object seems to be wrong!");
         }
     }
 
@@ -71,4 +81,4 @@ class TranslateToGeneralCode_1 {
 /*******************************************************************************************************************************
  *  CREATE CODE GENERATOR OBJECT AND ASSIGN IT TO GENERAL VARIABLES STORAGE
  *******************************************************************************************************************************/
-GraphLang.Utils.TranslateToGeneralCodeObj = new TranslateToGeneralCode_1({language: "cpp"});
+GraphLang.Utils.TranslateToGeneralCodeObj = new TranslateToGeneralCode_1({language: "cpp", canvasObj: appCanvas});

@@ -154,6 +154,9 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
     let compileErrorLines = Object.hasOwn(funcParams, "compileErrorLines") ? funcParams.compileErrorLines : null;
     let breakpointParentId = Object.hasOwn(funcParams, "breakpointParentId") ? funcParams.breakpointParentId : null;
 
+    let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+    let lineNumberToFind = Object.hasOwn(funcParams, "lineNumberToFind") ? funcParams.lineNumberToFind : null;
+
     var cCode = "";
     this.getUserData().wasTranslatedToCppCode = true;
     this.translateToCppCodeImportArray.clear();
@@ -165,14 +168,24 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
       cCode += wireStop.getSource().userData.datatype + " " + wireStop.getVariableName() + ";\n";
     }
 
-    cCode += this.getTunnelsDeclarationCppCode();
+    cCode += this.getTunnelsDeclarationCppCode({
+        lineNumberToFind: lineNumberToFind - 1,
+        translatorObj: translatorObj
+    });
 
-    cCode += this.getWiresInsideLoopDeclarationCppCode();
+    cCode += this.getWiresInsideLoopDeclarationCppCode({
+        lineNumberToFind: lineNumberToFind - GraphLang.Utils.getLineCount(cCode),
+        translatorObj: translatorObj
+    });
     cCode += "\n";
 
     cCode += "do{\n";
 
-    cCode += "\t" + this.getLeftTunnelsWiresAssignementCppCode().replaceAll("\n", "\n\t");
+    let leftTunnelsWiresAssignementCppCode = this.getLeftTunnelsWiresAssignementCppCode({
+        lineNumberToFind: lineNumberToFind - GraphLang.Utils.getLineCount(cCode),
+        translatorObj: translatorObj
+    });
+    cCode += "\t" + leftTunnelsWiresAssignementCppCode.replaceAll("\n", "\n\t");
     cCode += "\n\t";
 
     /*
@@ -202,10 +215,26 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
             nodeId: figObj.getId(),
             codeLinesOffset: codeLinesOffset + lineCountBefore,
             compileErrorLines: compileErrorLines,
-            breakpointParentId: breakpointParentId
+            breakpointParentId: breakpointParentId,
+            lineNumberToFind: lineNumberToFind - GraphLang.Utils.getLineCount(cCode),
+            translatorObj: translatorObj
         }).replaceAll("\n", "\n\t");
-      }else if (figObj.translateToCppCode2){
-        cCode += figObj.translateToCppCode2().replaceAll("\n", "\n\t")
+
+        //if searching for object which generates line try it here for wires
+        if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
+            if (GraphLang.Utils.getLineCount(cCode) >= lineNumberToFind) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = figObj;
+        }
+      }
+
+      if (figObj.getUserData() && figObj.getUserData().isSetBreakpoint){
+          let currentLineNumber = cCode.split("\n").length - 1;
+          translatorObj.translateToCppCodeBreakpointList.add({
+              lineNumber: codeLinesOffset + lineCountBefore - 2,    //TODO: need check if this is right that -2
+              objectId: figObj.getId(),
+              type: "node",
+              parentId: null,
+              parentName: null
+          });
       }
 
       GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
@@ -223,7 +252,8 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
               lineNumber: currentLineNumber + codeLinesOffset + 1,
               objectId: figObj.getId(),
               type: figObj.NAME.search('HoverConnection') == -1 ? "node" : "wire",
-              parentId: (Object.hasOwn(funcParams, "breakpointParentId")?funcParams.breakpointParentId:null), parentName: loopObj.NAME
+              parentId: null, //(Object.hasOwn(funcParams, "breakpointParentId") ? funcParams.breakpointParentId : null), //TODO: need to be done for subnode if is in subnode,  now for testing set to null
+              parentName: loopObj.NAME,
           });
       }
       if (figObj.getBreakpointList){
@@ -234,14 +264,25 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
           });
       }
 
-     /* in case of post C/C++ code run it */
-     if (figObj.translateToCppCodePost) cCode += figObj.translateToCppCodePost().replaceAll("\n", "\n\t"); //if there is defined to put something after let's do it
+     /*
+      *  Trigger translateToCppCodePost() if available
+      */
+     if (figObj.translateToCppCodePost){
+        //if there is defined to put something after let's do it
+         cCode += figObj.translateToCppCodePost({
+             lineNumberToFind: lineNumberToFind - GraphLang.Utils.getLineCount(cCode),
+             translatorObj: translatorObj
+         }).replaceAll("\n", "\n\t");
+     }
     });
 
     return cCode;
   },
 
-  translateToCppCodePost: function(){
+  translateToCppCodePost: function(funcParams){
+    let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+    let lineNumberToFind = Object.hasOwn(funcParams, "lineNumberToFind") ? funcParams.lineNumberToFind : null;
+
     var cCode = "";
     var endCondition = "";
     var stopTerminal = this.getInputPort("stopTerminal");
@@ -249,7 +290,11 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
       endCondition = stopTerminal.getConnections().get(0).getVariableName();
     }
 
-    cCode += this.getRightTunnelsAssignementOutputCppCode().replaceAll("\n", "\n\t");
+    let rightTunnelsAssignementOutputCppCode = this.getRightTunnelsAssignementOutputCppCode({
+        lineNumberToFind: lineNumberToFind - GraphLang.Utils.getLineCount(cCode),
+        translatorObj: translatorObj
+    });
+    cCode += rightTunnelsAssignementOutputCppCode.replaceAll("\n", "\n\t");
     cCode += "\n";  //there is replace of \n to \n\t so this will prevent to have last closing while loop intended
     cCode += "}while(!" + endCondition + "); //END WHILE LOOP\n";
 

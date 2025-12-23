@@ -2936,10 +2936,11 @@ GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject = function(funcParams){
  * @param {Object}   attributes       - attributes objet which will be modified to these values
  * @param {function} callbackFunction - this function is called at the end, there was sometimes incorrect end of animation so here you can put object into default state
  */
-GraphLang.Utils.animateBlinkObject = function(canvasOrOwnerObj, objId, attributes = {}, callbackFunction = null){
+GraphLang.Utils.animateBlinkObject = function(canvasOrOwnerObj, objId, attributes = {}, callbackFunction = null, blinkForever = false){
     let MAX_TOGGLE_COUNT = 6;
     let errorOpacityToggle = true;
     let errorOpacityToggleCounter = 0;
+    let BLINK_FOREVER = blinkForever;
 
     let objType = null;
     let obj = null;
@@ -2973,8 +2974,9 @@ GraphLang.Utils.animateBlinkObject = function(canvasOrOwnerObj, objId, attribute
 
         errorOpacityToggle = !errorOpacityToggle;
         errorOpacityToggleCounter++;
-        if (errorOpacityToggleCounter > MAX_TOGGLE_COUNT){
-            obj.stopTimer();
+        if (errorOpacityToggleCounter > MAX_TOGGLE_COUNT && BLINK_FOREVER === false){
+            //obj.stopTimer();
+            obj.off("timer");
             obj.attr(originalObjectAttributes); //set object attributes to previous values
 
             errorOpacityToggleCounter = 0;  //erase toggle counter
@@ -3052,7 +3054,9 @@ GraphLang.Utils.getCurrentProjectId = function(){
 }
 
 GraphLang.Utils.getProjectCodeTemplate = async function(projectId = null){
-    if (GLOBAL_PROJECT_INFO_CODE_TEMPLATE && GLOBAL_PROJECT_INFO_CODE_TEMPLATE !== "") return GLOBAL_PROJECT_INFO_CODE_TEMPLATE;
+    if (GLOBAL_PROJECT_INFO_CODE_TEMPLATE && GLOBAL_PROJECT_INFO_CODE_TEMPLATE !== ""){
+        return GLOBAL_PROJECT_INFO_CODE_TEMPLATE;
+    }
 
     if (projectId){
         let response = await GraphLang.Utils.serverAjaxPostSendReceive(

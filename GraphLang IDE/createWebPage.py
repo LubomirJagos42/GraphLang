@@ -159,6 +159,12 @@ document.addEventListener("DOMContentLoaded",function () {
        *  Update JSON representation of canvas
        */
       appCanvas = app.view;
+
+     /**
+      *  Set canvas object to code translator, translator is created at time when appCanvas doesn't exists therefore need to be set here later.
+      */
+      GraphLang.Utils.TranslateToGeneralCodeObj.setCanvas(appCanvas);
+
       app.view.getCommandStack().addEventListener(function(e){
           //postChangeEvent is notification when command already run
           if(e.isPostChangeEvent()){

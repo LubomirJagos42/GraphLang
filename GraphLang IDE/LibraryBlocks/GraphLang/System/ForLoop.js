@@ -215,8 +215,6 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
           compileErrorLines: compileErrorLines,
           breakpointParentId: breakpointParentId
         }).replaceAll("\n", "\n\t");
-      }else if (figObj.translateToCppCode2){
-        cCode += figObj.translateToCppCode2().replaceAll("\n", "\n\t");
       }
 
       GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({

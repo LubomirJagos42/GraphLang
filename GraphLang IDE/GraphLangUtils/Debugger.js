@@ -99,20 +99,34 @@ GraphLang.Debugger.Cpp.logResponse = function(event){
                 msgColor = "#ffcca9";
             }else if (gdbLine.type == "result") {
                 msgColor = "#bbfff4";
+            }else if (gdbLine.type == "output") {
+                msgColor = "#b0ddff";
             }
 
-            if (["console", "log", "result"].includes(gdbLine.type)){
+            if (["console", "log", "result"].includes(gdbLine.type)) {
                 msgContent += `<span style="font-color: #000000; background-color: ${msgColor}">`;
                 msgContent += `${msgPrefix}`;
 
                 //correct text output, if there is "some text...\\n" remove ending newline symbol as it is at the end of text inside apostophes
                 //replace newline symbol in gdb text output \\n -> <br /> as br tag is one which is displayed in html as newline
-                if (gdbLine.message !== null) msgContent += `message: ${JSON.stringify(gdbLine.message, undefined, 2)}<br />`.replace(/(\\n")/g, '"').replaceAll('\\n','<br />');
-                msgContent += `${JSON.stringify(gdbLine.payload, undefined, 2)}`.replace(/(\\n")/g, '"').replaceAll('\\n','<br />');
+                if (gdbLine.message !== null) msgContent += `message: ${JSON.stringify(gdbLine.message, undefined, 2)}<br />`.replace(/(\\n")/g, '"').replaceAll('\\n', '<br />');
+                msgContent += `${JSON.stringify(gdbLine.payload, undefined, 2)}`.replace(/(\\n")/g, '"').replaceAll('\\n', '<br />');
 
                 msgContent += `</span>`;
                 msgContent += `<br />`;
                 // msgContent += `</hr>`;
+            }else if (["output"].includes(gdbLine.type)){
+                /*
+                 *  This is for platformio gdb output, message type is "output"
+                 */
+                msgContent += `<pre style="font-color: #000000; background-color: ${msgColor}">`;
+                msgContent += `${msgPrefix}`;
+                if (gdbLine.message !== null) msgContent += `message: ${JSON.stringify(gdbLine.message, undefined, 2)}\n`;
+                msgContent += `${JSON.stringify(gdbLine.payload, undefined, 2)}`;
+                msgContent += `</pre>`;
+
+                //here using regular expression to extract current line number for further evaluation
+
             }else{
                 msgContent += `<pre style="font-color: #000000; background-color: ${msgColor}">`;
                 msgContent += `${msgPrefix}`;
@@ -763,9 +777,8 @@ GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWire = function(breakpointObj) {
         return;
     }
 
-    wireObj = appCanvas.getLine(breakpointObj.objectId);
-    GraphLang.Utils.animateDotAlongWire(wireObj, {userData: {isDebugBreakpointAnimatedDot: true}});
-},
+    GraphLang.Utils.animateDotAlongWire(wireObj, {userData: {isDebugBreakpointAnimated: true}});
+}
 
 /**
  *  @method breakpointAnimateDotAlongWireDeleteAll
@@ -780,12 +793,54 @@ GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWireDeleteAll = function(wireObj
 
     //find all debug red dots on wires and stops them
     wireObj.getChildren().each(function(childIndex, childObj){
-        if (childObj.userData && childObj.userData.isDebugBreakpointAnimatedDot){
+        if (childObj.userData && childObj.userData.isDebugBreakpointAnimated){
             // childObj.off("timer");
             wireObj.remove(childObj);
         }
     });
-},
+}
+
+GraphLang.Debugger.Cpp.breakpointAnimateNodeBlinking = function(breakpointObj) {
+    //check input breakpoint object if is right and if wire was found
+    if (breakpointObj === null || !(typeof breakpointObj === "object" && typeof breakpointObj.objectId === "string")){
+        console.log(`> breakpointAnimateNodeBlinking - entered - input parameter breakpointObj is not object or breakpointObj.objectId is not ID string`);
+        return;
+    }
+    console.log(`> breakpointAnimateNodeBlinking - entered - ${breakpointObj.objectId}`);
+    let nodeObj = appCanvas.getFigure(breakpointObj.objectId);
+    if (nodeObj === undefined || nodeObj === null){
+        console.log(`> breakpointAnimateNodeBlinking - entered - node not found`);
+        return;
+    }
+
+    GraphLang.Utils.animateBlinkObject(nodeObj.getCanvas(), nodeObj.getId(), {userData: {isDebugBreakpointAnimated: true}}, null, true);
+}
+
+GraphLang.Debugger.Cpp.breakpointAnimateNodeBlinkingStop = function(nodeObj) {
+    if (nodeObj === undefined || nodeObj === null){
+        console.log(`> breakpointAnimateNodeBlinkingStop - entered - node not found`);
+        return;
+    }
+
+    if (nodeObj.userData && nodeObj.userData.isDebugBreakpointAnimated){
+        nodeObj.off("timer");
+        //nodeObj.stopTimer();
+    }
+}
+
+GraphLang.Debugger.Cpp.breakpointAnimateStopAll = function() {
+    //delete animated dots from all wires
+    appCanvas.getLines().each((wireIndex, wireObj) => {
+        console.log(`> remove animated dot for wire id: ${wireObj.getId()}`);
+        GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWireDeleteAll(wireObj);
+    });
+
+    //delete all animated nodes for breakpoint
+    appCanvas.getFigures().each((figureIndex, figureObj) => {
+        console.log(`> remove blinking for figure id: ${figureObj.getId()}`);
+        GraphLang.Debugger.Cpp.breakpointAnimateNodeBlinkingStop(figureObj);
+    });
+}
 
 /**
  *  @method getCodeLocation
@@ -794,7 +849,7 @@ GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWireDeleteAll = function(wireObj
  */
 GraphLang.Debugger.Cpp.getCodeLocation = async function(){
 
-    await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`frame`, function(response) {
+    await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`frame`, async function(response) {
         let gdbMessages = JSON.parse(response);
         let lineNumber = -1;
         let breakpointInfo = {};
@@ -805,6 +860,9 @@ GraphLang.Debugger.Cpp.getCodeLocation = async function(){
             if (result) lineNumber = result[1];
         }
 
+        //log info
+        GraphLang.Debugger.Cpp.logResponse({data: `code current line: ${lineNumber}, breakpoint: ${JSON.stringify(breakpointInfo)}`});
+
         //check if current line is on some breakpoint
         GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
             if (breakpointObj.lineNumber == lineNumber){
@@ -812,14 +870,29 @@ GraphLang.Debugger.Cpp.getCodeLocation = async function(){
             }
         });
 
-        //log info
-        GraphLang.Debugger.Cpp.logResponse({data: `code current line: ${lineNumber}, breakpoint: ${JSON.stringify(breakpointInfo)}`});
+        //breakpoint was not found, need to evaluate where code is from generator and create breakpointInfo on the fly
+        if (Object.keys(breakpointInfo).length == 0 && lineNumber > -1){
+            let codeLineResponsibleObject = await GraphLang.Utils.TranslateToGeneralCodeObj.getObjectWhichGenerateCodeAtLine(lineNumber);
 
-        //delete animated dots from all wires
-        appCanvas.getLines().each((wireIndex, wireObj) => {
-            console.log(`> remove animated dot for wire id: ${wireObj.getId()}`);
-            GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWireDeleteAll(wireObj);
-        });
+            /*  This is structure of breakpointInfo object:
+                 {
+                    lineNumber: currentLineNumber,
+                    objectId:   figureObj.getId(),
+                    type:       "node" || "wire",
+                    parentId:   SUB_NODE_ID || null,
+                    parentName: SUB_NODE_NAME || null
+                 }
+             */
+            if (codeLineResponsibleObject === undefined || codeLineResponsibleObject === null){
+                document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>can't find object responsible for breakpoint</span><br/><hr/>\n");
+                return;
+            }
+
+            breakpointInfo.lineNumber = lineNumber;
+            breakpointInfo.objectId = codeLineResponsibleObject.getId();
+            breakpointInfo.objectParentId = null;       //TODO: developing now, testing on top most canvas now
+            breakpointInfo.objectParentName = null;     //TODO: developing now, testing on top most canvas now
+        }
 
         // line number -1 means program is not executed
         if (lineNumber == -1){
@@ -834,14 +907,17 @@ GraphLang.Debugger.Cpp.getCodeLocation = async function(){
 
         //TODO: NEED TO REMEMBER WHAT IS MAIN CANVAS, WHAT SCHEMATIC WAS THERE LOADED!!!
 
+        //go through all lines and nodes and stop animation
+        GraphLang.Debugger.Cpp.breakpointAnimateStopAll();
+
         //if breakpoint is in subnode load it into main canvas
         if (breakpointInfo.parentName != null){
             let nodeWithBreakpointObj = eval("new " + breakpointInfo.parentName + "();")
             GraphLang.Utils.displayContents(nodeWithBreakpointObj.jsonDocument);                //this will load schematic into main appCanvas
         }
 
-        GraphLang.Utils.animateBlinkObject(appCanvas, breakpointInfo.objectId);          //animate node to make visible where is breakpoint or scroll to it to make it visible
         GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWire(breakpointInfo); //animate dot along wire
+        GraphLang.Debugger.Cpp.breakpointAnimateNodeBlinking(breakpointInfo); //animate blinking node
     });
 }
 

@@ -174,8 +174,6 @@ GraphLang.Shapes.Basic.Loop2.Sequence = GraphLang.Shapes.Basic.Loop2.extend({
 
       if (figObj.translateToCppCode){
         cCode += figObj.translateToCppCode() + "\n"
-      }else if (figObj.translateToCppCode2){
-        cCode += figObj.translateToCppCode2() + "\n"
       }
       
      /* in case of post C/C++ code run it */

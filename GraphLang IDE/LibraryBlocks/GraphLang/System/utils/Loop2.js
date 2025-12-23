@@ -335,7 +335,7 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
   /*
    *  TUNNELS DECLARATION
    */
-  getTunnelsDeclarationCppCode:function(){
+  getTunnelsDeclarationCppCode:function(funcParams){
     cCode = "";
     cCode += "/* LEFT TUNNELs declarations */\n";
     cCode += "//tunnel declaration, if connected to wire also assignement\n";
@@ -397,8 +397,11 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
   /*
    *  WIRES INSIDE LOOP DECLARATION
    */
- getWiresInsideLoopDeclarationCppCode:function(){
-    cCode = "";
+ getWiresInsideLoopDeclarationCppCode:function(funcParams){
+    let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+    let lineNumberToFind = Object.hasOwn(funcParams, "lineNumberToFind") ? funcParams.lineNumberToFind : null;
+
+    let cCode = "";
     cCode += "//inside loop wires declaration\n";
 
     //sort nodes by execution order
@@ -464,6 +467,13 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
         if (datatypeStr == "") datatypeStr = datatypeStr_orig;
 
         cCode += datatypeStr + " " + connectionObj.getVariableName() + ";\n";
+
+        //if searching for object which generates line try it here for wires
+        if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
+            //TODO: Need to check that +1 if really it's correct
+            if (GraphLang.Utils.getLineCount(cCode) >= lineNumberToFind + 1) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = connectionObj;
+        }
+
   	});
 
     return cCode;
@@ -472,13 +482,24 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
    /*
     * LEFT TUNNEL LOOP WIRES INPUT ASSIGNEMENTS
     */
-  getLeftTunnelsWiresAssignementCppCode:function(){
-    cCode = "";
+  getLeftTunnelsWiresAssignementCppCode:function(funcParams){
+    let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+    let lineNumberToFind = Object.hasOwn(funcParams, "lineNumberToFind") ? funcParams.lineNumberToFind : null;
+
+    let cCode = "";
     this.getChildren().each(function(childIndex, childObj){
      if (childObj.NAME.toLowerCase().search("lefttunnel") > -1){
        if (childObj.getOutputPort(0).getConnections().getSize() > 0){
          childObj.getOutputPort(0).getConnections().each(function(connectionIndex, connectionObj){
+
            cCode += connectionObj.getVariableName() + " = tunnel_" + childObj.getId() + ";\n";
+
+           //if searching for object which generates line try it here for wires
+           if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
+               //TODO: Need to check that +1 if really it's correct
+               if (GraphLang.Utils.getLineCount(cCode) >= lineNumberToFind + 1) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = connectionObj;
+           }
+
          });
        }
      }
@@ -491,12 +512,23 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
    *  copy value of wire at left side to the wire at right side
    *  ERROR this is WRONG for multilayered structure when there is more than one input into output tunnel
    */
-  getRightTunnelsAssignementOutputCppCode:function(){
-    cCode = "";
+  getRightTunnelsAssignementOutputCppCode:function(funcParams){
+    let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+    let lineNumberToFind = Object.hasOwn(funcParams, "lineNumberToFind") ? funcParams.lineNumberToFind : null;
+
+    let cCode = "";
     this.getChildren().each(function(childIndex, childObj){
       if (childObj.NAME.toLowerCase().search("righttunnel") > -1){
         if (childObj.getOutputPort(0).getConnections().getSize() > 0){
+
           cCode += childObj.getOutputPort(0).getConnections().get(0).getVariableName() + " = " + childObj.getInputPort(0).getConnections().get(0).getVariableName() + ";\n";
+
+          //if searching for object which generates line try it here for wires
+          if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
+              //TODO: Need to check that +1 if really it's correct
+              if (GraphLang.Utils.getLineCount(cCode) >= lineNumberToFind + 1) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = connectionObj;
+          }
+
         }
       }
     });

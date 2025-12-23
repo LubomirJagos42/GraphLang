@@ -5,6 +5,8 @@
 
 class TranslateToCppCode_2_TranslatorObject {
 
+    translatorCanvasObj = null;
+
     //auxiliary ArrayList store declaration of some variables or something during translation process
     translateToCppCodeFunctionsArray = new draw2d.util.ArrayList();
     translateToCppCodeImportArray = new draw2d.util.ArrayList();
@@ -30,6 +32,11 @@ class TranslateToCppCode_2_TranslatorObject {
     GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = null;
 
     constructor(paramsObj) {
+        if (Object.keys(paramsObj).includes(paramsObj.canvasObj) && typeof paramsObj.canvasObj === "object") this.translatorCanvasObj = paramsObj.canvasObj;
+    }
+
+    setCanvas = (canvasObj) => {
+        this.translatorCanvasObj = canvasObj;
     }
 
     getCurrentTranslateLineOffset = () => {
@@ -141,7 +148,7 @@ class TranslateToCppCode_2_TranslatorObject {
             let warningMessage = "Canvas not defined in call translateCanvasToCppCode(), default main canvas will be used!";
             alert(warningMessage);
             console.warn(warningMessage);
-            canvas = appCanvas;
+            canvas = this.translatorCanvasObj;
         }
 
         let translatorObj = this;
@@ -153,9 +160,6 @@ class TranslateToCppCode_2_TranslatorObject {
         //THIS ADAPT PORT DATATYPES SAME AS CONNECTED Wires
         //this can cause some problems because it's not bullet proof function, beacuse it's running statically, need to rewrite it more adaptive but when clicked at least 3 times it's OK
         GraphLang.Utils.setWiresColorByPorts(canvas);
-
-        //ORIGINAL WITHOUT REWRITING IDs
-        //copyElement.innerHTML = GraphLang.Utils.translateToCppCode2(canvas, null);
 
         /*********************************************************************************************************
          *  PORT INITIALIZATION
@@ -265,6 +269,12 @@ class TranslateToCppCode_2_TranslatorObject {
                         lineOffset: codeLinesOffset,
                         errorSourceObj: lineObj
                     });
+
+                    //if searching for object which generates line try it here for wires
+                    if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
+                        //TODO: This will need to be corrected that +1
+                        if (GraphLang.Utils.getLineCount(cCode) >= lineNumberToFind+1) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = lineObj;
+                    }
                 }
             }
 
@@ -285,6 +295,11 @@ class TranslateToCppCode_2_TranslatorObject {
                     lineOffset: codeLinesOffset,
                     errorSourceObj: lineObj
                 });
+
+                //if searching for object which generates line try it here for wires
+                if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
+                    if (GraphLang.Utils.getLineCount(cCode) >= lineNumberToFind) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = lineObj;
+                }
             }
         });
 
@@ -333,6 +348,11 @@ class TranslateToCppCode_2_TranslatorObject {
                             lineOffset: codeLinesOffset,
                             errorSourceObj: nodeObj
                         });
+
+                        //if searching for object which generates line try it here for wires
+                        if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
+                            if (lineCountBefore >= lineNumberToFind) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = nodeObj;
+                        }
                     }
                 }
             });
@@ -454,6 +474,11 @@ class TranslateToCppCode_2_TranslatorObject {
                             lineOffset: codeLinesOffset,
                             errorSourceObj: nodeObj
                         });
+
+                        //if searching for object which generates line try it here
+                        if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
+                            if (lineCountBefore >= lineNumberToFind) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = nodeObj;
+                        }
                     }
 
                     /*
@@ -480,6 +505,11 @@ class TranslateToCppCode_2_TranslatorObject {
                                     lineOffset: codeLinesOffset,
                                     errorSourceObj: nodeObj
                                 });
+
+                                //if searching for object which generates line try it here
+                                if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
+                                    if (lineCountBefore >= lineNumberToFind) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = nodeObj;
+                                }
                             }
                         });
                     }
@@ -495,7 +525,9 @@ class TranslateToCppCode_2_TranslatorObject {
                             nodeId: nodeObj.getId(),
                             codeLinesOffset: codeLinesOffset + lineCountBefore,
                             compileErrorLines: compileErrorLines,
-                            breakpointParentId: null
+                            breakpointParentId: null,
+                            lineNumberToFind: lineNumberToFind - lineCountBefore,
+                            translatorObj: translatorObj
                         });
 
                         //console.log("--> ERROR SEARCHING NORMAL TRANSLATION NODE: " + nodeObj.NAME);  //TODO: This log message seems to be strange, needs to be check
@@ -511,7 +543,7 @@ class TranslateToCppCode_2_TranslatorObject {
                          *  If searching for some object which generates code line at some specific line check here if line was already generated
                          *  if yes store it in global variable
                          */
-                        if (translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null && lineCountBefore > lineNumberToFind){
+                        if (translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null && lineCountBefore >= lineNumberToFind){
                             translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = nodeObj;
                         }
                     }
@@ -555,14 +587,22 @@ class TranslateToCppCode_2_TranslatorObject {
                      */
                     if (nodeObj.translateToCppCodePost){
                         let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
-                        cCode += nodeObj.translateToCppCodePost();
+                        cCode += nodeObj.translateToCppCodePost({
+                            lineNumberToFind: lineNumberToFind - lineCountBefore,
+                            translatorObj: translatorObj
+                        });
                         GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
                             inputStr: cCode,
                             startLine: lineCountBefore,
                             errorLines: compileErrorLines,
                             lineOffset: codeLinesOffset,
-                            errorSourceObj: nodeObj
+                            errorSourceObj: nodeObj,
                         });
+
+                        //if searching for object which generates line try it here
+                        if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
+                            if (lineCountBefore >= lineNumberToFind) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = nodeObj;
+                        }
                     }
 
                     /*
@@ -875,15 +915,17 @@ class TranslateToCppCode_2_TranslatorObject {
      * @returns {figure} canvas figure responsible for specified code line number
      * @description Transcript code and when line which is specified is generated returns object from canvas which generates it.
      */
-    getObjectWhichGenerateCodeAtLine = (lineNumberToFind)=> {
-        this.getCppCode(appCanvas, false);
+    getObjectWhichGenerateCodeAtLine = async (lineNumberToFind)=> {
+        let codeTemplate = await GraphLang.Utils.getProjectCodeTemplate();    //need to get code template because there is different code wrapping for desktop and embedded
+        this.getCppCode(this.translatorCanvasObj, false, codeTemplate);
+
         let codeStartLineOffset = this.GLOBAL_CODE_LINE_OFFSET;
         let lineNumberWithoutOffset = lineNumberToFind - codeStartLineOffset;
 
         this.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = null;
 
         this.translateCanvasToCppCode({
-            canvas: appCanvas,
+            canvas: this.translatorCanvasObj,
             translateTerminalsDeclaration: true,
             lineNumberToFind: lineNumberWithoutOffset
         });
