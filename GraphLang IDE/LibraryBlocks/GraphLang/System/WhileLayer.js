@@ -226,16 +226,10 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
         }
       }
 
-      if (figObj.getUserData() && figObj.getUserData().isSetBreakpoint){
-          let currentLineNumber = cCode.split("\n").length - 1;
-          translatorObj.translateToCppCodeBreakpointList.add({
-              lineNumber: codeLinesOffset + lineCountBefore - 2,    //TODO: need check if this is right that -2
-              objectId: figObj.getId(),
-              type: "node",
-              parentId: null,
-              parentName: null
-          });
-      }
+      /*
+       *  Update line count since there were some lines generated now in step before
+       */
+      lineCountBefore = GraphLang.Utils.getLineCount(cCode);
 
       GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
           inputStr: cCode,
@@ -245,35 +239,89 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
           errorSourceObj: figObj
       });
 
-      //BREAKPOINT - ADD NODE into list
+      /*************************************************************************************************************
+       *  BREAKPOINTS
+       *************************************************************************************************************/
+
+      /*
+       *    Here BREAKPOINT IS ADDED TO LIST
+       */
       if (figObj.getUserData() && figObj.getUserData().isSetBreakpoint){
-          let currentLineNumber = GraphLang.Utils.getLineCount(cCode);
           loopObj.translateToCppCodeBreakpointList.add({
-              lineNumber: currentLineNumber + codeLinesOffset + 1,
+              lineNumber: codeLinesOffset + lineCountBefore,
               objectId: figObj.getId(),
-              type: figObj.NAME.search('HoverConnection') == -1 ? "node" : "wire",
-              parentId: null, //(Object.hasOwn(funcParams, "breakpointParentId") ? funcParams.breakpointParentId : null), //TODO: need to be done for subnode if is in subnode,  now for testing set to null
-              parentName: loopObj.NAME,
+              type: "node",
+              parentId: null,       //TODO: need to be done for subnode if is in subnode,  now for testing set to null
+              parentName: null,     //TODO: need to be done for subnode if is in subnode,  now for testing set to null
           });
       }
+      
+      /*
+       *    Add nested breakpoints in subnodes to loop object breakpoint list which is handled to owner
+       */
       if (figObj.getBreakpointList){
-          let lineNumberOffset = cCode.split("\n").length - 1;
           figObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
-              breakpointObj.lineNumber += lineNumberOffset + 1;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
+              breakpointObj.lineNumber += lineCountBefore;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
               loopObj.translateToCppCodeBreakpointList.add(breakpointObj);
           });
       }
 
-     /*
-      *  Trigger translateToCppCodePost() if available
-      */
-     if (figObj.translateToCppCodePost){
-        //if there is defined to put something after let's do it
-         cCode += figObj.translateToCppCodePost({
-             lineNumberToFind: lineNumberToFind - GraphLang.Utils.getLineCount(cCode),
-             translatorObj: translatorObj
-         }).replaceAll("\n", "\n\t");
-     }
+      /*************************************************************************************************************
+       *  WATCH LIST
+       *************************************************************************************************************/
+
+      /*
+       *  Check if wires connected to node have set breakpoint, if yes need to add code line into breakpoint list
+       *      - this is just for nodes on top canvas not inside loops
+       *      - TODO: set parentId, parentName when while loop is part of subnode
+       */
+      if (figObj.getOutputPorts) {
+          figObj.getOutputPorts().each(function (portIndex, portObj) {
+              portObj.getConnections().each(function (wireIndex, wireObj) {
+                  let currentLineNumber = GraphLang.Utils.getLineCount(cCode);
+                  /*
+                   *  SET BREAKPOINT ON WIRE
+                   */
+                  if (wireObj.getUserData() && wireObj.getUserData().isSetBreakpoint) {
+                      loopObj.translateToCppCodeBreakpointList.add({
+                          lineNumber: currentLineNumber,
+                          objectId: wireObj.getId(),
+                          objectVariableName: wireObj.getVariableName(),
+                          type: "wire",
+                          parentId: null,
+                          parentName: null
+                      });
+                  }
+
+                  /*
+                   *  SET WATCH ON WIRE - watch can be just on wire since there is where data are floating
+                   *      - this is ONLY PLACE where watch for wires is obtained
+                   */
+                  if (wireObj.getUserData() && wireObj.getUserData().isSetWatch) {
+                      loopObj.translateToCppCodeWatchList.add({
+                          lineNumber: currentLineNumber,
+                          objectId: wireObj.getId(),
+                          objectVariableName: wireObj.getVariableName(),
+                          type: "wire",
+                          parentId: null,
+                          parentName: null
+                      });
+                  }
+              });
+          });
+      }
+
+      /*
+       *  Trigger translateToCppCodePost() if available
+       */
+      if (figObj.translateToCppCodePost){
+         //if there is defined to put something after let's do it
+          cCode += figObj.translateToCppCodePost({
+              lineNumberToFind: lineNumberToFind - GraphLang.Utils.getLineCount(cCode),
+              translatorObj: translatorObj
+          }).replaceAll("\n", "\n\t");
+      }
+
     });
 
     return cCode;

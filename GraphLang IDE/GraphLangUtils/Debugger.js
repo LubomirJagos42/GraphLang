@@ -611,6 +611,8 @@ GraphLang.Debugger.Cpp.debugGetWireValue = function(options = null){
     return new Promise(async (resolve, reject) => {
         console.log(`> GraphLang.Debugger.Cpp.debugGetWireValue - executed`);
         if (options){
+            let codeTemplate = await GraphLang.Utils.getProjectCodeTemplate();
+
             let wireName = options.objectVariableName; //newer implementation using option parameter with wire name which must be pushed from compiler
 
             /*  WAY 0 - Intial experiment, this will not be used, left it here for now just to show how to obtain wire value from GDB
@@ -670,13 +672,13 @@ GraphLang.Debugger.Cpp.debugGetWireValue = function(options = null){
                 //         document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>> no wire value extracted!<pre/><hr/>");
                 //     }
 
-                /*  WAY 2 - most simplest way to get string value only directly from gdb using command
+                /*  WAY 2 - simpler way to get string value only directly from gdb using command
                  *        - this will print just string value also char[] value, tested in msys2 in gdb
                  */
                 let gdbOutputStr = await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`printf "%s",${wireName}.c_str()`);
                 let gdbOutputJson = JSON.parse(gdbOutputStr);
-                for (const key in gdbOutputJson){
-                    if (gdbOutputJson[key].type == "console"){
+                for (const key in gdbOutputJson) {
+                    if (gdbOutputJson[key].type == "console") {
                         wireValue = gdbOutputJson[key].payload;
                     }
                 }
@@ -688,17 +690,56 @@ GraphLang.Debugger.Cpp.debugGetWireValue = function(options = null){
                  *
                  *  Output parsing is done in provided callback function.
                  */
-                let gdbOutputStr = await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`-data-evaluate-expression ${wireName}`)
+                let gdbOutputStr = "";
+                if (codeTemplate === "desktop"){
+                    /*
+                     *  Reading variable value using gbd command, tested on raspberrypi
+                     */
+                    gdbOutputStr = await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`-data-evaluate-expression ${wireName}`)
 
-                console.log(`> parsing gdb output`);
-                console.log(gdbOutputStr);
+                    console.log(`> parsing gdb output`);
+                    console.log(gdbOutputStr);
 
-                let gdbOutputJson = JSON.parse(gdbOutputStr);
-                if (gdbOutputJson[0].payload.value === undefined){ resolve("__undefined__"); }
+                    let gdbOutputJson = JSON.parse(gdbOutputStr);
+                    if (gdbOutputJson[0].payload.value === undefined){ resolve("__undefined__"); }
 
-                const valueString = gdbOutputJson[0].payload.value;
+                    wireValue = gdbOutputJson[0].payload.value;
+                }else if (codeTemplate === "embedded"){
+                    /*
+                     *  Reading variable value using platformio gbd, tested on nucleo-64 board
+                     */
+                    gdbOutputStr = await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`print ${wireName}`);
 
-                wireValue = valueString;
+                    console.log(`> parsing gdb output`);
+                    console.log(gdbOutputStr);
+
+                    let gdbOutputJson = JSON.parse(gdbOutputStr);
+                    if (gdbOutputJson[0].payload === undefined){ resolve("__undefined__"); }
+
+                    try {
+                        /*
+                         *  manualy tested catching platfomrio gdb output from print using regular expression, output is in form: "$3 = ...something..."
+                         */
+                        wireValue = (gdbOutputJson[0].payload).match(/\$.*=\s(.*)/)[1].trim();
+                    }catch(e){
+                        /*
+                         *  it seems that during stepping on first try there is response with breakpoint line number, so try one more time
+                         */
+                        try {
+                            gdbOutputStr = await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`print ${wireName}`);
+                            let gdbOutputJson = JSON.parse(gdbOutputStr);
+                            if (gdbOutputJson[0].payload === undefined) {
+                                resolve("__undefined__");
+                            }
+                            wireValue = (gdbOutputJson[0].payload).match(/\$.*=\s(.*)/)[1].trim();
+                        }catch(e){
+                            throw new Error(`Error during reading watch, trying to evaluate value from platformio gdb: ${gdbOutputStr}`);
+                        }
+                    }
+                } else{
+                    throw new Error(`Cannot handle codeTemplate: "${codeTemplate}"`);
+                }
+
                 document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>> no wire datatype recognized, gdb value response:\n" + wireValue + "<pre/><hr/>");
             }
 
@@ -976,7 +1017,11 @@ GraphLang.Debugger.Cpp.refreshBreakpointList = function(funcParams){
     //     breakpointRow.remove();
     // }
 
-    outputElement.innerHTML = "<b>Code breakpoint list:</b><br /><br/>";
+    let htmlStr = "";
+    htmlStr += "<b>Code breakpoint list:</b>";
+    htmlStr += "<input type='button' value='REFRESH BREAKPOINTS' onclick='GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList()' />";
+    htmlStr += "<br /><br/>";
+    outputElement.innerHTML = htmlStr;
 
     GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
         outputElement.insertAdjacentHTML("beforeend", `<span onclick="GraphLang.Utils.animateBlinkObject(appCanvas, '${breakpointObj.objectId}')">${JSON.stringify(breakpointObj)}</span><br /><hr />`)
@@ -1026,7 +1071,7 @@ GraphLang.Debugger.Cpp.readGdbWatchValueAndDisplayOnScreen = async function(watc
      *  TODO: Function name is general, so need to add also case when watch type is 'node' or something else
      */
     let wireValue = await GraphLang.Debugger.Cpp.debugGetWireValue(watchObj)
-    GraphLang.Debugger.Cpp.putWireValueOnScreen(watchObj, wireValue, doAnimation);
+    await GraphLang.Debugger.Cpp.putWireValueOnScreen(watchObj, wireValue, doAnimation);
 }
 
 /**

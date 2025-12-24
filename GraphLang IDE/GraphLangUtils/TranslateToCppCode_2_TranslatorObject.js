@@ -558,16 +558,7 @@ class TranslateToCppCode_2_TranslatorObject {
                         translatorObj.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "node", parentId: null, parentName: null});
                     }
                     if (nodeObj.getBreakpointList){
-                        let lineNumberOffset = cCode.split("\n").length - 1;
-                        nodeObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
-                            //TODO: Error: this is wrong since it counts lines offset from all already generated code
-                            //breakpointObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
-
-                            //This just takes original code lines offset before node with canvas started generate code
-                            breakpointObj.lineNumber += codeLinesOffset;
-
-                            translatorObj.translateToCppCodeBreakpointList.add(breakpointObj);
-                        });
+                        translatorObj.translateToCppCodeBreakpointList.addAll(nodeObj.getBreakpointList());
                     }
 
                     /*
@@ -575,11 +566,7 @@ class TranslateToCppCode_2_TranslatorObject {
                      *      If node provides watch list get it from it, this is for Loops since they have subdiagrams
                      */
                     if (nodeObj.getWatchList){
-                        let lineNumberOffset = cCode.split("\n").length - 1;
-                        nodeObj.getWatchList().each(function(watchIndex, watchObj){
-                            watchObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
-                            translatorObj.translateToCppCodeWatchList.add(watchObj);
-                        });
+                        translatorObj.translateToCppCodeWatchList.addAll(nodeObj.getWatchList());
                     }
 
                     /*
@@ -611,11 +598,12 @@ class TranslateToCppCode_2_TranslatorObject {
                      */
                     nodeObj.getOutputPorts().each(function(portIndex, portObj){
                         portObj.getConnections().each(function(wireIndex, wireObj){
+                            let currentLineNumber = GraphLang.Utils.getLineCount(cCode);
+
                             /*
                              *  SET BREAKPOINT ON WIRE
                              */
                             if (wireObj.getUserData() && wireObj.getUserData().isSetBreakpoint){
-                                let currentLineNumber = cCode.split("\n").length - 1;
                                 translatorObj.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: wireObj.getId(), objectVariableName: wireObj.getVariableName(), type: "wire", parentId: null, parentName: null});
                             }
 
@@ -624,7 +612,6 @@ class TranslateToCppCode_2_TranslatorObject {
                              *      - this is ONLY PLACE where watch for wires is obtained
                              */
                             if (wireObj.getUserData() && wireObj.getUserData().isSetWatch){
-                                let currentLineNumber = cCode.split("\n").length - 1;
                                 translatorObj.translateToCppCodeWatchList.add({lineNumber: currentLineNumber, objectId: wireObj.getId(), objectVariableName: wireObj.getVariableName(), type: "wire", parentId: null, parentName: null});
                             }
                         });
@@ -1047,11 +1034,11 @@ SerialClass Serial;
         });
         template_cCode += "/************* END Transcripted SubNode function definitions ************/\n\n";
 
-        template_cCode += "void setup() {\n";
-        template_cCode += "\n";
+        template_cCode += "void setup() {   /****************** MAIN() ****************************/\n";
+        // template_cCode += "\n";
 
         //add offset to breakpoints line numbers since here before is some code generated and breakpoints were counted just from canvas code
-        let lineNumberOffset = GraphLang.Utils.getLineCount(template_cCode) - 1;
+        let lineNumberOffset = GraphLang.Utils.getLineCount(template_cCode);
         this.translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObject){
             breakpointObject.lineNumber += lineNumberOffset;
         });
@@ -1173,8 +1160,7 @@ typedef int polymorphic;  //THIS IS NOT EXACTLY RIGHT but usable for now\n\n`;
         this.GLOBAL_CODE_LINE_OFFSET = lineNumberOffset;
 
         //add program startpoint main() into breakpoint list, in debug mode it's first stop where it's waiting during stepping
-        //line number is +1 due till now there is white line and now on next line will start generated code therefore breakpoint is there
-        this.translateToCppCodeBreakpointList.add({lineNumber: lineNumberOffset+1, objectId: null, type: "programStart", parent: null});
+        this.translateToCppCodeBreakpointList.add({lineNumber: lineNumberOffset, objectId: null, type: "programStart", parent: null});
 
         template_cCode += cCode;
         template_cCode += "\n";

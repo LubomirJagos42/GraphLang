@@ -2888,7 +2888,7 @@ GraphLang.Utils.getNodeCodeWithReplacedSchematicWithCurrentCanvas = function(cla
 GraphLang.Utils.getLineCount = function(inputStr){
     //this using regular expression should be more performant than split and count array length
     //source: https://stackoverflow.com/questions/8488729/how-to-count-the-number-of-lines-of-a-string-in-javascript
-    return (inputStr.match(/\n/g) || '').length + 1
+    return (inputStr.match(/\n/g) || '').length
 }
 
 /**
