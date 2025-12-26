@@ -71,6 +71,7 @@
 <!--    <script src="<?php //echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToCppCode_1.js"></script>--> <!-- OBSOLETE, REPLACED BY GENERAL TRANSCRIPTOR CLASS -->
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToPythonCode_1.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToCppCode_2_TranslatorObject.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToPythonCode_2_TranslatorObject.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToGeneralCode_1.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/RightRelPortLocator.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/BottomRelPortLocator.js"></script>

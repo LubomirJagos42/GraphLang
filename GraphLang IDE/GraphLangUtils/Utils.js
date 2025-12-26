@@ -2062,8 +2062,8 @@ GraphLang.Utils.getVisibleLoopsAndMultilayered = function(canvas) {
 GraphLang.Utils.getUniqueNodeLabel = function(canvas, nodeLabel = "nodeLabel"){
     var nodeLabelList = new draw2d.util.ArrayList();
     canvas.getFigures().each(function(figureIndex, figureObj){
-        if (figureObj.getUserData().hasOwnProperty('isTerminal') && figureObj.getUserData().isTerminal &&
-            figureObj.getUserData().hasOwnProperty('nodeLabel') && figureObj.getUserData().nodeLabel){
+        if (figureObj.getUserData() && figureObj.getUserData().isTerminal &&
+            figureObj.getUserData() && figureObj.getUserData().nodeLabel){
             nodeLabelList.push(figureObj.userData.nodeLabel);
         }
     });
@@ -3069,4 +3069,186 @@ GraphLang.Utils.getProjectCodeTemplate = async function(projectId = null){
     }
 
     return "desktop";   //default return value
+}
+
+/**
+ * @method GraphLang.Utils.getObjectInProjectFromJSON
+ * @param funcParams
+ * @param {string} funcParams.id - search object id
+ * @param {string|objects} funcParams.name - search object name, for wires in its variable name, for node in its node label, also regular expression can be used for example /enumDatatype_.*_COLORS/
+ * @returns {*}
+ * @description This method going through JSON definition of all nodes in projects which are stored in global variable list and looking in its json, at first it's looking on current loaded canvas schematic
+ */
+GraphLang.Utils.getObjectInProjectFromJSON = function(funcParams){
+    const searchObjectId = Object.hasOwn(funcParams, "id") ? funcParams.id : "";
+    const searchObjectName = Object.hasOwn(funcParams, "name") ? funcParams.name : "";
+    const searchObjectType = Object.hasOwn(funcParams, "type") ? funcParams.type : "";
+
+    if (
+        searchObjectId === "" && searchObjectName === ""
+    ){
+        console.warn("At least object name or id must be specified");
+    }
+
+    let objectRef = null;
+    let searchResult = {
+        objectClassName: null,
+        objectDatatype: null,
+        objectId: null,
+        objectType: null,
+        parentNodeName: null,
+        parentNodeId: null
+    };
+    let searchResultList = new draw2d.util.ArrayList();
+
+    //search object specified by id
+    if (searchObjectId !== ""){
+        //console.log(`--> GraphLang.Utils.getObjectInProject(): searching using id`);
+
+        objectRef = appCanvas.getFigure(searchObjectId);
+        if (objectRef === null){
+            objectRef = appCanvas.getLine(searchObjectId);
+        }
+
+        //object found on main canvas
+        if (objectRef !== null) {
+            searchResult.objectId = objectRef.getId();
+            searchResult.objectClassName = objectRef.NAME;
+            searchResult.objectType = objectRef.NAME.toLowerCase().endsWith("connection") ? "wire" : "node";
+            searchResult.objectDatatype = typeof objectRef.getDatatype === "function" ? objectRef.getDatatype() : null;
+
+            searchResultList.add(searchResult);
+            return searchResultList;
+        }
+    }
+
+    //search object specified by name
+    if (searchObjectName !== ""){
+        //console.log(`--> GraphLang.Utils.getObjectInProject(): searching using object name`);
+
+        objectRef = null;
+
+        appCanvas.getFigures().each(function(nodeIndex, nodeObj){
+            if (
+                (nodeObj.userData && nodeObj.userData.nodeLabel && typeof searchObjectName === "string" && nodeObj.userData.nodeLabel.toLowerCase().search(searchObjectName.toLowerCase()) > -1) ||
+                (nodeObj.userData && nodeObj.userData.nodeLabel && typeof searchObjectName === "object" && nodeObj.userData.nodeLabel.toLowerCase().search(searchObjectName) > -1)
+            ){
+                objectRef = nodeObj;
+
+                searchResult.objectId = objectRef.getId();
+                searchResult.objectClassName = objectRef.NAME;
+                searchResult.objectType = objectRef.NAME.toLowerCase().endsWith("connection") ? "wire" : "node";
+                searchResult.objectDatatype = typeof objectRef.getDatatype === "function" ? objectRef.getDatatype() : null;
+
+                searchResultList.add(JSON.parse(JSON.stringify(searchResult))); //this will create copy, cannot add searResult directly because in case of multiple results they will be same reference
+                Object.keys(searchResult).forEach(k => searchResult[k] = null);
+            }
+        });
+
+        appCanvas.getLines().each(function(wireIndex, wireObj){
+            if (wireObj.getVariableName().toLowerCase().search(searchObjectName) > -1){
+                objectRef = wireObj;
+
+                searchResult.objectId = objectRef.getId();
+                searchResult.objectClassName = objectRef.NAME;
+                searchResult.objectType = objectRef.NAME.toLowerCase().endsWith("connection") ? "wire" : "node";
+                searchResult.objectDatatype = typeof objectRef.getDatatype === "function" ? objectRef.getDatatype() : null;
+
+                searchResultList.add(JSON.parse(JSON.stringify(searchResult))); //this will create copy, cannot add searResult directly because in case of multiple results they will be same reference
+                Object.keys(searchResult).forEach(k => searchResult[k] = null);
+            }
+        });
+    }
+
+    /*
+     *  Here below going through json nodes definition and look inside if there is appropriate object.
+     *      For wires there is impossible to look on their source datatype since this is not loading schematic just looking in JSON properties.
+     */
+
+    //searching object through all project nodes schematics
+    for (let nodeName of global_allProjectNodesList) {
+
+        //dynamicaly create object using it name
+        let nodeObj = eval(`new ${nodeName}()`);
+
+        //iterate over all object schematic objects (nodes, wires, ...all what is in json)
+        if (typeof nodeObj === "object" && nodeObj.jsonDocument && Array.isArray(nodeObj.jsonDocument)) {
+            for (let schematicObj of nodeObj.jsonDocument) {
+                if (searchObjectId !== "" && schematicObj.id === searchObjectId){
+                    try {
+                        //create object and assign it userData to can use it methods
+                        let objectRef = eval(`new ${schematicObj.type}()`);
+                        objectRef.userData = schematicObj.userData;
+
+                        searchResult.objectClassName = schematicObj.type;
+                        searchResult.parentNodeName = nodeName;
+                        searchResult.objectType = schematicObj.type.toLowerCase().endsWith("connection") ? "wire" : "node";
+
+                        searchResult.objectDatatype = typeof objectRef.getDatatype === "function" ? objectRef.getDatatype() : null;
+
+                        searchResultList.add(searchResult);
+                        return searchResultList;            //searching by id ends here since ID is unique
+                    }catch(e){
+                        //...do nothing if there is some error, skip
+                    }
+                }
+                if (searchObjectName !== ""){
+                    try{
+                        //create object and assign it userData to can use it methods
+                        let objectRef = eval(`new ${schematicObj.type}()`);
+                        objectRef.userData = schematicObj.userData;
+
+                        /*
+                         *  Inspecting wire
+                         */
+                        if (objectRef.NAME.toLowerCase().endsWith("connection") && typeof objectRef.getVariableName === "function"){
+                            if (
+                                (typeof searchObjectName === "string" && objectRef.getVariableName().toLowerCase().search(searchObjectName.toLowerCase()) > -1) ||
+                                (typeof searchObjectName === "object" && objectRef.getVariableName().toLowerCase().search(searchObjectName) > -1)
+                            ) {
+                                searchResult.objectClassName = schematicObj.type;
+                                searchResult.parentNodeName = nodeName;
+                                searchResult.objectType = "wire";
+                                searchResult.objectId = schematicObj.id;
+
+                                searchResultList.add(JSON.parse(JSON.stringify(searchResult))); //this will create copy, cannot add searResult directly because in case of multiple results they will be same reference
+                                Object.keys(searchResult).forEach(k => searchResult[k] = null);
+                            }
+                            continue;   //skip rest of comparison below
+                        }
+
+                        /*
+                         *  Inspecting nodes or something else
+                         */
+                        //searching by name means that I am looking for datatype
+                        let objectDatatype = typeof objectRef.getDatatype === "function" ? objectRef.getDatatype() : null;
+                        if (
+                            (typeof searchObjectName === "string" && objectDatatype.search(searchObjectName.toLowerCase()) > -1) ||
+                            (typeof searchObjectName === "object" && objectDatatype.search(searchObjectName) > -1)
+                        ) {
+                            searchResult.objectClassName = schematicObj.type;
+                            searchResult.parentNodeName = nodeName;
+                            searchResult.objectType = schematicObj.type.toLowerCase().endsWith("connection") ? "wire" : "node";
+                            searchResult.objectDatatype = objectDatatype;
+                            searchResult.objectId = schematicObj.id;
+
+                            searchResultList.add(JSON.parse(JSON.stringify(searchResult))); //this will create copy, cannot add searResult directly because in case of multiple results they will be same reference
+                            Object.keys(searchResult).forEach(k => searchResult[k] = null);
+                        }
+                    }catch(e){
+                        //...do nothing if there is some error, skip
+                    }
+                }
+
+                //TODO: Here maybe must be also check if structure is like case structure or loop and checked for its children nodes
+                //      This maybe not needed if these nodes are part of JSON array and tight to structure by some id, NEED CHECK!!!
+
+                //TODO: If some object source is cluster or some other like pointer or is referenced to other object somewhere
+                //      in project it's needed to search for this project also or maybe load whole schematic in helper canvas and evaluate it.
+
+            }
+        }
+    }
+
+    return searchResultList;
 }

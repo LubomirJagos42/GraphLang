@@ -10,14 +10,10 @@ class TranslateToGeneralCode_1 {
     translatorCanvasObj = {};
 
     constructor(paramsObj) {
-        if (typeof paramsObj === "object" && Object.hasOwn(paramsObj, "language")) this.language = paramsObj.language;
+        let languageName = typeof paramsObj === "object" && Object.hasOwn(paramsObj, "language") ? paramsObj.language : "";
         if (Object.keys(paramsObj).includes(paramsObj.canvasObj) && typeof paramsObj.canvasObj === "object") this.translatorCanvasObj = paramsObj.canvasObj;
 
-        if (this.language === "cpp"){
-            this.translatorObj = new TranslateToCppCode_2_TranslatorObject({canvasObj: this.translatorCanvasObj});
-        }else{
-            throw new Error("Translator language not defined, cannot create its instance!");
-        }
+        this.setProgrammingLanguage(languageName);
     }
 
     setCanvas = (canvasObj) => {
@@ -25,6 +21,18 @@ class TranslateToGeneralCode_1 {
             this.translatorObj.setCanvas(canvasObj);
         }else{
             throw new Error("Internal translator object seems to be wrong!");
+        }
+    }
+
+    setProgrammingLanguage = (languageName) => {
+        if (languageName !== "") this.language = languageName;
+
+        if (this.language === "cpp") {
+            this.translatorObj = new TranslateToCppCode_2_TranslatorObject({canvasObj: this.translatorCanvasObj});
+        }else if (this.language === "python"){
+            this.translatorObj = new TranslateToPythonCode_2_TranslatorObject({canvasObj: this.translatorCanvasObj});
+        }else{
+            throw new Error("Translator language not defined, cannot create its instance!");
         }
     }
 
