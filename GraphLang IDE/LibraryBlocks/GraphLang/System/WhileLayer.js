@@ -19,6 +19,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
     this.userData = {};
     this.userData.executionOrder = 1;
     this.userData.wasTranslatedToCppCode = false;
+    this.userData.isLoop = true;
 
     this.persistPorts=false;  /*??what's this??*/
   },
@@ -207,6 +208,36 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
 
       //Getting clusters and objects type definitions
       if (figObj.translateToCppCodeDeclaration && figObj.NAME.toLowerCase().search("feedbacknode") == -1) cCode += figObj.translateToCppCodeDeclaration().replaceAll("\n", "\n\t") ;
+
+
+
+
+      //TODO: Add this also to FOR LOOP!!!
+      /*
+       *    Getting TYPE DEFINITION, ie. for clusters
+       *      typeDefinitionUsedList   - stores already translated type definition nodes ie. cluster used in project
+       *      typeDefinitionNeededList - stores typedefinition needed to be additionaly added due they are not used in project and need to be scanned from files
+       *
+       */
+      if (figObj.translateToCppCodeTypeDefinition){
+          translatorObj.translateToCppCodeTypeDefinitionArray.push(figObj.translateToCppCodeTypeDefinition());
+          if (figObj.getDatatype && figObj.getDatatype().startsWith("clusterDatatype_")) {
+              translatorObj.typeDefinitionUsedList.push(`${nodeName} -> ${figObj.getNodeLabelText()}`);
+          }
+      }
+      if (
+          (figObj.NAME.toLowerCase().search("constantnode") > -1 ||
+              figObj.NAME.toLowerCase().search("pointerdatatypenode") > -1) &&
+          figObj.getDatatype().toLowerCase().search("clusterdatatype") > -1 &&
+          !translatorObj.typeDefinitionUsedList.contains(figObj.getText())
+      ){
+          translatorObj.typeDefinitionNeededList.add(figObj.getText());
+      }
+
+
+
+
+
 
       let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
 

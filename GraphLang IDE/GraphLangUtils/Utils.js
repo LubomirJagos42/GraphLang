@@ -3072,22 +3072,52 @@ GraphLang.Utils.getProjectCodeTemplate = async function(projectId = null){
 }
 
 /**
+ * @method GraphLang.Utils.objectDeepEqual
+ * @param {object} x
+ * @param {object} y
+ * @returns {boolean}
+ * @description Compare two objects if they have same values.
+ */
+GraphLang.Utils.objectDeepEqual = function(x, y) {
+    let result;
+
+    if (x && y && typeof x === 'object' && typeof y === 'object' && !(x instanceof RegExp)){
+        result = Object.keys(x).reduce(function(isEqual, key) {
+            return isEqual && GraphLang.Utils.objectDeepEqual(x[key], y[key]);
+        }, true);
+        return result;
+    }else{
+        result = (
+            x === y ||                                                                                       //item must be same number, or string
+            (typeof x === "object" && x instanceof RegExp && typeof y === "string" && y.search(x) > -1)      //this is used to compare string with regular expression
+        );
+    }
+
+    return result;
+}
+
+/**
  * @method GraphLang.Utils.getObjectInProjectFromJSON
  * @param funcParams
  * @param {string} funcParams.id - search object id
  * @param {string|objects} funcParams.name - search object name, for wires in its variable name, for node in its node label, also regular expression can be used for example /enumDatatype_.*_COLORS/
  * @returns {*}
  * @description This method going through JSON definition of all nodes in projects which are stored in global variable list and looking in its json, at first it's looking on current loaded canvas schematic
+ *  Examples how to search for object:
+ *      > GraphLang.Utils.getObjectInProjectFromJSON({id: "f165246f-0004-9c22-53a4-9983c6aa8015"})
+ *      > GraphLang.Utils.getObjectInProjectFromJSON({name: "some node label content"})
+ *      > GraphLang.Utils.getObjectInProjectFromJSON({name: /(.*)somevalue(.*)/i})                      //using regular expression to look for node with specific node label
+ *      > GraphLang.Utils.getObjectInProjectFromJSON({object: {userData: {isEnum: true}}})              //using object, looking for node with property userData{isEnum: true}
  */
 GraphLang.Utils.getObjectInProjectFromJSON = function(funcParams){
     const searchObjectId = Object.hasOwn(funcParams, "id") ? funcParams.id : "";
     const searchObjectName = Object.hasOwn(funcParams, "name") ? funcParams.name : "";
-    const searchObjectType = Object.hasOwn(funcParams, "type") ? funcParams.type : "";
+    const searchObjectUsingObject = Object.hasOwn(funcParams, "object") ? funcParams.object : {};
 
     if (
-        searchObjectId === "" && searchObjectName === ""
+        searchObjectId === "" && searchObjectName === "" && searchObjectUsingObject === {}
     ){
-        console.warn("At least object name or id must be specified");
+        console.warn("At least object name, id or userData object must be specified");
     }
 
     let objectRef = null;
@@ -3160,6 +3190,39 @@ GraphLang.Utils.getObjectInProjectFromJSON = function(funcParams){
         });
     }
 
+    //compare userData of objects if they are same
+    if (typeof searchObjectUsingObject === "object" && Object.keys(searchObjectUsingObject).length > 0){
+        objectRef = null;
+
+        appCanvas.getFigures().each(function(nodeIndex, nodeObj){
+            if (nodeObj.userData && GraphLang.Utils.objectDeepEqual(searchObjectUsingObject, nodeObj)){
+                objectRef = nodeObj;
+
+                searchResult.objectId = objectRef.getId();
+                searchResult.objectClassName = objectRef.NAME;
+                searchResult.objectType = "node";
+                searchResult.objectDatatype = typeof objectRef.getDatatype === "function" ? objectRef.getDatatype() : null;
+
+                searchResultList.add(JSON.parse(JSON.stringify(searchResult))); //this will create copy, cannot add searResult directly because in case of multiple results they will be same reference
+                Object.keys(searchResult).forEach(k => searchResult[k] = null);
+            }
+        });
+
+        appCanvas.getLines().each(function(wireIndex, wireObj){
+            if (wireObj.userData && GraphLang.Utils.objectDeepEqual(searchObjectUsingObject, wireObj)){
+                objectRef = wireObj;
+
+                searchResult.objectId = objectRef.getId();
+                searchResult.objectClassName = objectRef.NAME;
+                searchResult.objectType = objectRef.NAME.toLowerCase().endsWith("connection") ? "wire" : "node";
+                searchResult.objectDatatype = typeof objectRef.getDatatype === "function" ? objectRef.getDatatype() : null;
+
+                searchResultList.add(JSON.parse(JSON.stringify(searchResult))); //this will create copy, cannot add searResult directly because in case of multiple results they will be same reference
+                Object.keys(searchResult).forEach(k => searchResult[k] = null);
+            }
+        });
+    }
+
     /*
      *  Here below going through json nodes definition and look inside if there is appropriate object.
      *      For wires there is impossible to look on their source datatype since this is not loading schematic just looking in JSON properties.
@@ -3174,6 +3237,10 @@ GraphLang.Utils.getObjectInProjectFromJSON = function(funcParams){
         //iterate over all object schematic objects (nodes, wires, ...all what is in json)
         if (typeof nodeObj === "object" && nodeObj.jsonDocument && Array.isArray(nodeObj.jsonDocument)) {
             for (let schematicObj of nodeObj.jsonDocument) {
+
+                /*
+                 *  SEARCH using ID wire/node
+                 */
                 if (searchObjectId !== "" && schematicObj.id === searchObjectId){
                     try {
                         //create object and assign it userData to can use it methods
@@ -3192,6 +3259,10 @@ GraphLang.Utils.getObjectInProjectFromJSON = function(funcParams){
                         //...do nothing if there is some error, skip
                     }
                 }
+
+                /*
+                 *  SEARCH IN NAME and wire variable name
+                 */
                 if (searchObjectName !== ""){
                     try{
                         //create object and assign it userData to can use it methods
@@ -3240,6 +3311,25 @@ GraphLang.Utils.getObjectInProjectFromJSON = function(funcParams){
                     }
                 }
 
+                /*
+                 *  SEARCH IN userData
+                 */
+                if (Object.keys(searchObjectUsingObject).length > 0){
+                    try {
+                        if (GraphLang.Utils.objectDeepEqual(searchObjectUsingObject, schematicObj)){
+                            searchResult.objectClassName = schematicObj.type;
+                            searchResult.parentNodeName = nodeName;
+                            searchResult.objectType = schematicObj.type.toLowerCase().endsWith("connection") ? "wire" : "node";
+                            searchResult.objectId = schematicObj.id;
+
+                            searchResultList.add(JSON.parse(JSON.stringify(searchResult))); //this will create copy, cannot add searResult directly because in case of multiple results they will be same reference
+                            Object.keys(searchResult).forEach(k => searchResult[k] = null);
+                        }
+                    }catch(e){
+                        //...do nothing if there is some error, skip
+                    }
+                }
+
                 //TODO: Here maybe must be also check if structure is like case structure or loop and checked for its children nodes
                 //      This maybe not needed if these nodes are part of JSON array and tight to structure by some id, NEED CHECK!!!
 
@@ -3251,4 +3341,58 @@ GraphLang.Utils.getObjectInProjectFromJSON = function(funcParams){
     }
 
     return searchResultList;
+}
+
+GraphLang.Utils.getObjectInProjectFromJSONById = function(searchObjectId = ""){
+    if (
+        searchObjectId === ""
+    ){
+        console.error("Object id not specified!");
+    }
+
+    //search object specified by id
+    if (searchObjectId !== ""){
+
+        //TODO: This return object from canvas, need to be returned in serialized form to have same output as from JSON!!!
+
+        //console.log(`--> GraphLang.Utils.getObjectInProject(): searching using id`);
+
+        objectRef = appCanvas.getFigure(searchObjectId);
+        if (objectRef === null){
+            objectRef = appCanvas.getLine(searchObjectId);
+        }
+
+        //object found on main canvas
+        if (objectRef !== null) {
+            return objectRef.getPersistentAttributes();
+        }
+    }
+
+    /*
+     *  Here below going through json nodes definition and look inside if there is appropriate object.
+     *      For wires there is impossible to look on their source datatype since this is not loading schematic just looking in JSON properties.
+     */
+
+    //searching object through all project nodes schematics
+    for (let nodeName of global_allProjectNodesList) {
+
+        //dynamicaly create object using it name
+        let nodeObj = eval(`new ${nodeName}()`);
+
+        //iterate over all object schematic objects (nodes, wires, ...all what is in json)
+        if (typeof nodeObj === "object" && nodeObj.jsonDocument && Array.isArray(nodeObj.jsonDocument)) {
+            for (let schematicObj of nodeObj.jsonDocument) {
+
+                /*
+                 *  SEARCH using ID wire/node
+                 */
+                if (searchObjectId !== "" && schematicObj.id === searchObjectId) {
+                    return schematicObj;
+                }
+
+            }
+        }
+    }
+
+    return null;
 }

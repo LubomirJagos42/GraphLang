@@ -29,6 +29,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     this.userData = {};
     this.userData.executionOrder = 1;
     this.userData.wasTranslatedToCppCode = false;
+    this.userData.isLoop = true;
 
     this.persistPorts=false;    /*??what's this??*/
   },
@@ -204,6 +205,35 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
 
       //Getting clusters and objects type definitions
       if (figObj.translateToCppCodeDeclaration && figObj.NAME.toLowerCase().search("feedbacknode") == -1) cCode += "\t" + figObj.translateToCppCodeDeclaration().replaceAll("\n", "\n\t");
+
+
+
+      //TODO: This is copied from main translator to add type definitions inside loop to global space as they are just type definition and each has unique id in name therefore
+      //      there is no name interference, for now it's copied and not validated on correct running program!!!
+      /*
+       *    Getting TYPE DEFINITION, ie. for clusters
+       *      typeDefinitionUsedList   - stores already translated type definition nodes ie. cluster used in project
+       *      typeDefinitionNeededList - stores typedefinition needed to be additionaly added due they are not used in project and need to be scanned from files
+       *
+       */
+      if (figObj.translateToCppCodeTypeDefinition){
+        translatorObj.translateToCppCodeTypeDefinitionArray.push(figObj.translateToCppCodeTypeDefinition());
+        if (figObj.getDatatype && figObj.getDatatype().startsWith("clusterDatatype_")) {
+          translatorObj.typeDefinitionUsedList.push(`${nodeName} -> ${figObj.getNodeLabelText()}`);
+        }
+      }
+      if (
+          (figObj.NAME.toLowerCase().search("constantnode") > -1 ||
+              figObj.NAME.toLowerCase().search("pointerdatatypenode") > -1) &&
+          figObj.getDatatype().toLowerCase().search("clusterdatatype") > -1 &&
+          !translatorObj.typeDefinitionUsedList.contains(figObj.getText())
+      ){
+        translatorObj.typeDefinitionNeededList.add(figObj.getText());
+      }
+
+
+
+
 
       //HERE C/C++ code line is generated
       let lineCountBefore = GraphLang.Utils.getLineCount(cCode);

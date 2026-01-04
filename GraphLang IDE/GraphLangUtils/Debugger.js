@@ -383,6 +383,13 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
 
                 let compilationOutput = JSON.parse(GLOBAL_AJAX_RESPONSE.compileCommandOutput);
                 outputElement.insertAdjacentHTML('afterbegin', `<pre/>error: ${GLOBAL_AJAX_RESPONSE.errorMsg}\ncompilation output:\n\tstatus: ${compilationOutput.status}\n\tmessage: ${compilationOutput.message}<pre/><hr/>`);
+
+                //THERE IS ERROR IN COMPILATION
+                if (compilationOutput.status === 1){
+                    outputElement.insertAdjacentHTML('afterbegin', `<span style="color: #ff0000">ERROR DURING COMPILATION!</span><hr/>`);
+                }else{
+                    outputElement.insertAdjacentHTML('afterbegin', `<span style="color: #00ff00">COMPILATION OK!</span><hr/>`);
+                }
             }
         );
 
@@ -398,7 +405,7 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
         let compileCommandOutputObj = JSON.parse(compileCommandOutputStr);
         // console.log(`--> compileCommandOutputObj:`);
         // console.log(compileCommandOutputObj);
-        if (compileCommandOutputObj.status == -1) {
+        if (compileCommandOutputObj.status === 1) {
             /*
              *  This was for previous g++ compile whne used as:
              *      > g++ -fdiagnostic-fomrat=json
@@ -424,6 +431,10 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
              */
             let compileErrorStr = compileCommandOutputObj.errorMsg;//.replaceAll('\\"', '"'); //.replaceAll('\\n', '\n').split('\n'); //THIS DOESN'T HAVE TO BE USED
 
+            /*
+             *  TODO: Need check target device, if desktop it's working on raspi now as there is errors logged in json into file
+             *        If embedded need manually go through compilation output and look for errors as all output is going to stdout now!!!
+             */
             let compileErrorObj = null;
             try {
                 compileErrorObj = JSON.parse(compileErrorStr);
@@ -431,6 +442,7 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
                 console.log(compileErrorObj);
             } catch (e) {
                 console.warn(`Error parsing compile error message: ${e.message}`);
+                throw e;
             }
 
             for (let errorObj of compileErrorObj) {
@@ -509,9 +521,13 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
         GraphLang.Debugger.Cpp.refreshWatchList();
 
         /*
-         *  Return output
+         *  Resolve promise using standard linux return codes 0 = OK, 1 and more = FAILURE
          */
-        resolve(ajaxResponse);
+        if (compileCommandOutputObj.status === 0) {
+            resolve(ajaxResponse);
+        }else{
+            reject(ajaxResponse);
+        }
     });
 }
 

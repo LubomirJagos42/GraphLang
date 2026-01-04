@@ -353,7 +353,11 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
                 /*
                  *  Genereate C/C++ port output variable
                  */
-                cCode += portObj.userData.datatype + " " + portName + ";\n";
+                if (typeof portObj.getDatatype === "function"){
+                    cCode += portObj.getDatatype() + " " + portName + ";\n";
+                }else{
+                    cCode += portObj.userData.datatype + " " + portName + ";\n";
+                }
 
                 let connections = portObj.getConnections();
                 outputPortWiresList[portName] = [];

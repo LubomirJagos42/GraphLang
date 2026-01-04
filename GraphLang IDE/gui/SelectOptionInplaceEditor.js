@@ -26,7 +26,13 @@ draw2d.ui.SelectOptionInplaceEditor =  draw2d.ui.LabelInplaceEditor.extend({
         //if sourceFigureId is set then add values from it
         if (label.userData && label.userData.sourceFigureId){
             let sourceFigureId = label.userData.sourceFigureId;
-            let optionArray = label.getCanvas().getFigure(sourceFigureId).getOptionArray();
+
+            //search for enum object in whole project
+            let enumSerializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(sourceFigureId);
+            let sourceEnumFigure = eval(`new ${enumSerializedObj.type}()`);
+            sourceEnumFigure.setPersistentAttributes(enumSerializedObj);
+
+            let optionArray = sourceEnumFigure.getOptionArray();
             this.setOptions(optionArray)
         }
 

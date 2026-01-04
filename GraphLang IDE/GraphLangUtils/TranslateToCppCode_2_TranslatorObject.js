@@ -420,8 +420,8 @@ class TranslateToCppCode_2_TranslatorObject {
                     if (
                         (nodeObj.NAME.toLowerCase().search("constantnode") > -1 ||
                          nodeObj.NAME.toLowerCase().search("pointerdatatypenode") > -1) &&
-                        nodeObj.getDatatype().toLowerCase().search("clusterdatatype") > -1 &&
-                        !translatorObj.typeDefinitionUsedList.contains(nodeObj.getText())
+                         nodeObj.getDatatype().toLowerCase().search("clusterdatatype") > -1 &&
+                         !translatorObj.typeDefinitionUsedList.contains(nodeObj.getText())
                     ){
                         translatorObj.typeDefinitionNeededList.add(nodeObj.getText());
                     }

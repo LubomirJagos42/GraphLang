@@ -99,7 +99,19 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
                             break;
                         default:
                             emitter.userData.sourceFigureId = key;
-                            let sourceEnumFigure = emitter.getCanvas().getFigure(key);
+
+                            /*
+                             *  WAY 1 - this was used as first implementation, using just current canvas - not fully functional
+                             */
+                            // let sourceEnumFigure = emitter.getCanvas().getFigure(key);
+
+                            /*
+                             *  WAY 2 - get reference enum from whole project
+                             */
+                            let enumSerializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(key);
+                            let sourceEnumFigure = eval(`new ${enumSerializedObj.type}()`);
+                            sourceEnumFigure.setPersistentAttributes(enumSerializedObj);
+
                             let optionArray = sourceEnumFigure.getOptionArray();
                             emitter.updatePortDatatype();
 
@@ -140,26 +152,31 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
         let _contextMenuItems = this.contextMenuItems;
         let uniqueDatatypes = new draw2d.util.ArrayList();  //store just datatypes due they are unique
         if (this.getCanvas()) {
-            this.getCanvas().getFigures().each(function (nodeIndex, nodeObj) {
-                if (
-                    nodeObj.getDatatype &&
-                    nodeObj.getDatatype().startsWith("enumDatatype_") &&
-                    nodeObj.userData &&
-                    nodeObj.userData.isEnum === true &&
-                    !uniqueDatatypes.contains(nodeObj.getDatatype())
-                ) {
-                    uniqueDatatypes.add(nodeObj.getDatatype());
-                    _contextMenuItems[nodeObj.getId()] = {name: "THIS CANVAS -> " + nodeObj.getNodeLabelText()};
-                }
+            let projectEnumObjectList = GraphLang.Utils.getObjectInProjectFromJSON({object: {userData: {isEnum: true}}});
+            projectEnumObjectList.each((enumIndex, enumObject) => {
+                let enumId = enumObject.objectId;
+                let enumSerializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(enumId);
+
+                let enumName = enumObject.parentNodeName ? enumObject.parentNodeName + " -> " : "THIS CANVAS -> ";
+                enumName += enumSerializedObj && enumSerializedObj.userData && enumSerializedObj.userData.nodeLabel ? enumSerializedObj.userData.nodeLabel : enumId;
+
+                _contextMenuItems[enumId] = {name: enumName};
             });
+
         }
     },
 
     updatePortDatatype: function(){
-        //TODO: This not working at load time, seems like canvas is not set, anyway here will be general util function to search current canvas and subnodes maybe
-        // let sourceEnumFigure = this.getCanvas().getFigure(this.userData.sourceFigureId);
-        let sourceEnumFigure = appCanvas.getFigure(this.userData.sourceFigureId);   //TODO: use global canvas variable
+        //search for enum object in whole project
+        let enumSerializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(this.userData.sourceFigureId);
 
+        //create object on the fly to be able call its methods
+        let sourceEnumFigure = eval(`new ${enumSerializedObj.type}()`);
+
+        //update newly created object attributes to get same behaviour as it will be placed on canvas (this object has no connected wires!!!)
+        sourceEnumFigure.setPersistentAttributes(enumSerializedObj);
+
+        //call enum method to get datatype, this is using object standard api
         this.getOutputPorts().first().userData.datatype = sourceEnumFigure.getDatatype();
     },
 
@@ -181,8 +198,12 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
     getDatatype: function(){
         let datatypeStr = "undefined";
 
-        let sourceFigure = this.getCanvas().getFigure(this.userData.sourceFigureId);
-        if (sourceFigure) datatypeStr = sourceFigure.getDatatype();
+        //search for enum object in whole project
+        let enumSerializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(this.userData.sourceFigureId);
+        let sourceEnumFigure = eval(`new ${enumSerializedObj.type}()`);
+        sourceEnumFigure.setPersistentAttributes(enumSerializedObj);
+
+        if (sourceEnumFigure) datatypeStr = sourceEnumFigure.getDatatype();
 
         return datatypeStr;
     },
@@ -217,6 +238,15 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
             cCode += this.getDatatype() + " " + this.getVariableName() + " = " + this.getDatatype() + "::" + this.getText() + ";\n";
         }
         return cCode;
+    },
+
+    translateToCppCodeTypeDefinition: function(){
+        //search for enum object in whole project
+        let enumSerializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(this.userData.sourceFigureId);
+        let sourceEnumFigure = eval(`new ${enumSerializedObj.type}()`);
+        sourceEnumFigure.setPersistentAttributes(enumSerializedObj);
+
+        return sourceEnumFigure.translateToCppCodeTypeDefinition();
     },
 
     translateToCppCode: function(){

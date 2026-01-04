@@ -11,6 +11,7 @@ ConvertDatatype = GraphLang.UserDefinedNode.extend({
    {
      this._super( $.extend({stroke:0, bgColor:null, width:68, height:38.467302572204574, flagAutoCreatePorts: false},attr), setter, getter);
      var port;
+
      // variableIn
      port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(-1.0646941176469897, 52.16716706957266));
      port.setConnectionDirection(3);
@@ -18,6 +19,7 @@ ConvertDatatype = GraphLang.UserDefinedNode.extend({
      port.setName("variableIn");
      port.setMaxFanOut(20);
      port.userData = {datatype: "void*"};
+
      // castDatatype
      port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(50.014835294117646, -4.054295195439298));
      port.setConnectionDirection(0);
@@ -25,6 +27,7 @@ ConvertDatatype = GraphLang.UserDefinedNode.extend({
      port.setName("castDatatype");
      port.setMaxFanOut(20);
      port.userData = {datatype: "polymorphic"};
+
      // convertedVariable
      port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(103.33511764705882, 52.16716706957266));
      port.setConnectionDirection(1);
@@ -33,6 +36,15 @@ ConvertDatatype = GraphLang.UserDefinedNode.extend({
      port.setMaxFanOut(20);
      port.userData = {datatype: "polymorphic"};
      this.persistPorts=false;
+     port.getDatatype = function(){
+       let resultDatatype = this.userData.datatype;
+
+       let inPort = this.getParent().getInputPort("castDatatype");
+       let inputWire = (inPort.getConnections().getSize() > 0) ? inPort.getConnections().first() : null;
+       if (inputWire) resultDatatype = inputWire.getDatatype();
+
+       return resultDatatype;
+     };
    },
 
    createShapeElement : function()
@@ -230,6 +242,20 @@ ConvertDatatype = GraphLang.UserDefinedNode.extend({
     jsonDocument: [],
     
     translateToCppCode: function(){
-        return this.translateToCppCodeTemplate();
-    }
+        let cCode = "";
+
+        /*
+         *  General implementation for all output and just first input wire as they cannot be more than one
+         */
+        let outputDatatype = this.getInputPort("castDatatype").getConnections().first().getDatatype();
+
+        let outputPort = this.getOutputPort("convertedVariable");
+        let inputWire = this.getInputPort(0).getConnections().first();  //get just first connected wire
+        outputPort.getConnections().each(function(outputPortWireIndex, outputPortWireObj){
+            cCode += `${outputPortWireObj.getVariableName()} = static_cast<${outputDatatype}>(${inputWire.getVariableName()});\n`;
+        });
+
+        return cCode;
+    },
+
 });
