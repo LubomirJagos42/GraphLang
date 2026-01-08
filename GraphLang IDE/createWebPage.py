@@ -330,6 +330,7 @@ function navigationShowCategory(categoryName, emitter) {
   </div>
 
    <div id="helperPane" style="width: 100px;">
+       <div id="schematicBlockDocumentation"></div>
        <div id="schematicErrors"></div>
        <div id="breakpointList"></div>
        <div id="variablesWatch"></div>

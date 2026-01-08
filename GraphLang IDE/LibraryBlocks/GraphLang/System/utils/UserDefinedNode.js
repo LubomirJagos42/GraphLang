@@ -61,11 +61,12 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
             var element = this.jsonDocument[k];
             var port;
             if (element.userData && element.userData.isTerminal){
-                var node = eval("new " + element.type + "()");
+                let node = eval("new " + element.type + "()");
+                let topParentNode = this;
                 node.getInputPorts().each(function(nodePortIndex, nodePortObj){
                    //output port
-                   port = node.createPort("output", new draw2d.layout.locator.XYRelPortLocator(100,100/outputPortCount*outputPortIndex));
-                   port.setConnectionDirection(31);
+                   port = topParentNode.createPort("output", new draw2d.layout.locator.XYRelPortLocator(100,100/outputPortCount*outputPortIndex));
+                   port.setConnectionDirection(1);
                    port.setBackgroundColor("#37B1DE");
                    port.setMaxFanOut(20);
                    port.setName(nodePortObj.getName());
@@ -73,7 +74,7 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
                 });
                 node.getOutputPorts().each(function(nodePortIndex, nodePortObj){
                    // input port
-                   port = node.createPort("input", new draw2d.layout.locator.XYRelPortLocator(0,100/inputPortCount*inputPortIndex));
+                   port = topParentNode.createPort("input", new draw2d.layout.locator.XYRelPortLocator(0,100/inputPortCount*inputPortIndex));
                    port.setConnectionDirection(3);
                    port.setBackgroundColor("#37B1DE");
                    port.setMaxFanOut(20);
@@ -82,8 +83,7 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
                 });
             }
             if (
-                element.userData && element.type.toLowerCase().search('.return') > -1 ||
-                element.userData && element.type.toLowerCase().search('.terminaloutput') > -1
+                element.userData && element.type.toLowerCase().search('.return') > -1
             ){
                    //output port for return node
                    port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(100,100/outputPortCount*outputPortIndex));

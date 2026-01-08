@@ -250,9 +250,6 @@ class TranslateToCppCode_2_TranslatorObject {
                     //this is case when wires are connected to bundlers, unbundlers and so
                     sourceDatatype = lineObj.getSource().getParent().getConnectedCluster().getDatatype();
                 }
-                else if (lineObj.getSource().getDatatype) {
-                    sourceDatatype = lineObj.getSource().getDatatype();
-                }
                 else{
                     sourceDatatype = lineObj.getSource().getUserData().datatype;
                 }
@@ -301,6 +298,12 @@ class TranslateToCppCode_2_TranslatorObject {
                     if (GraphLang.Utils.getLineCount(cCode) >= lineNumberToFind) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = lineObj;
                 }
             }
+
+            /*
+             *  Add wire ID into list of all IDs
+             */
+            translatorObj.translateToCppCodeAdditionalId.add(lineObj.getId());
+            translatorObj.translateToCppCodeAdditionalIdNoHyphen.add(lineObj.getId().replaceAll('-', ''));  //wires will have replaced '-' to '_', but just to be sure put here also their ID without minus sign
         });
 
         /****************************************************************
@@ -366,6 +369,12 @@ class TranslateToCppCode_2_TranslatorObject {
                     nodeObj.NAME.toLowerCase().search("feedbacknode") == -1
                 ){
                     /*
+                     *  Add wire ID into list of all IDs
+                     */
+                    translatorObj.translateToCppCodeAdditionalId.add(nodeObj.getId());
+                    translatorObj.translateToCppCodeAdditionalIdNoHyphen.add(nodeObj.getId().replaceAll('-', ''));
+
+                    /*
                      *  Collecting libraries list for compiler which needs to be later embedded from DB or external
                      */
                     if (nodeObj.translateToCppCodeLibraries){
@@ -411,19 +420,40 @@ class TranslateToCppCode_2_TranslatorObject {
                      *
                      */
                     if (nodeObj.translateToCppCodeTypeDefinition){
-                        translatorObj.translateToCppCodeTypeDefinitionArray.push(nodeObj.translateToCppCodeTypeDefinition());
+                        translatorObj.translateToCppCodeTypeDefinitionArray.push(nodeObj.translateToCppCodeTypeDefinition({translatorObj: translatorObj}));
 
                         if (nodeObj.getDatatype && nodeObj.getDatatype().startsWith("clusterDatatype_")) {
                             translatorObj.typeDefinitionUsedList.push(`${nodeName} -> ${nodeObj.getNodeLabelText()}`);
                         }
                     }
                     if (
-                        (nodeObj.NAME.toLowerCase().search("constantnode") > -1 ||
-                         nodeObj.NAME.toLowerCase().search("pointerdatatypenode") > -1) &&
-                         nodeObj.getDatatype().toLowerCase().search("clusterdatatype") > -1 &&
-                         !translatorObj.typeDefinitionUsedList.contains(nodeObj.getText())
+                        (
+                            (nodeObj.NAME.toLowerCase().search("constantnode") > -1 && nodeObj.getDatatype().toLowerCase().startsWith("clusterDatatype_")) ||
+                          nodeObj.NAME.toLowerCase().search("pointerdatatypenode") > -1 ||
+                          (typeof nodeObj.getDatatype === "function" && nodeObj.getDatatype().toLowerCase().search("clusterdatatype") > -1)
+                        ) && translatorObj.typeDefinitionUsedList.contains(`${nodeName} -> ${nodeObj.getNodeLabelText()}`) === false
                     ){
-                        translatorObj.typeDefinitionNeededList.add(nodeObj.getText());
+                        let nodeSchematicParentClassName = "";
+                        let nodeDatatypeDefinitionLabelText = "";
+
+                        if (typeof nodeObj.getSourceFigureId === "function"){
+                            /*
+                             *  this case is now used for cluster struct nodes, which have defined getSourceFigureId(), search for cluster node across whole project
+                             */
+                            let searchClusterId = nodeObj.getSourceFigureId();
+                            let nodeInfo = GraphLang.Utils.getObjectInProjectFromJSON({id: searchClusterId}).first();
+                            let nodeJSONInfo = GraphLang.Utils.getObjectInProjectFromJSONById(searchClusterId);
+
+                            nodeSchematicParentClassName = nodeInfo.parentNodeName;
+                            nodeDatatypeDefinitionLabelText = nodeJSONInfo.userData.nodeLabel;
+
+                            translatorObj.typeDefinitionNeededList.push(`${nodeSchematicParentClassName} -> ${nodeDatatypeDefinitionLabelText}`);
+                        }else{
+                            /*
+                             *  nodeName -> current node class name, used when subnode is translated
+                             */
+                            translatorObj.typeDefinitionNeededList.push(`${nodeName} -> ${nodeObj.getNodeLabelText()}`);
+                        }
                     }
 
 
@@ -436,7 +466,12 @@ class TranslateToCppCode_2_TranslatorObject {
                      */
                     if (!translatorObj.translateToCppCodeSubnodeArray.contains(nodeObj.NAME) && nodeObj.jsonDocument !== undefined && nodeObj.jsonDocument.length > 0){
                         translatorObj.translateToCppCodeSubnodeArray.push(nodeObj.NAME);
-                        translatorObj.translateToCppCodeSubNode({nodeObj: nodeObj, schematicOwnerId: null, schematicOwnerName: null});
+                        translatorObj.translateToCppCodeSubNode({
+                            translatorObj: translatorObj,
+                            nodeObj: nodeObj,
+                            schematicOwnerId: null,
+                            schematicOwnerName: null
+                        });
                     }
 
                     /*
@@ -447,7 +482,12 @@ class TranslateToCppCode_2_TranslatorObject {
                         nodeObjChildrenWithDiagram.each(function(subnodeIndex, subnodeObj){
                             if (!translatorObj.translateToCppCodeSubnodeArray.contains(subnodeObj.NAME) && subnodeObj.jsonDocument !== undefined && subnodeObj.jsonDocument.length > 0){
                                 translatorObj.translateToCppCodeSubnodeArray.push(subnodeObj.NAME);
-                                translatorObj.translateToCppCodeSubNode({nodeObj: subnodeObj, schematicOwnerId: nodeObj.getId(), schematicOwnerName: nodeObj.NAME});
+                                translatorObj.translateToCppCodeSubNode({
+                                    translatorObj: translatorObj,
+                                    nodeObj: subnodeObj,
+                                    schematicOwnerId: nodeObj.getId(),
+                                    schematicOwnerName: nodeObj.NAME
+                                });
                             }
                         });
                     }
@@ -673,21 +713,14 @@ class TranslateToCppCode_2_TranslatorObject {
             outputTarget.appendChild(document.createElement("hr"));
         });
 
-        /******************************************************************************
-         * REWRITE IDs to HUMAN READABLE NUMBERS (starts from 1,2,...,N)
-         *******************************************************************************/
-        cCode = GraphLang.Utils.rewriteIDtoNumbers(canvas, cCode, translatorObj.translateToCppCodeAdditionalId, translatorObj.translateToCppCodeAdditionalIdNoHyphen);
-
         return cCode;
     }
 
     translateToCppCodeSubNode = (funcParams) => {
-        let translatorObj = this;
+        let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : this;
 
         let cCode = "";
         let cCodeParams = "";
-        let cCodeParamsInput = "";
-        let cCodeParamsOutput = "";
         let cCodeReturnDatatype = "void";
 
         let SUB_NODE_ID = Object.hasOwn(funcParams, "schematicOwnerId") ? funcParams.schematicOwnerId : null;
@@ -715,8 +748,7 @@ class TranslateToCppCode_2_TranslatorObject {
         GraphLang.Utils.displayContents2(nodeObj.jsonDocument, subnodeCanvas);
         //GraphLang.Utils.displayContentsFromClass(nodeObj, subnodeCanvas);
 
-        let paramsCounterInput = 0;
-        let paramsCounterOutput = 0;
+        let funcParamsCounter = 0;
         subnodeCanvas.getFigures().each(function(figureIndex, figureObj){
             /*
              *  INPUT TERMINAL TRANSCRIPTION AS PARAMS FOR FUNCTION DECLARATION
@@ -724,12 +756,26 @@ class TranslateToCppCode_2_TranslatorObject {
             if (
                 figureObj.userData &&
                 figureObj.userData.isTerminal &&
-                (figureObj.userData.isTerminal == 1 || figureObj.userData.isTerminal.toLowerCase() == true) &&
-                figureObj.translateToCppCodeAsParam != undefined
+                (figureObj.userData.isTerminal === 1 || figureObj.userData.isTerminal === true || figureObj.userData.isTerminal.toLowerCase() === true) &&
+                (typeof figureObj.translateToCppCodeAsParam === "function" || (typeof figureObj.getDatatype === "function" && typeof figureObj.getVariableName === "function"))
             ){
-                if (paramsCounterInput > 0) cCodeParamsInput += ', ';
-                cCodeParamsInput += figureObj.translateToCppCodeAsParam();
-                paramsCounterInput++;
+                //add trailing ',' if this is not first function input parameter
+                if (funcParamsCounter > 0) cCodeParams += ', ';
+
+                /*
+                 *  Each function in C++ have input parameters which can have default parameters.
+                 *  Here it will generate method params like:
+                 *      int methodName(int paramA = 5, string paramB = "__value__", ...){
+                 *          ...
+                 */
+                if (typeof figureObj.translateToCppCodeAsParam === "function"){
+                    cCodeParams += figureObj.translateToCppCodeAsParam();
+                }else if(typeof figureObj.getDatatype === "function" && typeof figureObj.getVariableName === "function"){
+                    cCodeParams += figureObj.getDatatype() + " " + figureObj.getVariableName();
+                }else{
+                    cCodeParams += `/* ERROR Cannot translate function input param for figure "${figureObj.NAME}" id: ${figureObj.getid()} */`;
+                }
+                funcParamsCounter++;
 
                 /*
                  *  push input terminal into array for case it's not connected and value must be assigned
@@ -741,6 +787,7 @@ class TranslateToCppCode_2_TranslatorObject {
                     variableName: `${figureObj.getUserData().nodeLabel}`,
                     variableValue: figureObj.getVariableValueAsStr ? figureObj.getVariableValueAsStr() : ""
                 };
+
                 console.log(`added subnode port: translateToCppCodeSubnodeInputTerminalsDefaultValuesArray["${nodeObj.NAME}"]["${figureObj.getUserData().nodeLabel}"]`);
             }
 
@@ -785,27 +832,6 @@ class TranslateToCppCode_2_TranslatorObject {
             //END breakpoint list filling
 
             /*
-             *  OUTPUT TERMINAL, as pointers
-             *
-             *      for now accept just output terminal node
-             */
-            if (figureObj.NAME.toLowerCase().search("terminaloutput") > -1){
-                if (paramsCounterOutput > 0) cCodeParamsOutput += ', ';
-                cCodeParamsOutput += figureObj.translateToCppCodeAsParam();
-                paramsCounterOutput++;
-            }
-
-            /*
-             *  COMPLETE FUNCTION CALL PARAMETERS LIST
-             */
-            if (cCodeParamsInput !== "") {
-                cCodeParams = cCodeParamsInput + ", " +cCodeParamsOutput;
-            }else{
-                cCodeParams = cCodeParamsOutput;
-            }
-
-
-            /*
              *  RETURN VALUE
              *      - if return node is found it asks for it datatype, if nothing is connected then it's undefined
              *      - in stored files nodes haven't 'NAME' property but have 'type' property
@@ -828,11 +854,6 @@ class TranslateToCppCode_2_TranslatorObject {
 
         cCode += "\n";  //to not have separate last curly bracket by tabulator
         cCode += '}' + "\n";
-
-        /******************************************************************************
-         * REWRITE IDs to HUMAN READABLE NUMBERS (starts from 1,2,...,N)
-         *******************************************************************************/
-        cCode = GraphLang.Utils.rewriteIDtoNumbers(subnodeCanvas, cCode, translatorObj.translateToCppCodeAdditionalId, translatorObj.translateToCppCodeAdditionalIdNoHyphen);
 
         //don't return any code, these functions are pushed into array and print after template is created
         //return cCode;
@@ -883,7 +904,7 @@ class TranslateToCppCode_2_TranslatorObject {
 
                 translatorObj.translateClusterTypeDefinitionItems[figureObj.getDatatype()] = figureObj.getItemNamesDatatypesIndexes();
 
-                //TODO here must be traversing through elements and if there is some constant which is also from some seaparte file find it and translate
+                //TODO here must be traversing through elements and if there is some constant which is also from some separate file find it and translate
             }
         });
 
@@ -942,88 +963,24 @@ class TranslateToCppCode_2_TranslatorObject {
             translateTerminalsDeclaration: true
         });
 
-        var template_cCode = "";
-        var _disabled_template_cCode = "";
+        let template_cCode = "";
 
         template_cCode += "\n";
         template_cCode += this.getCppCodeImport();
         template_cCode += "\n";
 
-        template_cCode += `
-typedef int errorDatatype;
-typedef int int32;
-typedef int undefined;
-typedef unsigned int uint;
-typedef float numeric;
-    `;
-
-        _disabled_template_cCode += `
-#define HIGH true
-#define LOW false
-
-using namespace std;
-
-/**** MOCKING CLASSES **************************/
-#include<iostream>
-#include<string>
-#include<unistd.h>
-#include<vector>
-
-typedef string String;
-
-class SerialClass{
-    public:
-        void println(string msg);
-        void begin(int pinNumber);
-    private:
-        bool initializeFlag = false;
-        int pinNumber;
-};
-
-void SerialClass::println(string msg){
-    cout << msg << endl;
-}
-
-void SerialClass::begin(int pinNumber){
-    this->initializeFlag = true;
-    this->pinNumber = pinNumber;
-    cout << "Serial initialized at pin " << pinNumber << endl;
-}
-
-void delay(int time_ms){
-    usleep(time_ms*1000);
-}
-
-int arduinoPinValue[100];
-int arduinoPinMode[100];
-enum pinMode{
-    INPUT,
-    OUTPUT,
-    INPUT_PULLUP
-};
-
-bool digitalRead(int pin){
-    return arduinoPinValue[pin];
-}
-
-void digitalWrite(int pin, bool value){
-    arduinoPinValue[pin] = value;
-}
-
-void pinMode(int pin, pinMode mode){
-    arduinoPinMode[pin] = mode;
-}
-
-SerialClass Serial;
-/***********************************************/
-    `;
+        template_cCode += `typedef int errorDatatype;\n`;
+        template_cCode += `typedef int int32;\n`;
+        template_cCode += `typedef int undefined;\n`;
+        template_cCode += `typedef unsigned int uint;\n`;
+        template_cCode += `typedef float numeric;\n`;
 
         template_cCode += "\n";
         template_cCode += this.getCppCodeTypeDefinition();
         template_cCode += "\n";
 
         /******************************************************************************
-         * SubNode code printed as subfunctions
+         * SubNode code printed as sub functions
          *******************************************************************************/
         template_cCode += "/************* BEGIN Transcripted SubNode function definitions ************/\n\n";
         this.translateToCppCodeFunctionsArray.unique();  //removes duplicates
@@ -1050,18 +1007,11 @@ SerialClass Serial;
         template_cCode += cCode;
         template_cCode += "\n";
         template_cCode += "}\n";
+        template_cCode += "\n";
+        template_cCode += "//loop function left empty as whole code is generated inside setup(), this should be never reached\n";
         template_cCode += "void loop() {\n";
         template_cCode += "\t/* generated code is in setup() */\n";
         template_cCode += "}\n";
-
-        /*
-        template_cCode += "int main(int argc, char* argv[]){\n";
-        template_cCode += "\n";
-        template_cCode += cCode;
-        template_cCode += "\n";
-        template_cCode += "\t return 0;\n";
-        template_cCode += "}\n";
-        */
 
         cCode = template_cCode;
 
@@ -1119,13 +1069,13 @@ SerialClass Serial;
         template_cCode += this.getCppCodeImport();
         template_cCode += "\n";
 
-        template_cCode += `//type definitions for datatypes in GraphLang -> C++ types        
-typedef int errorDatatype;
-typedef int int32;
-typedef int undefined;
-typedef unsigned int uint;
-typedef float numeric;
-typedef int polymorphic;  //THIS IS NOT EXACTLY RIGHT but usable for now\n\n`;
+        template_cCode += `//type definitions for datatypes in GraphLang -> C++ types\n`;
+        template_cCode += `typedef int errorDatatype;\n`;
+        template_cCode += `typedef int int32;\n`;
+        template_cCode += `typedef int undefined;\n`;
+        template_cCode += `typedef unsigned int uint;\n`;
+        template_cCode += `typedef float numeric;\n`;
+        template_cCode += `typedef int polymorphic;  //THIS IS NOT EXACTLY RIGHT but usable for now\n\n`;
 
         template_cCode += "using namespace std;\n";
         template_cCode += "\n";

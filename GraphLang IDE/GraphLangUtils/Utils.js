@@ -1591,8 +1591,6 @@ GraphLang.Utils.setTunnelColorByWire = function(canvas){
  *  @returns {String} Translated code with rewiritten ID to something more readible - normal numbers, so code is shorter and nicer looking.
  */
 GraphLang.Utils.rewriteIDtoNumbers = function(canvas, cCode, additionalIdList = null, additionalIdNoHyphenList = null){
-  var translationIdTable = [];
-
   var allIdList = new draw2d.util.ArrayList();
   var allIdNoHyphenList = new draw2d.util.ArrayList();
 
@@ -1602,25 +1600,12 @@ GraphLang.Utils.rewriteIDtoNumbers = function(canvas, cCode, additionalIdList = 
   var codeRewriteIdHtmlElement = document.querySelector("#codeRewriteIdFlag");
   var codeRewriteIdFlag = codeRewriteIdHtmlElement ? codeRewriteIdHtmlElement.checked : false;
 
-  canvas.getFigures().each(function(figureIndex, figureObj){
-      allIdList.push(figureObj.getId());
-      allIdNoHyphenList.push(figureObj.getId().replaceAll("-",""));
-      if (figureObj.NAME.toLowerCase().search("loop") > -1){
-        figureObj.getChildren().each(function(childIndex, childObj){
-          if (childObj.NAME.toLowerCase().search("tunnel") > -1){
-            allIdList.push(childObj.getId());
-          }
-        });
-      }
-  });
-
-  canvas.getLines().each(function(connectionIndex, connectionObj){
-    allIdList.push(connectionObj.getId());
-  });
-
   //add aditional IDs into list
   if (additionalIdList) allIdList.addAll(additionalIdList);
   if (additionalIdNoHyphenList) allIdNoHyphenList.addAll(additionalIdNoHyphenList);
+
+  additionalIdList.unique();
+  additionalIdNoHyphenList.unique();
 
   /*
    *  Replace IDs with their order for more human readible code
@@ -1648,7 +1633,9 @@ GraphLang.Utils.rewriteIDtoNumbers = function(canvas, cCode, additionalIdList = 
   allIdNoHyphenList.each(function(IdIndex, IdObj){
       var regExpression = new RegExp(IdObj, 'g');
 
-      if (codeRewriteIdFlag) cCode = cCode.replace(regExpression, counter++);    //this replace id with number
+      if (codeRewriteIdFlag){
+          cCode = cCode.replace(regExpression, counter++);  //this replace id with number
+      }
       cCode = cCode.replace(regExpression, IdObj.replaceAll('-', '_'));    //replace id with - replaced to _
   });
 
@@ -1985,7 +1972,7 @@ GraphLang.Utils.displayContents2 = function (jsonDocument, canvasObj) {
 }
 
 /**
- *  @method `saveSchemati`c
+ *  @method `saveSchematic`
  *  @param {draw2d.canvas} canvas - Canvas where schematic is located.
  *  @param {String} filename
  *  @param {String} type
@@ -2232,6 +2219,7 @@ GraphLang.Utils.ErrorList = {
     CONNECTION_DIFFERENT_DATATYPE: "CONNECTION_DIFFERENT_DATATYPE",
     NODE_MISSING_TRANSLATE_FUNCTION: "NODE_MISSING_TRANSLATE_FUNCTION",
     NO_EXECUTION_ORDER: "NO_EXECUTION_ORDER",
+    SOURCE_FIGURE_NOT_EXISTS: "SOURCE_FIGURE_NOT_EXISTS",
 }
 
 /**
@@ -2351,7 +2339,7 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
                 connectionTargetDatatype: targetPortDatatype,
                 connectionTarget: lineObj.getTarget(),
                 type: GraphLang.Utils.ErrorList.CONNECTION_UNDEFINED_DATATYPE,
-                message: "CONNECTION_UNDEFINED_DATATYPE"
+                message: `wire "${lineObj.getId()}" source is UNDEFINED, check figure connections and port datatypes (maybe they are polymorphic and evaluate to undefined datatype)`
             });
             console.warn(errorList.last());
 
@@ -2429,7 +2417,7 @@ GraphLang.Utils.userInteractiveErrorOnClick = function(errorObj){
     /*
      *  INTERACTIVE DISPLAY ERROR TO USER
      */
-    if (errorObj.type == GraphLang.Utils.ErrorList.CONNECTION_DIFFERENT_DATATYPE) {
+    if (errorObj.type == GraphLang.Utils.ErrorList.CONNECTION_DIFFERENT_DATATYPE || errorObj.type == GraphLang.Utils.ErrorList.CONNECTION_UNDEFINED_DATATYPE) {
         let errorConnection = nodeCanvas.getLine(errorObj.connectionId);
         animateBlinkObject(errorConnection);
     }
@@ -2448,6 +2436,12 @@ GraphLang.Utils.userInteractiveErrorOnClick = function(errorObj){
         let errorNode = nodeCanvas.getFigure(errorObj.figureId);
         errorNode.setStroke(4).setColor("#DD2241");
         animateBlinkObject(errorNode, (errorNode) => errorNode.setStroke(0));
+    }
+    else if (errorObj.type == GraphLang.Utils.ErrorList.SOURCE_FIGURE_NOT_EXISTS) {
+        let errorNode = nodeCanvas.getFigure(errorObj.figureId);
+        let origNodeAttr = errorNode.attr();
+        errorNode.setStroke(4).setColor("#DD2241");
+        animateBlinkObject(errorNode, (errorNode) => errorNode.attr(origNodeAttr));
     }
     else{
         alert(`error type: ${errorObj.type}\nThere is no interactive display, you must find it manually.`);
@@ -3343,6 +3337,12 @@ GraphLang.Utils.getObjectInProjectFromJSON = function(funcParams){
     return searchResultList;
 }
 
+/**
+ * @method GraphLang.Utils.getObjectInProjectFromJSONById
+ * @param {string} searchObjectId - search object id
+ * @returns {null|object} serialized node object in JSON
+ * @description Search whole project nodes JSON and returns JSON serialized node from schematic (or node object variable for schematic called jsonDocument)
+ */
 GraphLang.Utils.getObjectInProjectFromJSONById = function(searchObjectId = ""){
     if (
         searchObjectId === ""
@@ -3352,17 +3352,12 @@ GraphLang.Utils.getObjectInProjectFromJSONById = function(searchObjectId = ""){
 
     //search object specified by id
     if (searchObjectId !== ""){
-
-        //TODO: This return object from canvas, need to be returned in serialized form to have same output as from JSON!!!
-
-        //console.log(`--> GraphLang.Utils.getObjectInProject(): searching using id`);
-
         objectRef = appCanvas.getFigure(searchObjectId);
         if (objectRef === null){
             objectRef = appCanvas.getLine(searchObjectId);
         }
 
-        //object found on main canvas
+        //object found on main canvas, returned in serialized json form, same as when is stored in node schematic variable
         if (objectRef !== null) {
             return objectRef.getPersistentAttributes();
         }

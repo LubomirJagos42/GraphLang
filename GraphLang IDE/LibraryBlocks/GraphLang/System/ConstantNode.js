@@ -6,7 +6,7 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
   NAME: "GraphLang.Shapes.Basic.ConstantNode",
 
   contextMenuItems: {},
-  constantDatatypesList: ["int","uint","float","double","bool","string", "std::complex<double>", "std::complex<long double>", "std::complex<float>"],
+  constantDatatypesList: ["int","uint","float","double","bool","string", "std::complex<double>", "std::complex<long double>", "std::complex<float>", "String"],
 
   /**
    *  @method init
@@ -162,6 +162,10 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
                case "string":
                    emitter.changeDatatype(key);
                    emitter.setText("defaultString");   //<-- default value
+                   break;
+               case "arduino String":
+                   emitter.changeDatatype(key);
+                   emitter.setText("default arduino String");   //<-- default value
                    break;
                case "std::complex<double>":
                case "std::complex<long double>":

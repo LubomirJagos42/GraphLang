@@ -336,6 +336,8 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
    *  TUNNELS DECLARATION
    */
   getTunnelsDeclarationCppCode:function(funcParams){
+    let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+
     cCode = "";
     cCode += "/* LEFT TUNNELs declarations */\n";
     cCode += "//tunnel declaration, if connected to wire also assignement\n";
@@ -352,6 +354,12 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
         }else{
           cCode += childObj.getDatatype() + " tunnel_" + childObj.getId() + ";\n";
         }
+
+        /*
+         *  Add ID into list of all IDs
+         */
+        translatorObj.translateToCppCodeAdditionalId.add(childObj.getId());
+        translatorObj.translateToCppCodeAdditionalIdNoHyphen.add(childObj.getId().replaceAll('-', ''));
       }
 
       /*
@@ -439,6 +447,12 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
                 }
             }
         }
+
+        /*
+         *  Add ID into list of all IDs
+         */
+        translatorObj.translateToCppCodeAdditionalId.add(figureObj.getId());
+        translatorObj.translateToCppCodeAdditionalIdNoHyphen.add(figureObj.getId().replaceAll('-', ''));
     });
 
     /*
@@ -453,7 +467,7 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
     /*
      *  Generate wires declaration.
      */
-  	allConnections.each(function(connectionindex, connectionObj){
+  	allConnections.each(function(connectionIndex, connectionObj){
         let datatypeStr = "";
         let datatypeStr_orig = connectionObj.getSource().userData.datatype;
         //if (connectionObj.getSource().getDatatype) datatypeStr = connectionObj.getSource().getDatatype();    //use getDatatype function if available
@@ -473,8 +487,7 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
             //TODO: Need to check that +1 if really it's correct
             if (GraphLang.Utils.getLineCount(cCode) >= lineNumberToFind + 1) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = connectionObj;
         }
-
-  	});
+    });
 
     return cCode;
  },

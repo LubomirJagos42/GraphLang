@@ -3,11 +3,9 @@
 //
 // http://www.draw2d.org
 //
-GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
+GraphLang.Shapes.Basic.ClusterSelectOption = draw2d.shape.basic.Label.extend({
 
-    NAME: "GraphLang.Shapes.Basic.EnumSelectOption",
-
-    optionEditor: new draw2d.ui.SelectOptionInplaceEditor(),
+    NAME: "GraphLang.Shapes.Basic.ClusterSelectOption",
 
     init:function(attr, setter, getter)
     {
@@ -16,7 +14,7 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
             bgColor:null,
             flagAutoCreatePorts: false,
             userData: {
-                nodeLabel: "enumValue",
+                nodeLabel: "cluster ref. name",
                 sourceFigureId: null
             }
         },attr), setter, getter);
@@ -26,7 +24,7 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
          *  Add text "enum" on bottom of figure to distinguished it better from other nodes
          */
         this.add(
-            new draw2d.shape.basic.Label({text: "enum select", stroke: 0}),
+            new draw2d.shape.basic.Label({text: "cluster select", stroke: 0}),
             new draw2d.layout.locator.XYRelPortLocator(0, 100.0)
         );
 
@@ -44,8 +42,6 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
 
         this.persistPorts=false;
 
-        this.installEditor(this.optionEditor);
-        this.optionEditor.setSourceFigureId(this.userData.sourceFigureId);
         this.createContextMenu();
     },
 
@@ -79,6 +75,7 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
                             emitter.nodeLabel.on('change:text', function(nodeEmitter, event){
                                 labelText = nodeEmitter.getText();
                                 labelText = labelText.replaceAll(" ","_");
+                                labelText = labelText.replaceAll(".","_");
                                 if (labelText != nodeEmitter.getParent().userData.nodeLabel) labelText = GraphLang.Utils.getUniqueNodeLabel(emitter.getCanvas(), labelText);
                                 nodeEmitter.getParent().userData.nodeLabel = labelText;                  //when text change do this also in userData
                                 nodeEmitter.text = labelText;                                                   //this will not fire another event!
@@ -101,30 +98,14 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
                             emitter.userData.sourceFigureId = key;
 
                             /*
-                             *  WAY 1 - this was used as first implementation, using just current canvas - not fully functional
+                             *  Get reference enum from whole project
                              */
-                            // let sourceEnumFigure = emitter.getCanvas().getFigure(key);
+                            let structSerializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(key);
+                            let sourceStructFigure = eval(`new ${structSerializedObj.type}()`);
+                            sourceStructFigure.setPersistentAttributes(structSerializedObj);
 
-                            /*
-                             *  WAY 2 - get reference enum from whole project
-                             */
-                            let enumSerializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(key);
-                            let sourceEnumFigure = eval(`new ${enumSerializedObj.type}()`);
-                            sourceEnumFigure.setPersistentAttributes(enumSerializedObj);
+                            emitter.setText(sourceStructFigure.getNodeLabelText());
 
-                            let optionArray = sourceEnumFigure.getOptionArray();
-                            emitter.updatePortDatatype();
-
-                            emitter.editor.setOptions(optionArray);
-
-                            if (optionArray.length > 0){
-                                emitter.setText(optionArray[0].name);
-                            }else{
-                                emitter.setText("null");
-                                emitter.attr({width: 40, height: 30});
-                            }
-
-                            if (sourceEnumFigure) emitter.editor.setSourceFigureId(key);
                             break;
                     }
 
@@ -152,15 +133,15 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
         let _contextMenuItems = this.contextMenuItems;
         let uniqueDatatypes = new draw2d.util.ArrayList();  //store just datatypes due they are unique
         if (this.getCanvas()) {
-            let projectEnumObjectList = GraphLang.Utils.getObjectInProjectFromJSON({object: {userData: {isEnum: true}}});
-            projectEnumObjectList.each((enumIndex, enumObject) => {
-                let enumId = enumObject.objectId;
-                let enumSerializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(enumId);
+            let projectClusterObjectList = GraphLang.Utils.getObjectInProjectFromJSON({object: {userData: {isCluster: true}}});
+            projectClusterObjectList.each((clusterIndex, clusterObject) => {
+                let clusterId = clusterObject.objectId;
+                let clusterSerializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(clusterId);
 
-                let enumName = enumObject.parentNodeName ? enumObject.parentNodeName + " -> " : "THIS CANVAS -> ";
-                enumName += enumSerializedObj && enumSerializedObj.userData && enumSerializedObj.userData.nodeLabel ? enumSerializedObj.userData.nodeLabel : enumId;
+                let clusterName = clusterObject.parentNodeName ? clusterObject.parentNodeName + " -> " : "THIS CANVAS -> ";
+                clusterName += clusterSerializedObj && clusterSerializedObj.userData && clusterSerializedObj.userData.nodeLabel ? clusterSerializedObj.userData.nodeLabel : clusterId;
 
-                _contextMenuItems[enumId] = {name: enumName};
+                _contextMenuItems[clusterId] = {name: clusterName};
             });
 
         }
@@ -168,16 +149,20 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
 
     updatePortDatatype: function(){
         //search for enum object in whole project
-        let enumSerializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(this.userData.sourceFigureId);
+        let clusterSerializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(this.userData.sourceFigureId);
 
-        //create object on the fly to be able call its methods
-        let sourceEnumFigure = eval(`new ${enumSerializedObj.type}()`);
+        if (clusterSerializedObj){
+            //create object on the fly to be able call its methods
+            let sourceClusterFigure = eval(`new ${clusterSerializedObj.type}()`);
 
-        //update newly created object attributes to get same behaviour as it will be placed on canvas (this object has no connected wires!!!)
-        sourceEnumFigure.setPersistentAttributes(enumSerializedObj);
+            //update newly created object attributes to get same behaviour as it will be placed on canvas (this object has no connected wires!!!)
+            sourceClusterFigure.setPersistentAttributes(clusterSerializedObj);
 
-        //call enum method to get datatype, this is using object standard api
-        this.getOutputPorts().first().userData.datatype = sourceEnumFigure.getDatatype();
+            //call enum method to get datatype, this is using object standard api
+            this.getOutputPorts().first().userData.datatype = sourceClusterFigure.getDatatype();
+        }else{
+            this.getOutputPorts().first().userData.datatype = "undefined";
+        }
     },
 
     //loading from file attributes, sourceFigureId needs to be set
@@ -186,7 +171,6 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
         this._super(memento);
 
         if (memento.userData.sourceFigureId){
-            this.optionEditor.setSourceFigureId(memento.userData.sourceFigureId);
             this.updatePortDatatype();
         }
     },
@@ -199,19 +183,54 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
         let datatypeStr = "undefined";
 
         //search for enum object in whole project
-        let enumSerializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(this.userData.sourceFigureId);
-        let sourceEnumFigure = eval(`new ${enumSerializedObj.type}()`);
-        sourceEnumFigure.setPersistentAttributes(enumSerializedObj);
+        let clusterSerializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(this.userData.sourceFigureId);
 
-        if (sourceEnumFigure) datatypeStr = sourceEnumFigure.getDatatype();
+        if(clusterSerializedObj){
+            let clusterFigure = eval(`new ${clusterSerializedObj.type}()`);
+            clusterFigure.setPersistentAttributes(clusterSerializedObj);
+            if (clusterFigure) datatypeStr = clusterFigure.getDatatype();
+        }
 
         return datatypeStr;
     },
 
     getVariableName: function(){
-        let variableName = "enum_" + this.getId();
-        if (this.userData.nodeLabel) variableName += "_" + this.userData.nodeLabel;
+        let variableName = "clusterDatatype_" + this.getId();
+        if (this.userData.nodeLabel) {
+            let nodeLabelStr = this.userData.nodeLabel;
+            nodeLabelStr = nodeLabelStr
+                .replaceAll(' ', '_')
+                .replaceAll('.', '_')
+                .replaceAll('*', '_')
+                .replaceAll('-', '_');
+
+            variableName += "_" + nodeLabelStr;
+        }
         return variableName
+    },
+
+    getNodeLabelText: function(){
+        let nodeLabelStr = "";
+
+        //this must return cluster source figure node label text
+        let clusterNodeInfo = GraphLang.Utils.getObjectInProjectFromJSONById(this.userData.sourceFigureId);
+
+        nodeLabelStr = clusterNodeInfo.userData.nodeLabel;
+        nodeLabelStr = nodeLabelStr
+            .replaceAll(' ', '_')
+            .replaceAll('.', '_')
+            .replaceAll('*', '_')
+            .replaceAll('-', '_');
+
+        return nodeLabelStr;
+    },
+
+    getSourceFigureId: function(){
+        let sourceFigureId = "";
+        if (this.userData && this.userData.sourceFigureId && this.userData.sourceFigureId.length > 0){
+            sourceFigureId = this.userData.sourceFigureId;
+        }
+        return sourceFigureId;
     },
 
     validateSelf: function(canvasOwnerName){
@@ -226,7 +245,7 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
                     figureId: this.getId(),
                     portName: null,
                     type: GraphLang.Utils.ErrorList.SOURCE_FIGURE_NOT_EXISTS,
-                    message: `enum select option with id "${this.getId()}", specified source figure "${this.userData.sourceFigureId}" not longer available in project!'`
+                    message: `cluster select option with id "${this.getId()}", specified source figure "${this.userData.sourceFigureId}" not longer available in project!'`
                 });
             }
         }
@@ -269,29 +288,8 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
             return cCode
         }
 
-        let currentOption = this.getText();
-        if (currentOption === "null" || currentOption === ""){
-            cCode += this.getDatatype() + " " + this.getVariableName() + ";\n";     //enum has no items, this will declare uninitialized enum variable which can have any random value of underlying enum datatype
-        }else{
-            cCode += this.getDatatype() + " " + this.getVariableName() + " = " + this.getDatatype() + "::" + this.getText() + ";\n";
-        }
+        cCode += this.getDatatype() + " " + this.getVariableName() + ";\n";
         return cCode;
-    },
-
-    translateToCppCodeTypeDefinition: function(funcParams){
-        let translatorObj = null;
-        if (typeof funcParams === "object" && funcParams.hasOwnProperty("translatorObj")){
-            translatorObj = funcParams.translatorObj;
-            translatorObj.translateToCppCodeAdditionalId.add(this.userData.sourceFigureId);
-            translatorObj.translateToCppCodeAdditionalIdNoHyphen.add(this.userData.sourceFigureId.replaceAll('-', ''));
-        }
-
-        //search for enum object in whole project
-        let enumSerializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(this.userData.sourceFigureId);
-        let sourceEnumFigure = eval(`new ${enumSerializedObj.type}()`);
-        sourceEnumFigure.setPersistentAttributes(enumSerializedObj);
-
-        return sourceEnumFigure.translateToCppCodeTypeDefinition();
     },
 
     translateToCppCode: function(){
@@ -306,9 +304,9 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
             return cCode
         }
 
-        let enumSelectOptionObj = this;
+        let selectOptionObj = this;
         outputPort.getConnections().each(function(wireIndex, wireObj){
-            cCode += wireObj.getVariableName() + " = " + enumSelectOptionObj.getVariableName() + ";\n";
+            cCode += wireObj.getVariableName() + " = " + selectOptionObj.getVariableName() + ";\n";
         });
         return cCode;
     },

@@ -1785,62 +1785,6 @@ jsonDocument: [
         "fontFamily": null,
         "editor": "draw2d.ui.LabelInplaceEditor"
       },
-      {
-        "type": "draw2d.shape.basic.Label",
-        "id": "e5ff5d9b-7a67-09d9-0f66-c7c1df9d6770",
-        "x": 10,
-        "y": 370,
-        "width": 10,
-        "height": 24,
-        "alpha": 1,
-        "angle": 0,
-        "userData": {
-          "datatype": "int*",
-          "isInternalEnumItem": true
-        },
-        "cssClass": "draw2d_shape_basic_Label",
-        "ports": [],
-        "bgColor": "#FFFFFF",
-        "color": "#1B1B1B",
-        "stroke": 1,
-        "radius": 0,
-        "dasharray": null,
-        "text": "PB0",
-        "outlineStroke": 0,
-        "outlineColor": "none",
-        "fontSize": 12,
-        "fontColor": "#000000",
-        "fontFamily": null,
-        "editor": "draw2d.ui.LabelInplaceEditor"
-      },
-      {
-        "type": "draw2d.shape.basic.Label",
-        "id": "7d2ad1f0-6f72-0cb9-34ee-cfad4a139f51",
-        "x": 20,
-        "y": 370,
-        "width": 29.33984375,
-        "height": 24,
-        "alpha": 1,
-        "angle": 0,
-        "userData": {
-          "datatype": "int*",
-          "isInternalEnumItem": true
-        },
-        "cssClass": "draw2d_shape_basic_Label",
-        "ports": [],
-        "bgColor": "#0000FF",
-        "color": "#1B1B1B",
-        "stroke": 1,
-        "radius": 0,
-        "dasharray": null,
-        "text": "stm_PB0",
-        "outlineStroke": 0,
-        "outlineColor": "none",
-        "fontSize": 12,
-        "fontColor": "#FFFFFF",
-        "fontFamily": null,
-        "editor": "draw2d.ui.LabelInplaceEditor"
-      }
     ]
   },
   {
@@ -2153,4 +2097,12 @@ setPersistentAttributes: function(memento){
             this.add(figure, locator);
         },this));
     },
+
+/**************************************************************************************************************
+ *  Added manualy by LuboJ, needed to add #include <LIB_NAME>
+ **************************************************************************************************************/
+translateToCppCodeImport: function(){
+  return "#include <Arduino.h>";
+},
+
 });

@@ -2,8 +2,12 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
   NAME: "GraphLang.Shapes.Basic.Loop2.ForLoop",
   init:function(attr, setter, getter)
   {
-    this._super( $.extend({color: "#0000FF"},attr), setter, getter);
-    var port;
+    this._super( $.extend({
+      color: "#0000FF",
+      stroke: 3
+    },attr), setter, getter);
+
+    let port;
 
     //port is little pushed to the left, connected wire is thne not crossing loop border and tunnel is not generated
     port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(-0.7, 10));
@@ -173,7 +177,9 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
 
     var forLoopIteratorVariable = 'forLoopIterator_' + this.getId();
 
-    cCode += this.getTunnelsDeclarationCppCode();
+    cCode += this.getTunnelsDeclarationCppCode({
+        translatorObj: translatorObj,
+    });
     cCode += this.getWiresInsideLoopDeclarationCppCode();
     cCode += "\n";
     cCode += "for (int " + forLoopIteratorVariable + " = 0; " + forLoopIteratorVariable + " < " + iterationCount + "; " + forLoopIteratorVariable+ "++){\n";

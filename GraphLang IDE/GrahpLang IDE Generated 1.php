@@ -488,6 +488,7 @@ function menu_node_search_oninput(eventObj, emitterObj){
   </div>
 
    <div id="helperPane" style="width: 300px;">
+       <div id="schematicBlockDocumentation"></div>
        <div id="schematicErrors"></div>
        <div id="breakpointList"></div>
        <div id="variablesWatch"></div>

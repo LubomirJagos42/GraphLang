@@ -51,6 +51,7 @@ GraphLang.Utils.Color = draw2d.util.Color.extend({
     else if (colorName == "double") return "#AA2200";
     else if (colorName == "bool" || colorName == "boolean") return "#009900";
     else if (colorName == "string" || colorName == "String") return "#ff3385";
+    else if (colorName == "arduino String") return "#ffb1cd";
     else if (colorName.toLowerCase().search("cluster") > -1) return "#7D1A4C";
     else if (colorName == "errorDatatype") return "#cccc00";
     else if (colorName == "broken") return "#666666";

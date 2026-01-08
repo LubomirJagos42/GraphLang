@@ -3,8 +3,12 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
 
   init:function(attr, setter, getter)
   {
-    this._super( $.extend({},attr), setter, getter);
-    var port;
+    this._super( $.extend({
+        stroke: 3
+    },attr), setter, getter);
+
+    let port;
+
     // Port
     port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(99, 90));
     port.setConnectionDirection(3);

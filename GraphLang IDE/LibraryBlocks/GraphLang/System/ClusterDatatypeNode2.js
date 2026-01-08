@@ -51,6 +51,8 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
     this.userData.executionOrder = 1;
     this.userData.wasTranslatedToCppCode = false;
     this.userData.isTerminal = false;
+    this.userData.isStruct = true;
+    this.userData.isCluster = true;
     this.userData.datatype = "clusterDatatype_notDefinedYet";
 
     this.setPersistPorts(false); 
@@ -506,6 +508,16 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
   translateToCppCodeDeclaration: function(){
     var cCode = "";
     cCode += this.getDatatype() + " " + this.getVariableName() + ";\n";        //THIS CREATES NEW INSTANCE, SO THAT'S REASON WHY HERE IS ID USED
+    return cCode;
+  },
+
+  translateToCppCodeAsParam:function(){
+    cCode = "";
+    var constDatatype = this.getDatatype();
+
+    //no default values
+    cCode += constDatatype + " " + this.getVariableName();
+
     return cCode;
   },
 
