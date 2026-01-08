@@ -99,6 +99,7 @@ htmlTemplate = """
     <script src="./gui/HoverConnection.js"></script>
     <script src="./gui/MultilineInplaceEditor.js"></script>
     <script src="./gui/SelectOptionInplaceEditor.js"></script>
+    <script src="./gui/LocalBrowserTabSync.js"></script>
 
     <script src="./GraphLangUtils/Utils.js"></script>
     <script src="./GraphLangUtils/Debugger.js"></script>

@@ -122,6 +122,16 @@ class TranslateToCppCode_2_TranslatorObject {
     }
 
     /**
+     * @method translateCanvasToCode
+     * @param {Object}        funcParam - object with input parameters
+     * @returns {String} C/C++ code as string
+     * @description General named wrapper function for translateCanvasToCppCode().
+     */
+    translateCanvasToCode = (funcParams) => {
+        return this.translateCanvasToCppCode(funcParams);
+    }
+
+    /**
      * @method translateCanvasToCppCode
      * @param {Object}        funcParam - object with input parameters
      * @param {draw2d.Canvas} funcParam.canvas - schematic which will be serialize to JSON
@@ -422,14 +432,18 @@ class TranslateToCppCode_2_TranslatorObject {
                     if (nodeObj.translateToCppCodeTypeDefinition){
                         translatorObj.translateToCppCodeTypeDefinitionArray.push(nodeObj.translateToCppCodeTypeDefinition({translatorObj: translatorObj}));
 
-                        if (nodeObj.getDatatype && nodeObj.getDatatype().startsWith("clusterDatatype_")) {
+                        if (
+                            (nodeObj.getDatatype && nodeObj.getDatatype().startsWith("clusterDatatype_")) ||
+                            (nodeObj.userData && nodeObj.userData.isCluster === true)
+                        ){
                             translatorObj.typeDefinitionUsedList.push(`${nodeName} -> ${nodeObj.getNodeLabelText()}`);
                         }
                     }
                     if (
                         (
-                            (nodeObj.NAME.toLowerCase().search("constantnode") > -1 && nodeObj.getDatatype().toLowerCase().startsWith("clusterDatatype_")) ||
+                          (nodeObj.NAME.toLowerCase().search("constantnode") > -1 && nodeObj.getDatatype().toLowerCase().startsWith("clusterDatatype_")) ||
                           nodeObj.NAME.toLowerCase().search("pointerdatatypenode") > -1 ||
+                          (nodeObj.userData && nodeObj.userData.isClusterRef === true) ||
                           (typeof nodeObj.getDatatype === "function" && nodeObj.getDatatype().toLowerCase().search("clusterdatatype") > -1)
                         ) && translatorObj.typeDefinitionUsedList.contains(`${nodeName} -> ${nodeObj.getNodeLabelText()}`) === false
                     ){
@@ -749,16 +763,21 @@ class TranslateToCppCode_2_TranslatorObject {
         //GraphLang.Utils.displayContentsFromClass(nodeObj, subnodeCanvas);
 
         let funcParamsCounter = 0;
-        subnodeCanvas.getFigures().each(function(figureIndex, figureObj){
+
+        /*********************************************************************************************************************
+         *  1. TRANSLATE AS FUNCTION PARAMS INPUT PARAMS
+         *********************************************************************************************************************/
+        subnodeCanvas.getFigures().each(function(figureIndex, figureObj) {
             /*
              *  INPUT TERMINAL TRANSCRIPTION AS PARAMS FOR FUNCTION DECLARATION
              */
             if (
                 figureObj.userData &&
                 figureObj.userData.isTerminal &&
-                (figureObj.userData.isTerminal === 1 || figureObj.userData.isTerminal === true || figureObj.userData.isTerminal.toLowerCase() === true) &&
-                (typeof figureObj.translateToCppCodeAsParam === "function" || (typeof figureObj.getDatatype === "function" && typeof figureObj.getVariableName === "function"))
-            ){
+                (figureObj.userData.isTerminal === 1 || figureObj.userData.isTerminal === true || figureObj.userData.isTerminal.toLowerCase() === "true") &&
+                (typeof figureObj.translateToCppCodeAsParam === "function" || (typeof figureObj.getDatatype === "function" && typeof figureObj.getVariableName === "function")) &&
+                figureObj.getInputPorts().getSize() === 0
+            ) {
                 //add trailing ',' if this is not first function input parameter
                 if (funcParamsCounter > 0) cCodeParams += ', ';
 
@@ -768,11 +787,11 @@ class TranslateToCppCode_2_TranslatorObject {
                  *      int methodName(int paramA = 5, string paramB = "__value__", ...){
                  *          ...
                  */
-                if (typeof figureObj.translateToCppCodeAsParam === "function"){
+                if (typeof figureObj.translateToCppCodeAsParam === "function") {
                     cCodeParams += figureObj.translateToCppCodeAsParam();
-                }else if(typeof figureObj.getDatatype === "function" && typeof figureObj.getVariableName === "function"){
+                } else if (typeof figureObj.getDatatype === "function" && typeof figureObj.getVariableName === "function") {
                     cCodeParams += figureObj.getDatatype() + " " + figureObj.getVariableName();
-                }else{
+                } else {
                     cCodeParams += `/* ERROR Cannot translate function input param for figure "${figureObj.NAME}" id: ${figureObj.getid()} */`;
                 }
                 funcParamsCounter++;
@@ -790,7 +809,59 @@ class TranslateToCppCode_2_TranslatorObject {
 
                 console.log(`added subnode port: translateToCppCodeSubnodeInputTerminalsDefaultValuesArray["${nodeObj.NAME}"]["${figureObj.getUserData().nodeLabel}"]`);
             }
+        });
 
+        /*********************************************************************************************************************
+         *  2. TRANSLATE AS FUNCTION PARAMS OUTPUT PARAMS
+         *********************************************************************************************************************/
+        subnodeCanvas.getFigures().each(function(figureIndex, figureObj) {
+            /*
+             *  INPUT TERMINAL TRANSCRIPTION AS PARAMS FOR FUNCTION DECLARATION
+             */
+            if (
+                figureObj.userData &&
+                figureObj.userData.isTerminal &&
+                (figureObj.userData.isTerminal === 1 || figureObj.userData.isTerminal === true || figureObj.userData.isTerminal.toLowerCase() === "true") &&
+                (typeof figureObj.translateToCppCodeAsParam === "function" || (typeof figureObj.getDatatype === "function" && typeof figureObj.getVariableName === "function")) &&
+                figureObj.getOutputPorts().getSize() === 0
+            ){
+                //add trailing ',' if this is not first function input parameter
+                if (funcParamsCounter > 0) cCodeParams += ', ';
+
+                /*
+                 *  Each function in C++ have input parameters which can have default parameters.
+                 *  Here it will generate method params like:
+                 *      int methodName(int paramA = 5, string paramB = "__value__", ...){
+                 *          ...
+                 */
+                if (typeof figureObj.translateToCppCodeAsParam === "function") {
+                    cCodeParams += figureObj.translateToCppCodeAsParam();
+                } else if (typeof figureObj.getDatatype === "function" && typeof figureObj.getVariableName === "function") {
+                    cCodeParams += figureObj.getDatatype() + " " + figureObj.getVariableName();
+                } else {
+                    cCodeParams += `/* ERROR Cannot translate function input param for figure "${figureObj.NAME}" id: ${figureObj.getid()} */`;
+                }
+                funcParamsCounter++;
+
+                /*
+                 *  push input terminal into array for case it's not connected and value must be assigned
+                 *  assuming all terminal nodes has unique name
+                 */
+                if (translatorObj.translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[nodeObj.NAME] == undefined) translatorObj.translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[nodeObj.NAME] = {}
+                translatorObj.translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[nodeObj.NAME][figureObj.getUserData().nodeLabel] = {
+                    datatype: figureObj.getDatatype(),
+                    variableName: `${figureObj.getUserData().nodeLabel}`,
+                    variableValue: figureObj.getVariableValueAsStr ? figureObj.getVariableValueAsStr() : ""
+                };
+
+                console.log(`added subnode port: translateToCppCodeSubnodeInputTerminalsDefaultValuesArray["${nodeObj.NAME}"]["${figureObj.getUserData().nodeLabel}"]`);
+            }
+        });
+
+        /*********************************************************************************************************************
+         *  3. BREAKPOINTS, GETTING RETURN DATATYPE IF THERE IS RETURN NODE in subnode
+         *********************************************************************************************************************/
+        subnodeCanvas.getFigures().each(function(figureIndex, figureObj){
             /*
              *  Breakpoint list fulfilment for SUB NODE
              *      - for normal canvas nodes
@@ -843,8 +914,8 @@ class TranslateToCppCode_2_TranslatorObject {
                 cCodeReturnDatatype = figureObj.getDatatype();
             }
         });
-        cCodeParams = cCodeParams.replace(/,\s*$/ ,"");    //remove last ',' if it's there
 
+        cCodeParams = cCodeParams.replace(/,\s*$/ ,"");    //remove last ',' if it's there
         cCode += cCodeReturnDatatype + ' ' + nodeObj.translateToCppCodeFunctionName() + "(" + cCodeParams + "){\n\t";
 
         /*
@@ -893,8 +964,11 @@ class TranslateToCppCode_2_TranslatorObject {
 
         clusterTypeDefinitionCanvas.getFigures().each(function(figureIndex, figureObj){
             if (
-                figureObj.getDatatype &&
-                figureObj.getDatatype().startsWith("clusterDatatype_") &&
+                (
+                    (figureObj.getDatatype && figureObj.getDatatype().startsWith("clusterDatatype_")) ||
+                    (figureObj.userData && figureObj.userData.isCluster === true)
+                ) &&
+                typeof figureObj.getNodeLabelText === "function" &&
                 figureObj.getNodeLabelText() == clusterName
             ){
                 console.log(figureObj.translateToCppCodeTypeDefinition());
@@ -969,7 +1043,6 @@ class TranslateToCppCode_2_TranslatorObject {
         template_cCode += this.getCppCodeImport();
         template_cCode += "\n";
 
-        template_cCode += `typedef int errorDatatype;\n`;
         template_cCode += `typedef int int32;\n`;
         template_cCode += `typedef int undefined;\n`;
         template_cCode += `typedef unsigned int uint;\n`;

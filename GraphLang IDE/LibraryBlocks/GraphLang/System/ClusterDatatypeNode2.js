@@ -54,6 +54,7 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
     this.userData.isStruct = true;
     this.userData.isCluster = true;
     this.userData.datatype = "clusterDatatype_notDefinedYet";
+    this.userData.isDatatypeSameAsNodeLabel = false;  //add clusterDatatype_ prefix if true, otherwise use just cluster label as its datatype
 
     this.setPersistPorts(false); 
 
@@ -63,12 +64,6 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
      *  DO SOME ADDITIONAL CHANGES AFTER ADDED TO CANVAS
      */
     this.setResizeable(false);
-    this.on('added', function(emitter){
-      //emitter.setResizeable(false);
-      //this.off('resize');
-      emitter.nodeLabel.setText("ahoj");
-      emitter.nodeLabel.fireEvent("change:text");
-    });
     this.on('change:dimension', function(emitter, event){
       //emitter.setResizeable(false);
       //this.off('resize');
@@ -80,7 +75,7 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
     });
 
     this.nodeLabel = new GraphLang.Shapes.Basic.Label({bgColor: '#000000', fontColor: '#FFFFFF', text: "clusterName"});
-    this.nodeLabel.on('change:text', this.nodeLabelChanged);
+    this.nodeLabel.on('change:text', (emitter, event) => {this.nodeLabelChanged(emitter, event)});
 
     //this.add(this.nodeLabel, new draw2d.layout.locator.TopLocator());
     this.add(this.nodeLabel, new draw2d.layout.locator.BottomLocator());
@@ -133,6 +128,12 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
                 emitter.setColor("#AA4A4C"); //stroke color
                 emitter.userData.isTerminal = false;
                 break;
+             case "setDatatypeMangling":
+                emitter.userData.isDatatypeSameAsNodeLabel = true;
+                break;
+             case "unsetDatatypeMangling":
+                emitter.userData.isDatatypeSameAsNodeLabel = false;
+                break;
              default:
                  break;
              }
@@ -149,7 +150,10 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
               "hideItemsLabels": {name: "Hide Labels"},
               "sep2":   "---------",
               "setTerminal": {name: "Set as terminal"},
-              "unsetTerminal": {name: "Unset terminal"}
+              "unsetTerminal": {name: "Unset terminal"},
+              "sep3":   "---------",
+              "setDatatypeMangling": {name: "Set datatype same as cluster label"},
+              "unsetDatatypeMangling": {name: "Use clusterDatatype_ prefix"},
           }
       });
   },
@@ -182,7 +186,15 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
    * @returns {string}
    */
   getDatatype: function(){
-    return "clusterDatatype_" + this.getId().replaceAll("-", "") + "_" + this.getUserData().nodeLabel;
+    let datatypeStr = "";
+
+    if (this.userData && this.userData.isDatatypeSameAsNodeLabel == true){
+      datatypeStr = this.getUserData().nodeLabel;
+    }else{
+      datatypeStr = "clusterDatatype_" + this.getId().replaceAll("-", "") + "_" + this.getUserData().nodeLabel;
+    }
+
+    return datatypeStr;
   },
 
   getNodeLabelText: function(){
@@ -410,6 +422,7 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
             clusterObj.nodeLabel = childObj;
         }
     });
+    this.nodeLabel.on('change:text', (emitter, event) => {this.nodeLabelChanged(emitter, event)});
 
     let outputPort = this.getOutputPort(0);
     outputPort.userData.datatype = this.getDatatype();  //output port datatype is reference to cluster

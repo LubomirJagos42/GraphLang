@@ -17,7 +17,8 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
             flagAutoCreatePorts: false,
             userData: {
                 nodeLabel: "enumValue",
-                sourceFigureId: null
+                sourceFigureId: null,
+                isEnumRef: true,
             }
         },attr), setter, getter);
         var port;
@@ -287,11 +288,11 @@ GraphLang.Shapes.Basic.EnumSelectOption = draw2d.shape.basic.Label.extend({
         }
 
         //search for enum object in whole project
-        let enumSerializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(this.userData.sourceFigureId);
-        let sourceEnumFigure = eval(`new ${enumSerializedObj.type}()`);
-        sourceEnumFigure.setPersistentAttributes(enumSerializedObj);
+        let serializedObj = GraphLang.Utils.getObjectInProjectFromJSONById(this.userData.sourceFigureId);
+        let sourceFigure = eval(`new ${serializedObj.type}()`);
+        sourceFigure.setPersistentAttributes(serializedObj);
 
-        return sourceEnumFigure.translateToCppCodeTypeDefinition();
+        return sourceFigure.translateToCppCodeTypeDefinition();
     },
 
     translateToCppCode: function(){

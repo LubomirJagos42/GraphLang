@@ -394,78 +394,123 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
         );
 
         /*
-         *  Evaluate compilation output
+         *  Evaluate compilation output, compile status use linux convention:
+         *      0 = no error
+         *      1 = there is ERROR
          */
         let compileErrorLines = new draw2d.util.ArrayList();
         let errorLinesByLineNumbers = [];
 
         let compileCommandOutputStr = ajaxResponse.compileCommandOutput;
-        // console.log(`--> compileCommandOutputStr:`);
-        // console.log(compileCommandOutputStr);
         let compileCommandOutputObj = JSON.parse(compileCommandOutputStr);
-        // console.log(`--> compileCommandOutputObj:`);
-        // console.log(compileCommandOutputObj);
         if (compileCommandOutputObj.status === 1) {
-            /*
-             *  This was for previous g++ compile whne used as:
-             *      > g++ -fdiagnostic-fomrat=json
-             *  Now there is used cmake so this need to be re-done.
-             *
-             *  If there is status -1 it means there is whole error obj str in output json format
-             *  Error object structure:
-             *      - array[0..n]
-             *        |__children: array[0..n]
-             *           |__locations: array[0..n]
-             *              |__caret:
-             *                 |__line: number
-             *
-             *  This will extract just caret object information into array:
-             *      - array[lineNumber]
-             *        |__array["...error message..."]
-             *           |__array[0..n]
-             *              |__byte-column
-             *              |__column
-             *              |__display-column
-             *              |__file
-             *              |__line
-             */
-            let compileErrorStr = compileCommandOutputObj.errorMsg;//.replaceAll('\\"', '"'); //.replaceAll('\\n', '\n').split('\n'); //THIS DOESN'T HAVE TO BE USED
+
+            let codeTemplateUsed = await GraphLang.Utils.getProjectCodeTemplate();
 
             /*
-             *  TODO: Need check target device, if desktop it's working on raspi now as there is errors logged in json into file
-             *        If embedded need manually go through compilation output and look for errors as all output is going to stdout now!!!
+             *  Analyze error output from g++, it's in JSON format since -fdianostic-format=json is used
              */
-            let compileErrorObj = null;
-            try {
-                compileErrorObj = JSON.parse(compileErrorStr);
-                console.log(`--> compileErrorObj json answer from G++:`);
-                console.log(compileErrorObj);
-            } catch (e) {
-                console.warn(`Error parsing compile error message: ${e.message}`);
-                throw e;
-            }
+            if (codeTemplateUsed === "desktop") {
+                /*
+                 *  This was for previous g++ compile whne used as:
+                 *      > g++ -fdiagnostic-format=json
+                 *  Now there is used cmake so this need to be re-done.
+                 *
+                 *  If there is status -1 it means there is whole error obj str in output json format
+                 *  Error object structure:
+                 *      - array[0..n]
+                 *        |__children: array[0..n]
+                 *           |__locations: array[0..n]
+                 *              |__caret:
+                 *                 |__line: number
+                 *
+                 *  This will extract just caret object information into array:
+                 *      - array[lineNumber]
+                 *        |__array["...error message..."]
+                 *           |__array[0..n]
+                 *              |__byte-column
+                 *              |__column
+                 *              |__display-column
+                 *              |__file
+                 *              |__line
+                 */
+                let compileErrorStr = compileCommandOutputObj.errorMsg;
 
-            for (let errorObj of compileErrorObj) {
-                // console.log(`----> compileErrorObj one:`);
-                for (let errorLocation of errorObj.locations) {
-                    // console.log(errorLocation);
-                    compileErrorLines.add(errorLocation.caret);
+                /*
+                 *  TODO: Need check target device, if desktop it's working on raspi now as there is errors logged in json into file
+                 *        If embedded need manually go through compilation output and look for errors as all output is going to stdout now!!!
+                 */
+                let compileErrorObj = null;
+                try {
+                    compileErrorObj = JSON.parse(compileErrorStr);
+                    console.log(`--> compileErrorObj json answer from G++:`);
+                    console.log(compileErrorObj);
+                } catch (e) {
+                    console.warn(`Error parsing compile error message: ${e.message}`);
+                    throw e;
+                }
 
-                    //create new array at line number key
-                    let arrayKey = String(errorLocation.caret.line);    //output of this is object with properties, NO ARRAY
-                    if (!errorLinesByLineNumbers[arrayKey]) {
-                        errorLinesByLineNumbers[arrayKey] = [];
+                for (let errorObj of compileErrorObj) {
+                    // console.log(`----> compileErrorObj one:`);
+                    for (let errorLocation of errorObj.locations) {
+                        // console.log(errorLocation);
+                        compileErrorLines.add(errorLocation.caret);
+
+                        //create new array at line number key
+                        let arrayKey = String(errorLocation.caret.line);    //output of this is object with properties, NO ARRAY
+                        if (!errorLinesByLineNumbers[arrayKey]) {
+                            errorLinesByLineNumbers[arrayKey] = [];
+                        }
+
+                        //this will group message into
+                        let lineError = errorLocation.caret;
+                        let lineErrorMessage = errorObj.message;
+                        if (!errorLinesByLineNumbers[arrayKey][lineErrorMessage]) {
+                            errorLinesByLineNumbers[arrayKey][lineErrorMessage] = [];
+                        }
+                        errorLinesByLineNumbers[arrayKey][lineErrorMessage].push(errorLocation.caret);  //add line error into array under line number and error message key
                     }
-
-                    //this will group message into
-                    let lineError = errorLocation.caret;
-                    let lineErrorMessage = errorObj.message;
-                    if (!errorLinesByLineNumbers[arrayKey][lineErrorMessage]) {
-                        errorLinesByLineNumbers[arrayKey][lineErrorMessage] = [];
-                    }
-                    errorLinesByLineNumbers[arrayKey][lineErrorMessage].push(errorLocation.caret);  //add line error into array under line number and error message key
                 }
             }
+
+            /*
+             *  Analyze error output from stderr from platformio
+             */
+            if (codeTemplateUsed === "embedded") {
+                console.log(`--> COMPILER ERROR EVALUATION FOR EMBEDDED USED!!!`);
+                console.log(compileCommandOutputObj);
+
+                let compileErrorStr = compileCommandOutputObj.errorMsg;
+                let errorOutputSplitByNewline = compileErrorStr.split("\n");
+                console.log(errorOutputSplitByNewline);
+
+                let errorLineInfoList = [];
+                for (let errorLineStr of errorOutputSplitByNewline){
+                    let regexpResult = errorLineStr.match(/src\\main.*:([0-9]*):([0-9]*):(.*)/i);
+                    if (regexpResult){
+                        let lineNumber = regexpResult[1];
+                        let columnNumber = regexpResult[2];
+                        let message = regexpResult[3].trim();
+
+                        //this is simplified structure just for info, not used, can be removed
+                        errorLineInfoList.push({
+                            lineNumber: lineNumber,
+                            columnNumber: columnNumber,
+                            message: message
+                        });
+
+                        //output structure for graphlang web IDE
+                        if (!errorLinesByLineNumbers[lineNumber]) errorLinesByLineNumbers[lineNumber] = [];
+                        if (!errorLinesByLineNumbers[lineNumber][message]) errorLinesByLineNumbers[lineNumber][message] = [];
+                        errorLinesByLineNumbers[lineNumber][message].push(columnNumber);
+                    }
+                }
+                console.log(errorLineInfoList);
+            }   //end platformio error embedded output
+
+            /*
+             *  Follows errors evaluation to be able interactive highlight place on diagram where error occurs.
+             */
 
             //ASSIGN OBJECTS ON CANVAS TO EACH ERROR
             GraphLang.Utils.TranslateToGeneralCodeObj.initTranslateBuffers();

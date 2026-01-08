@@ -15,7 +15,8 @@ GraphLang.Shapes.Basic.ClusterSelectOption = draw2d.shape.basic.Label.extend({
             flagAutoCreatePorts: false,
             userData: {
                 nodeLabel: "cluster ref. name",
-                sourceFigureId: null
+                sourceFigureId: null,
+                isClusterRef: true,
             }
         },attr), setter, getter);
         var port;

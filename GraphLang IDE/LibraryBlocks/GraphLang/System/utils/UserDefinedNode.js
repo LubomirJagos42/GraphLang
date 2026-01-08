@@ -332,7 +332,18 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
             let connections = portObj.getConnections();
             if (paramsCounter > 0) paramsStr += ', ';
             if (connections.getSize() > 0){
-                paramsStr += connections.first().getVariableName();
+                let connectionObj = connections.first();
+                let sourceDatatype = connectionObj.getSource().getDatatype();
+                let targetDatatype = connectionObj.getTarget().userData.datatype;   //TODO: For now use port datatype, this need to be evaluated from schematic!!!
+
+                // if (sourceDatatype !== targetDatatype){
+                //     paramsStr += `*(${targetDatatype}*)(&${connectionObj.getVariableName()})`;
+                // }else{
+                //     paramsStr += connectionObj.getVariableName();
+                // }
+
+                paramsStr += connectionObj.getVariableName();
+
             }else{
                 //paramsStr += 'null';      //WRONG, there should be some default value, this is just too simple to be running properly
                 paramsStr += `node_${portOwnerNode.getId()}_inputPort_${portObj.getName()}`;      //default parameter defined before this method call, look for subnode translate where this name is psuhed into array
