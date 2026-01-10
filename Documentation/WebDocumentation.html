@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Web Documentation</title>
+</head>
+    <body>
+        <h1>Topics</h1>
+        <ul>
+            <li><a href="">platformio most used commands</a></li>
+        </ul>
+
+        <h2>PlatformIO commands</h2>
+        <div>
+            <ul>
+                <li>
+                    Init project with specified platform, board...
+                    <ul><li><pre>pio project init --board &lt;boardname&gt; -d &lt;directory path&gt;</pre></li></ul>
+                </li>
+                <li>
+                    List all installed boards, platforms, frameworks (could be little slow to wait for answer)
+                    <ul>
+                        <li><pre>pio boards --json-output</pre></li>
+                        <li><pre>pio platform list --json-output</pre></li>
+                        <li><pre>pio platform frameworks --json-output</pre></li>
+                    </ul>
+                </li>
+                <li>
+                    List all installed boards using cache files (faster) and linux jq json input processor
+                    <ul><li><pre>cat ~/.platformio/platforms/*/boards/*.json | jq -s '.'</pre></li></ul>
+                </li>
+                <li>
+                    Compile and upload current project
+                    <ul><li><pre>pio run -t upload</pre></li></ul>
+                </li>
+                <li>
+                    Just compile in debug mode
+                    <ul><li><pre>pio debug</pre></li></ul>
+                </li>
+                <li>
+                    Platform - search available
+                    <ul>
+                        <li><pre>pio platform search arduino</pre></li>
+                        <li><pre>pio platform search stm*</pre></li>
+                    </ul>
+                </li>
+                <li>
+                    Platform - install new one
+                    <ul><li><pre>pio platform install atmelavr</pre></li></ul>
+                </li>
+            </ul>
+        </div>
+
+        <h2>Resources url</h2>
+        <div>
+            <ul>
+                <li><a href="https://docs.platformio.org/en/latest/frameworks/index.html">platformio framework list</a></li>
+            </ul>
+        </div>
+
+    </body>
+</html>
