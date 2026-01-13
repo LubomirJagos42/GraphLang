@@ -6,10 +6,15 @@
 
 class LocalBrowserTabSync{
     constructor() {
-        this.bc = new BroadcastChannel('graphlang_sync');
+        this.projectId = GraphLang.Utils.getCurrentProjectId();
+        this.stateName = "graphlang_projectId_" + this.projectId + "_state";
+        let broadcastChannelName = 'graphlang_sync_project_' + this.projectId;
+        this.bc = new BroadcastChannel(broadcastChannelName);
         this.state = {
-            project: null,
-            schematics: {},
+            project: this.projectId,
+            broadcastChannelName: broadcastChannelName,
+            schematics: {},     //this stores raw node javasript code as string
+            schematicsHex: {},  //this is auxiliar node JS code encoded in HEX because not sure if there is some escaping of special characters done during message broadcast or so
             variables: {}
         };
 
@@ -32,7 +37,7 @@ class LocalBrowserTabSync{
 
     loadState() {
         try {
-            const stored = localStorage.getItem('graphlang_state');
+            const stored = localStorage.getItem(this.stateName);
             if (stored) {
                 this.state = JSON.parse(stored);
             }
@@ -43,7 +48,7 @@ class LocalBrowserTabSync{
 
     saveState() {
         try {
-            localStorage.setItem('graphlang_state', JSON.stringify(this.state));
+            localStorage.setItem(this.stateName, JSON.stringify(this.state));
         } catch (e) {
             console.error('Failed to save state:', e);
         }
@@ -55,6 +60,7 @@ class LocalBrowserTabSync{
         switch (type) {
             case 'UPDATE_SCHEMATIC':
                 this.state.schematics[data.id] = data.content;
+                this.state.schematicsHex[data.id] = data.contentHex;
                 this.trigger('schematicUpdated', data);
                 break;
 
@@ -73,14 +79,14 @@ class LocalBrowserTabSync{
     }
 
     handleStorageChange(e) {
-        if (e.key === 'graphlang_state' && e.newValue) {
+        if (e.key === this.stateName && e.newValue) {
             this.state = JSON.parse(e.newValue);
             this.trigger('stateChanged', this.state);
         }
     }
 
     syncWithStorage() {
-        const stored = localStorage.getItem('graphlang_state');
+        const stored = localStorage.getItem(this.stateName);
         if (stored) {
             const storedState = JSON.parse(stored);
             if (JSON.stringify(storedState) !== JSON.stringify(this.state)) {
@@ -92,11 +98,14 @@ class LocalBrowserTabSync{
 
     // Public API
     updateSchematic(id, content) {
+        let contentHex = GraphLang.Utils.toHex(content);
+
         this.state.schematics[id] = content;
+        this.state.schematicsHex[id] = contentHex;
         this.saveState();
         this.bc.postMessage({
             type: 'UPDATE_SCHEMATIC',
-            data: { id, content }
+            data: { id, content, contentHex }
         });
     }
 
@@ -147,35 +156,93 @@ class LocalBrowserTabSync{
     }
 }
 
+/********************************************************************************************************************
+ *  Heartbeat checking tabs and clear local storage
+ *  Each tab sends heartbeat every 2 seconds
+ ********************************************************************************************************************/
+const TAB_ID = Math.random().toString(36);
+const HEARTBEAT_INTERVAL = 2000;
+const TIMEOUT = 5000;
+
+// Send heartbeat
+setInterval(() => {
+    const tabs = JSON.parse(localStorage.getItem('activeTabs') || '{}');
+    tabs[TAB_ID] = Date.now();
+    localStorage.setItem('activeTabs', JSON.stringify(tabs));
+}, HEARTBEAT_INTERVAL);
+
+// Check for dead tabs
+setInterval(() => {
+    const tabs = JSON.parse(localStorage.getItem('activeTabs') || '{}');
+    const now = Date.now();
+
+    // Remove dead tabs
+    Object.keys(tabs).forEach(id => {
+        if (now - tabs[id] > TIMEOUT) {
+            delete tabs[id];
+        }
+    });
+
+    // If no tabs left, clear data
+    if (Object.keys(tabs).length === 0) {
+        localStorage.clear();
+    } else {
+        localStorage.setItem('activeTabs', JSON.stringify(tabs));
+    }
+}, HEARTBEAT_INTERVAL);
+
+// Cleanup on unload
+window.addEventListener('beforeunload', () => {
+    const tabs = JSON.parse(localStorage.getItem('activeTabs') || '{}');
+    delete tabs[TAB_ID];
+
+    if (Object.keys(tabs).length === 0) {
+        localStorage.clear();
+    } else {
+        localStorage.setItem('activeTabs', JSON.stringify(tabs));
+    }
+});
+
+
+/********************************************************************************************************************
+ *  Setting action on broadcast message
+ ********************************************************************************************************************/
+
 /*
  *  TODO: Uncomment things below to make this working and verify that it's working!
  */
 
-// // Usage
-// const sync = new LocalBrowserTabSync();
-//
-// // Listen for updates
-// sync.on('schematicUpdated', (data) => {
-//     console.log('Schematic updated:', data);
-//     renderSchematic(data.id);
-// });
-//
-// sync.on('variableUpdated', (data) => {
-//     console.log('Variable updated:', data);
-//     updateVariableDisplay(data.name, data.value);
-// });
-//
-// sync.on('projectLoaded', (data) => {
-//     console.log('Project loaded:', data);
-//     initializeProject(data);
-// });
-//
-// // Update from this tab
-// sync.updateSchematic('schematic1', { nodes: [...], edges: [...] });
-// sync.updateVariable('counter', 42);
-// sync.loadProject({ name: 'MyProject', version: '1.0' });
-//
-// // Read data
-// const schematic = sync.getSchematic('schematic1');
-// const counter = sync.getVariable('counter');
-// const project = sync.getProject();
+try {
+    // Usage
+    GraphLang.Utils.Sync = new LocalBrowserTabSync();
+
+    // Listen for updates
+    GraphLang.Utils.Sync.on('schematicUpdated', (data) => {
+        console.log('Schematic updated:', data.id);
+        eval(data.content);
+    });
+
+    GraphLang.Utils.Sync.on('variableUpdated', (data) => {
+        console.log('Variable updated:', data);
+        // updateVariableDisplay(data.name, data.value);
+        // alert("sync variableUpdated");
+    });
+
+    GraphLang.Utils.Sync.on('projectLoaded', (data) => {
+        console.log('Project loaded:', data);
+        // initializeProject(data);
+        // alert("sync projectLoaded");
+    });
+
+    // Update from this tab
+    // GraphLang.Utils.Sync.updateSchematic('schematic1', {nodes: [...], edges: [...]});
+    // GraphLang.Utils.Sync.updateVariable('counter', 42);
+    // GraphLang.Utils.Sync.loadProject({name: 'MyProject', version: '1.0'});
+
+    // Read data
+    // const schematic = GraphLang.Utils.Sync.getSchematic('schematic1');
+    // const counter = GraphLang.Utils.Sync.getVariable('counter');
+    // const project = GraphLang.Utils.Sync.getProject();
+}catch(e){
+    console.error(e);
+}

@@ -1279,7 +1279,7 @@ GraphLang.Utils.setWiresColorByPorts = function setWiresColorByPorts(canvas){
 
 /**
  * @method getCanvasJson
- * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
+ * @param {draw2d.Canvas} canvas - schematic which will be serialized to JSON
  * @returns {object} JSON which should go to output: file or server sql
  * @description For selected loop show number of tunnels.
  */
@@ -1319,7 +1319,7 @@ GraphLang.Utils.getCanvasJson = function (canvas) {
 
 /**
  * @method getCanvasAsObjectString
- * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
+ * @param {draw2d.Canvas} canvas - schematic which will be serialized to JSON
  * @returns {String}  string containing whole class definition
  * @description Creates class definition for GraphLang to load.
  */
@@ -1361,7 +1361,7 @@ GraphLang.Utils.getCanvasAsObjectString = function(canvas){
        *    If object was loaded from some file ie. means that it can have some symbol defined,
        *    then init function and shape functions are taken original ones.
        */
-      if (GraphLang.Utils.loadedNodeShapeAndSchematicStr !== null){
+      if (GraphLang.Utils.loadedNodeShapeAndSchematicStr !== null && typeof GraphLang.Utils.loadedNodeShapeAndSchematicStr === "string" && GraphLang.Utils.loadedNodeShapeAndSchematicStr.length > 0){
             // schematicAsObjectStr += '/******************************************* STORED FROM PREVIOUS NODE **********************************/' + "\n";
             // schematicAsObjectStr += GraphLang.Utils.loadedNodeShapeAndSchematicStr + "\n";
             // schematicAsObjectStr += '/********************************************************************************************************/' + "\n";
@@ -1923,21 +1923,21 @@ GraphLang.Utils.displayContentsFromClass = function(contents, canvasObj){
 
 /**
  *  @method displayContents2
- *  @param {Object} content JSON object which will be display
- *  @param {canvas} canvas  Target canvas where content is displayed
+ *  @param {Object} jsonDocument JSON object which will be display
+ *  @param {canvas} canvasObj  Target canvas where content is displayed
  *  @description Translates schematic on given canvas to C/C++ code as function which can be called in other
  *  diagrams using symbol with assign schematic, this function is general one and newer, using also canvas
  *  reference where content is displayed.
  */
-GraphLang.Utils.displayContents2 = function (jsonDocument, canvasObj) {
+GraphLang.Utils.displayContents2 = function (jsonDocument, canvasObj, schematicName = null, schematicDisplayName = null) {
 
-    //THIS FOLLOW VIOLATE ALL PROGRAMMING PRINCIPPLES NOW FOR DEBUGGING SUPPOSE VARIABLES ARE GLOBAL!
+    //THIS FOLLOW VIOLATE ALL PROGRAMMING PRINCIPLES NOW FOR DEBUGGING SUPPOSE VARIABLES ARE GLOBAL!
     //eval(contents); //all schematics are saved as JSON assigned to variable jsonDocument
 
     canvasObj.clear();
     var reader = new draw2d.io.json.Reader();
 
-    //need to do put connection into separate list and create them after all fgures are created to have phzsically on canvas ports to have place for them
+    //need to do put connection into separate list and create them after all figures are created to have physically on canvas ports to have place for them
     //var connectionList = new draw2d.utils.ArrayList
 
     //jsonDocumentCopy = jsonDocument;
@@ -1968,6 +1968,22 @@ GraphLang.Utils.displayContents2 = function (jsonDocument, canvasObj) {
             });
         }
     });
+
+    if (schematicName){
+        document.querySelector("input[id='schematicName']").value = schematicName;
+    }
+
+    if (schematicDisplayName){
+        document.querySelector("input[id='schematicDisplayName']").value = schematicDisplayName;
+    }else if (typeof schematicName === "string" && schematicName.length > 0){
+        try {
+            let schematicDisplayNameFromCurrentHtml = document.querySelector("div[data-shape='" + schematicName + "']").dataset.label;
+            document.querySelector("input[id='schematicDisplayName']").value = schematicDisplayNameFromCurrentHtml;
+        }catch(e){
+            console.error(`Cannot find node label in html in data-label for node class name "${schematicName}"`);
+            console.error(e);
+        }
+    }
 
 }
 
@@ -2833,6 +2849,15 @@ GraphLang.Utils.getNodeCodeWithReplacedSchematicWithCurrentCanvas = function(cla
     GLOBAL_HELPER_VARIABLE_2 = {};
     let codeToRun = "";
 
+    // 0. Check if all needed things are set
+    if (typeof GLOBAL_CURRENT_LOADED_OBJECT_CODE_CONTENT !== "string" || GLOBAL_CURRENT_LOADED_OBJECT_CODE_CONTENT.length === 0){
+        GLOBAL_CURRENT_LOADED_OBJECT_CODE_CONTENT = GraphLang.Utils.getNodeSchematicFromStorageVariable(className);
+
+        if (GLOBAL_CURRENT_LOADED_OBJECT_CODE_CONTENT.length === 0){
+            throw new Error("Global variable GLOBAL_CURRENT_LOADED_OBJECT_CODE_CONTENT must be set to contain node javascript code in text form!");
+        }
+    }
+
     // 1. Replace extend function with custom function which store objects, functions, properties into variable inside object
     codeToRun += `GLOBAL_HELPER_VARIABLE_1 = ${GLOBAL_CURRENT_LOADED_OBJECT_PARENT}.extend;\n`;
     codeToRun += `${GLOBAL_CURRENT_LOADED_OBJECT_PARENT}.extend = function(obj){this.extendObj = obj;}\n`;
@@ -2858,7 +2883,7 @@ GraphLang.Utils.getNodeCodeWithReplacedSchematicWithCurrentCanvas = function(cla
     codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += (typeof objItem == 'Object' || Array.isArray(objItem)) ? JSON.stringify(objItem) : objItem.toString();\n`;
     codeToRun += `\t\t\t\t\t\tconsole.log('----> serialize function: ' + m);\n`;
     codeToRun += `\t\t\t\t}else{\n`;
-    codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += '"' + objItem.toString() + '"';\n`;
+    codeToRun += `\t\t\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += m + ': "' + objItem.toString() + '"';\n`;
     codeToRun += `\t\t\t\t}\n`;
     codeToRun += `\t\t\t\tGLOBAL_HELPER_VARIABLE_2 += ",\\n";\n`;
     codeToRun += `\t\t}\n`;
@@ -3243,6 +3268,7 @@ GraphLang.Utils.getObjectInProjectFromJSON = function(funcParams){
 
                         searchResult.objectClassName = schematicObj.type;
                         searchResult.parentNodeName = nodeName;
+                        searchResult.objectId = schematicObj.id;
                         searchResult.objectType = schematicObj.type.toLowerCase().endsWith("connection") ? "wire" : "node";
 
                         searchResult.objectDatatype = typeof objectRef.getDatatype === "function" ? objectRef.getDatatype() : null;
@@ -3390,4 +3416,18 @@ GraphLang.Utils.getObjectInProjectFromJSONById = function(searchObjectId = ""){
     }
 
     return null;
+}
+
+GraphLang.Utils.getMainCanvas = function(){
+    return appCanvas;
+}
+
+GraphLang.Utils.getNodeSchematicFromStorageVariable = function(nodeClassName) {
+    console.log(`--> getting ${nodeClassName} from GraphLang.StorageHexNodeSchematics array`);
+    return GraphLang.Utils.hex2ascii(GraphLang.StorageHexNodeSchematics[nodeClassName]);
+}
+
+GraphLang.Utils.setNodeSchematicStorageHexVariable = function(nodeClassName, nodeCodeContent) {
+    console.log(`--> set ${nodeClassName} in GraphLang.StorageHexNodeSchematics array`);
+    GraphLang.StorageHexNodeSchematics[nodeClassName] = GraphLang.Utils.toHex(nodeCodeContent);
 }

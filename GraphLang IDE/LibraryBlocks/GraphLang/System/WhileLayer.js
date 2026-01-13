@@ -174,12 +174,12 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
     }
 
     cCode += this.getTunnelsDeclarationCppCode({
-        lineNumberToFind: lineNumberToFind - 1,
+        lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - 1 : null,
         translatorObj: translatorObj
     });
 
     cCode += this.getWiresInsideLoopDeclarationCppCode({
-        lineNumberToFind: lineNumberToFind - GraphLang.Utils.getLineCount(cCode),
+        lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - GraphLang.Utils.getLineCount(cCode) : null,
         translatorObj: translatorObj
     });
     cCode += "\n";
@@ -187,7 +187,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
     cCode += "do{\n";
 
     let leftTunnelsWiresAssignementCppCode = this.getLeftTunnelsWiresAssignementCppCode({
-        lineNumberToFind: lineNumberToFind - GraphLang.Utils.getLineCount(cCode),
+        lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - GraphLang.Utils.getLineCount(cCode) : null,
         translatorObj: translatorObj
     });
     cCode += "\t" + leftTunnelsWiresAssignementCppCode.replaceAll("\n", "\n\t");
@@ -251,7 +251,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
             codeLinesOffset: codeLinesOffset + lineCountBefore,
             compileErrorLines: compileErrorLines,
             breakpointParentId: breakpointParentId,
-            lineNumberToFind: lineNumberToFind - GraphLang.Utils.getLineCount(cCode),
+            lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - GraphLang.Utils.getLineCount(cCode) : null,
             translatorObj: translatorObj
         }).replaceAll("\n", "\n\t");
 
@@ -352,7 +352,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
       if (figObj.translateToCppCodePost){
          //if there is defined to put something after let's do it
           cCode += figObj.translateToCppCodePost({
-              lineNumberToFind: lineNumberToFind - GraphLang.Utils.getLineCount(cCode),
+              lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - GraphLang.Utils.getLineCount(cCode) : null,
               translatorObj: translatorObj
           }).replaceAll("\n", "\n\t");
       }
@@ -374,7 +374,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
     }
 
     let rightTunnelsAssignementOutputCppCode = this.getRightTunnelsAssignementOutputCppCode({
-        lineNumberToFind: lineNumberToFind - GraphLang.Utils.getLineCount(cCode),
+        lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - GraphLang.Utils.getLineCount(cCode) : null,
         translatorObj: translatorObj
     });
     cCode += rightTunnelsAssignementOutputCppCode.replaceAll("\n", "\n\t");

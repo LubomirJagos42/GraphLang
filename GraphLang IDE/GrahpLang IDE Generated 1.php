@@ -50,13 +50,15 @@
         /*
          *  Default tree object initialization for javascript - php generated from DB
          */
-        GraphLang = {}; //this is used for utils and so, must be here by default
+        GraphLang = {}; //this is used for utils and so, must be here by default, TODO: below it can be redefine again as object tree for nodes is rerecreated!!!
 
 <?php foreach ($nodeDefaultTreeDefinition as $newObjectName){echo("\t\t$newObjectName = {};\n");} ?>
 
         let global_allNodeCategoriesList = [
 <?php foreach ($nodeDefaultTreeDefinition as $newObjectName){echo("\t\t\t\"$newObjectName\",\n");} ?>
         ];
+
+        GraphLang.StorageHexNodeSchematics = [];
     </script>
 
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/Application.js"></script>
@@ -65,7 +67,6 @@
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/HoverConnection.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/MultilineInplaceEditor.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/SelectOptionInplaceEditor.js"></script>
-    <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/LocalBrowserTabSync.js"></script>
 
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Utils.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Debugger.js"></script>
@@ -82,6 +83,8 @@
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/KeyboardDeletePolicy.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Color.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/ArrayClusterInPlaceEditor.js"></script>
+
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/LocalBrowserTabSync.js"></script>
 
     <!-- user defined nodes place to insert -->
 	<script type="text/javascript" src="?q=getJavascriptForNodes&projectId=<?php echo($currentProject);?>"></script>

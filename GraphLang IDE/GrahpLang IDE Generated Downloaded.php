@@ -57,7 +57,6 @@
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/HoverConnection.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/MultilineInplaceEditor.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/SelectOptionInplaceEditor.js"></script>
-    <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/LocalBrowserTabSync.js"></script>
 
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Utils.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Debugger.js"></script>
@@ -73,6 +72,8 @@
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/KeyboardDeletePolicy.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Color.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/ArrayClusterInPlaceEditor.js"></script>
+
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/LocalBrowserTabSync.js"></script>
 
     <!-- user defined nodes place to insert -->
     <?php

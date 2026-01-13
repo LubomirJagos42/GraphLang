@@ -15,6 +15,9 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
        "separator": "--------------",
        "isBreakpoint": {name: "Show if is breakpoint"},
        "openNodeSchematic": {name: "Open node schematic"},
+       "openNodeSchematicCurrentWindow": {name: "Open schematic here"},
+       "separator2": "--------------",
+       "editSymbol": {name: "Edit Symbol"},
    },
 
    init: function(attr, setter, getter)
@@ -150,6 +153,50 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
                            targetUrl += `&nodeClassName=` + emitter.NAME;
 
                            window.open(targetUrl, "_blank");
+                           break;
+                       case "openNodeSchematicCurrentWindow":
+                           //TODO: There is special case when node is going to be renamed (its class name) which will FAIL due there is probably no new variable tree structure
+                           //      Need to be done in some new GraphLang.Utils.... function!!!
+
+                           //sync current canvas schematic across all browser tabs
+                           let currentSchematicName = document.querySelector("input[id='schematicName']").value;
+                           let currentSchematicNodeObj = eval(`new ${currentSchematicName}()`);
+                           if (currentSchematicNodeObj.getObjectAsString) GraphLang.Utils.loadedNodeShapeAndSchematicStr = currentSchematicNodeObj.getObjectAsString();
+
+                           /*
+                            *   TODO: This was done as global variables in beginning of development, MUST BE DONE SMARTER!!!
+                            */
+                           GLOBAL_CURRENT_LOADED_OBJECT_PARENT = currentSchematicNodeObj.__proto__.__proto__.NAME;
+                           GLOBAL_CURRENT_LOADED_OBJECT_CODE_CONTENT = "";
+
+                           let canvasObj =  GraphLang.Utils.getMainCanvas();
+                           let currentCanvasSchematicCode = GraphLang.Utils.getCanvasAsObjectString(canvasObj);
+
+                           console.log(`--> UserDefinedNode > openNodeSchematicCurrentWindow`);
+                           eval(currentCanvasSchematicCode);                                        //update current node JS code for current browser tab
+                           GraphLang.Utils.setNodeSchematicStorageHexVariable(currentSchematicName, currentCanvasSchematicCode);
+
+                           GraphLang.Utils.Sync.updateSchematic(currentSchematicName, currentCanvasSchematicCode); //notify other tabs about current node code change
+
+                           //open subnode schematic in main canvas
+                           let tempNodeObj = eval(`new ${emitter.NAME}()`);                     //create temporary node in memory, this node is going to be opened
+                           GraphLang.Utils.displayContents2(tempNodeObj.jsonDocument, canvasObj, emitter.NAME);   //display node schematic in current window
+
+                           break;
+                       case "editSymbol":
+                           let params2 = new URLSearchParams(window.location.search);
+                           let queryParams2 = {};
+                           params2.forEach((value, key) => {
+                               queryParams2[key] = value;
+                           });
+
+                           // let targetUrl = window.location.hostname + window.location.pathname + "?";
+                           let targetUrl2 = "?";
+                           targetUrl2 += `q=shapeDesigner`;
+                           targetUrl2 += `&projectId=` + queryParams2.projectId;
+                           targetUrl2 += `&nodeClassName=` + emitter.NAME;
+
+                           window.open(targetUrl2, "_blank");
                            break;
                        default:
                            break;

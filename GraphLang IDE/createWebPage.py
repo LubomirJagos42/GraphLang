@@ -99,7 +99,6 @@ htmlTemplate = """
     <script src="./gui/HoverConnection.js"></script>
     <script src="./gui/MultilineInplaceEditor.js"></script>
     <script src="./gui/SelectOptionInplaceEditor.js"></script>
-    <script src="./gui/LocalBrowserTabSync.js"></script>
 
     <script src="./GraphLangUtils/Utils.js"></script>
     <script src="./GraphLangUtils/Debugger.js"></script>
@@ -115,6 +114,8 @@ htmlTemplate = """
     <script src="./GraphLangUtils/KeyboardDeletePolicy.js"></script>
     <script src="./GraphLangUtils/Color.js"></script>
     <script src="./GraphLangUtils/ArrayClusterInPlaceEditor.js"></script>
+
+    <script src="./gui/LocalBrowserTabSync.js"></script>
 
     <!-- user defined nodes place to insert -->
 

@@ -9,6 +9,7 @@ class TranslateToCppCode_2_TranslatorObject {
 
     //auxiliary ArrayList store declaration of some variables or something during translation process
     translateToCppCodeFunctionsArray = new draw2d.util.ArrayList();
+
     translateToCppCodeImportArray = new draw2d.util.ArrayList();
     translateToCppCodeLibrariesList = new draw2d.util.ArrayList();              //additional CPP libraries which must be provided to linker
     translateToCppCodeTypeDefinitionArray = new draw2d.util.ArrayList();
@@ -29,6 +30,7 @@ class TranslateToCppCode_2_TranslatorObject {
     translateToCppCodeWatchList = new draw2d.util.ArrayList();
 
     GLOBAL_CODE_LINE_OFFSET = 0;
+    GLOBAL_CODE_LINE_OFFSET_BEFORE_SUBNODES = 0;
     GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = null;
 
     constructor(paramsObj) {
@@ -103,19 +105,19 @@ class TranslateToCppCode_2_TranslatorObject {
         return this.getCppCode(canvas, showCode, codeTemplate);
     }
 
-    getCppCode = (canvas, showCode = true, codeTemplate = "") => {
+    getCppCode = (canvas, showCode = true, codeTemplate = "", lineNumberToFind = null) => {
         let cCode = "";
 
         if (codeTemplate === "desktop"){
-            cCode = this.getCppCodeUsingTemplate_desktop(canvas, showCode, this.translateCanvasToCppCode);
+            cCode = this.getCppCodeUsingTemplate_desktop(canvas, showCode, this.translateCanvasToCppCode, lineNumberToFind);
         }else if (codeTemplate === "embedded"){
-            cCode = this.getCppCodeUsingTemplate_embedded(canvas, showCode, this.translateCanvasToCppCode);
+            cCode = this.getCppCodeUsingTemplate_embedded(canvas, showCode, this.translateCanvasToCppCode, lineNumberToFind);
         }else if (codeTemplate === "webassembly"){
             //TODO: Webassembly code template not implemented yet here!
             throw new Error("code template to generate webassembly not implemented, need check translator object implementation");
         }else{
             //BY DEFAULT USE DESKTOP CODE TEMPLATE
-            cCode = this.getCppCodeUsingTemplate_desktop(canvas, showCode, this.translateCanvasToCppCode);
+            cCode = this.getCppCodeUsingTemplate_desktop(canvas, showCode, this.translateCanvasToCppCode, lineNumberToFind);
         }
 
         return cCode;
@@ -484,7 +486,9 @@ class TranslateToCppCode_2_TranslatorObject {
                             translatorObj: translatorObj,
                             nodeObj: nodeObj,
                             schematicOwnerId: null,
-                            schematicOwnerName: null
+                            schematicOwnerName: null,
+                            compileErrorLines: compileErrorLines,
+                            lineNumberToFind: lineNumberToFind
                         });
                     }
 
@@ -547,10 +551,12 @@ class TranslateToCppCode_2_TranslatorObject {
                                 console.log(`getting default port value: translateToCppCodeSubnodeInputTerminalsDefaultValuesArray["${nodeObj.NAME}"]["${portObj.getName()}"]`);
                                 let defaultPortValues = translatorObj.translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[`${nodeObj.NAME}`][portObj.getName()];
                                 let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
-                                if (defaultPortValues.variableValue){
+                                if (defaultPortValues && defaultPortValues.variableValue){
                                     cCode += `${defaultPortValues.datatype} node_${nodeObj.getId()}_inputPort_${defaultPortValues.variableName} = ${defaultPortValues.variableValue};\n`;
-                                }else{
+                                }else if (defaultPortValues){
                                     cCode += `${defaultPortValues.datatype} node_${nodeObj.getId()}_inputPort_${defaultPortValues.variableName};\n`;
+                                }else{
+                                    cCode += `//ERROR: No default port value for node "${nodeObj.NAME}" for input port "${portObj.getName()}"\n`;
                                 }
                                 GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
                                     inputStr: cCode,
@@ -580,7 +586,7 @@ class TranslateToCppCode_2_TranslatorObject {
                             codeLinesOffset: codeLinesOffset + lineCountBefore,
                             compileErrorLines: compileErrorLines,
                             breakpointParentId: null,
-                            lineNumberToFind: lineNumberToFind - lineCountBefore,
+                            lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - lineCountBefore : null,
                             translatorObj: translatorObj
                         });
 
@@ -597,7 +603,7 @@ class TranslateToCppCode_2_TranslatorObject {
                          *  If searching for some object which generates code line at some specific line check here if line was already generated
                          *  if yes store it in global variable
                          */
-                        if (translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null && lineCountBefore >= lineNumberToFind){
+                        if (translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null && lineNumberToFind !== null && lineCountBefore >= lineNumberToFind){
                             translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = nodeObj;
                         }
                     }
@@ -629,7 +635,7 @@ class TranslateToCppCode_2_TranslatorObject {
                     if (nodeObj.translateToCppCodePost){
                         let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
                         cCode += nodeObj.translateToCppCodePost({
-                            lineNumberToFind: lineNumberToFind - lineCountBefore,
+                            lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - lineCountBefore : null,
                             translatorObj: translatorObj
                         });
                         GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
@@ -743,6 +749,8 @@ class TranslateToCppCode_2_TranslatorObject {
         let nodeObj = Object.hasOwn(funcParams, "nodeObj") ? funcParams.nodeObj : null;
         if (nodeObj === null) console.error(`Translating subnode, nodeObj must be defined in parameters!`);
 
+        let lineNumberToFind = Object.hasOwn(funcParams, "lineNumberToFind") ? funcParams.lineNumberToFind : null;
+
         /*
          *      SET GLOBAL FLAG TO NOT CREATE TERMINALS DECLARATIONs
          */
@@ -843,18 +851,6 @@ class TranslateToCppCode_2_TranslatorObject {
                 }
                 funcParamsCounter++;
 
-                /*
-                 *  push input terminal into array for case it's not connected and value must be assigned
-                 *  assuming all terminal nodes has unique name
-                 */
-                if (translatorObj.translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[nodeObj.NAME] == undefined) translatorObj.translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[nodeObj.NAME] = {}
-                translatorObj.translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[nodeObj.NAME][figureObj.getUserData().nodeLabel] = {
-                    datatype: figureObj.getDatatype(),
-                    variableName: `${figureObj.getUserData().nodeLabel}`,
-                    variableValue: figureObj.getVariableValueAsStr ? figureObj.getVariableValueAsStr() : ""
-                };
-
-                console.log(`added subnode port: translateToCppCodeSubnodeInputTerminalsDefaultValuesArray["${nodeObj.NAME}"]["${figureObj.getUserData().nodeLabel}"]`);
             }
         });
 
@@ -921,14 +917,26 @@ class TranslateToCppCode_2_TranslatorObject {
         /*
          *  Here is calling same parent C/C++ code transcription function on 2nd canvas
          */
-        cCode += translatorObj.translateCanvasToCppCode({canvas: subnodeCanvas, translateTerminalsDeclaration: false, nodeName: nodeObj.NAME}).replaceAll('\n','\n\t');
+        let currentLineNumber = GraphLang.Utils.getLineCount(cCode);
+        cCode += translatorObj.translateCanvasToCppCode({
+            canvas: subnodeCanvas,
+            translateTerminalsDeclaration: false,
+            nodeName: nodeObj.NAME,
+            lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - currentLineNumber : null,  //TODO: Check how to right pass line number parameter
+        }).replaceAll('\n','\n\t');
 
         cCode += "\n";  //to not have separate last curly bracket by tabulator
         cCode += '}' + "\n";
 
         //don't return any code, these functions are pushed into array and print after template is created
         //return cCode;
-        translatorObj.translateToCppCodeFunctionsArray.push(cCode);
+        translatorObj.translateToCppCodeFunctionsArray.push({
+            node_owner_id: SUB_NODE_ID,
+            node_owner_name: SUB_NODE_NAME,
+            node_id: nodeObj.getId(),
+            node_name: nodeObj.NAME,
+            code: cCode
+        });
 
         /*
             Remove canvas html element and destroy JS canvas in memory
@@ -998,19 +1006,22 @@ class TranslateToCppCode_2_TranslatorObject {
      * @description Transcript code and when line which is specified is generated returns object from canvas which generates it.
      */
     getObjectWhichGenerateCodeAtLine = async (lineNumberToFind)=> {
-        let codeTemplate = await GraphLang.Utils.getProjectCodeTemplate();    //need to get code template because there is different code wrapping for desktop and embedded
-        this.getCppCode(this.translatorCanvasObj, false, codeTemplate);
-
-        let codeStartLineOffset = this.GLOBAL_CODE_LINE_OFFSET;
-        let lineNumberWithoutOffset = lineNumberToFind - codeStartLineOffset;
-
         this.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = null;
 
-        this.translateCanvasToCppCode({
-            canvas: this.translatorCanvasObj,
-            translateTerminalsDeclaration: true,
-            lineNumberToFind: lineNumberWithoutOffset
-        });
+        let codeTemplate = await GraphLang.Utils.getProjectCodeTemplate();    //need to get code template because there is different code wrapping for desktop and embedded
+        this.getCppCode(this.translatorCanvasObj, false, codeTemplate, lineNumberToFind);
+
+        if (this.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE == null) {
+            let codeStartLineOffset = this.GLOBAL_CODE_LINE_OFFSET;
+            let lineNumberWithoutOffset = lineNumberToFind - codeStartLineOffset;
+
+
+            this.translateCanvasToCppCode({
+                canvas: this.translatorCanvasObj,
+                translateTerminalsDeclaration: true,
+                lineNumberToFind: lineNumberWithoutOffset
+            });
+        }
 
         return this.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE;
     }
@@ -1022,7 +1033,8 @@ class TranslateToCppCode_2_TranslatorObject {
      * @returns {String} C/C++ code as string
      * @description Generate C/C++ code using template written in this function.
      */
-    getCppCodeUsingTemplate_embedded = (canvas, showCode = true, translateCanvasToCodeFunction) =>{
+    getCppCodeUsingTemplate_embedded = (canvas, showCode = true, translateCanvasToCodeFunction, lineNumberToFind = null) =>{
+        let translatorObj = this;
 
         /******************************************************************************
          * Init buffers needed for translation process
@@ -1056,11 +1068,37 @@ class TranslateToCppCode_2_TranslatorObject {
          * SubNode code printed as sub functions
          *******************************************************************************/
         template_cCode += "/************* BEGIN Transcripted SubNode function definitions ************/\n\n";
-        this.translateToCppCodeFunctionsArray.unique();  //removes duplicates
-        this.translateToCppCodeFunctionsArray.each(function(functionIndex, functionStr){
+        this.GLOBAL_CODE_LINE_OFFSET_BEFORE_SUBNODES = GraphLang.Utils.getLineCount(template_cCode) + 1;    //+1 because there \n in fron of each subnode code
+
+        this.translateToCppCodeFunctionsCodeStr = new draw2d.util.ArrayList();  //removes duplicates
+        this.translateToCppCodeFunctionsArray.each((subnodeIndex, subnodeObj) => {
+            translatorObj.translateToCppCodeFunctionsCodeStr.add(subnodeObj.code);
+        });
+        this.translateToCppCodeFunctionsCodeStr.unique();  //removes duplicates
+        this.translateToCppCodeFunctionsCodeStr.each(function(functionIndex, functionCodeStr){
             template_cCode += "\n";
-            template_cCode += functionStr;
+            template_cCode += functionCodeStr;
             template_cCode += "\n";
+
+            if (lineNumberToFind){
+                if (translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null && GraphLang.Utils.getLineCount(template_cCode) > lineNumberToFind){
+
+                    let subnodeInfoWhichGeneratesCodeLine = null
+                    translatorObj.translateToCppCodeFunctionsArray.each((functionInfoIndex, functionInfoObj) => {
+                        if (functionInfoObj.code === functionCodeStr){
+                            subnodeInfoWhichGeneratesCodeLine = functionInfoObj;
+                        }
+                    });
+
+                    let tempNodeObj = eval(`new ${subnodeInfoWhichGeneratesCodeLine.node_name}()`);
+                    translatorObj.translateToCppCodeSubNode({
+                        schematicOwnerId: subnodeInfoWhichGeneratesCodeLine.node_owner_id,
+                        schematicOwnerName: subnodeInfoWhichGeneratesCodeLine.node_owner_name,
+                        nodeObj: tempNodeObj,
+                        lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - translatorObj.GLOBAL_CODE_LINE_OFFSET_BEFORE_SUBNODES : null,
+                    });
+                }
+            }
         });
         template_cCode += "/************* END Transcripted SubNode function definitions ************/\n\n";
 
@@ -1161,11 +1199,27 @@ class TranslateToCppCode_2_TranslatorObject {
          * SubNode code printed as subfunctions
          *******************************************************************************/
         template_cCode += "/************* BEGIN Transcripted SubNode function definitions ************/\n\n";
-        this.translateToCppCodeFunctionsArray.unique();  //removes duplicates
-        this.translateToCppCodeFunctionsArray.each(function(functionIndex, functionStr){
+        this.GLOBAL_CODE_LINE_OFFSET_BEFORE_SUBNODES = GraphLang.Utils.getLineCount(template_cCode) + 1;    //+1 because there \n in fron of each subnode code
+
+        this.translateToCppCodeFunctionsCodeStr = new draw2d.util.ArrayList();  //removes duplicates
+        this.translateToCppCodeFunctionsArray.each((subnodeIndex, subnodeObj) => {
+            translatorObj.translateToCppCodeFunctionsCodeStr.add(subnodeObj.code);
+        });
+        this.translateToCppCodeFunctionsCodeStr.unique();  //removes duplicates
+        this.translateToCppCodeFunctionsCodeStr.each(function(functionIndex, functionCodeStr){
             template_cCode += "\n";
-            template_cCode += functionStr;
+            template_cCode += functionCodeStr;
             template_cCode += "\n";
+
+            if (lineNumberToFind){
+                if (translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null && GraphLang.Utils.getLineCount(template_cCode) > lineNumberToFind){
+                    translatorObj.translateToCppCodeFunctionsArray.each((functionInfoIndex, functionInfoObj) => {
+                        if (functionInfoObj.code === functionCodeStr){
+                            translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = functionInfoObj;
+                        }
+                    });
+                }
+            }
         });
         template_cCode += "/************* END Transcripted SubNode function definitions ************/\n\n";
 
