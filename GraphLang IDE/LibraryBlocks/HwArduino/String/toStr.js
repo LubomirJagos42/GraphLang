@@ -3,9 +3,9 @@
 //                                                        
 // http://www.draw2d.org                                  
 //                                                        
-HwRaspiZero.String.toStr = GraphLang.UserDefinedNode.extend({
+HwArduino.String.toStr = GraphLang.UserDefinedNode.extend({
 
-   NAME: "HwRaspiZero.String.toStr",
+   NAME: "HwArduino.String.toStr",
 
    init:function(attr, setter, getter)
    {

@@ -1,16 +1,16 @@
-HwArduino.IO.Constants.DigitalPinConstants = GraphLang.UserDefinedNode.extend({
-NAME: 'HwArduino.IO.Constants.DigitalPinConstants',
+HwArduino.IO.Constants.DigitalPinConstants = HwArduino.CommonParent.extend({
+NAME: "HwArduino.IO.Constants.DigitalPinConstants",
 init: function(attr)
-    {
-        this._super($.extend({width: 42, height: 42, flagAutoCreatePorts: true}, attr));
-    },
+{
+    this._super($.extend({width: 42, height: 42, flagAutoCreatePorts: true}, attr));
+},
 jsonDocument: [
   {
     "type": "GraphLang.Shapes.Basic.EnumNode",
     "id": "361198de-365a-43a3-a597-1aa30798c78e",
-    "x": 136,
-    "y": 97,
-    "width": 115.140625,
+    "x": 78,
+    "y": 109,
+    "width": 236.984375,
     "height": 380,
     "alpha": 1,
     "angle": 0,
@@ -29,7 +29,7 @@ jsonDocument: [
     "labels": [
       {
         "type": "draw2d.shape.basic.Label",
-        "id": "2ebc89f4-2aab-5c73-fd73-ea4b8b4f6de0",
+        "id": "d964c4ab-2902-b4ce-172b-9171a7656f6a",
         "x": 0,
         "y": 380,
         "width": 33.015625,
@@ -59,7 +59,7 @@ jsonDocument: [
         "id": "25dcafc6-2dac-8231-9f92-17c605ad26f9",
         "x": 10,
         "y": 10,
-        "width": 10,
+        "width": 22.796875,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -85,9 +85,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "8ae102d3-0fe6-fde1-85e3-d1be58cd8e3a",
-        "x": 20,
+        "x": 95.140625,
         "y": 10,
-        "width": 22.796875,
+        "width": 61.71875,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -115,7 +115,7 @@ jsonDocument: [
         "id": "c7799bb3-2dc1-7a82-5924-55be364f3b78",
         "x": 10,
         "y": 34,
-        "width": 10,
+        "width": 23.2216796875,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -141,9 +141,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "e746ee01-c59d-4076-42f4-8a7292022984",
-        "x": 20,
+        "x": 95.140625,
         "y": 34,
-        "width": 23.2216796875,
+        "width": 62.142578125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -171,7 +171,7 @@ jsonDocument: [
         "id": "a3c5c7e4-96a3-46d6-3c1f-f5b4eedcbd4a",
         "x": 10,
         "y": 58,
-        "width": 10,
+        "width": 23.2216796875,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -197,9 +197,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "1be69e16-be2d-6d41-fca5-e92a51aec7f6",
-        "x": 20,
+        "x": 95.140625,
         "y": 58,
-        "width": 23.2216796875,
+        "width": 62.142578125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -227,7 +227,7 @@ jsonDocument: [
         "id": "55d465d9-e32f-e2b8-e7f9-0352d3957b2d",
         "x": 10,
         "y": 82,
-        "width": 10,
+        "width": 23.2216796875,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -253,9 +253,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "71ff3d1f-c013-08e4-725d-b226706219a1",
-        "x": 20,
+        "x": 95.140625,
         "y": 82,
-        "width": 23.2216796875,
+        "width": 62.142578125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -283,7 +283,7 @@ jsonDocument: [
         "id": "440c675d-3e21-e6ad-9f2f-3a0b47b3ef65",
         "x": 10,
         "y": 106,
-        "width": 10,
+        "width": 23.2216796875,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -309,9 +309,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "28e229d6-d2f2-dbd3-77b5-831f00f30248",
-        "x": 20,
+        "x": 95.140625,
         "y": 106,
-        "width": 23.2216796875,
+        "width": 62.142578125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -339,7 +339,7 @@ jsonDocument: [
         "id": "b641822d-09e2-5726-fccf-93d928fcc77b",
         "x": 10,
         "y": 130,
-        "width": 10,
+        "width": 23.2216796875,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -365,9 +365,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "35c89973-0d2b-306e-bcee-888ad57b4a2a",
-        "x": 20,
+        "x": 95.140625,
         "y": 130,
-        "width": 23.2216796875,
+        "width": 62.142578125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -395,7 +395,7 @@ jsonDocument: [
         "id": "f8ded278-fa6b-e4aa-c6b5-a10493579b70",
         "x": 10,
         "y": 154,
-        "width": 10,
+        "width": 23.2216796875,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -421,9 +421,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "c9dadd26-3763-ebf4-d36d-a066453d0c9d",
-        "x": 20,
+        "x": 95.140625,
         "y": 154,
-        "width": 23.2216796875,
+        "width": 62.142578125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -451,7 +451,7 @@ jsonDocument: [
         "id": "6620729b-b953-64b6-7f7d-46270bc4468d",
         "x": 10,
         "y": 178,
-        "width": 10,
+        "width": 23.2216796875,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -477,9 +477,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "ed657f32-af44-2eef-4317-8284b7690d1f",
-        "x": 20,
+        "x": 95.140625,
         "y": 178,
-        "width": 23.2216796875,
+        "width": 62.142578125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -507,7 +507,7 @@ jsonDocument: [
         "id": "29aa80a3-4b17-52a3-1abf-6ace19d9d5e0",
         "x": 10,
         "y": 202,
-        "width": 10,
+        "width": 28.783203125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -533,9 +533,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "83f701fc-5059-c772-863f-fcd1336c8f4d",
-        "x": 20,
+        "x": 95.140625,
         "y": 202,
-        "width": 28.783203125,
+        "width": 67.7041015625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -563,7 +563,7 @@ jsonDocument: [
         "id": "55d67e23-d866-eef9-f701-918a6ea117fb",
         "x": 10,
         "y": 226,
-        "width": 10,
+        "width": 27.609375,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -589,9 +589,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "97592d94-3ba7-96d8-9dca-e8ab111991cb",
-        "x": 20,
+        "x": 95.140625,
         "y": 226,
-        "width": 27.609375,
+        "width": 66.53125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -619,7 +619,7 @@ jsonDocument: [
         "id": "c63d669c-2b37-065a-c83d-dbb2bcdb2331",
         "x": 10,
         "y": 250,
-        "width": 10,
+        "width": 28.783203125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -645,9 +645,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "80282b5e-a6ba-c6a6-8111-a2522caeacb6",
-        "x": 20,
+        "x": 95.140625,
         "y": 250,
-        "width": 28.783203125,
+        "width": 67.7041015625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -675,7 +675,7 @@ jsonDocument: [
         "id": "f7188f0f-27dd-17c4-642f-ae52c86a5437",
         "x": 10,
         "y": 274,
-        "width": 10,
+        "width": 28.783203125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -701,9 +701,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "85175438-3c29-88f3-e3e9-4a2af0f505e9",
-        "x": 20,
+        "x": 95.140625,
         "y": 274,
-        "width": 28.783203125,
+        "width": 67.7041015625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -731,7 +731,7 @@ jsonDocument: [
         "id": "75b01a24-ba5e-dec4-d70c-eaa403f51b86",
         "x": 10,
         "y": 298,
-        "width": 10,
+        "width": 28.783203125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -757,9 +757,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "9dba6575-aa00-6290-d4cf-82edecc08817",
-        "x": 20,
+        "x": 95.140625,
         "y": 298,
-        "width": 28.783203125,
+        "width": 67.7041015625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -787,7 +787,7 @@ jsonDocument: [
         "id": "f4780464-47fe-662c-cda6-ec32932b1361",
         "x": 10,
         "y": 322,
-        "width": 10,
+        "width": 28.783203125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -813,9 +813,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "1054386c-52e3-ee8d-dbb2-028529e134b2",
-        "x": 20,
+        "x": 95.140625,
         "y": 322,
-        "width": 28.783203125,
+        "width": 67.7041015625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -843,7 +843,7 @@ jsonDocument: [
         "id": "7d660e40-c446-7405-fdb8-1d543ad5cef2",
         "x": 10,
         "y": 346,
-        "width": 10,
+        "width": 72.625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -869,9 +869,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "77b1e628-a987-5559-a66c-5106974a6ca9",
-        "x": 20,
+        "x": 95.140625,
         "y": 346,
-        "width": 72.625,
+        "width": 111.546875,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -893,6 +893,34 @@ jsonDocument: [
         "fontColor": "#FFFFFF",
         "fontFamily": null,
         "editor": "draw2d.ui.LabelInplaceEditor"
+      },
+      {
+        "type": "GraphLang.Shapes.Basic.Label",
+        "id": "3a8c8a1b-6bd4-0dda-c46d-febd5fde539f",
+        "x": 63.9609375,
+        "y": -26,
+        "width": 92.71875,
+        "height": 21,
+        "alpha": 1,
+        "angle": 0,
+        "userData": {
+          "type": "nodeLabel"
+        },
+        "cssClass": "GraphLang_Shapes_Basic_Label",
+        "ports": [],
+        "bgColor": "#000000",
+        "color": "#1B1B1B",
+        "stroke": 1,
+        "radius": 0,
+        "dasharray": null,
+        "text": "ArduinoDigitalPins",
+        "outlineStroke": 0,
+        "outlineColor": "none",
+        "fontSize": 12,
+        "fontColor": "#FFFFFF",
+        "fontFamily": null,
+        "editor": "draw2d.ui.LabelInplaceEditor",
+        "locator": "draw2d.layout.locator.TopLocator"
       }
     ]
   },
@@ -901,8 +929,8 @@ jsonDocument: [
     "id": "ecdf42bf-82b1-506c-d325-fa4c60809e6d",
     "x": 347,
     "y": 107,
-    "width": 63.0078125,
-    "height": 404,
+    "width": 112.01953125,
+    "height": 380,
     "alpha": 1,
     "angle": 0,
     "userData": {
@@ -920,9 +948,9 @@ jsonDocument: [
     "labels": [
       {
         "type": "draw2d.shape.basic.Label",
-        "id": "36c42b49-de4b-e997-fb62-7243892c7222",
+        "id": "320361c8-d981-d18c-e440-9177aff8fe78",
         "x": 0,
-        "y": 404,
+        "y": 380,
         "width": 33.015625,
         "height": 19,
         "alpha": 1,
@@ -950,7 +978,7 @@ jsonDocument: [
         "id": "e61382e1-74df-10a2-8474-801c3ff67ac2",
         "x": 10,
         "y": 10,
-        "width": 10,
+        "width": 28.171875,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -976,9 +1004,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "803e6cd8-d50a-7324-42ff-d10c7ee2fc52",
-        "x": 20,
+        "x": 43.0078125,
         "y": 10,
-        "width": 28.171875,
+        "width": 49.84375,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1006,7 +1034,7 @@ jsonDocument: [
         "id": "2a69fe5e-1ea5-0912-d810-458c36dbca3c",
         "x": 10,
         "y": 34,
-        "width": 10,
+        "width": 28.59765625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1032,9 +1060,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "a94e6bdf-1c2a-54c5-8117-a8c7f0b5e0e1",
-        "x": 20,
+        "x": 43.0078125,
         "y": 34,
-        "width": 28.59765625,
+        "width": 50.267578125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1062,7 +1090,7 @@ jsonDocument: [
         "id": "e72f0cba-d8ed-743c-fd2e-cd4af9958012",
         "x": 10,
         "y": 58,
-        "width": 10,
+        "width": 28.59765625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1088,9 +1116,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "bc18df86-5afb-9687-6b06-0caa971be270",
-        "x": 20,
+        "x": 43.0078125,
         "y": 58,
-        "width": 28.59765625,
+        "width": 50.267578125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1118,7 +1146,7 @@ jsonDocument: [
         "id": "73bbf933-118d-1803-ffe0-00ee58926d9d",
         "x": 10,
         "y": 82,
-        "width": 10,
+        "width": 28.59765625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1144,9 +1172,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "90b2e8a8-1375-93a2-acab-36f7ec171a9f",
-        "x": 20,
+        "x": 43.0078125,
         "y": 82,
-        "width": 28.59765625,
+        "width": 50.267578125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1174,7 +1202,7 @@ jsonDocument: [
         "id": "6dde776a-389b-2295-416a-aab5144d357e",
         "x": 10,
         "y": 106,
-        "width": 10,
+        "width": 28.59765625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1200,9 +1228,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "9dea1984-4d48-6292-f0ac-2a6d0fb8447e",
-        "x": 20,
+        "x": 43.0078125,
         "y": 106,
-        "width": 28.59765625,
+        "width": 50.267578125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1230,7 +1258,7 @@ jsonDocument: [
         "id": "8dc0282f-2465-25ef-2f66-f04cbbf6446e",
         "x": 10,
         "y": 130,
-        "width": 10,
+        "width": 28.59765625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1256,9 +1284,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "f7d45ae0-b951-e981-f036-1be5b848566c",
-        "x": 20,
+        "x": 43.0078125,
         "y": 130,
-        "width": 28.59765625,
+        "width": 50.267578125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1286,7 +1314,7 @@ jsonDocument: [
         "id": "0fc7a514-7dac-fd17-f0fc-89cd6c9afb6c",
         "x": 10,
         "y": 154,
-        "width": 10,
+        "width": 28.59765625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1312,9 +1340,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "3cb0645f-6a97-8150-4225-b0c5c340f37b",
-        "x": 20,
+        "x": 43.0078125,
         "y": 154,
-        "width": 28.59765625,
+        "width": 50.267578125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1342,7 +1370,7 @@ jsonDocument: [
         "id": "7ed720a2-3551-6841-ab6f-77126261fe1a",
         "x": 10,
         "y": 178,
-        "width": 10,
+        "width": 29.33984375,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1368,9 +1396,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "ccf2a5a2-aa92-b417-b8a6-599c81f54b91",
-        "x": 20,
+        "x": 43.0078125,
         "y": 178,
-        "width": 29.33984375,
+        "width": 51.009765625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1398,7 +1426,7 @@ jsonDocument: [
         "id": "d24762ed-dd07-ac9d-f94a-043d65eef7c3",
         "x": 10,
         "y": 202,
-        "width": 10,
+        "width": 28.90625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1424,9 +1452,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "9037af62-0190-84ae-fa5f-1b2dd06b81b5",
-        "x": 20,
+        "x": 43.0078125,
         "y": 202,
-        "width": 28.90625,
+        "width": 50.578125,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1454,7 +1482,7 @@ jsonDocument: [
         "id": "6c6e46d3-9e65-7fc5-1b43-f44275e50226",
         "x": 10,
         "y": 226,
-        "width": 10,
+        "width": 29.33984375,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1480,9 +1508,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "60bee231-86fd-f85c-f36d-c2debafd62f5",
-        "x": 20,
+        "x": 43.0078125,
         "y": 226,
-        "width": 29.33984375,
+        "width": 51.009765625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1510,7 +1538,7 @@ jsonDocument: [
         "id": "849edc53-7de1-be88-87da-d5d3ce64449e",
         "x": 10,
         "y": 250,
-        "width": 10,
+        "width": 29.33984375,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1536,9 +1564,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "b5a4cf25-a5e1-b801-21a6-0a90177a92c4",
-        "x": 20,
+        "x": 43.0078125,
         "y": 250,
-        "width": 29.33984375,
+        "width": 51.009765625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1566,7 +1594,7 @@ jsonDocument: [
         "id": "ab091b2c-d6c9-ca1c-b99b-4a4368d359b2",
         "x": 10,
         "y": 274,
-        "width": 10,
+        "width": 29.33984375,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1592,9 +1620,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "5dadd10c-740d-a244-b8c5-0ccef9e39ce1",
-        "x": 20,
+        "x": 43.0078125,
         "y": 274,
-        "width": 29.33984375,
+        "width": 51.009765625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1622,7 +1650,7 @@ jsonDocument: [
         "id": "eb1fc25e-9cd6-3c1d-e7af-80d7fd272aa3",
         "x": 10,
         "y": 298,
-        "width": 10,
+        "width": 29.33984375,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1648,9 +1676,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "b545317e-221d-7ed0-d3d8-ebf44a45c90c",
-        "x": 20,
+        "x": 43.0078125,
         "y": 298,
-        "width": 29.33984375,
+        "width": 51.009765625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1678,7 +1706,7 @@ jsonDocument: [
         "id": "eb87bd18-b532-ac17-bd87-fbcc497450a6",
         "x": 10,
         "y": 322,
-        "width": 10,
+        "width": 29.33984375,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1704,9 +1732,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "1a996f72-e3ad-cf66-1bde-724dc6b8b0e8",
-        "x": 20,
+        "x": 43.0078125,
         "y": 322,
-        "width": 29.33984375,
+        "width": 51.009765625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1734,7 +1762,7 @@ jsonDocument: [
         "id": "9e737b13-4524-0732-4f1e-cb7de4a73252",
         "x": 10,
         "y": 346,
-        "width": 10,
+        "width": 29.33984375,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1760,9 +1788,9 @@ jsonDocument: [
       {
         "type": "draw2d.shape.basic.Label",
         "id": "b868a55b-80d9-ceb2-727c-4f806a9505ab",
-        "x": 20,
+        "x": 43.0078125,
         "y": 346,
-        "width": 29.33984375,
+        "width": 51.009765625,
         "height": 24,
         "alpha": 1,
         "angle": 0,
@@ -1785,324 +1813,105 @@ jsonDocument: [
         "fontFamily": null,
         "editor": "draw2d.ui.LabelInplaceEditor"
       },
+      {
+        "type": "GraphLang.Shapes.Basic.Label",
+        "id": "e1e06d48-8eb2-935a-0106-bfd4f4a61032",
+        "x": 11.994140625,
+        "y": -26,
+        "width": 75.03125,
+        "height": 21,
+        "alpha": 1,
+        "angle": 0,
+        "userData": {
+          "type": "nodeLabel"
+        },
+        "cssClass": "GraphLang_Shapes_Basic_Label",
+        "ports": [],
+        "bgColor": "#000000",
+        "color": "#1B1B1B",
+        "stroke": 1,
+        "radius": 0,
+        "dasharray": null,
+        "text": "StmDigitalPins",
+        "outlineStroke": 0,
+        "outlineColor": "none",
+        "fontSize": 12,
+        "fontColor": "#FFFFFF",
+        "fontFamily": null,
+        "editor": "draw2d.ui.LabelInplaceEditor",
+        "locator": "draw2d.layout.locator.TopLocator"
+      }
     ]
-  },
-  {
-    "type": "GraphLang.Shapes.Basic.ConstantNode",
-    "id": "e5527b14-0f45-6186-8721-226c9db3ba8c",
-    "x": 551,
-    "y": 108,
-    "width": 16,
-    "height": 21,
-    "alpha": 1,
-    "angle": 0,
-    "userData": {
-      "datatype": "int",
-      "isTerminal": false,
-      "nodeLabel": "add_input_A"
-    },
-    "cssClass": "GraphLang_Shapes_Basic_ConstantNode",
-    "bgColor": "#0000FF",
-    "color": "#0000FF",
-    "stroke": 1,
-    "radius": 0,
-    "dasharray": null,
-    "text": "0",
-    "outlineStroke": 0,
-    "outlineColor": "none",
-    "fontSize": 12,
-    "fontColor": "#FFFFFF",
-    "fontFamily": null,
-    "editor": "draw2d.ui.LabelInplaceEditor"
-  },
-  {
-    "type": "GraphLang.Shapes.Basic.ConstantNode",
-    "id": "567ec82d-b20d-32a9-d3f5-ffa8933c80f5",
-    "x": 555,
-    "y": 256,
-    "width": 16,
-    "height": 21,
-    "alpha": 1,
-    "angle": 0,
-    "userData": {
-      "datatype": "int",
-      "isTerminal": false,
-      "nodeLabel": "add_input_B"
-    },
-    "cssClass": "GraphLang_Shapes_Basic_ConstantNode",
-    "bgColor": "#0000FF",
-    "color": "#0000FF",
-    "stroke": 1,
-    "radius": 0,
-    "dasharray": null,
-    "text": "0",
-    "outlineStroke": 0,
-    "outlineColor": "none",
-    "fontSize": 12,
-    "fontColor": "#FFFFFF",
-    "fontFamily": null,
-    "editor": "draw2d.ui.LabelInplaceEditor"
-  },
-  {
-    "type": "GraphLang.Math.Basic.Add",
-    "id": "5c6f64f8-0253-993d-f24c-f05e51eca90c",
-    "x": 650,
-    "y": 163,
-    "width": 123.40234375,
-    "height": 78,
-    "alpha": 1,
-    "angle": 0,
-    "userData": {},
-    "cssClass": "GraphLang_Math_Basic_Add",
-    "bgColor": "none",
-    "color": "#1B1B1B",
-    "stroke": 0,
-    "radius": 0,
-    "dasharray": null,
-    "labels": []
-  },
-  {
-    "type": "GraphLang.Shapes.Basic.TerminalOutput",
-    "id": "25d857a5-5269-099b-4d9f-69e22a51ad98",
-    "x": 859,
-    "y": 183,
-    "width": 83.37890625,
-    "height": 25,
-    "alpha": 1,
-    "angle": 0,
-    "userData": {
-      "isTerminal": true,
-      "datatype": "polymorphic"
-    },
-    "cssClass": "GraphLang_Shapes_Basic_TerminalOutput",
-    "bgColor": "#626262",
-    "color": "#FF0000",
-    "stroke": 3,
-    "radius": 0,
-    "dasharray": "-",
-    "text": "some_output_x",
-    "outlineStroke": 0,
-    "outlineColor": "none",
-    "fontSize": 12,
-    "fontColor": "#FFFFFF",
-    "fontFamily": null,
-    "editor": "draw2d.ui.LabelInplaceEditor"
-  },
-  {
-    "type": "HoverConnection",
-    "id": "7b3336e1-6d33-170d-6a73-e4c9f08a7004",
-    "alpha": 1,
-    "angle": 0,
-    "userData": {},
-    "cssClass": "HoverConnection",
-    "stroke": 1.35,
-    "color": "#4286F4",
-    "outlineStroke": 0,
-    "outlineColor": "none",
-    "policy": "draw2d.policy.line.OrthogonalSelectionFeedbackPolicy",
-    "vertex": [
-      {
-        "x": 572.85,
-        "y": 268
-      },
-      {
-        "x": 628.1515625,
-        "y": 268
-      },
-      {
-        "x": 628.1515625,
-        "y": 206.5
-      },
-      {
-        "x": 683.453125,
-        "y": 206.5
-      }
-    ],
-    "router": "draw2d.layout.connection.InteractiveManhattanConnectionRouter",
-    "radius": 5,
-    "routingMetaData": {
-      "routedByUserInteraction": false,
-      "fromDir": 1,
-      "toDir": 3
-    },
-    "source": {
-      "node": "567ec82d-b20d-32a9-d3f5-ffa8933c80f5",
-      "port": "out1"
-    },
-    "target": {
-      "node": "5c6f64f8-0253-993d-f24c-f05e51eca90c",
-      "port": "in2"
-    }
-  },
-  {
-    "type": "HoverConnection",
-    "id": "943d664b-8c0e-5ea3-47d0-1d096f7cc011",
-    "alpha": 1,
-    "angle": 0,
-    "userData": {},
-    "cssClass": "HoverConnection",
-    "stroke": 1.35,
-    "color": "#4286F4",
-    "outlineStroke": 0,
-    "outlineColor": "none",
-    "policy": "draw2d.policy.line.OrthogonalSelectionFeedbackPolicy",
-    "vertex": [
-      {
-        "x": 568.85,
-        "y": 120
-      },
-      {
-        "x": 626.1515625,
-        "y": 120
-      },
-      {
-        "x": 626.1515625,
-        "y": 184.5
-      },
-      {
-        "x": 683.453125,
-        "y": 184.5
-      }
-    ],
-    "router": "draw2d.layout.connection.InteractiveManhattanConnectionRouter",
-    "radius": 5,
-    "routingMetaData": {
-      "routedByUserInteraction": false,
-      "fromDir": 1,
-      "toDir": 3
-    },
-    "source": {
-      "node": "e5527b14-0f45-6186-8721-226c9db3ba8c",
-      "port": "out1"
-    },
-    "target": {
-      "node": "5c6f64f8-0253-993d-f24c-f05e51eca90c",
-      "port": "in1"
-    }
-  },
-  {
-    "type": "HoverConnection",
-    "id": "8fe18308-3e00-1ae8-5623-062fa398efdb",
-    "alpha": 1,
-    "angle": 0,
-    "userData": {},
-    "cssClass": "HoverConnection",
-    "stroke": 1.35,
-    "color": "#636363",
-    "outlineStroke": 0,
-    "outlineColor": "none",
-    "policy": "draw2d.policy.line.OrthogonalSelectionFeedbackPolicy",
-    "vertex": [
-      {
-        "x": 760.453125,
-        "y": 195.5
-      },
-      {
-        "x": 809.7265625,
-        "y": 195.5
-      },
-      {
-        "x": 809.7265625,
-        "y": 197
-      },
-      {
-        "x": 859,
-        "y": 197
-      }
-    ],
-    "router": "draw2d.layout.connection.InteractiveManhattanConnectionRouter",
-    "radius": 5,
-    "routingMetaData": {
-      "routedByUserInteraction": false,
-      "fromDir": 1,
-      "toDir": 3
-    },
-    "source": {
-      "node": "5c6f64f8-0253-993d-f24c-f05e51eca90c",
-      "port": "out1"
-    },
-    "target": {
-      "node": "25d857a5-5269-099b-4d9f-69e22a51ad98",
-      "port": "out1"
-    }
   }
 ],
 applyAlpha: function(){},
 layerGet: function(name, attributes){
-        if(this.svgNodes===null) return null;
-        var result=null;
-        this.svgNodes.some(function(shape){
-            if(shape.data("name")===name){
-                result=shape;
-            }
-            return result!==null;
-        });
-        return result;
-    },
-layerAttr: function(name, attributes){
-        if(this.svgNodes===null) return;
-        this.svgNodes.forEach(function(shape){
-            if(shape.data("name")===name){
-                shape.attr(attributes);
-            }
-        });
-    },
-layerShow: function(name, flag, duration){
-        if(this.svgNodes===null) return;
-        if(duration){
-            this.svgNodes.forEach(function(node){
-                if(node.data("name")===name){
-                    if(flag){
-                        node.attr({ opacity : 0 }).show().animate({ opacity : 1 }, duration);
-                    }
-                    else{
-                        node.animate({ opacity : 0 }, duration, function () { this.hide() });
-                    }
-                }
-            });
-        }
-        else{
-            this.svgNodes.forEach(function(node){
-                if(node.data("name")===name){
-                    if(flag){node.show();}
-                    else{node.hide();}
-                }
-            });
-        }
-    },
-getParameterSettings: function(){
-        return [];
-    },
-addPort: function(port, locator){
-        this._super(port, locator);
-        return port;
-    },
-getPersistentAttributes: function(){
-        var memento = this._super();
-        memento.labels = [];
-        this.children.each(function(i,e){
-            var labelJSON = e.figure.getPersistentAttributes();
-            labelJSON.locator=e.locator.NAME;
-            memento.labels.push(labelJSON);
-        });
-        return memento;
-    },
-setPersistentAttributes: function(memento){
-        this._super(memento);
-        this.resetChildren();
-        $.each(memento.labels, $.proxy(function(i,json){
-            var figure =  eval("new "+json.type+"()");
-            figure.attr(json);
-            var locator =  eval("new "+json.locator+"()");
-            this.add(figure, locator);
-        },this));
-    },
-
-/**************************************************************************************************************
- *  Added manualy by LuboJ, needed to add #include <LIB_NAME>
- **************************************************************************************************************/
-translateToCppCodeImport: function(){
-  return "#include <Arduino.h>";
+  if(this.svgNodes===null) return null;
+  var result=null;
+  this.svgNodes.some(function(shape){
+     if(shape.data("name")===name){
+        result=shape;
+     }
+     return result!==null;
+  });
+  return result;
 },
-
+layerAttr: function(name, attributes){
+ if(this.svgNodes===null) return;
+ this.svgNodes.forEach(function(shape){
+         if(shape.data("name")===name){
+              shape.attr(attributes);
+         }
+ });
+},
+layerShow: function(name, flag, duration){
+  if(this.svgNodes===null) return;
+  if(duration){
+    this.svgNodes.forEach(function(node){
+        if(node.data("name")===name){
+            if(flag){
+                node.attr({ opacity : 0 }).show().animate({ opacity : 1 }, duration);
+            }
+            else{
+                node.animate({ opacity : 0 }, duration, function () { this.hide() });
+            }
+        }
+    });
+  }
+  else{
+      this.svgNodes.forEach(function(node){
+          if(node.data("name")===name){
+               if(flag){node.show();}
+               else{node.hide();}
+           }
+       });
+  }
+},
+getParameterSettings: function(){
+    return [];
+},
+addPort: function(port, locator){
+    this._super(port, locator);
+    return port;
+},
+getPersistentAttributes : function(){
+    var memento = this._super();
+    memento.labels = [];
+    this.children.each(function(i,e){
+        var labelJSON = e.figure.getPersistentAttributes();
+        labelJSON.locator=e.locator.NAME;
+        memento.labels.push(labelJSON);
+    });
+    return memento;
+},
+setPersistentAttributes : function(memento){
+    this._super(memento);
+    this.resetChildren();
+    $.each(memento.labels, $.proxy(function(i,json){
+        var figure =  eval("new "+json.type+"()");
+        figure.attr(json);
+        var locator =  eval("new "+json.locator+"()");
+        this.add(figure, locator);
+    },this));
+}
 });

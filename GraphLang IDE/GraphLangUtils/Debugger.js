@@ -474,9 +474,10 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
             }
 
             /*
-             *  Analyze error output from stderr from platformio
+             *  Analyze error output from stderr from platformio and webassembly
+             *      - seems like compiler parameter -fdiagnostic-format=json doesn't work for these compiler therefore errors are parsed from standard text output
              */
-            if (codeTemplateUsed === "embedded") {
+            if (codeTemplateUsed === "embedded" || codeTemplateUsed === "webassembly") {
                 console.log(`--> COMPILER ERROR EVALUATION FOR EMBEDDED USED!!!`);
                 console.log(compileCommandOutputObj);
 
@@ -486,7 +487,14 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
 
                 let errorLineInfoList = [];
                 for (let errorLineStr of errorOutputSplitByNewline){
-                    let regexpResult = errorLineStr.match(/src\\main.*:([0-9]*):([0-9]*):(.*)/i);
+                    let regexpResult = {};
+
+                    if (codeTemplateUsed === "embedded") {
+                        regexpResult = errorLineStr.match(/src[\\,/]main.*:([0-9]*):([0-9]*):(.*)/i);
+                    }else{
+                        regexpResult = errorLineStr.match(/[\\,/]main.*:([0-9]*):([0-9]*):(.*)/i);
+                    }
+
                     if (regexpResult){
                         let lineNumber = regexpResult[1];
                         let columnNumber = regexpResult[2];
@@ -544,7 +552,7 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
                          */
                         for (let errorCanvasObj of errorObj["sourceObjects"]) {
                             // errorCanvasObj.setStroke(4).setColor("#b43500");                         //this will set stroke for each error object in stacktrace
-                            outputMsg += `<span onclick="GraphLang.Utils.animateBlinkObject(appCanvas, '${errorCanvasObj.getId()}', {color: '#b43500'}, (obj) => obj.setStroke(0))">&nbsp;&nbsp;&nbsp;&nbsp;${errorCanvasObj.NAME}&nbsp;&nbsp;-->&nbsp;&nbsp;${errorCanvasObj.getId()}</span><br/>`;
+                            outputMsg += `<span onclick="GraphLang.Utils.animateBlinkObject(appCanvas, '${errorCanvasObj.getId()}', {color: '#b43500'}, (obj) => obj.setStroke(0))"><b>&nbsp;&nbsp;&nbsp;&nbsp;CLICK TO LOCATE: ${errorCanvasObj.NAME}&nbsp;&nbsp;-->&nbsp;&nbsp;${errorCanvasObj.getId()}</b></span><br/>`;
                         }
                     }
                 }

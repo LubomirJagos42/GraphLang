@@ -175,9 +175,9 @@ setPersistentAttributes: function(memento)
                  *  Enumeration is declared as enum type and they are not typed implictly, therefore to be printed to terminal they need to be casted to have some type for compiler.
                  *  If there is no cast then there is looooong error from compiler.
                  */
-                cCode += `std::cout << static_cast<int>(${wireName});\n`;
+                cCode += `std::cout << static_cast<int>(${wireName}) << std::endl;\n`;
             }else{
-                cCode += `std::cout << ${wireName};\n`;
+                cCode += `std::cout << ${wireName} << std::endl;\n`;
             }
         });
         return cCode;

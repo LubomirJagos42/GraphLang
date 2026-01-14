@@ -51,6 +51,19 @@
             </ul>
         </div>
 
+        <h2>MariaDB set root password</h2>
+        <div>
+            Seems like MariaDB nowadays is installed without password and graphlang is using password therefore after installation is needed to run these commands:
+<pre>
+> mysql -u root
+
+FLUSH PRIVILEGES;
+ALTER USER 'root'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('root');
+FLUSH PRIVILEGES;
+</pre>
+        </div>
+        </div>
+
         <h2>Resources url</h2>
         <div>
             <ul>

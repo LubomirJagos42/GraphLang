@@ -98,6 +98,7 @@ class TranslateToCppCode_2_TranslatorObject {
         this.translateToCppCodeBreakpointList.clear();
         this.translateToCppCodeWatchList.clear();
         this.translateToCppCodeLibrariesList.clear();
+        this.translateToCppCodeSubnodeInputTerminalsDefaultValuesArray.clear();
     }
 
     //wrapper around internal code generate method, this is here to have general function with general name as interface to outside code
@@ -1150,7 +1151,8 @@ class TranslateToCppCode_2_TranslatorObject {
      * @returns {String} C/C++ code as string
      * @description Generate C/C++ code for desktop.
      */
-    getCppCodeUsingTemplate_desktop = (canvas, showCode = true, translateCanvasToCodeFunction) =>{
+    getCppCodeUsingTemplate_desktop = (canvas, showCode = true, translateCanvasToCodeFunction, lineNumberToFind = null) =>{
+        let translatorObj = this;
 
         /******************************************************************************
          * Init buffers needed for translation process
@@ -1266,7 +1268,8 @@ class TranslateToCppCode_2_TranslatorObject {
         return cCode; //return C/C++ code as string
     }
 
-    getCppCodeUsingTemplate_webassembly = (canvas, showCode = true, translateCanvasToCodeFunction) =>{
+    getCppCodeUsingTemplate_webassembly = (canvas, showCode = true, translateCanvasToCodeFunction, lineNumberToFind = null) =>{
+        let translatorObj = this;
 
         /******************************************************************************
          * Init buffers needed for translation process
@@ -1300,6 +1303,9 @@ class TranslateToCppCode_2_TranslatorObject {
         template_cCode += "#endif\n";
         template_cCode += "\n";
 
+        template_cCode += "using namespace std;\n";
+        template_cCode += "\n";
+
         template_cCode += "#ifdef WASM_BUILD\n";
         template_cCode += "extern \"C\" {\n";
         template_cCode += "#endif\n";
@@ -1321,6 +1327,7 @@ class TranslateToCppCode_2_TranslatorObject {
         this.translateToCppCodeFunctionsCodeStr.unique();  //removes duplicates
         this.translateToCppCodeFunctionsCodeStr.each(function(functionIndex, functionCodeStr){
             template_cCode += "\n";
+            template_cCode += "EMSCRIPTEN_KEEPALIVE\n";
             template_cCode += functionCodeStr;
             template_cCode += "\n";
 

@@ -31,7 +31,7 @@ blocksToTabsAssignment = {
     os.path.join(blocksRootDir, "HwRaspiZero", "IO", "Analog"):           "RaspiZero_Analog",
     os.path.join(blocksRootDir, "HwRaspiZero", "IO", "Digital"):          "RaspiZero_Digital",
     os.path.join(blocksRootDir, "HwRaspiZero", "IO", "Constants"):        "RaspiZero_Constants",
-    os.path.join(blocksRootDir, "HwRaspiZero", "String"):                 "RaspiZero_String",
+    os.path.join(blocksRootDir, "HwRaspiZero", "string"):                 "RaspiZero_string",
     os.path.join(blocksRootDir, "HwRaspiZero", "Time"):                   "RaspiZero_Time",
     os.path.join(blocksRootDir, "PythonQtGuiLib"):                        "Python GUI",
     os.path.join(blocksRootDir, "SignalProcessing"):                      "Signal Proc.",

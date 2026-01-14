@@ -2747,7 +2747,7 @@ GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(paramete
             }else{
                 nodeContent = GraphLang.Utils.getCanvasAsObjectString(parametersObj.canvas);
             }
-            nodeContent = GraphLang.Utils.toHex(nodeContent);
+            let nodeContentHex = GraphLang.Utils.toHex(nodeContent);
 
             console.log(`start saving this for projectId:${projectId}, nodeClassName:${nodeClassName}`);
 
@@ -2755,12 +2755,15 @@ GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(paramete
                 // newer function for node upload doing also rename, create, update
                 GraphLang.Utils.serverAjaxPostSendReceive(
                     ["q", "nodeUpload"],
-                    ["projectId", projectId, "nodeId", nodeId, "nodeClassName", nodeClassName, "nodeDisplayName", nodeDisplayName, "nodeCodeContent", nodeContent],
+                    ["projectId", projectId, "nodeId", nodeId, "nodeClassName", nodeClassName, "nodeDisplayName", nodeDisplayName, "nodeCodeContent", nodeContentHex],
                     function () {
                         console.log(JSON.stringify(GLOBAL_AJAX_RESPONSE));
                     }
                 )
-                    .then(response => alert(JSON.stringify(response)))
+                    .then(response => {
+                        GraphLang.Utils.Sync.updateSchematic(nodeClassName, nodeContent); //notify other tabs about current node code change
+                        alert(JSON.stringify(response));
+                    })
                     .catch(response => alert(JSON.stringify(response)));
             }
         }

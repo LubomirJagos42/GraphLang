@@ -3,9 +3,9 @@
 //                                                        
 // http://www.draw2d.org                                  
 //                                                        
-HwRaspiZero.String.replace2 = GraphLang.UserDefinedNode.extend({
+HwArduino.String.replace2 = GraphLang.UserDefinedNode.extend({
 
-   NAME: "HwRaspiZero.String.replace2",
+   NAME: "HwArduino.String.replace2",
 
    init:function(attr, setter, getter)
    {
