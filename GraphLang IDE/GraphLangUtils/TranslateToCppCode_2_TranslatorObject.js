@@ -113,8 +113,7 @@ class TranslateToCppCode_2_TranslatorObject {
         }else if (codeTemplate === "embedded"){
             cCode = this.getCppCodeUsingTemplate_embedded(canvas, showCode, this.translateCanvasToCppCode, lineNumberToFind);
         }else if (codeTemplate === "webassembly"){
-            //TODO: Webassembly code template not implemented yet here!
-            throw new Error("code template to generate webassembly not implemented, need check translator object implementation");
+            cCode = this.getCppCodeUsingTemplate_webassembly(canvas, showCode, this.translateCanvasToCppCode, lineNumberToFind);
         }else{
             //BY DEFAULT USE DESKTOP CODE TEMPLATE
             cCode = this.getCppCodeUsingTemplate_desktop(canvas, showCode, this.translateCanvasToCppCode, lineNumberToFind);
@@ -1173,7 +1172,7 @@ class TranslateToCppCode_2_TranslatorObject {
          *******************************************************************************/
         var template_cCode = "";
 
-        template_cCode += "//THIS CODE IS GENERATED FROM GraphLang -> GraphLang.Utils.getCppCode4()\n";
+        template_cCode += "//THIS CODE IS GENERATED FROM GraphLang -> getCppCodeUsingTemplate_desktop\n";
         template_cCode += "\n";
 
         template_cCode += "//import libraries\n";
@@ -1241,6 +1240,128 @@ class TranslateToCppCode_2_TranslatorObject {
 
         template_cCode += cCode;
         template_cCode += "\n";
+        template_cCode += "return 0;    //<-- THIS IS HARDCODED IN TEMPLATE!\n";
+        template_cCode += "}\n";
+
+        cCode = template_cCode;
+
+        /******************************************************************************
+         * REWRITE IDs to HUMAN READABLE NUMBERS (starts from 1,2,...,N)
+         *******************************************************************************/
+        cCode = GraphLang.Utils.rewriteIDtoNumbers(canvas, cCode, this.translateToCppCodeAdditionalId, this.translateToCppCodeAdditionalIdNoHyphen);
+
+        /*
+         *  Copy code into clipboard
+         */
+        var copyElement = document.createElement('textarea');
+        copyElement.innerHTML = cCode;
+        copyElement = document.body.appendChild(copyElement);
+        copyElement.select();
+        document.execCommand('copy');
+        copyElement.remove();
+
+        if (showCode) alert(cCode); //DEBUG show code in alert message
+
+        GraphLang.Utils.initAllPortToDefault(canvas);
+        return cCode; //return C/C++ code as string
+    }
+
+    getCppCodeUsingTemplate_webassembly = (canvas, showCode = true, translateCanvasToCodeFunction) =>{
+
+        /******************************************************************************
+         * Init buffers needed for translation process
+         *******************************************************************************/
+        this.initTranslateToCppBuffers();
+
+
+        /******************************************************************************
+         * Translate canvas to C/C++ code
+         *******************************************************************************/
+        let cCode = translateCanvasToCodeFunction({
+            canvas: canvas,
+            translateTerminalsDeclaration: true
+        });
+
+
+        /******************************************************************************
+         * TEMPLATE START
+         *******************************************************************************/
+        var template_cCode = "";
+
+        template_cCode += "//THIS CODE IS GENERATED FROM GraphLang -> getCppCodeUsingTemplate_webassembly\n";
+        template_cCode += "\n";
+
+        template_cCode += "//import libraries\n";
+        template_cCode += this.getCppCodeImport();
+        template_cCode += "\n";
+
+        template_cCode += "#ifdef WASM_BUILD\n";
+        template_cCode += "#include <emscripten/emscripten.h>\n";
+        template_cCode += "#endif\n";
+        template_cCode += "\n";
+
+        template_cCode += "#ifdef WASM_BUILD\n";
+        template_cCode += "extern \"C\" {\n";
+        template_cCode += "#endif\n";
+        template_cCode += "\n";
+
+        template_cCode += this.getCppCodeTypeDefinition();
+        template_cCode += "\n";
+
+        /******************************************************************************
+         * SubNode code printed as subfunctions
+         *******************************************************************************/
+        template_cCode += "/************* BEGIN Transcripted SubNode function definitions ************/\n\n";
+        this.GLOBAL_CODE_LINE_OFFSET_BEFORE_SUBNODES = GraphLang.Utils.getLineCount(template_cCode) + 1;    //+1 because there \n in fron of each subnode code
+
+        this.translateToCppCodeFunctionsCodeStr = new draw2d.util.ArrayList();  //removes duplicates
+        this.translateToCppCodeFunctionsArray.each((subnodeIndex, subnodeObj) => {
+            translatorObj.translateToCppCodeFunctionsCodeStr.add(subnodeObj.code);
+        });
+        this.translateToCppCodeFunctionsCodeStr.unique();  //removes duplicates
+        this.translateToCppCodeFunctionsCodeStr.each(function(functionIndex, functionCodeStr){
+            template_cCode += "\n";
+            template_cCode += functionCodeStr;
+            template_cCode += "\n";
+
+            if (lineNumberToFind){
+                if (translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null && GraphLang.Utils.getLineCount(template_cCode) > lineNumberToFind){
+                    translatorObj.translateToCppCodeFunctionsArray.each((functionInfoIndex, functionInfoObj) => {
+                        if (functionInfoObj.code === functionCodeStr){
+                            translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = functionInfoObj;
+                        }
+                    });
+                }
+            }
+        });
+        template_cCode += "/************* END Transcripted SubNode function definitions ************/\n\n";
+
+        template_cCode += "#ifdef WASM_BUILD\n";
+        template_cCode += "}\n";
+        template_cCode += "#endif\n";
+        template_cCode += "\n";
+
+        template_cCode += "int main() {\n";
+        template_cCode += "\n";
+
+        //add offset to breakpoints line numbers since here before is some code generated and breakpoints were counted just from canvas code
+        let lineNumberOffset = GraphLang.Utils.getLineCount(template_cCode);
+        this.translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObject){
+            breakpointObject.lineNumber += lineNumberOffset;
+        });
+        this.translateToCppCodeWatchList.each(function(watchIndex, watchObject){
+            watchObject.lineNumber += lineNumberOffset;
+        });
+        this.GLOBAL_CODE_LINE_OFFSET = lineNumberOffset;
+
+        //add program startpoint main() into breakpoint list, in debug mode it's first stop where it's waiting during stepping
+        this.translateToCppCodeBreakpointList.add({lineNumber: lineNumberOffset, objectId: null, type: "programStart", parent: null});
+
+        template_cCode += cCode;
+        template_cCode += "\n";
+        template_cCode += "#ifdef WASM_BUILD\n";
+        template_cCode += "\temscripten_exit_with_live_runtime();\n";
+        template_cCode += "#endif\n";
         template_cCode += "return 0;    //<-- THIS IS HARDCODED IN TEMPLATE!\n";
         template_cCode += "}\n";
 

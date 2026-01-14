@@ -1971,6 +1971,13 @@ GraphLang.Utils.displayContents2 = function (jsonDocument, canvasObj, schematicN
 
     if (schematicName){
         document.querySelector("input[id='schematicName']").value = schematicName;
+
+        //modify current node name in url if present
+        let url = new URL(window.location.href);
+        let params = new URLSearchParams(url.search);
+        params.delete("nodeId");                        //nodeId have higher priority than nodeClassName, therefore delete it when other schematici is opened
+        params.set("nodeClassName", schematicName);     //update url schematic to new value
+        history.pushState(null, '', '?' + params.toString());   //update url in toolbar without page reloading
     }
 
     if (schematicDisplayName){
