@@ -50,6 +50,8 @@ if ENABLE_LOGGING:
     logging.basicConfig(level=logging.DEBUG, filename='tmp/gdb_websocket.log')
     logger = logging.getLogger(__name__)
 
+
+
 class DebbugerCppBrowserInterface:
     __gdbmi = None
     __websocketInterface = None
@@ -75,6 +77,36 @@ class DebbugerCppBrowserInterface:
         """Blocking GDB write operation"""
         return self.__gdbmi.write(message)
 
+    async def cleanup(self, websocket):
+        """Properly cleanup resources"""
+        try:
+            # Send final message
+            if ENABLE_EMBEDDED:
+                await websocket.send("GDB process terminate() was called")
+                self.__gdbmi.gdb_process.terminate()
+
+            try:
+                await websocket.close()
+            except Exception as e:
+                print(f"Error closing websocket: {e}", flush=True)
+
+            # Cancel all tasks except current
+            current_task = asyncio.current_task()
+            tasks = [t for t in asyncio.all_tasks()
+                    if t is not current_task and not t.done()]
+
+            for task in tasks:
+                task.cancel()
+
+            # Wait for cancellations with timeout
+            if tasks:
+                await asyncio.wait(tasks, timeout=0.1)
+                
+            os._exit(0)    
+
+        except Exception as e:
+            print(f"Cleanup error: {e}")
+
     async def processBrowserMessage(self, websocket):
         try:
             async for message in websocket:
@@ -88,16 +120,17 @@ class DebbugerCppBrowserInterface:
                     if message == "end debugging":
 
                         #for embedded there is platformio debugger running what is python process therefore it needs to be terminated this way
-                        if ENABLE_EMBEDDED:
-                           await websocket.send(f"GDB process terminate() was called")
-                           self.__gdbmi.gdb_process.terminate()
+                        #if ENABLE_EMBEDDED:
+                        #   await websocket.send(f"GDB process terminate() was called")
+                        #   self.__gdbmi.gdb_process.terminate()
+                        #
+                        #await websocket.close()
+                        #exit(0)
 
-                        await websocket.close()
+                        await self.cleanup(websocket)
+                        return  # Exit coroutine gracefully
 
-                        #this doesn't seems to finish async loop
-                        #return  # Instead of exit(0)
 
-                        exit(0)
 
                     elif (message.startswith("get random")):
                          numberStr = str(random.random())

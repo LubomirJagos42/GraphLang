@@ -38,6 +38,10 @@
                     <ul><li><pre>pio debug</pre></li></ul>
                 </li>
                 <li>
+                    Start debugging and stop at init point of code
+                    <ul><li><pre>pio debug --interface=gdb -- -x .pioinit</pre></li></ul>
+                </li>
+                <li>
                     Platform - search available
                     <ul>
                         <li><pre>pio platform search arduino</pre></li>
@@ -47,6 +51,13 @@
                 <li>
                     Platform - install new one
                     <ul><li><pre>pio platform install atmelavr</pre></li></ul>
+                </li>
+                <li>
+                    Error "Error: libusb_open() failed with LIBUSB_ERROR_NOT_FOUND" you must install on Windows ST Link drivers
+                    <ul><li><a href="https://www.st.com/en/development-tools/stsw-link009.html">ST Link drivers</a></li></ul>
+                </li>
+                <li>
+                    Add path to platformio into system path for Windows, it makes lot of problem go away, use panel which able to edit all variables user and system, run sysdm.cpl, advanced, environment variables, edit PATH variable and add there C:\Users\your_user\.platformio\penv\Scripts > tab Advanced
                 </li>
             </ul>
         </div>
@@ -70,6 +81,18 @@ FLUSH PRIVILEGES;
                 <li><a href="https://docs.platformio.org/en/latest/frameworks/index.html">platformio framework list</a></li>
             </ul>
         </div>
+
+        <h2>Windows tips - installation</h2>
+        <div>
+On fresh win instllation seems like system PATH and user PATH variable is not propagated into msys2 PATH, therefore they need to be added to ~/.bash_profile file like this:
+<pre>
+  export PATH=$PATH:/C/User_installed_programs/emsdk:/C/User_installed_programs/Python313:/C/Users/ljagos/Downloads/msys64/mingw64/bin
+</pre>
+            <!-- <ul>
+                <li></li>
+            </ul> -->
+        </div>
+
 
     </body>
 </html>

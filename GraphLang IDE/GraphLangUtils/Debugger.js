@@ -240,7 +240,7 @@ GraphLang.Debugger.Cpp.startDebuggerServer = async function(options = null){
         await GraphLang.Utils.serverAjaxPostSendReceive(
             ["q", "runPythonCppDebugServer", "projectId", projectId],
             null,
-            function () {
+            function (response) {
                 clearInterval(intervalIdentifierForServerDebuggerToStart);
                 document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>>debugger server RUNNING<pre/><hr/>");
             }
@@ -249,6 +249,10 @@ GraphLang.Debugger.Cpp.startDebuggerServer = async function(options = null){
         //For embedded target wait here till there is message from gdb: "PlatformIO: Initialization completed"
         let codeTemplate = await GraphLang.Utils.getProjectCodeTemplate();
         if (codeTemplate === "embedded") {
+
+            /*
+             *  Create websocket connection to debugger layer
+             */
             GraphLang.Debugger.Cpp.createWebSocket();
 
             let timeoutResponsesCounter = 0;
@@ -260,7 +264,7 @@ GraphLang.Debugger.Cpp.startDebuggerServer = async function(options = null){
                     if (
                         gdbResponse.search("PlatformIO: Initialization completed") > -1 ||
                         (parsedJsonGdbResponse.hasOwnProperty("error") && parsedJsonGdbResponse.error.length > 0)
-                    ) {
+                    ){
                         timeoutResponsesCounter++;
                         if (gdbResponse.search("PlatformIO: Initialization completed") > -1 || timeoutResponsesCounter > MAX_INTERVAL_TIMEOUTS_COUNT) {
                             if (gdbResponse.search("PlatformIO: Initialization completed") > -1) {
@@ -274,12 +278,34 @@ GraphLang.Debugger.Cpp.startDebuggerServer = async function(options = null){
                         } else {
                             if (gdbResponse.toLowerCase().search("undefined command") === -1) timeoutResponsesCounter = 0;  //"undefined command" is response for gdb command "."
                         }
+                    }else{
+                        console.log(`--> no platformio init message yet`);
                     }
                 } catch (e) {
                     document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<pre/>${e.message}<pre/><hr/>");
                 }
             }, 2000);
         } else if (codeTemplate === "desktop") {
+
+            /*
+             *  There was error that here was no waiting for websocket to be opened and then next command caused crash.
+             */
+            function waitForConnection(ws) {
+                return new Promise((resolve, reject) => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        resolve();
+                    } else {
+                        ws.addEventListener('open', () => resolve());
+                        ws.addEventListener('error', (err) => reject(err));
+                    }
+                });
+            }
+
+            // Usage
+            await waitForConnection(GraphLang.Debugger.websocket);            
+
+
+
             resolve("debbuger running for desktop app");
         } else {
             reject(`undefined codeTemplate: ${codeTemplate}, python debugger layer running`);
@@ -478,7 +504,7 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
              *      - seems like compiler parameter -fdiagnostic-format=json doesn't work for these compiler therefore errors are parsed from standard text output
              */
             if (codeTemplateUsed === "embedded" || codeTemplateUsed === "webassembly") {
-                console.log(`--> COMPILER ERROR EVALUATION FOR EMBEDDED USED!!!`);
+                console.log(`--> COMPILER ERROR EVALUATION FOR "${codeTemplateUsed}" USED!!!`);
                 console.log(compileCommandOutputObj);
 
                 let compileErrorStr = compileCommandOutputObj.errorMsg;
@@ -628,18 +654,18 @@ GraphLang.Debugger.Cpp.debugSchematicDesktop = async function(options = null){
     document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `start desktop debugger server result: ${startDebuggerServerResult}<hr/>`);
 
     let compiledFileFullPath = ajaxResponse.outputFileAbsolutePath.replaceAll('\\', '\\\\');
-    GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`file ${compiledFileFullPath}`);
+    await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`file ${compiledFileFullPath}`);
 
     /*
      *  Check there is breakpoint list variable from CPP translate process.
      */
     if (GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList()){
-        GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
-            GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`b ${breakpointObj.lineNumber}`);
+        GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList().each(async function(breakpointIndex, breakpointObj){
+            await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`b ${breakpointObj.lineNumber}`);
         });
     }
 
-    GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`start`);
+    await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`start`);
 }
 
 GraphLang.Debugger.Cpp.debugSchematicEmbedded = async function(options = null){

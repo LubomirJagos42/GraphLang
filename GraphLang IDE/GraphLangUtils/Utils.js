@@ -3144,7 +3144,7 @@ GraphLang.Utils.getObjectInProjectFromJSON = function(funcParams){
     const searchObjectUsingObject = Object.hasOwn(funcParams, "object") ? funcParams.object : {};
 
     if (
-        searchObjectId === "" && searchObjectName === "" && searchObjectUsingObject === {}
+        searchObjectId === "" && searchObjectName === "" && Object.keys(searchObjectUsingObject).length === 0
     ){
         console.warn("At least object name, id or userData object must be specified");
     }
