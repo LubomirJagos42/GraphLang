@@ -163,6 +163,9 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     let compileErrorLines = Object.hasOwn(funcParams, "compileErrorLines") ? funcParams.compileErrorLines : null;
     let breakpointParentId = Object.hasOwn(funcParams, "breakpointParentId") ? funcParams.breakpointParentId : null;
 
+    let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+    let lineNumberToFind = Object.hasOwn(funcParams, "lineNumberToFind") ? funcParams.lineNumberToFind : null;
+
     this.getUserData().wasTranslatedToCppCode = true;
     this.translateToCppCodeImportArray.clear();
     this.translateToCppCodeBreakpointList.clear();
@@ -178,12 +181,24 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     var forLoopIteratorVariable = 'forLoopIterator_' + this.getId();
 
     cCode += this.getTunnelsDeclarationCppCode({
-        translatorObj: translatorObj,
+        lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - 1 : null,
+        translatorObj: translatorObj
     });
-    cCode += this.getWiresInsideLoopDeclarationCppCode();
+
+    cCode += this.getWiresInsideLoopDeclarationCppCode({
+        lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - GraphLang.Utils.getLineCount(cCode) : null,
+        translatorObj: translatorObj
+    });
     cCode += "\n";
+    
     cCode += "for (int " + forLoopIteratorVariable + " = 0; " + forLoopIteratorVariable + " < " + iterationCount + "; " + forLoopIteratorVariable+ "++){\n";
-    cCode += "\t" + this.getLeftTunnelsWiresAssignementCppCode().replaceAll("\n", "\n\t");
+
+    let leftTunnelsWiresAssignementCppCode = this.getLeftTunnelsWiresAssignementCppCode({
+        lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - GraphLang.Utils.getLineCount(cCode) : null,
+        translatorObj: translatorObj
+    });
+    cCode += "\t" + leftTunnelsWiresAssignementCppCode.replaceAll("\n", "\n\t");
+    cCode += "\n\t";
 
     this.getOutputPort("iterationTerminalOutput").getConnections().each(function(wireIndex, wireObj){
       cCode += "\t" + wireObj.getVariableName() + " = " + forLoopIteratorVariable + ";\n";
@@ -311,9 +326,18 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     return cCode;
   },
 
-  translateToCppCodePost: function(){
+  translateToCppCodePost: function(funcParams){
+    let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+    let lineNumberToFind = Object.hasOwn(funcParams, "lineNumberToFind") ? funcParams.lineNumberToFind : null;
+
     var cCode = "";
-    cCode += this.getRightTunnelsAssignementOutputCppCode().replaceAll("\n", "\n\t");    //first assign values to output wires
+
+    let rightTunnelsAssignementOutputCppCode = this.getRightTunnelsAssignementOutputCppCode({
+        lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - GraphLang.Utils.getLineCount(cCode) : null,
+        translatorObj: translatorObj
+    });
+    cCode += rightTunnelsAssignementOutputCppCode.replaceAll("\n", "\n\t");
+
     cCode += "\n";  //this is here dure tafter last \n in right tunnels assignement there is indentation so this will put there empty line
     cCode += "} //END FOR LOOP\n";
 

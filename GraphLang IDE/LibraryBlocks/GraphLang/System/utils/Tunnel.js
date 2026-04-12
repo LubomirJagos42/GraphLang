@@ -213,6 +213,16 @@ GraphLang.Shapes.Basic.Tunnel = draw2d.shape.node.Between.extend({
         }
     },
 
+    getVariableName: function(){
+        let variableName = "";
+
+        variableName += "tunnel_" + this.getId();
+        variableName = variableName.replaceAll('-', '_');
+
+        return variableName;
+    },
+
+
     translateToCppCode: function(){
       return "{Tunnel: executionOrder: " + this.getUserData().executionOrder + "}";
     }

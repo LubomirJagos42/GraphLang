@@ -325,7 +325,7 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
     this.getChildren().each(function(childIndex, childObj){
         if (childObj.NAME.toLowerCase().search('righttunnel') > -1){
             childObj.getOutputPort(0).getConnections().each(function(connectionIndex, connectionObj){
-                cCode += connectionObj.getVariableName() + " = tunnel_" + connectionObj.getSource().getParent().getId() + ";\n";
+                cCode += connectionObj.getVariableName() + " = " + connectionObj.getSource().getParent().getVariableName() + ";\n";
             });
         }
     });
@@ -350,9 +350,9 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
          * if tunnel connected on its input its datatype is based on first connection with index 0
          */
         if (childObj.getInputPort(0).getConnections().getSize() > 0){
-          cCode += childObj.getDatatype() + " tunnel_" + childObj.getId() + " = " + childObj.getInputPort(0).getConnections().get(0).getVariableName() + ";\n";
+          cCode += childObj.getDatatype() + " " + childObj.getVariableName() + " = " + childObj.getInputPort(0).getConnections().get(0).getVariableName() + ";\n";
         }else{
-          cCode += childObj.getDatatype() + " tunnel_" + childObj.getId() + ";\n";
+          cCode += childObj.getDatatype() + " " + childObj.getVariableName() + ";\n";
         }
 
         /*
@@ -371,7 +371,7 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
        */
       //cCode += "/* RIGHT TUNNELs declarations */\n";
       //if (childObj.NAME.toLowerCase().search("righttunnel") > -1){
-      //    cCode += childObj.getDatatype() + " tunnel_" + childObj.getId() + ";\n";
+      //    cCode += childObj.getDatatype() + " " + childObj.getVariableName() + ";\n";
       //}
 
     });
@@ -505,7 +505,7 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
        if (childObj.getOutputPort(0).getConnections().getSize() > 0){
          childObj.getOutputPort(0).getConnections().each(function(connectionIndex, connectionObj){
 
-           cCode += connectionObj.getVariableName() + " = tunnel_" + childObj.getId() + ";\n";
+           cCode += connectionObj.getVariableName() + " = " + childObj.getVariableName() + ";\n";
 
            //if searching for object which generates line try it here for wires
            if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
@@ -566,7 +566,7 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
       if (childObj.NAME.toLowerCase().search("lefttunnel") > -1){
         //generates code just for tunnel which has connected input
         if (childObj.getInputPort(0).getConnections().getSize() > 0){
-          cCode += "tunnel_" + childObj.getId() + " = " + childObj.getInputPort(0).getConnections().get(0).getVariableName() + ";\n";
+          cCode += childObj.getVariableName() + " = " + childObj.getInputPort(0).getConnections().get(0).getVariableName() + ";\n";
         }
       }
     });
