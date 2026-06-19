@@ -271,7 +271,17 @@ Installation
 - test running debugger server using this command on raspbian it seems to have problem to execute it under different account:
         sudo -u www-data bash -c '/var/www/html/GraphLangServerApp/run_cpp_debugger.sh'
 
+Platformio commands
+===================
+- GraphLang php backend is using msys commands to simulate linux backend, check that environment variable is set:
+    - on my machine add to "Path" this "C:\Users\ljagos\Downloads\msys64\usr\bin\"    
 
+- to compile project do
+    > pio run -t clean
+    > pio run
+
+- upload project to board:
+    > pio run -t upload
 
 
 

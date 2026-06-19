@@ -96,9 +96,6 @@ var createConnection=function(sourcePort, targetPort){
     return conn;
 };
 
-
-bullshit = 0;
-
 /**
  *  @method detectTunnels2
  *  @param {draw2d.Canvas} canvas - schematic in which is loop located
@@ -2702,6 +2699,7 @@ GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(paramete
                      */
                     let codeToRun = "";
                     codeToRun += `GLOBAL_HELPER_VARIABLE_3 = ${nodeClassName};\n`;
+                    codeToRun += `const originalExtendMethod = ${nodeClassParent}.extend;\t//store original parent .extend(...) method, it will be modified\n`;
 
                     //redefine .extend() to our own method which stores its params into object internal variable
                     codeToRun += `${nodeClassParent}.extend = function(obj){this.extendObj = obj;}\n`;
@@ -2732,6 +2730,7 @@ GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(paramete
 
                     //return back original node functionality
                     codeToRun += `GLOBAL_HELPER_VARIABLE_2 += "});\\n"\n`;
+                    codeToRun += `${nodeClassParent}.extend = originalExtendMethod;\t//return back parent .extend(...) method, this must be used!\n`;
                     codeToRun += `${nodeClassName} = GLOBAL_HELPER_VARIABLE_3;\n`;
 
                 //evaluate js code which stores string content of updated node js code into global helper variable
@@ -3080,6 +3079,18 @@ GraphLang.Utils.getCurrentProjectId = function(){
     let projectId = urlParams.get('projectId');
 
     return projectId;
+}
+
+GraphLang.Utils.getCurrentNodeName = function(){
+    let currUrl = window.location.href;
+    const urlParams = new URLSearchParams(currUrl);
+    let nodeClassName = urlParams.get('nodeClassName');
+
+    /*
+     *  TODO: If nodeClassName is not in url and there is nodeId ask server about node name!!!
+     */
+
+    return nodeClassName;
 }
 
 GraphLang.Utils.getProjectCodeTemplate = async function(projectId = null){

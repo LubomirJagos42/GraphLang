@@ -7,6 +7,7 @@
 class LocalBrowserTabSync{
     constructor() {
         this.projectId = GraphLang.Utils.getCurrentProjectId();
+        this.tabId = Math.random().toString(36).substring(2, 11);
         this.stateName = "graphlang_projectId_" + this.projectId + "_state";
         let broadcastChannelName = 'graphlang_sync_project_' + this.projectId;
         this.bc = new BroadcastChannel(broadcastChannelName);
@@ -57,6 +58,9 @@ class LocalBrowserTabSync{
     handleMessage(message) {
         const { type, data } = message;
 
+        // Ignore messages sent by this same tab
+        if (message.senderId === this.tabId) return;
+
         switch (type) {
             case 'UPDATE_SCHEMATIC':
                 this.state.schematics[data.id] = data.content;
@@ -105,7 +109,8 @@ class LocalBrowserTabSync{
         this.saveState();
         this.bc.postMessage({
             type: 'UPDATE_SCHEMATIC',
-            data: { id, content, contentHex }
+            data: { id, content, contentHex },
+            senderId: this.tabId
         });
     }
 
@@ -114,7 +119,8 @@ class LocalBrowserTabSync{
         this.saveState();
         this.bc.postMessage({
             type: 'UPDATE_VARIABLE',
-            data: { name, value }
+            data: { name, value },
+            senderId: this.tabId
         });
     }
 
@@ -123,7 +129,8 @@ class LocalBrowserTabSync{
         this.saveState();
         this.bc.postMessage({
             type: 'LOAD_PROJECT',
-            data: projectData
+            data: projectData,
+            senderId: this.tabId
         });
     }
 
@@ -142,6 +149,12 @@ class LocalBrowserTabSync{
     // Event system
     listeners = {};
 
+    /**
+     * @description Method use to register event listener methods for given event, use as obj.on("eventName", () => {...})
+     * @param event
+     * @param callback
+     * @return null
+     */
     on(event, callback) {
         if (!this.listeners[event]) {
             this.listeners[event] = [];
@@ -216,10 +229,44 @@ try {
     // Usage
     GraphLang.Utils.Sync = new LocalBrowserTabSync();
 
-    // Listen for updates
+    /*
+     *  Update schematic when is uploaded on some tab, this will read it's content from storage and load its jsonDocument on current canvas
+     *
+     *  TODO: This is not running right when multiplies update happens on same tab or mulitple tabs, there is error that 'new schematicName()' is not
+     *        a constructor, I tried on 3 tabs and 2 were updated but one tab after multiple updates refuse update code, seems like some error in
+     *        stored content.
+     */
     GraphLang.Utils.Sync.on('schematicUpdated', (data) => {
         console.log('Schematic updated:', data.id);
-        eval(data.content);
+
+        currentOpenedSchematicName = GraphLang.Utils.getCurrentNodeName();
+        updatedSchematicName = data.id;
+
+        console.log(`--> updated schematic name: ${updatedSchematicName}`)
+        console.log(`--> current schematic name: ${currentOpenedSchematicName}`)
+
+        if (currentOpenedSchematicName === updatedSchematicName){
+            try {
+                // 1. Use window.eval to ensure the class is defined in the global scope
+                // 2. Wrap in a try-catch to prevent one bad sync from breaking the whole IDE
+                window.eval(data.content);
+
+                // // Check if the constructor exists before calling 'new'
+                // if (typeof window[currentOpenedSchematicName] === 'function') {
+                //     const updatedSchematicObj = eval(`new ${currentOpenedSchematicName}`);
+                //     GraphLang.Utils.displayContents2(updatedSchematicObj.jsonDocument, appCanvas);
+                // } else {
+                //     console.error(`Sync Error: ${currentOpenedSchematicName} is not a valid constructor on window.`);
+                // }
+
+                const updatedSchematicObj = eval(`new ${currentOpenedSchematicName}`);
+                GraphLang.Utils.displayContents2(updatedSchematicObj.jsonDocument, appCanvas);
+
+            } catch (evalError) {
+                console.error("Error during schematic sync evaluation:", evalError);
+            }
+        }
+
     });
 
     GraphLang.Utils.Sync.on('variableUpdated', (data) => {

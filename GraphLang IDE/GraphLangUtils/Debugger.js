@@ -1203,7 +1203,7 @@ GraphLang.Debugger.Cpp.runCurrentNode = async function(options = null){
     /*
      *  ATTENTION THIS IS USING getCppCode4() which is template for C++ desktop code
      */
-    let nodeCodeContent = GraphLang.Utils.TranslateToGeneralCodeObj.getCode(appCanvas, false);
+    let nodeCodeContent = await GraphLang.Utils.TranslateToGeneralCodeObj.getCode(appCanvas, false);
     nodeCodeContent = GraphLang.Utils.toHex(nodeCodeContent);
 
     let nodeCodeAdditionalLibraries = "";
