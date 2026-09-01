@@ -3275,7 +3275,7 @@ shape_designer.filter.PortDatatypeFilter = shape_designer.filter.Filter.extend({
             '  </div>'+
             '  <div class="panel-body collapse in" id="'+this.cssScope+'_panel">'+
             '     <div class="form-group portDatatypeOption">'+
-            '       <select name="'+this.cssScope+'_select">'+
+            '       <select id="'+this.cssScope+'_select" name="'+this.cssScope+'_select">'+
             '         <option value="int">int</option>'+
             '         <option value="uint">uint</option>'+
             '         <option value="float">float</option>'+
@@ -3285,36 +3285,41 @@ shape_designer.filter.PortDatatypeFilter = shape_designer.filter.Filter.extend({
             '         <option value="other">other</option>'+
             '       </select>'+
             '       <br />'+
-            '       <input type="text" value="" disabled />'+
+            '       <input id="'+this.cssScope+'_input" type="text" value="" disabled />'+
             '     </div>'+
             '  </div>'+
             '</div>'
         );
 
         if (['int','uint','float','double','bool','String'].includes(datatype)){
-            $("#"+_this.cssScope+"_panel .portDatatypeOption select").val(datatype);
+            $("#"+_this.cssScope+"_select").val(datatype);
         }else{
-            $("#"+_this.cssScope+"_panel .portDatatypeOption input").prop('disabled', false);
-            $("#"+_this.cssScope+"_panel .portDatatypeOption select").val('other');
-            $("#"+_this.cssScope+"_panel .portDatatypeOption input").val(datatype);
+            $("#"+_this.cssScope+"_input").prop('disabled', false);
+            $("#"+_this.cssScope+"_select").val('other');
+            $("#"+_this.cssScope+"_input").val(datatype);
         }
 
-        $("#"+_this.cssScope+"_panel .portDatatypeOption select").on("change", function(){
+        // Attach input field change handler immediately to ensure it works for "other" datatype
+        $("#"+_this.cssScope+"_input").off("change").on("change", function(){
+            var datatypeName = $(this).val();
+            figure.setDatatype(datatypeName);
+        });
+
+        $("#"+_this.cssScope+"_select").off("change").on("change", function(){
             var $this = $(this);
             var datatypeName = $this.val();
             if (datatypeName == "other"){
-                $("#"+_this.cssScope+"_panel .portDatatypeOption input").prop('disabled', false);
-                $("#"+_this.cssScope+"_panel .portDatatypeOption input").css({'color':'black'});
-                $("#"+_this.cssScope+"_panel .portDatatypeOption input").on("change", function(){
-                    var $this = $(this);
-                    var datatypeName = $this.val();
-                    figure.setDatatype(datatypeName);
-                });
-                datatypeName = $("#"+_this.cssScope+"_panel .portDatatypeOption input").val();
+                $("#"+_this.cssScope+"_input").prop('disabled', false);
+                $("#"+_this.cssScope+"_input").css({'color':'black'});
+                // Get the current value from input field and set it as datatype
+                datatypeName = $("#"+_this.cssScope+"_input").val();
+                if (datatypeName === "") {
+                    datatypeName = "undefined";
+                }
                 figure.setDatatype(datatypeName);
             }else{
-                $("#"+_this.cssScope+"_panel .portDatatypeOption input").prop('disabled', true);
-                $("#"+_this.cssScope+"_panel .portDatatypeOption input").css({'color':'#CCCCCC'});
+                $("#"+_this.cssScope+"_input").prop('disabled', true);
+                $("#"+_this.cssScope+"_input").css({'color':'#CCCCCC'});
                 figure.setDatatype(datatypeName);
             }
         });
