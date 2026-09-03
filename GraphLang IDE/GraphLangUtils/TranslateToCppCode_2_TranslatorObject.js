@@ -487,7 +487,7 @@ class TranslateToCppCode_2_TranslatorObject {
                      */
 
                     /*
-                     *    Translate canvas most top nodes with diagram inside into separate function
+                     *  Translate canvas most top nodes with diagram inside into separate function
                      */
                     if (!translatorObj.translateToCppCodeSubnodeArray.contains(nodeObj.NAME) && nodeObj.jsonDocument !== undefined && nodeObj.jsonDocument.length > 0){
                         translatorObj.translateToCppCodeSubnodeArray.push(nodeObj.NAME);
@@ -502,7 +502,7 @@ class TranslateToCppCode_2_TranslatorObject {
                     }
 
                     /*
-                     *      Translate blocks nested in loops or multilayered nodes, they MUST HAVE DEFINED METHOD .getSubNodesWithDiagramInside()
+                     *  Translate blocks nested in loops or multilayered nodes, they MUST HAVE DEFINED METHOD .getSubNodesWithDiagramInside()
                      */
                     if (typeof nodeObj.getSubNodesWithDiagramInside == "function"){
                         let nodeObjChildrenWithDiagram = nodeObj.getSubNodesWithDiagramInside(translatorObj.translateToCppCodeSubnodeArray);

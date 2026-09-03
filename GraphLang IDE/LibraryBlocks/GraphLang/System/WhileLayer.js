@@ -20,12 +20,17 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
 
     this.stopTerminal = port;
 
-    this.userData = {};
-    this.userData.executionOrder = 1;
-    this.userData.wasTranslatedToCppCode = false;
+    // Don't reassign userData as it's already initialized in parent Loop2.init()
+    // Just add the additional properties needed for ForLoop
     this.userData.isLoop = true;
 
     this.persistPorts=false;  /*??what's this??*/
+
+    //add top text to hold and move loop
+    this.add(
+      new draw2d.shape.basic.Label({text: "WhileLoop"}),
+      new draw2d.layout.locator.TopLocator(this)
+    );
   },
 
   /**

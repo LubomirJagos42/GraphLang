@@ -432,22 +432,24 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
     removeLayer: function (layerId) {
         if (this.layers.getSize() == 1) return; //DO NOTHING IF THERE IS JUST ONE LAYER, that's default layer it MUST BE THERE
 
-        var nodesToRemove = new draw2d.util.ArrayList();
+        let nodesToRemove = new draw2d.util.ArrayList();
         this.layers.get(this.activeLayer).getAssignedFigures().each(function (nodeIndex, nodeObj) {
             nodesToRemove.push(nodeObj);
         });
-        var activeLayerObj = this.layers.get(this.activeLayer);
-        for (var i = 0; i < nodesToRemove.getSize(); i++) {
-            var cmd = new draw2d.command.CommandDelete(nodesToRemove.get(i));
+        let activeLayerObj = this.layers.get(this.activeLayer);
+        for (let i = 0; i < nodesToRemove.getSize(); i++) {
+            let cmd = new draw2d.command.CommandDelete(nodesToRemove.get(i));
             nodesToRemove.get(i).getCanvas().getCommandStack().execute(cmd);  //remove from canvas
 
             //delete object assignement to layer, but it will fire events to change layer position and dimension, so here I will reverse this action and set them back after calling function
-            var activeLayerX = activeLayerObj.getAbsoluteX();
-            var activeLayerY = activeLayerObj.getAbsoluteY();
-            var activeLayerWidth = activeLayerObj.getWidth();
-            var activeLayerHeight = activeLayerObj.getHeight();
+            let activeLayerX = activeLayerObj.getAbsoluteX();
+            let activeLayerY = activeLayerObj.getAbsoluteY();
+            let activeLayerWidth = activeLayerObj.getWidth();
+            let activeLayerHeight = activeLayerObj.getHeight();
+
             //remove relation btw node and its layer
             activeLayerObj.unassignFigure(nodesToRemove.get(i));  //remove from multilayer structure (jailhouse object)
+
             //reversing dimensions and position change
             activeLayerObj.setWidth(activeLayerWidth);
             activeLayerObj.setHeight(activeLayerHeight);
@@ -455,7 +457,7 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
             activeLayerObj.setY(activeLayerY);
         }
 
-        var cmd = new draw2d.command.CommandDelete(activeLayerObj);
+        let cmd = new draw2d.command.CommandDelete(activeLayerObj);
         this.getCanvas().getCommandStack().execute(cmd);  //remove from canvas
         this.layers.remove(activeLayerObj);
         this.switchActiveLayer();
@@ -593,7 +595,7 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
      */
     setLayerVisible: function(layerObj, visibleFlag){
         layerObj.getAssignedFigures().each(function(index, element){
-            if (element.setVisible != 'undefined'){
+            if (Object.hasOwn(element, 'getPorts') && element.setVisible != 'undefined'){
                 element.getPorts().each(function(pIndex, pObj){
                     pObj.setVisible(visibleFlag);
                     pObj.getConnections().each(function(cIndex, cObj){

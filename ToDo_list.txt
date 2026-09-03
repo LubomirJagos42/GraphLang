@@ -122,7 +122,7 @@ This is list features what to do due I always forget on what to work
 In progress features
 ====================
 - breakpoints in code for C++ debugger:
-    - on top level canvas OK
+    + on top level canvas OK
     - nested nodes (schematics) - FAIL - need to add support for breakpoints
 
 - breakpoints on canvas
@@ -141,6 +141,30 @@ In progress features
 
 - compile C++ code into WebAssembly and deploy it into separate webpage
 
+- Multilayered3 node DELETE ERROR in loaded schematic properly
+    - one layer still left on canvas when schematic is loaded???
+    - Multilayered3 node there is some error after loading causing problems with moving, deleting and so
+
+- ForLoop node DELETE ERROR
+
+- embedded target not counting lines correctly
+    - line counting was made working for desktop target ask AI to make it same way for embedded
+
+
+
+
+
+
+
+Web Browser Debug Window Helpful Commands
+=========================================
+> list all canvas figures with some index on beginning of line
+    appCanvas.getFigures((i,o)=>{console.log(`${i} -> ${o.NAME}`)})
+> translator object
+    GraphLang.Utils.TranslateToGeneralCodeObj.translatorObj
+
+
+
 Finished features
 =================
 - g++ compilation messages display in IDE
@@ -150,21 +174,21 @@ Finished features
     - url:     https://www.mingw-w64.org/downloads/#mingw-w64-builds
     - release: https://github.com/niXman/mingw-builds-binaries/releases
 
-- saving node to local drive
-    - if node already exists left all functions
-    - if new use template with needed functions
++ saving node to local drive
+    + if node already exists left all functions
+    + if new use template with needed functions
 
-- shape editor for user defined nodes
-    - top nodes without inner schematic - OK
-    - user defined with schematics inside - OK
++ shape editor for user defined nodes
+    + top nodes without inner schematic - OK
+    + user defined with schematics inside - OK
 
-- shape designer newly created nodes image creation from clipboard image is empty - OK
-    - after refresh and upload it's ok
-    - shape designer is using this function: shape_designer.loadSymbolFromGraphLangClass
-    - problem is caused when uploading zoomed symbol, when zoom is 1.0 PNG image preview is generated right
-    - before upload added click on zoom normal button
++ shape designer newly created nodes image creation from clipboard image is empty - OK
+    + after refresh and upload it's ok
+    + shape designer is using this function: shape_designer.loadSymbolFromGraphLangClass
+    + problem is caused when uploading zoomed symbol, when zoom is 1.0 PNG image preview is generated right
+    + before upload added click on zoom normal button
 
-- create new schematic - OK
++ create new schematic - OK
     - it's using old backend function, using newly one as in shape designer will solve problem
     - new code from shape desinger for upload:
         GraphLang.Utils.serverAjaxPostSendReceive(
