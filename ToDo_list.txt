@@ -145,7 +145,10 @@ In progress features
     - one layer still left on canvas when schematic is loaded???
     - Multilayered3 node there is some error after loading causing problems with moving, deleting and so
 
-- ForLoop node DELETE ERROR
++ Loop node DELETE ERROR
+    + ForLoop delete error
+    + WhileLayer delete error
+
 
 - embedded target not counting lines correctly
     - line counting was made working for desktop target ask AI to make it same way for embedded
