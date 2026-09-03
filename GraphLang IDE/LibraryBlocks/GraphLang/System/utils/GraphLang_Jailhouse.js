@@ -19,11 +19,13 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
   },
 
   /*
-   *  Layer has own translate fucntion, it's not translate recursively as loop, because layer
+   *  Layer has own translate function, it's not translate recursively as loop, because layer
    *  has no tunnels they are owned parent object instead, so this just order elements and
    *  call their translation function.
    */
-  translateToCppCode: function(){
+  translateToCppCode: function(funcParams = {}){
+    let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+
     cCode = "";
 
     //cCode += "{BEGIN Multilayered Jailhouse layer id: " + this.getId() + "}\n";
@@ -105,22 +107,29 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
 
     //3rd translate figures inside layer
     layerFigures.each(function(figureIndex, figureObj){
-      //if there is some declaration translate it
-      if (figureObj.translateToCppCodeDeclaration) cCode += figureObj.translateToCppCodeDeclaration() + "\n";
-
-      if (figureObj.NAME.toLowerCase().search("loop") > -1 &&
-          figureObj.NAME.toLowerCase().search("multilayered") == -1){
-        //cCode += figureObj.getTunnelsDeclarationCppCode();  //NOT NEEDED!
-        cCode += figureObj.translateToCppCode() + "\n";
-      }else if (figureObj.NAME.toLowerCase().search("connection") == -1){
-        cCode += figureObj.translateToCppCode() + "\n";                       //translation of normal nodes except wires
-      }else if (figureObj.translateToCppCode){
-        cCode += figureObj.translateToCppCode() + "\n";                       //translation of normal nodes except wires        
-      }else if (figureObj.translateToCppCode2){
-        cCode += figureObj.translateToCppCode2() + "\n";                       //translation of normal nodes except wires
+      //translate C++ declarations
+      if ('translateToCppCodeDeclaration' in figureObj && typeof figureObj.translateToCppCodeDeclaration === 'function'){
+        cCode += figureObj.translateToCppCodeDeclaration(funcParams) + "\n";
       }
 
-      if (figureObj.translateToCppCodePost) cCode += figureObj.translateToCppCodePost() + "\n";
+      //translate C++ node code
+      if ('translateToCppCode' in figureObj && typeof figureObj.translateToCppCode === 'function'){
+        cCode += figureObj.translateToCppCode(funcParams) + "\n";
+      }
+
+      //translate C++ additional post code if available
+      if ('translateToCppCodePost' in figureObj && typeof figureObj.translateToCppCodePost === 'function'){
+        cCode += figureObj.translateToCppCodePost(funcParams) + "\n";
+      }
+
+      /*
+       *  Add ID into list of all IDs
+       */
+      if (translatorObj !== null){
+        translatorObj.translateToCppCodeAdditionalId.add(figureObj.getId());
+        translatorObj.translateToCppCodeAdditionalIdNoHyphen.add(figureObj.getId().replaceAll('-', ''));
+      }
+
     });
 
     //4th translate wires going OUTSIDE FIGURE THROUGH TUNNELS

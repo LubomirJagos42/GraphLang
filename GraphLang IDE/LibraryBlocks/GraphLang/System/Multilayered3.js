@@ -650,13 +650,19 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
      *    TRANSLATE TO C/C++ functions
      *****************************************************************************************************************************************************/
 
-    translateToCppCode: function () {
+    translateToCppCode: function(funcParams = {}) {
+        let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+        let lineNumberToFind = Object.hasOwn(funcParams, "lineNumberToFind") ? funcParams.lineNumberToFind : null;
+
         /*
          *  Going thorugh all layers and ask them to translate into C/C++ code
          */
         cCode = "";
 
-        cCode += this.getTunnelsDeclarationCppCode();
+        cCode += this.getTunnelsDeclarationCppCode({
+            lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - 1 : null,
+            translatorObj: translatorObj
+        });
 
         selectorPortWires = this.selectorPort.getConnections();
         selectorPortDatatype = "undefined";
@@ -677,7 +683,7 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
                 cCode += "if(/* selectorPort not connected*/){\n";
             }
 
-            cCode += layerObj.translateToCppCode();
+            cCode += layerObj.translateToCppCode(funcParams);
             cCode += "}\n"
         });
 

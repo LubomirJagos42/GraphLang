@@ -188,10 +188,19 @@ class TranslateToCppCode_2_TranslatorObject {
         GraphLang.Utils.executionOrder(canvas);
 
         //TODO: here must be check if all nodes at canvas have execution order!!!
+        //      - case for multilayered case structure to exclude execution order of its layers must be done better or more universal not just exclude them based on their name
         let haveAllNodesExecutionOrder = true;
         let _this = this;
         canvas.getFigures().each(function(figureIndex, figureObj){
-            if (figureObj.getUserData() && figureObj.getUserData().executionOrder && figureObj.getUserData().executionOrder <= 0){
+
+            /*
+             *  condition to detect if all figures have executionOrder set
+             *      - ignore multilayered direct layer children
+             */
+            if (
+                figureObj.getUserData() && figureObj.getUserData().executionOrder && figureObj.getUserData().executionOrder <= 0
+                && figureObj.NAME !== 'GraphLang.Shapes.Basic.Jailhouse'
+            ){
                 haveAllNodesExecutionOrder = false;
 
                 _this.translateToCppCodeErrorList.add({

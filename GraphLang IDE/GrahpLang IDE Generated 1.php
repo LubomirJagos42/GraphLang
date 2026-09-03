@@ -67,6 +67,7 @@
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/HoverConnection.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/MultilineInplaceEditor.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/SelectOptionInplaceEditor.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/JailhouseAwareSelectionPolicy.js"></script>
 
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Utils.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Debugger.js"></script>
@@ -116,6 +117,13 @@ document.addEventListener("DOMContentLoaded",function () {
             return this._super(requestingFigure, connectTarget);
         }
       }));
+
+     /**
+      *   JAILHOUSE SELECTION policy
+      *   - Replaces default BoundingboxSelectionPolicy to enable drag-selection inside jailhouses
+      */
+     app.view.uninstallEditPolicy(new draw2d.policy.canvas.BoundingboxSelectionPolicy());
+     app.view.installEditPolicy(new draw2d.policy.canvas.JailhouseAwareSelectionPolicy());
 
 //draw2d.command.CommandStackListener
 

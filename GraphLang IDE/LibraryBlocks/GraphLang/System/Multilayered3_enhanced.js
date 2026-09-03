@@ -44,11 +44,6 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3_enhanced = GraphLang.Shapes.Basic.Loo
         this.userData = {};
         this.userData.executionOrder = 1;
         this.userData.wasTranslatedToCppCode = false;
-
-        /***************************
-         *  DRAG options
-         */
-
     },
 
     removeSelectorPort: function () {
@@ -423,7 +418,6 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3_enhanced = GraphLang.Shapes.Basic.Loo
         this.assignFigure(newLayer);
 
         //newLayer._onDragStart = this.onDragStart; //WRONG
-
     },
 
     /**
@@ -596,7 +590,7 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3_enhanced = GraphLang.Shapes.Basic.Loo
      */
     setLayerVisible: function(layerObj, visibleFlag){
         layerObj.getAssignedFigures().each(function(index, element){
-            if (element.setVisible != 'undefined'){
+            if (Object.hasOwn(element, 'getPorts') && element.setVisible != 'undefined'){
                 element.getPorts().each(function(pIndex, pObj){
                     pObj.setVisible(visibleFlag);
                     pObj.getConnections().each(function(cIndex, cObj){
@@ -653,13 +647,19 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3_enhanced = GraphLang.Shapes.Basic.Loo
      *    TRANSLATE TO C/C++ functions
      *****************************************************************************************************************************************************/
 
-    translateToCppCode: function () {
+    translateToCppCode: function(funcParams = {}) {
+        let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+        let lineNumberToFind = Object.hasOwn(funcParams, "lineNumberToFind") ? funcParams.lineNumberToFind : null;
+
         /*
          *  Going thorugh all layers and ask them to translate into C/C++ code
          */
         cCode = "";
 
-        cCode += this.getTunnelsDeclarationCppCode();
+        cCode += this.getTunnelsDeclarationCppCode({
+            lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - 1 : null,
+            translatorObj: translatorObj
+        });
 
         selectorPortWires = this.selectorPort.getConnections();
         selectorPortDatatype = "undefined";
@@ -680,7 +680,7 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3_enhanced = GraphLang.Shapes.Basic.Loo
                 cCode += "if(/* selectorPort not connected*/){\n";
             }
 
-            cCode += layerObj.translateToCppCode();
+            cCode += layerObj.translateToCppCode(funcParams);
             cCode += "}\n"
         });
 

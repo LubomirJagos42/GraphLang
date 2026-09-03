@@ -338,9 +338,19 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
   getTunnelsDeclarationCppCode:function(funcParams){
     let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
 
+    /*
+     *  TODO: ERROR: If there is no translator object it means somewhere happened error and it was not passed, needs to be corrected in code.
+     */
+    if (translatorObj === null){
+        //for now put error message into console since this is error and need to be repaired
+        console.error(`${this.NAME} > getTunnelsDeclarationCppCode(...) > No translatorObj, it is null, needs to be checked!`);
+    }
+
     cCode = "";
     cCode += "/* LEFT TUNNELs declarations */\n";
     cCode += "//tunnel declaration, if connected to wire also assignement\n";
+
+
     this.getChildren().each(function(childIndex, childObj){
       /*
        *    LEFT TUNNEL declaration
@@ -357,9 +367,12 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
 
         /*
          *  Add ID into list of all IDs
+         *      TODO: Check if there is no translatorObj since because then it's really strange, during translation process it has to be always available!
          */
-        translatorObj.translateToCppCodeAdditionalId.add(childObj.getId());
-        translatorObj.translateToCppCodeAdditionalIdNoHyphen.add(childObj.getId().replaceAll('-', ''));
+        if (translatorObj !== null){
+          translatorObj.translateToCppCodeAdditionalId.add(childObj.getId());
+          translatorObj.translateToCppCodeAdditionalIdNoHyphen.add(childObj.getId().replaceAll('-', ''));
+        }
       }
 
       /*

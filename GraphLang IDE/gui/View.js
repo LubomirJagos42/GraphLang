@@ -98,8 +98,8 @@ example.View = draw2d.Canvas.extend({
   		}
   
   		// LuboJ
-  		// if adding multilayere node, then move its layers to its mposition, it's updatet internally
-  		// but here called, because these nodes are composed from more layers and they don''t know
+  		// if adding multilayered node, then move its layers to its position, it's updated internally
+  		// but here called, because these nodes are multiple layers composition therefore don't know
   		// at init time position where on canvas  should be placed so they were before placed at 0,0
   		// what is worng
   		if (type.toLowerCase().search("multilayered") >= 0){
@@ -108,9 +108,9 @@ example.View = draw2d.Canvas.extend({
   			figure.switchActiveLayer();
   		}
   
-                // LuboJ
-                // If node has in name array it try to run method addItem what means to add item into it when placed on canvas.
-                if (type.toLowerCase().search("array") > -1){
+		// LuboJ
+		// If node has in name array it try to run method addItem what means to add item into it when placed on canvas.
+		if (type.toLowerCase().search("array") > -1){
   			if (figure.addItem !== undefined) figure.addItem();
   		}
   
@@ -118,7 +118,7 @@ example.View = draw2d.Canvas.extend({
   		 *	Adding anchor policy for connection when drop new node.
   		 *	Not used in combination with interactive InteractiveManhattanConnectionRouter
   		 *	because then there are possibility to modify route by 2 ways:
-  		 *		1. using wire nodes for editting
+  		 *		1. using wire nodes for editing
   		 *		2. routing associated with ports
   		 */
   		// this.getFigures().each(function(i,f){
