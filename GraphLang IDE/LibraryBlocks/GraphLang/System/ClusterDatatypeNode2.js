@@ -33,6 +33,17 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
     this.setDashArray("");
     this.setColor("#AA4A4C"); //stroke color
 
+    /*
+     *  Disable auto-resize by overriding setBoundingBox method
+     */
+    let parentSetBoundingBox = this.setBoundingBox;
+    let clusterInstance = this;
+    this.setBoundingBox = function(box){
+      // Only allow setBoundingBox to resize if explicitly needed
+      // Prevent auto-resize during figure movement
+      return;
+    };
+
     /**********************************************************************************
      *  LAYER SELECTOR
      **********************************************************************************/
@@ -405,7 +416,7 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
   /**
    * @method setPersistentAttributes
    * @descritpiton Read all attributes from the serialized properties and transfer them into the shape.
-   * This is used when file is lOADED.
+   * This is used when file is LOADED.
    *
    * @param {Object} memento
    */
@@ -415,6 +426,7 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
 
     this._super(memento);           //CALLING PARENT METHOD, these will rerecreate this showSelectedObjExecutionOrder
     this.setId(memento.id);         //set ID same as in saved file
+    this.setIsLoop(false);          //backward compatibility, if not set in userData then this will set it during loading process
 
     let clusterObj = this;
     this.getChildren().each(function(childIndex, childObj){
@@ -456,7 +468,7 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
   },  
 
   /* @method getPort
-   * @description This method is used when loading file, it redefine here to return just clusterOutput port, without definitio this method
+   * @description This method is used when loading file, it redefine here to return just clusterOutput port, without definition this method
    * wires are not loading correctly, they are missing.
    */
   getPort: function(name){
@@ -478,7 +490,9 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
    *    TRANSLATE TO CPP functions 
    **************************************************************************************************************************************/
 
-  translateToCppCodeTypeDefinition: function(){
+  translateToCppCodeTypeDefinition: function(funcParams){
+    let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+
     var cCode = "";
     
     this.addItemsIndexes();
@@ -501,14 +515,16 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
      */
     allFigures.each(function(figureIndex, figureObj){
         if (figureObj.NAME.toLowerCase().search('cluster') > -1){
-            cCode += figureObj.translateToCppCodeDeclaration();
+            translatorObj.translateToCppCodeTypeDefinitionArray.push(figureObj.translateToCppCodeTypeDefinition({translatorObj: translatorObj}));
+            translatorObj.translateToCppCodeAdditionalId.add(figureObj.getId());
+            translatorObj.translateToCppCodeAdditionalIdNoHyphen.add(figureObj.getId().replaceAll('-', ''));
         }
     });
     
     cCode += "typedef struct " + this.getDatatype() + " {\n";       //dereferencing datatype
     allFigures.each(function(figureIndex, figureObj){
       if (figureObj.translateToCppCodeDeclaration){
-        cCode += "\t" + figureObj.translateToCppCodeDeclaration();
+        cCode += "\t" + figureObj.translateToCppCodeDeclaration(funcParams);
       }else if (figureObj.getDatatype){
         cCode += "\t" + figureObj.getDatatype() + " " + figureObj.userData.nodeLabel + ";\n";
       }

@@ -485,7 +485,10 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3_enhanced = GraphLang.Shapes.Basic.Loo
                 let nestedMultilayeredList = figureObj.getVisibleLoopAndMultilayered();
                 if (!nestedMultilayeredList.isEmpty()) multilayeredList.addAll(nestedMultilayeredList); //recursive call to add all nested multilayered figures
             } else {
-                if (figureObj.NAME.toLowerCase().search("loop") > -1) {
+                if (
+                    // figureObj.NAME.toLowerCase().search("loop") > -1    //DEPRECATED this was done here in beginning where not much code was written and figures were recognized based on their names
+                   figureObj.getUserData() && figureObj.isLoop && figureObj.isLoop() == true
+                ){
                     multilayeredList.push(figureObj); //add also loop into list
                 }
             }

@@ -238,6 +238,47 @@ example.Toolbar = Class.extend({
 		}));
 		this.html.append(this.rotateSelectedNodeButton);
 
+		/******************************************************************************************************************************
+		 *	Experimental buttons which set global variable which change behavior of selection mode
+		 *		- TODO: Still inside forloop or whilelayer cursor is 'default' inside
+		 ******************************************************************************************************************************/
+
+		/**
+		 *	normalselection Button
+		 */
+		this.normalselectionButton  = $("<button id=\"normalselectionButton\">normalselection</button>");
+		this.normalselectionButton.button().click($.proxy(function(){
+			GraphLang.Utils.setSelectionMode();
+		}));
+		this.html.append(this.normalselectionButton);
+
+		/**
+		 *	forloop select Button
+		 */
+		this.forloopButton  = $("<button id=\"forloopButton\">forloop</button>");
+		this.forloopButton.button().click($.proxy(function(){
+			GraphLang.Utils.setSelectionMode("forloop");
+		}));
+		this.html.append(this.forloopButton);
+
+		/**
+		 *	whilelayer select Button
+		 */
+		this.whilelayerButton  = $("<button id=\"whilelayerButton\">whilelayer</button>");
+		this.whilelayerButton.button().click($.proxy(function(){
+			GraphLang.Utils.setSelectionMode("whilelayer");
+		}));
+		this.html.append(this.whilelayerButton);
+
+		/**
+		 *	multilayered select Button
+		 */
+		this.multilayeredButton  = $("<button id=\"multilayeredButton\">multilayered</button>");
+		this.multilayeredButton.button().click($.proxy(function(){
+			GraphLang.Utils.setSelectionMode("multilayered");
+		}));
+		this.html.append(this.multilayeredButton);
+
 	},
 
 	/**

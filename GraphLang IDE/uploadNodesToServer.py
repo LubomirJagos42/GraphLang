@@ -14,6 +14,7 @@ URL = 'http://localhost/GraphLangServerApp/?q=uploadNodesToServer'
 
 NODE_LANGUAGE = "C/C++"
 NODE_ISHIDDEN = 0
+NODE_SEARCH_DIR_LIST = []
 
 if __name__ == "__main__":
     loginInfo, username, passwordMD5 = login.loginUsingNamePassword()
@@ -27,6 +28,7 @@ if __name__ == "__main__":
         description='GraphLang uploadNodesToServer argument parser'
     )
     parser.add_argument('--projectId', type=int, help='Project ID')
+    parser.add_argument('--nodeLibrarySearchDir', type=str, default=None)
 
     # Parse
     args, unknown = parser.parse_known_args()
@@ -40,10 +42,13 @@ if __name__ == "__main__":
     NODE_PROJECT = abs(int(NODE_PROJECT))
     print(NODE_PROJECT)
     
+    if args.nodeLibrarySearchDir is not None:
+        NODE_SEARCH_DIR_LIST.append(args.nodeLibrarySearchDir)
+
     start_time = time.time()
     
     print("======== START SEARCHING LOCAL FILE SYSTEM FOR NODES ==========")
-    localNodesHelper.fillVariablesJavascriptClassHierarchy()
+    localNodesHelper.fillVariablesJavascriptClassHierarchy(overrideSearchDirsWith=NODE_SEARCH_DIR_LIST)
     print("======== END SEARCHING LOCAL FILE SYSTEM FOR NODES ==========")
 
     for nodeToUpload in localNodesHelper.objectsNamesList:

@@ -153,7 +153,7 @@ In progress features
 - embedded target not counting lines correctly
     - line counting was made working for desktop target ask AI to make it same way for embedded
 
-
+- nested cluster type definition is not generated!!!
 
 
 

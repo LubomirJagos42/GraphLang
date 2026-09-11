@@ -64,7 +64,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
   /**
    * @method setPersistentAttributes
    * @descritpiton Read all attributes from the serialized properties and transfer them into the shape.
-   * This is used when file is lOADED.
+   * This is used when file is LOADED.
    *
    * @param {Object} memento
    */
@@ -75,10 +75,12 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
 
       memento.ports = [];
       memento.labels = [];
-      this._super(memento);           //CALLING PARENT METHOD, these will rerecreate this showSelectedObjExecutionOrder
+      this._super(memento);           //CALLING PARENT METHOD, these will recreate this showSelectedObjExecutionOrder
+
+      //backward compatibility to set value even when is not saved in userData
+      this.setIsLoop(true);
 
       // remove all decorations created in the constructor of this element
-      //
       this.resetChildren();
 
       // and add all children of the JSON document.
@@ -166,11 +168,13 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
 
     let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
     let lineNumberToFind = Object.hasOwn(funcParams, "lineNumberToFind") ? funcParams.lineNumberToFind : null;
+    let nodeName = Object.hasOwn(funcParams, "nodeName") ? funcParams.nodeName : "";
 
     var cCode = "";
     this.getUserData().wasTranslatedToCppCode = true;
     this.translateToCppCodeImportArray.clear();
     this.translateToCppCodeBreakpointList.clear();
+    this.translateToCppCodeWatchList.clear();
 
     var stopTerminal = this.getInputPort("stopTerminal");
     var wireStop = stopTerminal.getConnections().first();
@@ -229,7 +233,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
        *
        */
       if (figObj.translateToCppCodeTypeDefinition){
-          translatorObj.translateToCppCodeTypeDefinitionArray.push(figObj.translateToCppCodeTypeDefinition());
+          translatorObj.translateToCppCodeTypeDefinitionArray.push(figObj.translateToCppCodeTypeDefinition(funcParams));
           if (figObj.getDatatype && figObj.getDatatype().startsWith("clusterDatatype_")) {
               translatorObj.typeDefinitionUsedList.push(`${nodeName} -> ${figObj.getNodeLabelText()}`);
           }

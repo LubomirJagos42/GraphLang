@@ -5,6 +5,7 @@
 lastCreatedConnection = null;
 GLOBAL_MAIN_CANVAS_LOADED_NODE = null;
 GLOBAL_HELPER_CANVAS_LOADED_NODE = null;
+GLOBAL_SELECTION_NODE_MODE = null;
 
 /**
  *  @class GraphLang.Utils
@@ -108,15 +109,33 @@ GraphLang.Utils.detectTunnels2 = function(canvas, wire = null){
   let connectionList = new draw2d.util.ArrayList();
 
   /*
-   *	gathering all multilayered structures
+   *  Gathering all multilayered structures
+   *      - THIS IS IMPORTANT part of this method since it collects all child or assigned loops, here are figures/loops collected into array
+   *        and later that loopList is just evaluated by traversing throug all gathered referencies
+   *      
+   *      IMPORTANT: We need to collect ALL loops from canvas, not just from one parent loop, to handle nested loops properly
    */
   canvas.getFigures().each(function(figureIndex, figureObj){
-    if (figureObj.NAME.search("GraphLang.Shapes.Basic.Loop") > -1 &&
-        figureObj.NAME.toLowerCase().search("clusterdatatype") == -1 &&
-        figureObj.getComposite() == null){
-
+    if (
+        // DEPRECATED - this was old way from beginning, later there was added method .isLoop() for real loops
+        // figureObj.NAME.search("GraphLang.Shapes.Basic.Loop") > -1 &&
+        // figureObj.NAME.toLowerCase().search("clusterdatatype") == -1 &&
+        // figureObj.getComposite() == null
+        figureObj.isLoop && figureObj.isLoop() === true
+    ){
+      // Add the loop itself first
+      loopList.push(figureObj);
+      
+      // Then add all nested loops from getVisibleLoopAndMultilayered
       let nestedLayeredList = figureObj.getVisibleLoopAndMultilayered();
-      if (!nestedLayeredList.isEmpty()) loopList.addAll(nestedLayeredList);  //add ArrayList to current just in case it's not empty otherwise there will be undefined object and make harm in following code
+      if (!nestedLayeredList.isEmpty()) {
+        // Add all nested loops, but avoid duplicates
+        nestedLayeredList.each(function(nestedIndex, nestedObj){
+          if (!loopList.contains(nestedObj)) {
+            loopList.push(nestedObj);
+          }
+        });
+      }
     }
   });
 
@@ -593,7 +612,7 @@ GraphLang.Utils.initAllPortToDefault = function(canvas){
     }
 
     //for loops there is flag about they were transcripted to C/C++
-    if (nodeObj.NAME.toLowerCase().search("loop") >= 0){
+    if (nodeObj.getUserData() && nodeObj.isLoop && nodeObj.isLoop() === true){
       if (nodeObj.getUserData() == undefined) nodeObj.userData.wasTranslatedToCppCode = false;
       nodeObj.getUserData().wasTranslatedToCppCode = false;
     }
@@ -807,7 +826,7 @@ GraphLang.Utils.showNodes = function(canvas){
     //if (nodeObj.NAME.toLowerCase().search("graphlang") < 0) return; //THIS RETURN IN CASE THAT NODE IS NOT GRAPHLANG NODE
 
     //SHOW TRIGGERED LABEL ON LOOP
-    if (nodeObj.NAME.toLowerCase().search("loop") > 0){
+    if (nodeObj.getUserData() && nodeObj.isLoop && nodeObj.isLoop() === true){
       var allSubNodes = nodeObj.getChildren();
       allSubNodes.each(function(nodeIndex, nodeObj){
         if (nodeObj.NAME.toLowerCase().search("shapes.basic") > 0){ //put label just for nodes, for now suppose that's all shapes.basic
@@ -844,7 +863,10 @@ GraphLang.Utils.getNodeLoopOwner = function(canvas, nodeObj){
 
   //get lsit of all loops
   canvas.getFigures().each(function(figureIndex, figureObj){
-    if (figureObj.NAME.toLowerCase().search("loop") >= 0 && figureObj !== nodeObj){
+    if (
+        // figureObj.NAME.toLowerCase().search("loop") >= 0 && figureObj !== nodeObj    //DEPRECATED this was done here in beginning where not much code was written and figures were recognized based on their names
+        figureObj.getUserData() && figureObj.isLoop && figureObj.isLoop() === true && figureObj !== nodeObj
+    ){
       loopList.push(figureObj);
     }
   });
@@ -867,11 +889,11 @@ GraphLang.Utils.getNodeLoopOwner = function(canvas, nodeObj){
       }
 
     }else{
-      loopObj.getAllLayers().each(function(layerIndex, layerObj){
-        if (layerObj != nodeObj && layerObj.getAssignedFigures().contains(nodeObj)){
-          nodeParentLoop = loopObj;
-        }
-      });
+        loopObj.getAllLayers().each(function(layerIndex, layerObj){
+          if (layerObj != nodeObj && layerObj.getAssignedFigures().contains(nodeObj)){
+            nodeParentLoop = loopObj;
+          }
+        });
     }
   });
   return nodeParentLoop;
@@ -888,7 +910,9 @@ GraphLang.Utils.getLoopDirectChildrenNodes = function(canvas, parentLoop = null)
   var allLayerNodes = new draw2d.util.ArrayList();
 
   canvas.getFigures().each(function(figureIndex, figureObj){
-    if ((figureObj.NAME.toLowerCase().search("loop") < 0) &&
+    if (
+        // figureObj.NAME.toLowerCase().search("loop") < 0 &&    //DEPRECATED this was done here in beginning where not much code was written and figures were recognized based on their names
+        (figureObj.getUserData() && figureObj.isLoop && figureObj.isLoop() === false) &&
         (figureObj.NAME.toLowerCase().search("tunnel") < 0) &&
         (GraphLang.Utils.getNodeLoopOwner(canvas, figureObj)) == parentLoop) allLayerNodes.push(figureObj);
   });
@@ -910,10 +934,13 @@ GraphLang.Utils.getDirectChildrenWithoutTunnels = function(canvas, parentObj){
   //below is string comparison and items are named there and between them is OR operator!
   canvas.getFigures().each(function(figureIndex, figureObj){
     if (figureObj.NAME.toLowerCase().search("tunnel") == -1 &&
-        (figureObj.NAME.toLowerCase().search("loop") > -1 ||            //this condition is list of allowed objects which are added as direct children objects, if something not running when added new structures here is probably error, need to add to this list
-        figureObj.NAME.toLowerCase().search("multilayered") > -1 ||
-        figureObj.NAME.toLowerCase().search("node") > -1 ||
-        figureObj.NAME.toLowerCase().search("port") > -1) &&
+        (
+            // figureObj.NAME.toLowerCase().search("loop") > -1 ||            //DEPRECATED this was done here in beginning where not much code was written and figures were recognized based on their names
+            (figureObj.getUserData() && figureObj.isLoop && figureObj.isLoop() === true) ||
+            figureObj.NAME.toLowerCase().search("multilayered") > -1 ||
+            figureObj.NAME.toLowerCase().search("node") > -1 ||
+            figureObj.NAME.toLowerCase().search("port") > -1
+        ) &&
         GraphLang.Utils.getNodeLoopOwner(canvas, figureObj) == parentObj){
           allLayerNodes.push(figureObj);
         }
@@ -938,7 +965,7 @@ GraphLang.Utils.executionOrder = function executionOrder(canvas){
     }
 
     //ADD ALL LOOP'S TUNNELS into node list
-    if (nodeObj.NAME.toLowerCase().search("loop") >= 0){
+    if (nodeObj.getUserData() && nodeObj.isLoop && nodeObj.isLoop() === true){
       var loopTunnels = new draw2d.util.ArrayList();
       nodeObj.getUserData().executionOrder = 1;   // default value for loops if other it will change in next calculations
       nodeObj.getChildren().each(function(childIndex, childObj){
@@ -3451,4 +3478,27 @@ GraphLang.Utils.getNodeSchematicFromStorageVariable = function(nodeClassName) {
 GraphLang.Utils.setNodeSchematicStorageHexVariable = function(nodeClassName, nodeCodeContent) {
     console.log(`--> set ${nodeClassName} in GraphLang.StorageHexNodeSchematics array`);
     GraphLang.StorageHexNodeSchematics[nodeClassName] = GraphLang.Utils.toHex(nodeCodeContent);
+}
+
+/**
+ * @description Set cursor type based on selection mode and global variable which indicates what will be performed when in loop mode instead of selecting nodes it creates loop around selected nodes.
+ * @param modeType {string} : 'forloop' | 'whileloop' | ''
+ */
+GraphLang.Utils.setSelectionMode = function(modeType = ""){
+    if (modeType === "whilelayer"){
+        GLOBAL_SELECTION_NODE_MODE = modeType;
+        const base64Image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGHaVRYdFhNTDpjb20uYWRvYmUueG1wAAAAAAA8P3hwYWNrZXQgYmVnaW49J++7vycgaWQ9J1c1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCc/Pg0KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyI+PHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj48cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0idXVpZDpmYWY1YmRkNS1iYTNkLTExZGEtYWQzMS1kMzNkNzUxODJmMWIiIHhtbG5zOnRpZmY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vdGlmZi8xLjAvIj48dGlmZjpPcmllbnRhdGlvbj4xPC90aWZmOk9yaWVudGF0aW9uPjwvcmRmOkRlc2NyaXB0aW9uPjwvcmRmOlJERj48L3g6eG1wbWV0YT4NCjw/eHBhY2tldCBlbmQ9J3cnPz4slJgLAAABGUlEQVQ4T5XSvWoUURgG4GfyR0YjWdfNHYitEFsLsbH3jnJBehGCQVgRG0tBRYskZkdUxMSdeS12zGRNsSdv9XHO4eHl40iSdN+S6YPk5E2umzWgpX7L60ecThdHhVkAqRiNGH3n8AmzcqRvgLVwE13Dq3JkAFqMEbTlyAB02MIEP8qbDIC+xQSb+FWGLAMddrDbzwXIMvAve9ViF9Vq5CrQ4jZu9bcrkKtAhzrsbTDf5kaPbaJuePmQry8unldJomv4fJeN2aLBNnae0e7z+z3NO/4ccTKl+8S85vEh6zVJknaWfBwnXyQ/Jc3B/19+OWenF+Ml4E5yLjl+eunl6gzAB8nxvXTzQS9Jv8SKrfvsPletj4eFFuQvlwZLkLpXqeEAAAAASUVORK5CYII=';
+        document.getElementById('canvas').style.cursor = `url(${base64Image}), auto`;
+    }else if (modeType === "forloop"){
+        GLOBAL_SELECTION_NODE_MODE = modeType;
+        const base64Image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsIAAA7CARUoSoAAAAGHaVRYdFhNTDpjb20uYWRvYmUueG1wAAAAAAA8P3hwYWNrZXQgYmVnaW49J++7vycgaWQ9J1c1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCc/Pg0KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyI+PHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj48cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0idXVpZDpmYWY1YmRkNS1iYTNkLTExZGEtYWQzMS1kMzNkNzUxODJmMWIiIHhtbG5zOnRpZmY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vdGlmZi8xLjAvIj48dGlmZjpPcmllbnRhdGlvbj4xPC90aWZmOk9yaWVudGF0aW9uPjwvcmRmOkRlc2NyaXB0aW9uPjwvcmRmOlJERj48L3g6eG1wbWV0YT4NCjw/eHBhY2tldCBlbmQ9J3cnPz4slJgLAAABNklEQVQ4T52SvarCQBCFz44pjJ0K/hCbvIIPop2o5Akt9UF8hDQhKCFiZVLEObcQB11YkPvBwsI3nN1hBgzQti2zLON+v2fbtr42BAHqusZsNsN8PkdVVb42ggHOOYgIRATOOV8bwYBfCQaoKqIoQhRFUFVfG8GAfr+PPM+R5zniOPa14UiyLEvrkyTiOMZwOMTxeARJrNdr3O93PB4Pq1NVJEkCl2UZp9Mper2epRZFgc1mg/P5DJJYLpc4HA5YLBZW83w+cb1eIaoKkva6f3/7z/P2qvpqoSiKrxYGgwFGoxFOpxNIYrVa4Xa7fbVA8vUjf7Pe1HXN3W7H7XbLqqp8bQSn0DQN0jRFmqZomsbXRjBARNB1Hbqug0iwLBzwK8GAzwn8axPH4zEulwvKssRkMvG18QdzzhQmNe66cwAAAABJRU5ErkJggg==';
+        document.getElementById('canvas').style.cursor = `url(${base64Image}), auto`;
+    }else if (modeType === "multilayered"){
+        GLOBAL_SELECTION_NODE_MODE = modeType;
+        const base64Image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHQSURBVDhPpZDNS5RRFIdPES1dBG3ctWkh7lxI/0AtgxYDBqFCkYEQjn0uQokgdWHQ4MYax/xIxY9qhmymRSMxNIJ9+tG4GHLAMceMSsdx9GVen7hXfJt33gmJnsVdnHt+zzn3Cv+JqMPMwsb7HGZ2p/B+X7Rg/e02EflO+NgiH+pSfB1PY6ybhb1F2d0gs0OoNE5QkjyTBR7LHD2l7widm2d+eIXM6nZhzkILFFMXVDjBQ5mkQyJ4JMJ9idIqE9w5Ms6jM2+Y7P7Cz2SmuGDpxRoD8lmH2+UVdyVIswS4KWNclREa5QkNEqBGukh8XHUKjI0c3qNRPflPeJQGGaRe+rgofTRVPCXomSGbNpwCxfOzs3rtvbBbh/u5XDLA3Mul/FYLmyA2kqJNJvTau5P7OS9d1B700VkXzm+1sAk2fxg0l/j1m/Xah31UixeXeHBJJy1V/vx2jU2g8J5+rT9MvXkmlOTBpbAOn5IWTso9mqqGbf0OQbQ7jlsC3CgfsmpqsgqfkFtUym3crh4y6S195xD8Wt6k9oCPUMe0ra4mq3C5XOO4XCEeS+m6Q6BIfPqGsZUrLNPo6qXs0HX8g1NWrajgb5imSTy2bKv9k6AYvwH4R2WznDV11AAAAABJRU5ErkJggg==';
+        document.getElementById('canvas').style.cursor = `url(${base64Image}), auto`;
+    }else{
+        GLOBAL_SELECTION_NODE_MODE = null;
+        document.getElementById('canvas').style.cursor = `default`;
+    }
 }

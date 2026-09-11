@@ -66,7 +66,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
   /**
    * @method setPersistentAttributes
    * @descritpiton Read all attributes from the serialized properties and transfer them into the shape.
-   * This is used when file is lOADED.
+   * This is used when file is LOADED.
    *
    * @param {Object} memento
    */
@@ -77,10 +77,12 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
 
       memento.ports = [];
       memento.labels = [];
-      this._super(memento);           //CALLING PARENT METHOD, these will rerecreate this showSelectedObjExecutionOrder
+      this._super(memento);           //CALLING PARENT METHOD, these will recreate this showSelectedObjExecutionOrder
+
+      //backward compatibility to set value even when is not saved in userData
+      this.setIsLoop(true);
 
       // remove all decorations created in the constructor of this element
-      //
       this.resetChildren();
 
       // and add all children of the JSON document.
@@ -170,6 +172,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
 
     let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
     let lineNumberToFind = Object.hasOwn(funcParams, "lineNumberToFind") ? funcParams.lineNumberToFind : null;
+    let nodeName = Object.hasOwn(funcParams, "nodeName") ? funcParams.nodeName : "";
 
     this.getUserData().wasTranslatedToCppCode = true;
     this.translateToCppCodeImportArray.clear();
@@ -243,7 +246,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
        *
        */
       if (figObj.translateToCppCodeTypeDefinition){
-        translatorObj.translateToCppCodeTypeDefinitionArray.push(figObj.translateToCppCodeTypeDefinition());
+        translatorObj.translateToCppCodeTypeDefinitionArray.push(figObj.translateToCppCodeTypeDefinition(funcParams));
         if (figObj.getDatatype && figObj.getDatatype().startsWith("clusterDatatype_")) {
           translatorObj.typeDefinitionUsedList.push(`${nodeName} -> ${figObj.getNodeLabelText()}`);
         }
@@ -269,7 +272,8 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
           nodeId: figObj.getId(),
           codeLinesOffset: codeLinesOffset + lineCountBefore,
           compileErrorLines: compileErrorLines,
-          breakpointParentId: breakpointParentId
+          breakpointParentId: breakpointParentId,
+          translatorObj: translatorObj
         }).replaceAll("\n", "\n\t");
       }
 
@@ -323,8 +327,15 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
       }
 
 
-      /* in case of post C/C++ code run it */
-      if (figObj.translateToCppCodePost) cCode += "\t" + figObj.translateToCppCodePost().replaceAll("\n", "\n\t"); //if there is defined to put somethin after let's do it
+      // in case of post C/C++ code run it
+      // if there is defined to put something after let's do it
+      if (figObj.translateToCppCodePost){
+        cCode += "\t";
+        cCode += figObj.translateToCppCodePost({
+          lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - GraphLang.Utils.getLineCount(cCode) : null,
+          translatorObj: translatorObj
+        }).replaceAll("\n", "\n\t");
+      }
 
     });
 

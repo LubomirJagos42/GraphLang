@@ -19,6 +19,7 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
     this.userData = {};
     this.userData.executionOrder = 1;
     this.userData.wasTranslatedToCppCode = false;
+    this.userData.isLoop = false;   //set to false because this class is used also for cluster and could be for another type of things, therefore nodes which really will be loops should se this flag to true in their init()
     this.translateToCppCodeImportArray = new draw2d.util.ArrayList();
     this.translateToCppCodeBreakpointList = new draw2d.util.ArrayList();
     this.translateToCppCodeWatchList = new draw2d.util.ArrayList();
@@ -47,6 +48,17 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
   },
   getUserData: function(){
     return this.userData;
+  },
+
+  isLoop: function(){
+      if (this.getUserData() && this.getUserData().isLoop) {
+          return this.getUserData().isLoop;
+      }
+      return false;
+  },
+
+  setIsLoop: function(value){
+      this.getUserData().isLoop = value;
   },
 
   /*
@@ -223,7 +235,10 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
            let nestedMultilayeredList = figureObj.getVisibleLoopAndMultilayered();
            if (!nestedMultilayeredList.isEmpty()) multilayeredList.addAll(nestedMultilayeredList); //recursive call to add all nested multilayered figures
        }else{
-         if (figureObj.NAME.toLowerCase().search("loop") > -1){
+         if (
+             // figureObj.NAME.toLowerCase().search("loop") > -1    //DEPRECATED this was done here in beginning where not much code was written and figures were recognized based on their names
+            figureObj.getUserData() && figureObj.isLoop && figureObj.isLoop() == true
+         ){
            multilayeredList.push(figureObj); //add also loop into list
          }
        }

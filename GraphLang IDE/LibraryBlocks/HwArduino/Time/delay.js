@@ -191,7 +191,12 @@ HwArduino.Time.delay = GraphLang.UserDefinedNode.extend({
     translateToCppCode: function(){
         let cCode = "";
 
-        let wireVariableName = this.getPort("delay_ms").getConnections().first().getVariableName();
+        let wireVariableName = `/* ERROR: ${this.NAME}: INPUT WIRE NOT CONNECTED! */`;
+        try {
+            wireVariableName = this.getPort("delay_ms").getConnections().first().getVariableName();
+        }catch(err){
+        }
+
         cCode += `delay(${wireVariableName});\n`;
 
         return cCode;

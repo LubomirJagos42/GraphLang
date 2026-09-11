@@ -372,7 +372,7 @@ def createVariableInitDeclaration(t,s, outStr = ""):
             createVariableIniStatement.append("\t" + outStr + ('.' if len(outStr) > 0 else '') + key + " = {};\n")
             classList.append(outStr + ('.' if len(outStr) > 0 else '') + key)
 
-def fillVariablesJavascriptClassHierarchy():
+def fillVariablesJavascriptClassHierarchy(overrideSearchDirsWith: list[str] = None):
     '''
     This will search specified folders and fill arrays with blocks paths, parent classes and so...
     Global variable objectNamesList is filled with array of nodes with this info:
@@ -394,12 +394,20 @@ def fillVariablesJavascriptClassHierarchy():
     global createVariableIniStatement
     global classList
     global objectsNamesList
+    global searchDirs
+
+    # if list of directories where to look for schematic nodes is not empty use them instead of predefined one
+    if overrideSearchDirsWith is not None and len(overrideSearchDirsWith) > 0:
+        print(f"--> Overriding search directories with {overrideSearchDirsWith}")
+        searchDirs = overrideSearchDirsWith
+    else:
+        print(f"--> searchDirs: {searchDirs}")
 
     for dirName in searchDirs:
         searchPath = dirName + '/**'
         for fileName in glob.glob(searchPath, recursive=True):
             if not os.path.isdir(fileName):
-                #print(fileName)
+                print(f'--> fillVariablesJavascriptClassHierarchy(...) > reading file: {fileName}')
                 with open(fileName, "r") as currentFile:
                     fileContent = currentFile.read()
                     regExp = re.compile(r"[\/\s\n]*([a-zA-Z0-9\.\-\_]+)[\s]*=[\s]*([a-zA-Z0-9\.\-]+)\.extend", re.MULTILINE)
