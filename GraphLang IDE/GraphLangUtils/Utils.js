@@ -123,8 +123,10 @@ GraphLang.Utils.detectTunnels2 = function(canvas, wire = null){
         // figureObj.getComposite() == null
         figureObj.isLoop && figureObj.isLoop() === true
     ){
-      // Add the loop itself first
-      loopList.push(figureObj);
+      // Add the loop itself first if it's not already added since this loop iterate over all loops even nested ones
+      if (!loopList.contains(figureObj)) {
+          loopList.push(figureObj);
+      }
       
       // Then add all nested loops from getVisibleLoopAndMultilayered
       let nestedLayeredList = figureObj.getVisibleLoopAndMultilayered();
@@ -140,7 +142,7 @@ GraphLang.Utils.detectTunnels2 = function(canvas, wire = null){
   });
 
   /*
-   *	DETECT INTERSECTION WITH WIRE AND EACH MULTILAYERED STRUCTURED AND GATHER ALL NEEDED INFORMATIONS
+   *	DETECT INTERSECTION WITH WIRE AND EACH MULTILAYERED STRUCTURED AND GATHER ALL NEEDED INFORMATION
    */
   let loopIntersections = [];
   loopList.each(function(loopIndex, loopObj){
@@ -379,7 +381,9 @@ GraphLang.Utils.detectTunnels2 = function(canvas, wire = null){
   }
 
   /*
-   *	REMOVE TUNNELS WHICH are going straight through some structure
+   *  REMOVE TUNNELS WHICH are going straight through some structure
+   *    - there is used array.splice(k, 2) to delete 2 tunnels as when wire is going through some structure it always corssed it using two tunnels
+   *      one as input and as output from that structure
    */
   tunnelsRemovedFromArray = true;
   while (tunnelsRemovedFromArray){
@@ -2082,11 +2086,27 @@ GraphLang.Utils.saveSchematic2 = function(canvas, filename, type) {
 GraphLang.Utils.getVisibleLoopsAndMultilayered = function(canvas) {
     let loopList = new draw2d.util.ArrayList();
     canvas.getFigures().each(function(figureIndex, figureObj){
-      if (figureObj.NAME.search("GraphLang.Shapes.Basic.Loop") > -1 &&
-          figureObj.getComposite() == null){
-
+      if (
+          // figureObj.NAME.search("GraphLang.Shapes.Basic.Loop") > -1 &&
+          // figureObj.getComposite() == null
+          figureObj.isLoop && typeof figureObj.isLoop === "function" && figureObj.isLoop() == true
+      ){
         let nestedLayeredList = figureObj.getVisibleLoopAndMultilayered();
-        if (!nestedLayeredList.isEmpty()) loopList.addAll(nestedLayeredList);  //add ArrayList to current just in case it's not empty otherwise there will be undefined object and make harm in following code
+
+        //old way
+        // if (!nestedLayeredList.isEmpty()){
+        //     //add ArrayList to current just in case it's not empty otherwise there will be undefined object and make harm in following code
+        //     loopList.addAll(nestedLayeredList);
+        // }
+
+        //new way
+        // add loop reference just in case it's not already in list
+        nestedLayeredList.each(function(nestedLoopIndex, nestedLoopRef){
+            if (!loopList.contains(nestedLoopRef)) {
+                loopList.push(nestedLoopRef);
+            }
+        });
+
       }
     });
 
