@@ -96,10 +96,13 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
           var figure =  eval("new "+json.type+"({id: '" + json.id + "'})"); // create the figure stored in the JSON, SET SAME ID AS SAVED IN FILE, THIS IS IMPORTANT!!! (for tunnels, look at its init() function)
           figure.attr(json);
 
-          if (json.locatorX != undefined && json.locatorY != undefined){
-            var locator =  eval("new "+json.locator+"(" + json.locatorX + "," + json.locatorY + ")");     // instantiate the locator
+          let locator;
+          if (json.locator && json.locator.toLowerCase().search("toplocator") > -1){
+              locator = new draw2d.layout.locator.TopLocator(this);      // needs the parent, like in init()
+          }else if (json.locatorX != undefined && json.locatorY != undefined){
+              locator = eval("new " + json.locator + "(" + json.locatorX + "," + json.locatorY + ")");
           }else{
-            var locator =  eval("new draw2d.layout.locator.XYAbsPortLocator(" + json.x + "," + json.y + ")"); //DEFAULT LOCATOR
+              locator = new draw2d.layout.locator.XYAbsPortLocator(json.x, json.y);
           }
 
           this.add(figure, locator);                                                                    // add the new figure as child to this figure

@@ -191,7 +191,7 @@ GraphLang.Utils.detectTunnels2 = function(canvas, wire = null){
   let loopIntersectionsOrdered = [];
   let lineSegments = wire.getSegments();
   lineSegments.each(function(segmentIndex, segmentObj){
-   	if (segmentObj.start.x == segmentObj.end.x){
+   	if (Math.abs(segmentObj.start.x - segmentObj.end.x) < 1.0){
 
   		auxLoopIntersections = [];
   		if (segmentObj.start.y < segmentObj.end.y){
@@ -229,7 +229,7 @@ GraphLang.Utils.detectTunnels2 = function(canvas, wire = null){
   	}
 
 
-  	if (segmentObj.start.y == segmentObj.end.y){
+  	if (Math.abs(segmentObj.start.y - segmentObj.end.y) < 1.0){
 
   		auxLoopIntersections = [];
   		if (segmentObj.start.x < segmentObj.end.x){

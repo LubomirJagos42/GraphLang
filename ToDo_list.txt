@@ -155,8 +155,20 @@ In progress features
 
 - nested cluster type definition is not generated!!!
 
++ loop created from selection when crossing more then 1 wire tunnel is not generated for other wires
+    + solved by iterating over appCanvas.getLines().clone() which clone list and not iterate over
 
++ loop nodes (nested ones) when resize label is not moving according to relative locator
+    + for some loops this is working but for most no
+    + solved - there was missing locator if/else in case of top locator during loading method in forloop and whilelayer in setPersistentAttributes()
 
++ tunnel after move on left edge is not half on left
+    + method to add tunnel to loop is in: draw2d.Figure = Class.extend({...
+    + solved with AI help, there was problem that .adjustPosition() for:
+        this.policy = new _packages2.default.policy.figure.RegionEditPolicy(0, 0, 10, 10);
+      was there
+        r = this.constRect.moveInside(r);
+    + it creates custom setPosition method for tunnel to rewrite original one
 
 
 Web Browser Debug Window Helpful Commands

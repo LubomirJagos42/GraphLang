@@ -11,6 +11,9 @@ GraphLang.Utils.RightRelPortLocator = draw2d.layout.locator.XYRelPortLocator.ext
       var x = node.getWidth() - this.x;
       var y = node.getHeight()/100  * this.y;
 
+      // Set flag to bypass edit policy constraints for tunnel positioning
+      figure.isLocatorPositioning = true;
       this.applyConsiderRotation( figure, x, y);
+      figure.isLocatorPositioning = false;
   }
 });

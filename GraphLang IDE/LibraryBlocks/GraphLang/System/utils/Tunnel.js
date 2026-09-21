@@ -60,106 +60,32 @@ GraphLang.Shapes.Basic.Tunnel = draw2d.shape.node.Between.extend({
   			emitter.setX(pX);
   			emitter.setY(pY);
             emitter.setDraggable(true);
-
-            //alert(emitter.NAME);						
 		});
-        
-		this.onDragEnd = function(x, y, shiftKey, ctrlKey){
-			//alert("drag end for tunnel");
-			this.setX(x);
-			this.setY(y);
-      
-			loopObj = this.getCanvas().getFigure(this.userData.parentLoop);
-			loopBoundingRect = loopObj.getBoundingBox();
-            pX = x;
-            pY = y;
-            tunnelObj = this
 
-            //loopBoundingRect.scale(tunnelObj.getWidth(), tunnelObj.getHeight());
-            //loopObj.setBoundingBox(loopBoundingRect.scale(tunnelObj.getWidth(), tunnelObj.getHeight()));
-                    
-             xCoord = (pX - loopObj.getX() - tunnelObj.getWidth()/2)/loopBoundingRect.getWidth()*100;
-             yCoord = (pY - loopObj.getY() - tunnelObj.getHeight()/2)/loopBoundingRect.getHeight()*100;
-      
-             //alert(xCoord + "   " + yCoord);
-
-             if (xCoord > 95) xCoord = 95;
-             else if (xCoord < 5) xCoord = 5;         
-      
-             if (yCoord > 95) yCoord = 95;
-             else if (yCoord < 5) yCoord = 5;
-             
-             tunnelEdge = -1;
-            
-            //TUNNEL ATTACHED TO RIGHT EDGE
-            if (Math.abs(x-loopBoundingRect.getRight()) < Math.abs(x-loopBoundingRect.getLeft()) &&
-                Math.abs(x-loopBoundingRect.getRight()) < Math.abs(y-loopBoundingRect.getTop()) &&
-                Math.abs(x-loopBoundingRect.getRight()) < Math.abs(y-loopBoundingRect.getBottom())
-            ){
-              tunnelEdge = 0;
-              tunnelLocatorRel =  new GraphLang.Utils.RightRelPortLocator(
-                tunnelObj.getWidth()/2,
-                yCoord
-              );
-              if (this.NAME.toLowerCase().search('lefttunnel') > -1) this.setRotationAngle(-180);
-              else this.setRotationAngle(0);                                                                             
+        // Store original setPosition to bypass edit policy constraints when locator sets position
+        this.originalSetPosition = this.setPosition;
+        this.setPosition = function(x, y) {
+            // When positioned by locator (with rotation applied), bypass edit policy constraints
+            // to allow tunnel to extend outside loop boundary
+            if (this.isLocatorPositioning) {
+                var oldPos = { x: this.x, y: this.y };
+                if (x instanceof draw2d.geo.Point) {
+                    this.x = x.x;
+                    this.y = x.y;
+                } else {
+                    this.x = x;
+                    this.y = y;
+                }
+                this.repaint();
+                var event = { figure: this, dx: this.x - oldPos.x, dy: this.y - oldPos.y };
+                this.fireEvent("move", event);
+                this.fireEvent("change:x", event);
+                this.fireEvent("change:y", event);
+                return this;
             }
-            //TUNNEL ATTACHED TO LEFT EDGE
-            else if (Math.abs(x-loopBoundingRect.getLeft()) < Math.abs(x-loopBoundingRect.getRight()) &&
-                Math.abs(x-loopBoundingRect.getLeft()) < Math.abs(y-loopBoundingRect.getTop()) &&
-                Math.abs(x-loopBoundingRect.getLeft()) < Math.abs(y-loopBoundingRect.getBottom())
-            ){
-              tunnelEdge = 1;
-              tunnelLocatorRel =  new GraphLang.Utils.LeftRelPortLocator(
-                tunnelObj.getWidth()/2,
-                yCoord
-              );
-              if (this.NAME.toLowerCase().search('lefttunnel') > -1) this.setRotationAngle(-360);
-              else this.setRotationAngle(-180);                                                                             
-            }
-            //TUNNEL ATTACHED TO BOTTOM
-            else if (Math.abs(y-loopBoundingRect.getBottom()) < Math.abs(x-loopBoundingRect.getRight()) &&
-                Math.abs(y-loopBoundingRect.getBottom()) < Math.abs(x-loopBoundingRect.getLeft()) &&
-                Math.abs(y-loopBoundingRect.getBottom()) < Math.abs(y-loopBoundingRect.getTop())
-            ){
-              tunnelEdge = 2;
-              tunnelLocatorRel =  new GraphLang.Utils.BottomRelPortLocator(
-                xCoord,
-                tunnelObj.getHeight()/2
-              );
-
-              if (this.NAME.toLowerCase().search('lefttunnel') > -1) this.setRotationAngle(-90);
-              else this.setRotationAngle(-270);
-
-              //this.setWidth(this.originalHeight)
-              //this.setHeight(this.originalWidth)                                                                             
-            }
-            //TUNNEL ATTACHED TO TOP
-            else if (Math.abs(y-loopBoundingRect.getTop()) < Math.abs(x-loopBoundingRect.getRight()) &&
-                Math.abs(y-loopBoundingRect.getTop()) < Math.abs(x-loopBoundingRect.getLeft()) &&
-                Math.abs(y-loopBoundingRect.getTop()) < Math.abs(y-loopBoundingRect.getBottom())
-            ){
-              tunnelEdge = 3;
-              tunnelLocatorRel =  new GraphLang.Utils.TopRelPortLocator(
-                xCoord,
-                tunnelObj.getHeight()/2
-              );
-
-              if (this.NAME.toLowerCase().search('lefttunnel') > -1) this.setRotationAngle(-270);
-              else this.setRotationAngle(-90);                                                                             
-
-              //this.setWidth(this.originalHeight)
-              //this.setHeight(this.originalWidth)                                                                             
-            }
-      
-            //alert(this.NAME);
-      
-            this.setDashArray("");
-            //this.getCanvas().remove(this);    //DO NOT REMOVE OBJECT FROM CANVAS
-                        
-            loopObj.add(this, tunnelLocatorRel);                        
-            //loopObj.bringsAllTunnelsToFront();
-	   };
+            // Otherwise use normal setPosition with edit policy constraints
+            return this.originalSetPosition(x, y);
+        };
 
     },  //END init() function
     
@@ -213,6 +139,105 @@ GraphLang.Shapes.Basic.Tunnel = draw2d.shape.node.Between.extend({
         }
     },
 
+    onDragEnd: function(x, y, shiftKey, ctrlKey){
+    	//alert("drag end for tunnel");
+    	this.setX(x);
+    	this.setY(y);
+
+    	loopObj = this.getCanvas().getFigure(this.userData.parentLoop);
+    	loopBoundingRect = loopObj.getBoundingBox();
+        pX = x;
+        pY = y;
+        tunnelObj = this
+
+        //loopBoundingRect.scale(tunnelObj.getWidth(), tunnelObj.getHeight());
+        //loopObj.setBoundingBox(loopBoundingRect.scale(tunnelObj.getWidth(), tunnelObj.getHeight()));
+
+        xCoord = (pX - loopObj.getX() - tunnelObj.getWidth()/2)/loopBoundingRect.getWidth()*100;
+        yCoord = (pY - loopObj.getY() - tunnelObj.getHeight()/2)/loopBoundingRect.getHeight()*100;
+
+        //alert(xCoord + "   " + yCoord);
+
+        if (xCoord > 95) xCoord = 95;
+        else if (xCoord < 5) xCoord = 5;
+
+        if (yCoord > 95) yCoord = 95;
+        else if (yCoord < 5) yCoord = 5;
+
+        tunnelEdge = -1;
+
+         //TUNNEL ATTACHED TO RIGHT EDGE
+         if (Math.abs(x-loopBoundingRect.getRight()) < Math.abs(x-loopBoundingRect.getLeft()) &&
+             Math.abs(x-loopBoundingRect.getRight()) < Math.abs(y-loopBoundingRect.getTop()) &&
+             Math.abs(x-loopBoundingRect.getRight()) < Math.abs(y-loopBoundingRect.getBottom())
+         ){
+           tunnelEdge = 0;
+           tunnelLocatorRel =  new GraphLang.Utils.RightRelPortLocator(
+             tunnelObj.getWidth()/2,
+             yCoord
+           );
+           if (this.NAME.toLowerCase().search('lefttunnel') > -1) this.setRotationAngle(-180);
+           else this.setRotationAngle(0);
+         }
+         //TUNNEL ATTACHED TO LEFT EDGE
+         else if (Math.abs(x-loopBoundingRect.getLeft()) < Math.abs(x-loopBoundingRect.getRight()) &&
+             Math.abs(x-loopBoundingRect.getLeft()) < Math.abs(y-loopBoundingRect.getTop()) &&
+             Math.abs(x-loopBoundingRect.getLeft()) < Math.abs(y-loopBoundingRect.getBottom())
+         ){
+           tunnelEdge = 1;
+
+           tunnelLocatorRel =  new GraphLang.Utils.LeftRelPortLocator(
+             tunnelObj.getWidth()/2,
+             yCoord
+           );
+
+           if (this.NAME.toLowerCase().search('lefttunnel') > -1) this.setRotationAngle(-360);
+           else this.setRotationAngle(-180);
+         }
+         //TUNNEL ATTACHED TO BOTTOM
+         else if (Math.abs(y-loopBoundingRect.getBottom()) < Math.abs(x-loopBoundingRect.getRight()) &&
+             Math.abs(y-loopBoundingRect.getBottom()) < Math.abs(x-loopBoundingRect.getLeft()) &&
+             Math.abs(y-loopBoundingRect.getBottom()) < Math.abs(y-loopBoundingRect.getTop())
+         ){
+           tunnelEdge = 2;
+           tunnelLocatorRel =  new GraphLang.Utils.BottomRelPortLocator(
+             xCoord,
+             tunnelObj.getHeight()/2
+           );
+
+           if (this.NAME.toLowerCase().search('lefttunnel') > -1) this.setRotationAngle(-90);
+           else this.setRotationAngle(-270);
+
+           //this.setWidth(this.originalHeight)
+           //this.setHeight(this.originalWidth)
+         }
+         //TUNNEL ATTACHED TO TOP
+         else if (Math.abs(y-loopBoundingRect.getTop()) < Math.abs(x-loopBoundingRect.getRight()) &&
+             Math.abs(y-loopBoundingRect.getTop()) < Math.abs(x-loopBoundingRect.getLeft()) &&
+             Math.abs(y-loopBoundingRect.getTop()) < Math.abs(y-loopBoundingRect.getBottom())
+         ){
+           tunnelEdge = 3;
+           tunnelLocatorRel =  new GraphLang.Utils.TopRelPortLocator(
+             xCoord,
+             tunnelObj.getHeight()/2
+           );
+
+           if (this.NAME.toLowerCase().search('lefttunnel') > -1) this.setRotationAngle(-270);
+           else this.setRotationAngle(-90);
+
+           //this.setWidth(this.originalHeight)
+           //this.setHeight(this.originalWidth)
+         }
+
+         this.setDashArray("");
+         //this.getCanvas().remove(this);    //DO NOT REMOVE OBJECT FROM CANVAS
+
+         loopObj.add(this, tunnelLocatorRel);
+         //loopObj.bringsAllTunnelsToFront();
+
+         this.setAlpha(1);   // restore opacity, base onDragEnd is not called
+    },
+
     getVariableName: function(){
         let variableName = "";
 
@@ -221,7 +246,6 @@ GraphLang.Shapes.Basic.Tunnel = draw2d.shape.node.Between.extend({
 
         return variableName;
     },
-
 
     translateToCppCode: function(){
       return "{Tunnel: executionOrder: " + this.getUserData().executionOrder + "}";

@@ -228,7 +228,10 @@ draw2d.policy.canvas.JailhouseAwareSelectionPolicy = draw2d.policy.canvas.Boundi
             }
 
             //detect tunnels if needed
-            canvas.getLines().each(function(connectionIndex, connectionRef){
+            //snapshot: detectTunnels2 adds new HoverConnections to the canvas, so never iterate the live list
+            let linesSnapshot = canvas.getLines().clone();
+            linesSnapshot.each(function(connectionIndex, connectionRef){
+                if (connectionRef.getCanvas() === null) return;   // wire was removed meanwhile
                 GraphLang.Utils.detectTunnels2(canvas, connectionRef);
             });
 

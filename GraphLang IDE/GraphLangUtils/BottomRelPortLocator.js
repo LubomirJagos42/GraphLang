@@ -11,6 +11,9 @@ GraphLang.Utils.BottomRelPortLocator = draw2d.layout.locator.XYRelPortLocator.ex
       var x = node.getWidth()/100 * this.x;
       var y = node.getHeight() - this.y;
 
+      // Set flag to bypass edit policy constraints for tunnel positioning
+      figure.isLocatorPositioning = true;
       this.applyConsiderRotation(figure, x, y);
+      figure.isLocatorPositioning = false;
   }
 });

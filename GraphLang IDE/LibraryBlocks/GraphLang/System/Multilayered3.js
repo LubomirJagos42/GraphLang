@@ -45,10 +45,11 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
         this.userData.executionOrder = 1;
         this.userData.wasTranslatedToCppCode = false;
 
-        /***************************
-         *  DRAG options
+        /**********************************************************************************
+         *  Page indicator in bottom left corner
          */
-
+        this.pageIndicator = new draw2d.shape.basic.Label({text: "page 0", outlineStroke: 0, stroke: 0});
+        this.add(this.pageIndicator, new draw2d.layout.locator.XYRelPortLocator(0, 100));
     },
 
     removeSelectorPort: function () {
@@ -219,6 +220,7 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
         this.makeActiveLayerVisible();
 
         this.layerChooser.setText(this.layers.get(this.activeLayer).userData.layerText);
+        this.pageIndicator.setText("page " + this.activeLayer);
     },
 
     /**
