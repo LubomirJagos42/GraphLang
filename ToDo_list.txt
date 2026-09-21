@@ -149,11 +149,11 @@ In progress features
     + ForLoop delete error
     + WhileLayer delete error
 
-
 - embedded target not counting lines correctly
     - line counting was made working for desktop target ask AI to make it same way for embedded
 
-- nested cluster type definition is not generated!!!
++ nested cluster type definition is not generated!!!
+    + this is already running
 
 + loop created from selection when crossing more then 1 wire tunnel is not generated for other wires
     + solved by iterating over appCanvas.getLines().clone() which clone list and not iterate over

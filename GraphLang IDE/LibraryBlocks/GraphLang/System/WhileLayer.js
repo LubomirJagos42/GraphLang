@@ -148,6 +148,15 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
   },
 
   /*
+   *    This event is called when figure is dragged out of layer.
+   */
+  onDragLeave: function(draggedFigure){
+    if (draggedFigure.getComposite()){
+      draggedFigure.getComposite().unassignFigure(draggedFigure);
+    }
+  },
+
+  /*
    *  Modified function to provide input port to add also stop terminal
    */
   getInputPorts: function(){

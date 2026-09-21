@@ -456,15 +456,31 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
     //run super() or continue just in case there is not dropped tunnel inside layer, tunnel is possible to move
 
     if (droppedFigure.NAME.toLowerCase().search('tunnel') == -1){
+      // Temporarily override parent's setBoundingBox to prevent auto-resize during assignment
+      let parentOriginalSetBoundingBox = null;
+      let parentComposite = this.getComposite();
+      if (parentComposite !== null && parentComposite.setBoundingBox){
+        parentOriginalSetBoundingBox = parentComposite.setBoundingBox;
+        parentComposite.setBoundingBox = function(box){
+          // Prevent auto-resize during figure movement/assignment
+          return;
+        };
+      }
+
       this._super(droppedFigure, x, y, shiftKey, ctrlKey);
       droppedFigure.getPorts().each(function(portIndex, portObj){
   		portObj.getConnections().each(function(connectionIndex, connectionObj){
   			connectionObj.getCanvas().remove(connectionObj);
   		});
 	  });
+
+      // Restore parent's original setBoundingBox method after assignment is complete
+      if (parentComposite !== null && parentOriginalSetBoundingBox !== null){
+        parentComposite.setBoundingBox = parentOriginalSetBoundingBox;
+      }
     }
 
-    //alert("cluster catched figure\n" + this.originalWidth + " " + this.originalHeight + "\n" +this.getWidth() + " " + this.getHeight());    
+    //alert("cluster catched figure\n" + this.originalWidth + " " + this.originalHeight + "\n" +this.getWidth() + " " + this.getHeight());
   },  
 
   /* @method getPort

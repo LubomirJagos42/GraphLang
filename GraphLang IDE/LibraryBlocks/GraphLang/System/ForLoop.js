@@ -63,6 +63,15 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     }
   },
 
+  /*
+   *    This event is called when figure is dragged out of layer.
+   */
+  onDragLeave: function(draggedFigure){
+    if (draggedFigure.getComposite()){
+      draggedFigure.getComposite().unassignFigure(draggedFigure);
+    }
+  },
+
   /**
    * @method setPersistentAttributes
    * @descritpiton Read all attributes from the serialized properties and transfer them into the shape.

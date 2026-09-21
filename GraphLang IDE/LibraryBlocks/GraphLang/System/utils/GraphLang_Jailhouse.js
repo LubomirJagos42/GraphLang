@@ -231,5 +231,14 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
   		});
       }
     }
+  },
+
+  /*
+   *    This event is called when figure is dragged out of layer.
+   */
+  onDragLeave: function(draggedFigure){
+    if (draggedFigure.getComposite()){
+      draggedFigure.getComposite().unassignFigure(draggedFigure);
+    }
   }   
 });

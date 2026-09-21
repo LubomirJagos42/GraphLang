@@ -23,6 +23,21 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
     this.translateToCppCodeImportArray = new draw2d.util.ArrayList();
     this.translateToCppCodeBreakpointList = new draw2d.util.ArrayList();
     this.translateToCppCodeWatchList = new draw2d.util.ArrayList();
+
+    /*
+     *  Disable auto-resize by default, only allow explicit resize through setWidth/setHeight methods
+     */
+    this.allowAutoResize = false;
+
+    let parentSetBoundingBox = this.setBoundingBox;
+    let loopInstance = this;
+    this.setBoundingBox = function(box){
+      // Only allow resize if explicitly enabled or if it's a manual resize operation
+      if (loopInstance.allowAutoResize === true){
+        return parentSetBoundingBox.call(loopInstance, box);
+      }
+      return;
+    };
   },
 
   //THIS IS MY FUNCTION TO GET INPUT PORTS LIST FOR THIS Loop
@@ -270,6 +285,15 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
     //run super() or continue just in case there is not dropped tunnel inside layer, tunnel is possible to move
     if (droppedFigure.NAME.toLowerCase().search('tunnel') == -1){
       this._super(droppedFigure, x, y, shiftKey, ctrlKey);
+    }
+  },
+
+  /*
+   *    This event is called when figure is dragged out of layer.
+   */
+  onDragLeave: function(draggedFigure){
+    if (draggedFigure.getComposite()){
+      draggedFigure.getComposite().unassignFigure(draggedFigure);
     }
   },
  
