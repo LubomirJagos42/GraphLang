@@ -1,0 +1,28 @@
+{
+  "name": "graphlang-ui-tests",
+  "version": "1.0.0",
+  "description": "TypeScript UI tests for GraphLang application",
+  "main": "dist/logging_1/ui_test.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node run-all-tests.js",
+    "test:dev": "ts-node logging_1/ui_test.ts",
+    "test:node-operations": "ts-node basic_node_operations/schematic_node_test.ts"
+  },
+  "keywords": [
+    "testing",
+    "puppeteer",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/puppeteer": "^5.4.7",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0"
+  },
+  "dependencies": {
+    "puppeteer": "^21.0.0"
+  }
+}

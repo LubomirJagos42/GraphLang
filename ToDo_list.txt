@@ -152,6 +152,9 @@ In progress features
 - embedded target not counting lines correctly
     - line counting was made working for desktop target ask AI to make it same way for embedded
 
+- right tunnel and probably all tunnels if input port is not connected then it's cpp code generator fails since there is no if/else and there is call directly for wire.getVariableName()
+    - check all tunnels will suffer this
+
 + nested cluster type definition is not generated!!!
     + this is already running
 
@@ -170,6 +173,9 @@ In progress features
         r = this.constRect.moveInside(r);
     + it creates custom setPosition method for tunnel to rewrite original one
 
+- now while and for loop can be taken away from jailhouse!!!
+    - seems like c++ code is generated right but wires connections to tunnels are not removed when they are moved out
+    - need tunel detection when they are moved out and right Z index ordering after they are moved out
 
 Web Browser Debug Window Helpful Commands
 =========================================
@@ -310,6 +316,10 @@ Installation
 - test running debugger server using this command on raspbian it seems to have problem to execute it under different account:
         sudo -u www-data bash -c '/var/www/html/GraphLangServerApp/run_cpp_debugger.sh'
 
+- MYSQL - on Windws when it crash and is renewed from backup and root is not using password it's set using commands:
+    SET PASSWORD FOR 'root'@'localhost' = PASSWORD('root');
+    FLUSH PRIVILEGES;
+
 Platformio commands
 ===================
 - GraphLang php backend is using msys commands to simulate linux backend, check that environment variable is set:
@@ -322,7 +332,17 @@ Platformio commands
 - upload project to board:
     > pio run -t upload
 
+AI task - create new schematic and drop node on canvas from left menu
+---------------------------------------------------------------------
+Create typescript test in test/ts/basic_node_opearions which, create class for multiple test and since all tests will be performed inside browser make just once open browser, login
+into graphlang on page localhost/GraphLangServerApp click on login item in menu and use name lubomir.jagos@hidden-mail.com and password heslo123 write them
+into submit form and submit them, then when sucessfuly submitted in graphlang go for page http://localhost/GraphLangServerApp/?q=projectCategoriesNodesEditor&projectId=20
+and click on "NEW SCHEMATIC" which will open page where is left menu where should be schematic block wit label "begin" take it and drag and drop it to canvas
+and check that node is present on canvas using javascript command "appCanvas.getFigures().each((figureIndex, figureRef)=>{console.log(`--> ${figureRef.NAME}`)})"
 
+Now when you have put begin node on canvas add another test that you add println node on canvas, ConstantNode on canvas then click on output port of constant node and drag it to serial
+println node input named in1 which should create wire connection then click on error_out port of serial.begin and drag it to error_in of serial.println wihch
+also should create wire connection. Check that both wire connections were created using "appCanvas.getLines().size() == 2" add this test and run it till it pass.
 
 
 
