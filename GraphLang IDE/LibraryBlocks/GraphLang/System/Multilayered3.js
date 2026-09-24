@@ -43,6 +43,9 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
         //USER DATA/
         this.userData = {};
         this.userData.executionOrder = 1;
+        // Tunnel detection scans top-level loops on the canvas. Multilayered3
+        // must identify itself as a loop so its own boundary is included.
+        this.setIsLoop(true);
         this.userData.wasTranslatedToCppCode = false;
 
         /**********************************************************************************
@@ -322,6 +325,8 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
         memento.ports = [];
         memento.labels = [];
         this._super(memento);           //CALLING PARENT METHOD, these will rerecreate this showSelectedObjExecutionOrder
+        // Older saved multilayered structures may not have the isLoop flag.
+        this.setIsLoop(true);
 
         // remove all decorations created in the constructor of this element
         //

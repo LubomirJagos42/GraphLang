@@ -7,7 +7,7 @@
     "build": "tsc",
     "test": "npm run build && node run-all-tests.js",
     "test:dev": "ts-node logging_1/ui_test.ts",
-    "test:node-operations": "ts-node basic_node_operations/schematic_node_test.ts"
+    "test:node-operations": "ts-node basic_node_operations/test_schematic_node.ts"
   },
   "keywords": [
     "testing",

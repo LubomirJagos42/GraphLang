@@ -177,6 +177,13 @@ In progress features
     - seems like c++ code is generated right but wires connections to tunnels are not removed when they are moved out
     - need tunel detection when they are moved out and right Z index ordering after they are moved out
 
++ multilayered node resizing when shrinking to become smaller is too slow, seems like notifying all layers or something
+    + try some AI assistance to identify problem
+    + Codex (openAI) fixed this by adding .setIsLoop(true) into Multilayered3.js therefore tunnel detection is applicable even when multilayered structure
+      is placed on top canvas
+
+- when multilayered node is resizing shrinking it's too slow
+
 Web Browser Debug Window Helpful Commands
 =========================================
 > list all canvas figures with some index on beginning of line
