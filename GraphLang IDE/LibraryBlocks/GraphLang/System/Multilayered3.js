@@ -41,11 +41,12 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
         this.renewLayerSelector();  //NOT WORKING WHEN LOADING FROM FILE
 
         //USER DATA/
-        this.userData = {};
+        if (this.getUserData() == false) this.userData = {};
         this.userData.executionOrder = 1;
         // Tunnel detection scans top-level loops on the canvas. Multilayered3
         // must identify itself as a loop so its own boundary is included.
         this.setIsLoop(true);
+        this.setIsMultilayered(true);
         this.userData.wasTranslatedToCppCode = false;
 
         /**********************************************************************************
@@ -223,7 +224,7 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
         this.makeActiveLayerVisible();
 
         this.layerChooser.setText(this.layers.get(this.activeLayer).userData.layerText);
-        this.pageIndicator.setText("page " + this.activeLayer);
+        this.pageIndicator.setText("page " + (this.activeLayer+1) + "/" + this.layers.getSize());
     },
 
     /**
@@ -426,6 +427,7 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
         appCanvas.add(newLayer, new draw2d.layout.locator.XYAbsPortLocator(this.getAbsoluteX() + 5, this.getAbsoluteY() + 5));
         this.assignFigure(newLayer);
 
+        this.pageIndicator.setText("page " + (this.activeLayer+1) + "/" + this.layers.getSize());
         //newLayer._onDragStart = this.onDragStart; //WRONG
 
     },

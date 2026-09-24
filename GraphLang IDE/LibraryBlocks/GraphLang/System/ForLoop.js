@@ -67,8 +67,22 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
    *    This event is called when figure is dragged out of layer.
    */
   onDragLeave: function(draggedFigure){
-    if (draggedFigure.getComposite()){
-      draggedFigure.getComposite().unassignFigure(draggedFigure);
+    var previousComposite = draggedFigure.getComposite();
+    if (previousComposite){
+      previousComposite.unassignFigure(draggedFigure);
+
+      try{
+        draggedFigure.getPorts().each(function(portIndex, portObj){
+          portObj.getConnections().each(function(connIndex, connObj){
+            GraphLang.Utils.detectTunnels2(draggedFigure.getCanvas(), connObj);
+          });
+        });
+      }catch(e){/* ignore */}
+
+      if (typeof previousComposite.bringsAllTunnelsToFront === 'function'){
+        previousComposite.bringsAllTunnelsToFront();
+      }
+      try{ draggedFigure.toFront(); }catch(e){}
     }
   },
 

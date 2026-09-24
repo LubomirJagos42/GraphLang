@@ -237,8 +237,27 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
    *    This event is called when figure is dragged out of layer.
    */
   onDragLeave: function(draggedFigure){
-    if (draggedFigure.getComposite()){
-      draggedFigure.getComposite().unassignFigure(draggedFigure);
+    var previousComposite = draggedFigure.getComposite();
+    if (previousComposite){
+      // unassign from composite first
+      previousComposite.unassignFigure(draggedFigure);
+
+      // re-evaluate tunnels for all connections of the moved figure
+      try{
+        draggedFigure.getPorts().each(function(portIndex, portObj){
+          portObj.getConnections().each(function(connIndex, connObj){
+            GraphLang.Utils.detectTunnels2(draggedFigure.getCanvas(), connObj);
+          });
+        });
+      }catch(e){/* ignore if ports/connections not present */}
+
+      // ensure tunnels of the composite are displayed above its children
+      if (typeof previousComposite.bringsAllTunnelsToFront === 'function'){
+        previousComposite.bringsAllTunnelsToFront();
+      }
+
+      // bring moved figure to front so it stays visible after leaving
+      try{ draggedFigure.toFront(); }catch(e){}
     }
   }   
 });

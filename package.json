@@ -1,0 +1,11 @@
+{
+  "name": "graphlang-ide-test",
+  "version": "1.0.0",
+  "description": "UI tests for GraphLang IDE",
+  "scripts": {
+    "test": "node test/ui_test.js"
+  },
+  "dependencies": {
+    "puppeteer": "^22.15.0"
+  }
+}

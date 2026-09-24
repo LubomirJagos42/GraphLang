@@ -175,7 +175,7 @@ In progress features
 
 - now while and for loop can be taken away from jailhouse!!!
     - seems like c++ code is generated right but wires connections to tunnels are not removed when they are moved out
-    - need tunel detection when they are moved out and right Z index ordering after they are moved out
+    - need tunnel detection when they are moved out and right Z index ordering after they are moved out
 
 + multilayered node resizing when shrinking to become smaller is too slow, seems like notifying all layers or something
     + try some AI assistance to identify problem
@@ -183,6 +183,7 @@ In progress features
       is placed on top canvas
 
 - when multilayered node is resizing shrinking it's too slow
+    - trying to correct this with Codex in Multilayered3_enhanced.js but it doesn't seems to make some better progress than I did
 
 Web Browser Debug Window Helpful Commands
 =========================================
