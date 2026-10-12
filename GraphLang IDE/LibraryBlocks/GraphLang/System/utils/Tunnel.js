@@ -42,6 +42,11 @@ GraphLang.Shapes.Basic.Tunnel = draw2d.shape.node.Between.extend({
         //portObj.setName(portObj.getName() + "_" + this.getId());
         //this.add(new draw2d.shape.basic.Label({text: "tunnel"}), new draw2d.layout.locator.CenterLocator(this));
 
+        if (this.getUserData() == undefined){
+            this.userData = {};
+        }
+        this.userData.isTunnel = true;
+
         tunnelObj = this
 		this.on('click',function(emitter, event){
             //emitter.setBackgroundColor("#FF0000");
@@ -145,6 +150,8 @@ GraphLang.Shapes.Basic.Tunnel = draw2d.shape.node.Between.extend({
     	this.setY(y);
 
     	loopObj = this.getCanvas().getFigure(this.userData.parentLoop);
+        if (loopObj == null) return;    //this is triggered also by wire connection what is not tunnel so in case no loop found stop
+
     	loopBoundingRect = loopObj.getBoundingBox();
         pX = x;
         pY = y;
@@ -236,6 +243,37 @@ GraphLang.Shapes.Basic.Tunnel = draw2d.shape.node.Between.extend({
          //loopObj.bringsAllTunnelsToFront();
 
          this.setAlpha(1);   // restore opacity, base onDragEnd is not called
+    },
+
+    isTunnel: function(){
+        if (this.getUserData() && this.getUserData().isTunnel){
+            return this.getUserData().isTunnel;
+        }
+        return false;
+    },
+
+    isLeftTunnel: function(){
+        return false;
+    },
+
+    isRightTunnel: function(){
+        return false;
+    },
+
+    /**
+     * @description Visibility method override for tunnel to hide also connected wires and all of its ports.
+     * @param visibleFlag
+     */
+    setVisible: function(visibleFlag){
+        //call original method, set visible tunnel node body and its ports
+        this._super(visibleFlag);
+
+        //set connected wires visibility
+        this.getPorts().each(function(pIndex, pObj){
+            pObj.getConnections().each(function(cIndex, cObj){
+                cObj.setVisible(visibleFlag);
+            });
+        });
     },
 
     getVariableName: function(){

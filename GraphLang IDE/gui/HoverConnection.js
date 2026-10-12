@@ -225,11 +225,12 @@ HoverConnection = draw2d.Connection.extend({
                 port: this.getSource().getName()
               };
 
-      if (this.getSource().getParent().NAME.toLowerCase().search("tunnel") > -1){     //ADDED by LuboJ to know exact port ID
+      let sourceNode = this.getSource().getParent();
+      if (typeof sourceNode.isTunnel === "function" && sourceNode.isTunnel() === true){     //ADDED by LuboJ to know exact port ID
         memento.userData.sourceTunnel = this.getSource().getParent().getId();
         memento.userData.sourcePortName = this.getSource().getName();
       }
-      else if (this.getSource().getParent().NAME.toLowerCase().search("multilayered") > -1){     //ADDED by LuboJ to know exact port ID
+      else if (typeof sourceNode.isMultilayered === "function" && sourceNode.isMultilayered() === true){     //ADDED by LuboJ to know exact port ID
         memento.userData.sourceMultilayered = this.getSource().getParent().getId();
         memento.userData.sourcePortName = this.getSource().getName();
       }
@@ -245,11 +246,12 @@ HoverConnection = draw2d.Connection.extend({
                  port:this.getTarget().getName(),
                };
 
-      if (this.getTarget().getParent().NAME.toLowerCase().search("tunnel") > -1){   //ADDED by LuboJ to know exact port ID
+      let targetNode = this.getTarget().getParent();
+      if (typeof targetNode.isTunnel === "function" && targetNode.isTunnel() === true){   //ADDED by LuboJ to know exact port ID
         memento.userData.targetTunnel = this.getTarget().getParent().getId();
         memento.userData.targetPortName = this.getTarget().getName();
       }
-      else if (this.getTarget().getParent().NAME.toLowerCase().search("multilayered") > -1){     //ADDED by LuboJ to know exact port ID
+      else if (typeof targetNode.isMultilayered === "function" && targetNode.isMultilayered() === true){     //ADDED by LuboJ to know exact port ID
         memento.userData.sourceMultilayered = this.getSource().getParent().getId();
         memento.userData.sourcePortName = this.getSource().getName();
       }
@@ -302,6 +304,10 @@ HoverConnection = draw2d.Connection.extend({
        }
 */
 
+  },
+
+  setVisible: function(visibleFlag){
+    this._super(visibleFlag);
   },
 
   getVariableName: function(){
