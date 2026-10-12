@@ -49,6 +49,10 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
         this.setIsMultilayered(true);
         this.userData.wasTranslatedToCppCode = false;
 
+        this.renewPageIndicator();
+    },
+
+    renewPageIndicator: function(){
         /**********************************************************************************
          *  Page indicator in bottom left corner
          */
@@ -82,7 +86,6 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
         if (this.layers.getSize() > 0) {
             this.layerChooser.setText(this.layers.get(0).userData.layerText);
         }
-
 
         //there is no layer 0 in constructor so this is not used now //this.layerChooser.setText(this.layers.get(0).userData.layerText);  //after place structure into diagram, it's layer selector is set to has name as layer 0.
         //this.layerChooser.setText('none');  //after place structure into diagram, it's layer selector is set to has name as layer 0.
@@ -123,6 +126,20 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
                 layerObj.setY(emitter.getY() + 2);
             });
         });
+
+        // TODO: Oct2026 trying to fix issue with autoresize
+        // this.on("resize", function (emitter) {
+        //     const apply = function () {
+        //         emitter.layers.each(function (i, layer) {
+        //             layer.setWidth(emitter.getWidth() - 4);
+        //             layer.setHeight(emitter.getHeight() - 4);
+        //             layer.setX(emitter.getX() + 2);
+        //             layer.setY(emitter.getY() + 2);
+        //         });
+        //     };
+        //     if (typeof emitter._allowLayerResize === "function") emitter._allowLayerResize(apply);
+        //     else apply();
+        // });
 
         this.on("show", function (emitter) {
             emitter.moveActiveLayer();
@@ -180,21 +197,21 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
         });
     },
 
-    //this function is also called in gui/View.js after placing multilayer node to canvas to right placed layers
     moveActiveLayer: function () {
-        var x = this.getX();
-        var y = this.getY();
-        var width = this.getWidth();
-        var height = this.getHeight();
-        this.layers.each(function (layerIndex, layerObj) {
-            // layers and protective rectangle are on 0,0 coords relative to parent, so this IS NOT USED INTENTIONALLY
-            layerObj.setX(x + 2);
-            layerObj.setY(y + 2);
-            layerObj.setWidth(width - 4);
-            layerObj.setHeight(height - 4);
-            layerObj.setSelectable(false);
-            layerObj.setDraggable(false);
-        });
+        const apply = () => {
+            const x = this.getX(), y = this.getY(), w = this.getWidth(), h = this.getHeight();
+            this.layers.each(function (i, layer) {
+                layer.setX(x + 2);
+                layer.setY(y + 2);
+                layer.setWidth(w - 4);
+                layer.setHeight(h - 4);
+                layer.setSelectable(false);
+                layer.setDraggable(false);
+            });
+        };
+
+        if (typeof this._allowLayerResize === "function") this._allowLayerResize(apply);
+        else apply();
     },
 
     /**
@@ -210,41 +227,16 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
 
         //brings tunnels on nodes which has that function to front,. just for active layer
         activeLayerObj.getAssignedFigures().each(function (assignedFigureIndex, assignedFigureObj) {
-            if (assignedFigureObj.bringsAllTunnelsToFront) {
-                assignedFigureObj.bringsAllTunnelsToFront();
-            }
-            if (assignedFigureObj.updateNode) {
-                assignedFigureObj.updateNode();
-            }
+            try{ assignedFigureObj.bringsAllTunnelsToFront(); }catch(e){}
+            try{ assignedFigureObj.updateNode(); }catch(e){}
         });
-
-        this.bringsAllTunnelsToFront();
 
         this.hideAllLayers();
         this.makeActiveLayerVisible();
+        this.bringsAllTunnelsToFront();
 
         this.layerChooser.setText(this.layers.get(this.activeLayer).userData.layerText);
         this.pageIndicator.setText("page " + (this.activeLayer+1) + "/" + this.layers.getSize());
-    },
-
-    /**
-     * @name bringsAllTunnelsToFront
-     * @description Brings all tunnels owned by structure to front, tunnels are owned by Multilayer structure not by layers, so they are common for all layers and always should be displayed at front of structure to be visible. But wires which go from tunnel to particular layer are owned by that layer.
-     */
-    bringsAllTunnelsToFront: function () {
-        this.getChildren().each(function (childIndex, childObj) {
-            if (childObj.NAME.toLowerCase().search("tunnel") >= 0) {
-                childObj.toFront();
-            }
-        });
-    },
-
-    bringsAllTunnelsToBack: function () {
-        this.getChildren().each(function (childIndex, childObj) {
-            if (childObj.NAME.toLowerCase().search("tunnel") >= 0) {
-                childObj.toBack();
-            }
-        });
     },
 
     /**
@@ -325,7 +317,7 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
 
         memento.ports = [];
         memento.labels = [];
-        this._super(memento);           //CALLING PARENT METHOD, these will rerecreate this showSelectedObjExecutionOrder
+        this._super(memento);           //CALLING PARENT METHOD, these will re-recreate this showSelectedObjExecutionOrder
         // Older saved multilayered structures may not have the isLoop flag.
         this.setIsLoop(true);
 
@@ -357,7 +349,9 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
 
         }, this));
 
-        //RERECREATE JUST SELECTOR PORT
+        /*
+         *  RERECREATE JUST SELECTOR PORT
+         */
         $.each(mementoPorts, $.proxy(function (i, json) {
             if (json.name.toLowerCase().search('layerselector') > -1) {
                 var figure = eval("new " + json.type + "()");
@@ -379,8 +373,23 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
                 this.selectorPort = figure; //assign port which is layerSelector to internal variable
                 this.selectorPort.setName("layerSelector");
             }
-            this.add(figure, locator);                                                                    // add the new figure as child to this figure
+            this.add(figure, locator);  // add the new figure as child to this figure
         }, this));
+
+        /*
+         *  Add page indicator into left bottom corner, since layers ale loaded separately later after schematic load there is just text "page 0"
+         */
+        this.renewPageIndicator();
+
+        /*
+         * TODO: Seems that this fixed issue when multilayered was nested to some other multilayered it was after schematic load and resize placed at coords 0.0, 0.0 what
+         *       caused problem, for now this seems to fix it (Oct2026)
+         */
+        let compositeOwner = this.getComposite();
+        if (compositeOwner !== null){
+            // this.getCanvas().getFigure(compositeOwner.getId()).assignFigure(this.getId());
+            compositeOwner.assignFigure(this.getId());
+        }
     },
 
     /**
@@ -434,7 +443,7 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
 
     /**
      * @name removeLayer
-     * @param {Number} layer order which should be removed
+     * @param {Number} layerId - order which should be removed
      * @description Removed layer from structure and also removes all contained nodes and wires. Remove function is call using CommandStack over all nodes contained inside layer. This way would be able to use "Undo" after layer is deleted. Now it's not needed, but it's proper way how to delete objects and have stored information about that for another purposes.
      * NOTE, THERE IS IMPLEMENTED JUST REMOVING NODES INSIDE, NO OTHER ELEMENTS, SO THERE SHOULD BE RECURSIVELY CALL OF REMOVE FUNCTION OVER ALL OBJECTS INSIDE, BECAUSE IT'S OTHER THING TO REMOVE NODE AND REMOVE LOOP OR MULTILAYERED STRUCTURE, NEED TO THINK ABOUT THIS.
      */
@@ -495,7 +504,7 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
         let multilayeredList = new draw2d.util.ArrayList();
         multilayeredList.push(this);
         childrenList.each(function (figureIndex, figureObj) {
-            if (figureObj.NAME.toLowerCase().search("multilayered") > -1) {
+            if (typeof figureObj.isMultilayered === "function" && figureObj.isMultilayered() === true) {
                 let nestedMultilayeredList = figureObj.getVisibleLoopAndMultilayered();
                 if (!nestedMultilayeredList.isEmpty()) multilayeredList.addAll(nestedMultilayeredList); //recursive call to add all nested multilayered figures
             } else {
@@ -607,40 +616,82 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
      */
     setLayerVisible: function(layerObj, visibleFlag){
         layerObj.getAssignedFigures().each(function(index, element){
-            if (Object.hasOwn(element, 'getPorts') && element.setVisible != 'undefined'){
+
+            //set visibility for ports
+            if (typeof element.getPorts === "function"){
+                //port visibility
                 element.getPorts().each(function(pIndex, pObj){
                     pObj.setVisible(visibleFlag);
+                    pObj.setVisible(visibleFlag);
+                });
+
+                //wires visibility
+                element.getPorts().each(function(pIndex, pObj){
                     pObj.getConnections().each(function(cIndex, cObj){
                         cObj.setVisible(visibleFlag);
+                        cObj.setVisible(visibleFlag);
+
+                        //TODO: Here are some fragments created as visibility for wires is not really set right, if source or tunnel are hidden also wire should be hidden.
+                        let sourcePort = cObj.getSource();
+                        let targetPort = cObj.getTarget();
+                        if (
+                            typeof sourcePort.getParent().isTunnel === "function" && sourcePort.getParent().isTunnel() === true &&
+                            typeof targetPort.getParent().isTunnel === "function" && targetPort.getParent().isTunnel() === true &&
+                            (sourcePort.getParent().getParent().isVisible() === false || targetPort.getParent().getParent().isVisible() === false)
+                        ){
+                            if (
+                                sourcePort.getParent().getParent().isVisible() === false &&
+                                targetPort.getParent().getParent().isVisible() === false
+                            ){
+                                console.warn(`Wire id: ${cObj.getId()} was set to visible ON, tunnel -> tunnel ${sourcePort.getParent().getId()} where BOTH source and target is placed on hidden structure, hiding wire!`);
+                            }else{
+                                if (sourcePort.getParent().getParent().isVisible() === false) {
+                                    console.warn(`Wire id: ${cObj.getId()} was set to visible ON, tunnel -> tunnel ${sourcePort.getParent().getId()} where source is placed on hidden structure, hiding wire!`);
+                                }
+                                if (targetPort.getParent().getParent().isVisible() === false) {
+                                    console.warn(`Wire id: ${cObj.getId()} was set to visible ON, tunnel -> tunnel ${targetPort.getParent().getId()} where target is placed on hidden structure, hiding wire!`);
+                                }
+                            }
+                            cObj.setVisible(false);
+                        }
+
                     });
                 });
 
-                //DON'T KNOW WHY BUT WHEN MAKING NODE VISIBLE, THIS NEED TO BE SET TWICE, otherwise ports will stay hidden
+            }
+
+            //set visibility for figure itself
+            //TODO: .setVisible(...) here must be twice otherwise it's not working properly some fragments left on canvas!!!
+            if (typeof element.setVisible === "function"){
                 element.setVisible(visibleFlag);
                 element.setVisible(visibleFlag);
 
-                console.log(`visible: ${visibleFlag}, element: ${element.NAME}`);
+                //TODO: In case that tunnel become visible but its parent is still hidden, hide it!!!
+                if (typeof element.isTunnel === "function" && element.isTunnel() === true && element.getParent().isVisible() === false){
+                    element.setVisible(false);
+                }
             }
+
         });
+
+        //set visible for multilayered layer
         layerObj.setVisible(visibleFlag);
     },
 
     /**
      *  @description Hide all layers, must also traverse nodes and if there is multilayered must call it's hide layers function
      */
-    hideAllLayers: function(){
-        /*
-         *  This will hide all nested multilayered nodes
-         */
-        let parentObj = this;
+    hideAllLayers: function(visited = new Set()){
+        if (visited.has(this)) return;
+        visited.add(this);
+        const parentObj = this;
         this.layers.each(function(layerIndex, layerObj){
             layerObj.getAssignedFigures().each(function(figureIndex, figureObj){
-                if (figureObj.NAME.toLowerCase().search('multilayered') > -1){
-                    figureObj.hideAllLayers();
+                if (figureObj !== parentObj && figureObj.isMultilayered && figureObj.isMultilayered() === true){
+                    figureObj.hideAllLayers(visited);
                     figureObj.layerChooser.setVisible(false);
                 }
             });
-
             parentObj.setLayerVisible(layerObj, false);
         });
     },
@@ -648,12 +699,14 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
     /**
      *  @description Make active layer visible, must also traverse nodes and if there is multilayered must call it's set visible layer function
      */
-    makeActiveLayerVisible: function(){
-        let parentObj = this;
-        let activeLayer = this.layers.get(this.activeLayer);
+    makeActiveLayerVisible: function(visited = new Set()){
+        if (visited.has(this)) return;
+        visited.add(this);
+        const parentObj = this;
+        const activeLayer = this.layers.get(this.activeLayer);
         activeLayer.getAssignedFigures().each(function(figureIndex, figureObj){
-            if (figureObj.NAME.toLowerCase().search('multilayered') > -1){
-                figureObj.makeActiveLayerVisible();
+            if (figureObj !== parentObj && figureObj.NAME.toLowerCase().search('multilayered') > -1){
+                figureObj.makeActiveLayerVisible(visited);
                 figureObj.layerChooser.setVisible(true);
             }
         });
@@ -665,8 +718,20 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
      *****************************************************************************************************************************************************/
 
     translateToCppCode: function(funcParams = {}) {
+        let loopObj = this;
+
+        let codeLinesOffset = Object.hasOwn(funcParams, "codeLinesOffset") ? funcParams.codeLinesOffset : 0;
+        let compileErrorLines = Object.hasOwn(funcParams, "compileErrorLines") ? funcParams.compileErrorLines : null;
+        let breakpointParentId = Object.hasOwn(funcParams, "breakpointParentId") ? funcParams.breakpointParentId : null;
+
         let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
         let lineNumberToFind = Object.hasOwn(funcParams, "lineNumberToFind") ? funcParams.lineNumberToFind : null;
+        let nodeName = Object.hasOwn(funcParams, "nodeName") ? funcParams.nodeName : "";
+
+        this.getUserData().wasTranslatedToCppCode = true;
+        this.translateToCppCodeImportArray.clear();
+        this.translateToCppCodeBreakpointList.clear();
+        this.translateToCppCodeWatchList.clear();
 
         /*
          *  Going thorugh all layers and ask them to translate into C/C++ code
@@ -688,7 +753,7 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
 
         this.getAllLayers().each(function (layerIndex, layerObj) {
             if (selectorPortWires != null && selectorPortWires.getSize() > 0) {
-                if (selectorPortDatatype == "String") {
+                if (["String", "string"].includes(selectorPortDatatype)) {
                     cCode += "if(" + selectorPortWires.first().getVariableName() + " == \"" + layerObj.userData.layerText + "\"){\n";
                 } else {
                     cCode += "if(" + selectorPortWires.first().getVariableName() + " == " + layerObj.userData.layerText + "){\n";
@@ -697,7 +762,19 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
                 cCode += "if(/* selectorPort not connected*/){\n";
             }
 
-            cCode += layerObj.translateToCppCode(funcParams);
+
+            //original translate method for layer passing func params without adjusting line number to find if used
+            // cCode += layerObj.translateToCppCode(funcParams);
+
+            //trying to fix searching for node by line number, unwrap funcParams and modify just needed properties
+            let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
+            cCode += layerObj.translateToCppCode({
+                ...funcParams,
+                nodeId: layerObj.getId(),
+                codeLinesOffset: codeLinesOffset + lineCountBefore,
+                lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - lineCountBefore : null,
+            });
+
             cCode += "}\n"
         });
 
@@ -725,7 +802,7 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
 
         this.getAllLayers().each(function (layerIndex, layerObj) {
             layerTextValue = layerObj.userData.layerText
-            if (selectorDatatype == "String") layerTextValue = '"' + layerTextValue + '"';
+            if (["String", "string"].includes(selectorDatatype)) layerTextValue = '"' + layerTextValue + '"';
 
             if (layerIndex == 0) pythonCode += "if " + selectorWireName + " == " + layerTextValue + ":\n";
             else pythonCode += "elif " + selectorWireName + " == " + layerTextValue + ":\n";

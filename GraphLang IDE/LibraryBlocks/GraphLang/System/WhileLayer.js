@@ -163,10 +163,8 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
                 });
             }catch(e){/* ignore */}
 
-            if (typeof previousComposite.bringsAllTunnelsToFront === 'function'){
-                previousComposite.bringsAllTunnelsToFront();
-            }
             try{ draggedFigure.toFront(); }catch(e){}
+            try{ previousComposite.bringsAllTunnelsToFront(); }catch(e){}
         }
   },
 

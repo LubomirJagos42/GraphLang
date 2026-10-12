@@ -279,6 +279,15 @@ example.Toolbar = Class.extend({
 		}));
 		this.html.append(this.multilayeredButton);
 
+		/**
+		 *	multilayered select Button
+		 */
+		this.multilayeredEnhancedButton  = $("<button id=\"multilayeredEnhancedButton\">multilayered_enhanced</button>");
+		this.multilayeredEnhancedButton.button().click($.proxy(function(){
+			GraphLang.Utils.setSelectionMode("multilayeredenhanced");
+		}));
+		this.html.append(this.multilayeredEnhancedButton);
+
 	},
 
 	/**

@@ -120,7 +120,7 @@ GraphLang.Utils.detectTunnels2 = function(canvas, wire = null){
         // DEPRECATED - this was old way from beginning, later there was added method .isLoop() for real loops
         // figureObj.NAME.search("GraphLang.Shapes.Basic.Loop") > -1 &&
         // figureObj.NAME.toLowerCase().search("clusterdatatype") == -1 &&
-        // figureObj.getComposite() == null
+        figureObj.getComposite() == null &&
         figureObj.isLoop && figureObj.isLoop() === true
     ){
       // Add the loop itself first if it's not already added since this loop iterate over all loops even nested ones
@@ -698,7 +698,7 @@ GraphLang.Utils.initAllPortToDefault = function(canvas){
      *  FOR MULTILAYER NODES remove executionOrder Label
      ****************************************************************/
     multilayerObj = portObj.getParent();
-    if (multilayerObj.NAME.toLowerCase().search("multilayered") > -1){
+    if (typeof multilayerObj.isMultilayered === "function" && multilayerObj.isMultilayered() === true){
 
 	  /*
 	   *	THIS SHOULDN'T BE RUNNING BUT THIS REMOVE MOST EXECUTION LABELS, NEED INSPECTION!!!!!!
@@ -730,7 +730,7 @@ GraphLang.Utils.initAllPortToDefault = function(canvas){
 	 *	remove execution order labels from multilayered structure
 	 */
     multilayerObj = portObj.getParent().getParent();
-    if (multilayerObj && multilayerObj.NAME.toLowerCase().search("multilayered") > -1){
+    if (multilayerObj && typeof multilayerObj.isMultilayered === "function" && multilayerObj.isMultilayered() === true){
 	  multilayerObj.layers.each(function(childIndex, childObj){
         if (childObj.NAME.toLowerCase().search("jailhouse") > -1){
           childObj.getChildren().each(function(layerChildIndex, layerChildObj){
@@ -751,7 +751,7 @@ GraphLang.Utils.initAllPortToDefault = function(canvas){
 
     //  FEEDBACK, SET PORTS OUTPUT INPUT EXECUTION Order
     //FOR MULTILAYER NODES remove executionOrder Label
-    nodeObj = portObj.getParent();
+    let nodeObj = portObj.getParent();
     if (nodeObj.NAME.toLowerCase().search("feedback") > -1){
       nodeObj.getInputPort(0).userData.executionOrder = 1;
       nodeObj.getOutputPort(0).userData.executionOrder = 1;
@@ -859,31 +859,34 @@ GraphLang.Utils.showNodes = function(canvas){
  *  @method getNodeLoopOwner
  *  @param {draw2d.Canvas} canvas - schematic from which is node or loop
  *  @param {draw2d.shape.Node} nodeObj=null - node or loop objec which is inspected for its loop owner
- *  @description Return loop which ownes node, if there's no loop return null.
+ *  @description Return loop which owns node, if there's no loop return null.
  *  @returns {GraphLang.Shapes.Basic.Loop|null} Found node owner, if none then return null.
  */
 GraphLang.Utils.getNodeLoopOwner = function(canvas, nodeObj){
   var loopList = new draw2d.util.ArrayList();
 
-  //get lsit of all loops
+  //get lsit of all loops, there are also multilayered structures as they have set isLoop to true
   canvas.getFigures().each(function(figureIndex, figureObj){
     if (
-        // figureObj.NAME.toLowerCase().search("loop") >= 0 && figureObj !== nodeObj    //DEPRECATED this was done here in beginning where not much code was written and figures were recognized based on their names
         figureObj.getUserData() && figureObj.isLoop && figureObj.isLoop() === true && figureObj !== nodeObj
     ){
       loopList.push(figureObj);
     }
   });
 
-  //find all parent loop of this node
+  // Find all parent loop of this node
+  //
   // There could be two cases:
   //    1. node is part normal one layer loop - WhileLoop or ForLoop
   //    2. node is part of multilayered loop - case structure
   var nodeParentLoop = null;
   loopList.each(function(loopIndex, loopObj){
-    if (loopObj.NAME.toLowerCase().search("multilayered") == -1 ||  //decision if dealing with multilayered loop, also need to think about layers of multilayered that reason why jailhouse is here also
-        loopObj.NAME.toLowerCase().search("jailhouse") == -1){
+    if (
+        (typeof loopObj.isLoop === "function" && loopObj.isLoop() == true) &&
+        !(typeof loopObj.isMultilayered === "function" || loopObj.isMultilayered() === false)   //this condition part excludes multilayered case structures
+    ){
 
+      //CASE 1 - node is inside while loop, for loop
       if (loopObj != nodeObj && typeof loopObj.getAboardFigures !== "undefined" && loopObj.getAboardFigures().contains(nodeObj)){        //comparison for one layer loop
         nodeParentLoop = loopObj;
       }else{
@@ -893,6 +896,8 @@ GraphLang.Utils.getNodeLoopOwner = function(canvas, nodeObj){
       }
 
     }else{
+
+        //CASE 2 - node is part of multilayered case structure
         loopObj.getAllLayers().each(function(layerIndex, layerObj){
           if (layerObj != nodeObj && layerObj.getAssignedFigures().contains(nodeObj)){
             nodeParentLoop = loopObj;
@@ -941,7 +946,7 @@ GraphLang.Utils.getDirectChildrenWithoutTunnels = function(canvas, parentObj){
         (
             // figureObj.NAME.toLowerCase().search("loop") > -1 ||            //DEPRECATED this was done here in beginning where not much code was written and figures were recognized based on their names
             (figureObj.getUserData() && figureObj.isLoop && figureObj.isLoop() === true) ||
-            figureObj.NAME.toLowerCase().search("multilayered") > -1 ||
+            (typeof figureObj.isMultilayered === "function" && figureObj.isMultilayered() === true) ||
             figureObj.NAME.toLowerCase().search("node") > -1 ||
             figureObj.NAME.toLowerCase().search("port") > -1
         ) &&
@@ -1149,6 +1154,8 @@ GraphLang.Utils.executionOrder = function executionOrder(canvas){
  *  @method loopsRecalculateAbroadFigures
  *  @param {draw2d.Canvas} canvas - schematic which will be recalculated
  *  @description Reevaluate children nodes of every loop on canvas. This function was implemented because sometimes it looks like there are problems with this when new loops are added.
+ *
+ *  @deprecated
  */
 GraphLang.Utils.loopsRecalculateAbroadFigures = function(canvas){
   canvas.getFigures().each(function(loopIndex, loopObj){
@@ -1791,7 +1798,10 @@ GraphLang.Utils.displayContents = function(contents){
      *  all others objects which are placed on layers are just assigned to each layer so here is
      *  needed to just go through layers and again assigned them to their owner.
      */
-    if (figureObj.NAME.toLowerCase().search('multilayered') != -1){
+    if (
+        // figureObj.NAME.toLowerCase().search('multilayered') != -1
+        figureObj.isMultilayered && figureObj.isMultilayered() === true
+    ){
       figureObj.getAssignedFigures().each(function(assignedFigureIndex, assignedFigureObj){
         figureObj.layers.push(assignedFigureObj); //THIS ADD EACH LAYER TO PARENT JAILHOUSE COMPOSITE OBJECT, this is needed to be here
       });
@@ -1799,6 +1809,9 @@ GraphLang.Utils.displayContents = function(contents){
       figureObj.renewLayerSelector(); //NOT RUNNING CORRECTLY
 
       figureObj.switchActiveLayer();    //TO REWRITE TUNNELS IF THERE ARE SOME ON LOOPS
+
+      //TODO: Oct2026 fixing issue about loading multilayered enhanced structures that assigned nodes are not properly moving across their canvas
+      // figureObj.moveActiveLayer();
     }
 
     /*
@@ -1975,6 +1988,11 @@ GraphLang.Utils.displayContents2 = function (jsonDocument, canvasObj, schematicN
 
     //here are composite object repaired, they are assigned back to their ownership
     var allFigures = canvasObj.getFigures();
+
+    /*
+     *  TODO: Correct this method to properly recognize multilayered structure there is method now .isMultilayered() === true for them
+     *        Also .renewChooser() seems to be faulty here
+     */
     allFigures.each(function (figureIndex, figureObj) {
         //if (figureObj.getComposite)
         if (figureObj.NAME.toLowerCase().search('multilayered') != -1) {
@@ -2081,25 +2099,19 @@ GraphLang.Utils.saveSchematic2 = function(canvas, filename, type) {
 /**
  *  @method getVisibleLoopsAndMultilayered
  *  @param {draw2d.canvas} canvas - Canvas where schematic is located.
- *  @description Returns visible loops and multilayered structures. So if there are some loops on non active layers they are not returned.
+ *  @description Returns visible loops and multilayered structures. So if there are some loops on hidden layers they are not returned.
  */
 GraphLang.Utils.getVisibleLoopsAndMultilayered = function(canvas) {
     let loopList = new draw2d.util.ArrayList();
     canvas.getFigures().each(function(figureIndex, figureObj){
+      //searching for loops starts from top canvast, therefore there must be condition that node is not assigned to any other loop or multilayered node
+      //and that it's loop
       if (
-          // figureObj.NAME.search("GraphLang.Shapes.Basic.Loop") > -1 &&
-          // figureObj.getComposite() == null
+          figureObj.getComposite() == null &&
           figureObj.isLoop && typeof figureObj.isLoop === "function" && figureObj.isLoop() == true
       ){
         let nestedLayeredList = figureObj.getVisibleLoopAndMultilayered();
 
-        //old way
-        // if (!nestedLayeredList.isEmpty()){
-        //     //add ArrayList to current just in case it's not empty otherwise there will be undefined object and make harm in following code
-        //     loopList.addAll(nestedLayeredList);
-        // }
-
-        //new way
         // add loop reference just in case it's not already in list
         nestedLayeredList.each(function(nestedLoopIndex, nestedLoopRef){
             if (!loopList.contains(nestedLoopRef)) {
@@ -3516,6 +3528,10 @@ GraphLang.Utils.setSelectionMode = function(modeType = ""){
     }else if (modeType === "multilayered"){
         GLOBAL_SELECTION_NODE_MODE = modeType;
         const base64Image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHQSURBVDhPpZDNS5RRFIdPES1dBG3ctWkh7lxI/0AtgxYDBqFCkYEQjn0uQokgdWHQ4MYax/xIxY9qhmymRSMxNIJ9+tG4GHLAMceMSsdx9GVen7hXfJt33gmJnsVdnHt+zzn3Cv+JqMPMwsb7HGZ2p/B+X7Rg/e02EflO+NgiH+pSfB1PY6ybhb1F2d0gs0OoNE5QkjyTBR7LHD2l7widm2d+eIXM6nZhzkILFFMXVDjBQ5mkQyJ4JMJ9idIqE9w5Ms6jM2+Y7P7Cz2SmuGDpxRoD8lmH2+UVdyVIswS4KWNclREa5QkNEqBGukh8XHUKjI0c3qNRPflPeJQGGaRe+rgofTRVPCXomSGbNpwCxfOzs3rtvbBbh/u5XDLA3Mul/FYLmyA2kqJNJvTau5P7OS9d1B700VkXzm+1sAk2fxg0l/j1m/Xah31UixeXeHBJJy1V/vx2jU2g8J5+rT9MvXkmlOTBpbAOn5IWTso9mqqGbf0OQbQ7jlsC3CgfsmpqsgqfkFtUym3crh4y6S195xD8Wt6k9oCPUMe0ra4mq3C5XOO4XCEeS+m6Q6BIfPqGsZUrLNPo6qXs0HX8g1NWrajgb5imSTy2bKv9k6AYvwH4R2WznDV11AAAAABJRU5ErkJggg==';
+        document.getElementById('canvas').style.cursor = `url(${base64Image}), auto`;
+    }else if (modeType === "multilayeredenhanced"){
+        GLOBAL_SELECTION_NODE_MODE = modeType;
+        const base64Image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABhGlDQ1BJQ0MgcHJvZmlsZQAAKJF9kb9Lw0AcxV9TpVIrDnYQcchQneziLxxLFYtgobQVWnUwufQXNGlIUlwcBdeCgz8Wqw4uzro6uAqC4A8Q/wBxUnSREr+XFFrEeHDch3f3HnfvAKFZZarZEwNUzTLSibiYy6+KgVcE0Y8QgBmJmXoys5iF5/i6h4+vd1Ge5X3uzzGgFEwG+ETiGNMNi3iDeHbT0jnvE4dZWVKIz4knDLog8SPXZZffOJccFnhm2Mim54nDxGKpi+UuZmVDJZ4mjiiqRvlCzmWF8xZntVpn7XvyF4YK2kqG6zRHkcASkkhBhIw6KqjCQpRWjRQTadqPe/hHHH+KXDK5KmDkWEANKiTHD/4Hv7s1i1OTblIoDvS+2PbHGBDYBVoN2/4+tu3WCeB/Bq60jr/WBOY+SW90tMgRMLgNXFx3NHkPuNwBhp90yZAcyU9TKBaB9zP6pjwwdAsE19ze2vs4fQCy1NXyDXBwCIyXKHvd49193b39e6bd3w+ZinK2AoA5igAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAAuIwAALiMBeKU/dgAAAAd0SU1FB+oKCwwCMPtPpq4AAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAB1UlEQVQ4y6WTy0uUURjGfzPOjEzoOOM4oyNmQgtLwia7giTqoqRIbSpBBYPoH+iyqo2LIoSsqAiC9l2g6EL/QBC5MFtYi9mUJC3aZAbNODPfd54W31yycYrwgbN54f2d8zzve1ySxDrkBlgxad4uz7Bi0v8N8ADM/5hjYnKMmjY/Hb3tJGLj9IUPEPAE/wlwSVLK/kn3VJzUlwyyhSzhj1XTeqSRkeYJDkaGaKyOVQYAjL07xOzdeey0QUaQT0aW8IU8tAxGGdpynMGmEdr8m8sBz78+4tzFs9gZ47zCFrJxYEYOT2Ayhsf3n7Av1FMKEaA/PICv3gui1Jy3YyyhnIh0Bzl98yQdtZ2rQwSo8QRoTURJ3l4sNRvn+IJepq9Oc7RpdO0xFjTacqrU+JuN7Lcc9z7fqrwHBR2OJqjaUOV4NsLtdSMj7Kxh7kKS/pddfweEfRE2DkeKgV2/c42dl9oBMFnDh6kF+p7tqAwAGN52woHtCnAsNs6L3a/ZemYT4MJkDe+vfKLn4XaWc0v5Of+hxfSCmgcaNJk8v6re+zSuhr11qu8KKBSv1ez3N5KkMoAkzSy9UtpKldX3P+hUeE+dbny8XKytCagky1jFmwtyrfc7/wKzeWeeErmoTwAAAABJRU5ErkJggg==';
         document.getElementById('canvas').style.cursor = `url(${base64Image}), auto`;
     }else{
         GLOBAL_SELECTION_NODE_MODE = null;

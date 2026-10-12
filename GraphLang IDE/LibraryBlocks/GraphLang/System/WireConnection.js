@@ -13,6 +13,11 @@ GraphLang.Shapes.Basic.WireConnection = GraphLang.Shapes.Basic.Tunnel.extend({
         this.setBackgroundColor("#FFFFFF");
         let port;
 
+        if (this.getUserData() == undefined){
+            this.userData = {};
+        }
+        this.userData.isTunnel = false; //this is definitely not tunnel
+
         /*
          *	There is added -in0 and -out0 in Tunnel init, this is making mess when code is translated
          *	into C++ when ID of wires are replaced by normal number to have readable code, so here

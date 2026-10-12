@@ -8,10 +8,7 @@ This is list features what to do due I always forget on what to work
 - general weak typed language generator class
 - list of errors click on item and focus on graph somewhere
 - 2D array node
-- figure methods isCluster(), isArray(), ... instead of detect these things from NAME property
-    - easiest is to extend Figure object and add this methods to detect it from userData
-- put getDatatype() method into InputPort, OutputPort to have it there
-    - it will look into userData.datatype variable, parent node or somewhere else
+
 - translate polymorphic datatype into right C/C++ code datatype in C/C++
 
 - GENERAL PRESERVATION PROPERTIES for SHAPE DESIGNER - HOW TO EXTRACT STRING FUNCTIONS FROM CUSTOM OBJECTS GENERALLY steps:
@@ -119,6 +116,10 @@ This is list features what to do due I always forget on what to work
     </body>
     </html>
 
+
+
+
+
 In progress features
 ====================
 - breakpoints in code for C++ debugger:
@@ -151,6 +152,7 @@ In progress features
 
 - embedded target not counting lines correctly
     - line counting was made working for desktop target ask AI to make it same way for embedded
+    + seems identifying code line in loop is ok but probably multilayered are not working
 
 - right tunnel and probably all tunnels if input port is not connected then it's cpp code generator fails since there is no if/else and there is call directly for wire.getVariableName()
     - check all tunnels will suffer this
@@ -182,8 +184,74 @@ In progress features
     + Codex (openAI) fixed this by adding .setIsLoop(true) into Multilayered3.js therefore tunnel detection is applicable even when multilayered structure
       is placed on top canvas
 
-- when multilayered node is resizing shrinking it's too slow
-    - trying to correct this with Codex in Multilayered3_enhanced.js but it doesn't seems to make some better progress than I did
++ when multilayered node is resizing shrinking it's too slow
+    + trying to correct this with Codex in Multilayered3_enhanced.js but it doesn't seems to make some better progress than I did
+    + partialy done in Multilayered3_enhanced using Calude AI as only it was really capable to make it right
+    - still needs repair that when resize is done from left side it ove nodes instead shrink it but from right and bottom it's running ok
+
+- method to get node which generates C++ specific code line is not working for node inside Multilayered3
+    - let nodeObj = await GraphLang.Utils.TranslateToGeneralCodeObj.getObjectWhichGenerateCodeAtLine(lineNumber);
+    - error is in file GraphLang_Jailhouse.js there is no line searching done as in ForLoop.js or WhileLayer.js
+    - not working also for forloop when nested in some case structure
+    + this seems already done as I added there into multilayered translateToCppCode line counter lines
+    - check if breakpoints are identified right
+    - check if watches are identified rights
+
+- taking nodes out of multilayered is not done yet
+    - it is possible but wires are not deleted correctly
+
+- multilayered structure has still problem that layers inside when there is multilayered->multilayered->loop is changing size
+
+- multilayered structure when loaded it's label selector has z index to high and is not at right layer
+    - seems to be this way, when page is loaded there are these method running what is causing error:
+        GraphLang.Utils.displayContents2() > in all nodes loop iteration there is call .renewLayerChooser() > see below
+        
+        //put layer chooser into back if it's multilayered structure is not visible, ie. it's somewhere on layer which is not displayed at the time
+        if (this.getComposite() !== null) {
+            let visibleLoops = GraphLang.Utils.getVisibleLoopsAndMultilayered(this.getCanvas());
+            if (!visibleLoops.contains(this)) {
+                this.layerChooser.toBack();
+            }
+        }
+    
+    + seems to be solved correcting condition in GraphLang.Utils.getVisibleLoopsAndMultilayered() that during iterate over all canvas figure check that .getComposite() === null
+      to obtain at beginning just top figures not nested ones
+
+- multilayered nodes after load when loops there tunnels detected on loop edges on hidden layers
+    - that probably because detectTunnel2 algorithm is treating wires which are not part of current visible loops but also taking wires from hidden layers
+    - problem is in draw2d.policy.canvas.JailhouseAwareSelectionPolicy > .createLoopAroundSelectedObjects() there is tunnel detection over all canvas lines
+    - scenario how nested structures are problem:
+        - multilayered node with another nested for loop
+        - load schematic, click on multilayered, on forloop and then move multilayered little
+        - on other layer wire detect tunnel with first layer forloop -> FAIL, probably .getVisible... is not working in this case
+
++ multilayered nodes enhanced, moving nodes inside them behaves really strange
+    + AI assisted solved, autoresize of multilayered enhanced node fixed and now nodes inside multilayered node behave correctly
+
+- multilayered enhanced nodes, dropping them from left menu doesn't work
+
+- IMPORTANT: wires connected to tunnels startegy to set them visible for loop and multilayered needs to be solved, it's not so easy
+    - that's reason what is causing wires fragments and errors in schematics!!!
+
+- figure methods isCluster(), isArray(), ... instead of detect these things from NAME property
+    - easiest is to extend Figure object and add this methods to detect it from userData
+
+- put getDatatype() method into InputPort, OutputPort to have it there
+    - it will look into userData.datatype variable, parent node or somewhere else
+
+
+
+
+
+
+Design notes
+============
++ wire list must be stored at the end of serialized JSON what in our case is, since wires must be created as last
+    + to be wire visible both his source and target must be visible, if one of them is hidden wire should be also hidden
+    + hiding wires is part in Tunnel set visibility and everywhere where wire wisibility is to be set, therefore it's overwritten in HoverConnection itself
+
+
+
 
 Web Browser Debug Window Helpful Commands
 =========================================

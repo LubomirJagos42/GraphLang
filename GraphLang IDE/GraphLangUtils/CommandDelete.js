@@ -9,7 +9,7 @@ GraphLang.Utils.CommandDelete = draw2d.command.CommandDelete.extend({
     cmdStack = this.figure.getCanvas().getCommandStack();
 
     //THIS REMOVES ALL PARTS OF MULTILAYERED STRUCTURE
-    if (this.figure.NAME.toLowerCase().search("multilayered") > -1){
+    if (typeof this.figure.isMultilayered === "function" && this.figure.isMultilayered === true){
 
       //ITERATE OVER ALL LAYERS, DELETE ALL LAYERS FIGURES
       this.figure.getAllLayers().each(function(layerIndex, layerObj){

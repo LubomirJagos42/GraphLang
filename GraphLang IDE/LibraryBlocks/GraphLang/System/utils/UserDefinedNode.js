@@ -14,6 +14,7 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
        "unsetBreakpoint": {name: "Unset breakpoint"},
        "separator": "--------------",
        "isBreakpoint": {name: "Show if is breakpoint"},
+       "openNodeSymbol": {name: "Open node symbol"},
        "openNodeSchematic": {name: "Open node schematic"},
        "openNodeSchematicCurrentWindow": {name: "Open schematic here"},
        "separator2": "--------------",
@@ -120,6 +121,9 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
                    //if there are some additional pre hook defined in some node which extend this user defined node run them
                    if (typeof emitter.additionalContextMenuItemsHandlerPreHook == "function") emitter.additionalContextMenuItemsHandlerPreHook(emitter, key, options);
 
+                   //for url links
+                   let params, queryParams, targetUrl;
+
                    switch(key){
                        case "setBreakpoint":
                            emitter.setStroke(3);
@@ -140,15 +144,24 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
                            else alert("Wire has no breakpoint data.");
                            break;
                        case "openNodeSchematic":
-                           let params = new URLSearchParams(window.location.search);
-                           let queryParams = {};
-                           params.forEach((value, key) => {
-                               queryParams[key] = value;
-                           });
+                           params = new URLSearchParams(window.location.search);
+                           queryParams = {};
+                           params.forEach((value, key) => {queryParams[key] = value;});
 
-                           // let targetUrl = window.location.hostname + window.location.pathname + "?";
-                           let targetUrl = "?";
+                           targetUrl = "?";
                            targetUrl += `q=ide`;
+                           targetUrl += `&projectId=` + queryParams.projectId;
+                           targetUrl += `&nodeClassName=` + emitter.NAME;
+
+                           window.open(targetUrl, "_blank");
+                           break;
+                       case "openNodeSymbol":
+                           params = new URLSearchParams(window.location.search);
+                           queryParams = {};
+                           params.forEach((value, key) => {queryParams[key] = value;});
+
+                           targetUrl = "?";
+                           targetUrl += `q=shapeDesigner`;
                            targetUrl += `&projectId=` + queryParams.projectId;
                            targetUrl += `&nodeClassName=` + emitter.NAME;
 

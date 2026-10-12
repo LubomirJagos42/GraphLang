@@ -7,5 +7,9 @@
   },
   "dependencies": {
     "puppeteer": "^22.15.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "jest": "^30.5.2"
   }
 }

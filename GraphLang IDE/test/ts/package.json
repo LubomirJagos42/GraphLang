@@ -7,7 +7,11 @@
     "build": "tsc",
     "test": "npm run build && node run-all-tests.js",
     "test:dev": "ts-node logging_1/ui_test.ts",
-    "test:node-operations": "ts-node basic_node_operations/test_schematic_node.ts"
+    "test:playwright": "ts-node logging_1/ui_test_playwright.ts",
+    "test:node-operations": "ts-node basic_node_operations/test_schematic_node.ts",
+    "test:playwright-node-operations": "ts-node basic_node_operations/test_playwright_schematic_node.ts",
+    "test:playwright-node-operations-firefox": "ts-node basic_node_operations/test_playwright_schematic_node_2.ts",
+    "test:playwright-schematic": "playwright test basic_node_operations/test_playwright_schematic_node_3.ts"
   },
   "keywords": [
     "testing",
@@ -17,10 +21,12 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/node": "^20.0.0",
     "@types/puppeteer": "^5.4.7",
-    "typescript": "^5.0.0",
-    "ts-node": "^10.9.0"
+    "playwright": "^1.63.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
   },
   "dependencies": {
     "puppeteer": "^21.0.0"

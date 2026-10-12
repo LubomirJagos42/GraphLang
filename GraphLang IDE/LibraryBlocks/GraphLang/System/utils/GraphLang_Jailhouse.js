@@ -12,10 +12,12 @@
  */
 GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
   NAME: "GraphLang.Shapes.Basic.Jailhouse",
-  init:function(attr, setter, getter)
-  {
-    this._super( $.extend({},attr), setter, getter);
+
+  init: function(attr, setter, getter) {
+    this._super($.extend({}, attr), setter, getter);
     this.userData = {};
+    this._autoResizeDisabled = false;
+    this._allowResize = false;
   },
 
   /*
@@ -26,12 +28,14 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
   translateToCppCode: function(funcParams = {}){
     let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
 
+    let codeLinesOffset = Object.hasOwn(funcParams, "codeLinesOffset") ? funcParams.codeLinesOffset : 0;
+    let compileErrorLines = Object.hasOwn(funcParams, "compileErrorLines") ? funcParams.compileErrorLines : null;
+    let breakpointParentId = Object.hasOwn(funcParams, "breakpointParentId") ? funcParams.breakpointParentId : null;
+
+    let lineNumberToFind = Object.hasOwn(funcParams, "lineNumberToFind") ? funcParams.lineNumberToFind : null;
+    let nodeName = Object.hasOwn(funcParams, "nodeName") ? funcParams.nodeName : "";
+
     cCode = "";
-
-    //cCode += "{BEGIN Multilayered Jailhouse layer id: " + this.getId() + "}\n";
-
-    //this is not running
-    //    cCode += GraphLang.Utils.translateToCppCode2(this.getCanvas(), this)
 
     /*
      *  Going through all nodes and wires inside Jailhouse and translate them into C/C++ code or call appropriate translate function
@@ -88,7 +92,7 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
       
       //if (wireTargetFigure.NAME.toLowerCase().search('tunnel') > -1) wireTargetFigure = wireTargetFigure.getParent();
       
-      //getting parent() until it's nullso that's node which is part of canvas
+      //getting parent() until it's null so that's node which is part of canvas
       //here must be while() because port can be part fo label which is part of vertical layout which is part of BundleByName
       while(wireTargetFigure.getParent() != null){
         wireTargetFigure = wireTargetFigure.getParent();
@@ -107,19 +111,54 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
 
     //3rd translate figures inside layer
     layerFigures.each(function(figureIndex, figureObj){
+
       //translate C++ declarations
       if ('translateToCppCodeDeclaration' in figureObj && typeof figureObj.translateToCppCodeDeclaration === 'function'){
-        cCode += figureObj.translateToCppCodeDeclaration(funcParams) + "\n";
+        let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
+        let adjustedParams = {
+            ...funcParams,
+            lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - lineCountBefore : null
+        };
+        cCode += figureObj.translateToCppCodeDeclaration(adjustedParams) + "\n";
+
+        //check if target line was reached by this figure's declaration
+        if (translatorObj !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null &&
+            lineNumberToFind !== null && GraphLang.Utils.getLineCount(cCode) > lineNumberToFind){
+          translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = figureObj;
+        }
       }
 
       //translate C++ node code
       if ('translateToCppCode' in figureObj && typeof figureObj.translateToCppCode === 'function'){
-        cCode += figureObj.translateToCppCode(funcParams) + "\n";
+        let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
+        let adjustedParams = {
+            ...funcParams,
+            lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - lineCountBefore : null
+        };
+        cCode += figureObj.translateToCppCode(adjustedParams) + "\n";
+
+        //check if target line was reached by this figure's code
+        if (translatorObj !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null &&
+            lineNumberToFind !== null && GraphLang.Utils.getLineCount(cCode) > lineNumberToFind){
+          translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = figureObj;
+        }
       }
 
       //translate C++ additional post code if available
       if ('translateToCppCodePost' in figureObj && typeof figureObj.translateToCppCodePost === 'function'){
-        cCode += figureObj.translateToCppCodePost(funcParams) + "\n";
+        let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
+        let adjustedParams = {
+            ...funcParams,
+            lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - lineCountBefore : null
+        };
+        cCode += figureObj.translateToCppCodePost(adjustedParams) + "\n";
+
+        //check if target line was reached by this figure's post code
+        if (translatorObj !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null &&
+            lineNumberToFind !== null && GraphLang.Utils.getLineCount(cCode) > lineNumberToFind){
+          translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = figureObj;
+        }
+
       }
 
       /*
@@ -182,8 +221,10 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
       //if there is some declaration translate it
       if (figureObj.translateToCppCodeDeclaration) pythonCode += figureObj.translateToCppCodeDeclaration() + "\n";
 
-      if (figureObj.NAME.toLowerCase().search("loop") > -1 &&
-          figureObj.NAME.toLowerCase().search("multilayered") == -1){
+      if (
+          (typeof figureObj.isLoop === "function" && figureObj.isLoop() === true) &&
+          !(typeof figureObj.isMultilayered === "function" && figureObj.isMultilayered() === true)
+      ){
         pythonCode += figureObj.translateToPythonCode() + "\n";
       }else if (figureObj.NAME.toLowerCase().search("connection") == -1){
         pythonCode += figureObj.translateToPythonCode() + "\n";                       //translation of normal nodes except wires
@@ -218,18 +259,42 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
    */
   onCatch(droppedFigure, x, y, shiftKey, ctrlKey){
     //run super() or continue just in case there is not dropped tunnel inside layer, tunnel is possible to move
-    if (droppedFigure.NAME.toLowerCase().search('tunnel') == -1){
+    if ((typeof droppedFigure.isTunnel === "function" && droppedFigure.isTunnel() === true) === false){
+
       this._super(droppedFigure, x, y, shiftKey, ctrlKey);
-      if (droppedFigure.getComposite() && droppedFigure.getComposite().getId() == this.getId()){
+
+      if (
+          (droppedFigure.getComposite() && droppedFigure.getComposite().getId() == this.getId())
+      ){
           //alert('no layer change')
       }else{
         //alert('new layer assignment')
+        let self = this;
+
         droppedFigure.getPorts().each(function(portIndex, portObj){
-    		portObj.getConnections().each(function(connectionIndex, connectionObj){
-    			GraphLang.Utils.detectTunnels2(droppedFigure.getCanvas(), connectionObj);
-    		});
+            console.log(`--> ${self.NAME} > ${self.getId()} > onCatch() > ${droppedFigure.NAME} > ${droppedFigure.getId()} > ${portObj.getParent().NAME}, ${portObj.getName()}`);
+
+          //this excludes connection going inside some loop or multilayered structure, wire going from tunnel inside or wire going from structure to rightTunnel input port what is still inside structure
+          if (
+              (typeof portObj.getParent().isLeftTunnel === "function" && portObj.getParent().isLeftTunnel() === true && portObj.NAME.toLowerCase().search(".outputport") > -1) ||
+              (typeof portObj.getParent().isRightTunnel === "function" && portObj.getParent().isRightTunnel() === true && portObj.NAME.toLowerCase().search(".inputport") > -1)
+          ){
+            console.log(`----> port excluded from tunnel detection, all its wire connection are ignored`);
+          }else{
+            portObj.getConnections().each(function(connectionIndex, connectionObj){
+              console.log(`----> detecting tunnels for wire id: ${connectionObj.getId()}`)
+              GraphLang.Utils.detectTunnels2(droppedFigure.getCanvas(), connectionObj);
+            });
+          }
   		});
       }
+
+      try{
+        droppedFigure.bringsAllTunnelsToFront()
+        console.log(`--> ${droppedFigure.NAME} > ${droppedFigure.getId()} > onCatch() > bringsAllTunnelsToFront()`);
+      }catch(e){}
+
+
     }
   },
 
@@ -237,6 +302,8 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
    *    This event is called when figure is dragged out of layer.
    */
   onDragLeave: function(draggedFigure){
+    let self = this;
+
     var previousComposite = draggedFigure.getComposite();
     if (previousComposite){
       // unassign from composite first
@@ -246,18 +313,52 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
       try{
         draggedFigure.getPorts().each(function(portIndex, portObj){
           portObj.getConnections().each(function(connIndex, connObj){
+            console.log(`--> ${self.NAME} > onDragLeave() > detecting tunnel for port ${portObj.getId()} > wire ${connectionObj.getId()}`);
             GraphLang.Utils.detectTunnels2(draggedFigure.getCanvas(), connObj);
           });
         });
       }catch(e){/* ignore if ports/connections not present */}
 
-      // ensure tunnels of the composite are displayed above its children
-      if (typeof previousComposite.bringsAllTunnelsToFront === 'function'){
-        previousComposite.bringsAllTunnelsToFront();
-      }
-
       // bring moved figure to front so it stays visible after leaving
       try{ draggedFigure.toFront(); }catch(e){}
+
+      // ensure tunnels of the composite are displayed above its children
+      try{ previousComposite.bringsAllTunnelsToFront(); }catch(e){}
     }
-  }   
+  },
+
+  // block only auto-resize; owner-driven resize goes through _allowResize
+  setDimension: function(w, h) {
+    if (this._autoResizeDisabled && !this._allowResize) return this;
+    return this._super(w, h);
+  },
+  setBoundingBox: function(r) {
+    if (this._autoResizeDisabled && !this._allowResize) return this;
+    return this._super(r);
+  },
+
+  setPersistentAttributes: function(memento) {
+    this._super(memento);
+
+    // sync internal constraint region with the loaded bounds, BEFORE locking
+    this._allowResize = true;
+    try { this.setDimension(this.getWidth(), this.getHeight()); }
+    finally { this._allowResize = false; }
+
+    const ud = this.getUserData();
+    this._autoResizeDisabled = !!(ud && ud.enableAutoresize === false);
+  },
+
+  assignFigure: function(figure) {
+    const ownerId = this.userData && this.userData.owner;
+    const isOwner  = ownerId && figure.getId && figure.getId() === ownerId;
+    const isLayer  = figure.NAME && figure.NAME.indexOf("Jailhouse") > -1;
+    if (isOwner || isLayer || figure === this) {
+      console.warn("Jailhouse.assignFigure refused:", figure.NAME, figure.getId(), "->", this.getId());
+      console.trace();
+      return;
+    }
+    return this._super(figure);
+  },
+
 });

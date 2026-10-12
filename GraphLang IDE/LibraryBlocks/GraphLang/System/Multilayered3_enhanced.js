@@ -459,55 +459,6 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3_enhanced = GraphLang.Shapes.Basic.Loo
     init: function (attr, setter, getter) {
         this._super($.extend({}, attr), setter, getter);
 
-        this._lockLayerAutoResize = function () {
-            if (!this.layers) return;
-            this.layers.each(function (idx, layer) {
-                if (!layer) return;
-                var originalSetDimension = layer._multilayerOriginalSetDimension || layer.setDimension;
-                var originalSetBoundingBox = layer._multilayerOriginalSetBoundingBox || layer.setBoundingBox;
-
-                layer._multilayerOriginalSetDimension = originalSetDimension;
-                layer._multilayerOriginalSetBoundingBox = originalSetBoundingBox;
-                layer.setDimension = function () { return this; };
-                layer.setBoundingBox = function () { return this; };
-                layer._multilayerAutoResizeDisabled = true;
-            });
-        };
-
-        this._allowLayerResize = function (fn) {
-            if (!this.layers) {
-                if (fn) return fn.call(this);
-                return;
-            }
-
-            var restore = [];
-            this.layers.each(function (idx, layer) {
-                if (!layer || layer._multilayerAutoResizeDisabled !== true) return;
-
-                restore.push(layer);
-                if (layer._multilayerOriginalSetDimension) {
-                    layer.setDimension = layer._multilayerOriginalSetDimension;
-                }
-                if (layer._multilayerOriginalSetBoundingBox) {
-                    layer.setBoundingBox = layer._multilayerOriginalSetBoundingBox;
-                }
-            });
-
-            try {
-                if (fn) return fn.call(this);
-            } finally {
-                restore.forEach(function (layer) {
-                    layer.setDimension = function () { return this; };
-                    layer.setBoundingBox = function () { return this; };
-                    layer._multilayerAutoResizeDisabled = true;
-                });
-            }
-        };
-
-        this._disableLayerAutoResize = function () {
-            this._lockLayerAutoResize();
-        };
-
         this._disableLayerAutoResize();
 
         // Always replace the active figure selection policy so only the multilayer-specific resize policy remains.
@@ -516,18 +467,14 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3_enhanced = GraphLang.Shapes.Basic.Loo
         this.installEditPolicy(new GraphLang.policy.figure.MultilayeredResizeSelectionFeedbackPolicy());
     },
 
-    addLayer: function () {
-        this._super();
+    _disableLayerAutoResize: function () {
+        this._lockLayerAutoResize();
+    },
 
-        if (!this.layers || this.layers.isEmpty()) return;
-        var lastLayer = this.layers.get(this.layers.getSize() - 1);
-        if (!lastLayer) return;
+    setPersistentAttributes: function (memento) {
+        this._super(memento);
 
-        lastLayer._multilayerOriginalSetDimension = lastLayer.setDimension;
-        lastLayer._multilayerOriginalSetBoundingBox = lastLayer.setBoundingBox;
-        lastLayer.setDimension = function () { return this; };
-        lastLayer.setBoundingBox = function () { return this; };
-        lastLayer._multilayerAutoResizeDisabled = true;
+        this._disableLayerAutoResize();
     },
 
     renewLayerChooser: function(){
@@ -536,6 +483,29 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3_enhanced = GraphLang.Shapes.Basic.Loo
         this.layerChooser.setSelectionAdapter(function () {
             return emitter_parent;   // the multilayered structure
         });
+    },
+
+    _lockLayerAutoResize: function() {
+        if (!this.layers) return;
+        this.layers.each(function(i, layer) { if (layer) layer._autoResizeDisabled = true; });
+    },
+
+    _allowLayerResize: function(fn) {
+        const layers = [];
+        if (this.layers) this.layers.each(function(i, l) { if (l) layers.push(l); });
+        const prev = layers.map(l => l._allowResize);
+        layers.forEach(l => l._allowResize = true);
+        try { return fn ? fn.call(this) : undefined; }
+        finally { layers.forEach((l, i) => l._allowResize = prev[i]); }
+    },
+
+    addLayer: function() {
+        this._super();
+        if (!this.layers || this.layers.isEmpty()) return;
+        const last = this.layers.get(this.layers.getSize() - 1);
+        if (!last) return;
+        last._autoResizeDisabled = true;
+        last.getUserData().enableAutoresize = false;
     },
 
 });

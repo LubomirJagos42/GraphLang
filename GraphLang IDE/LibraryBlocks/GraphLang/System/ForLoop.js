@@ -48,7 +48,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
    */
   onCatch(droppedFigure, x, y, shiftKey, ctrlKey){
     //run super() or continue just in case there is not dropped tunnel inside layer, tunnel is possible to move
-    if (droppedFigure.NAME.toLowerCase().search('tunnel') == -1){
+    if ( !(typeof droppedFigure.isTunnel === "function" && droppedFigure.isTunnel() === true) === true ){
       this._super(droppedFigure, x, y, shiftKey, ctrlKey);
       if (droppedFigure.getComposite() && droppedFigure.getComposite().getId() == this.getId()){
         //alert('no layer change')
@@ -79,10 +79,8 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
         });
       }catch(e){/* ignore */}
 
-      if (typeof previousComposite.bringsAllTunnelsToFront === 'function'){
-        previousComposite.bringsAllTunnelsToFront();
-      }
       try{ draggedFigure.toFront(); }catch(e){}
+      try{ previousComposite.bringsAllTunnelsToFront(); }catch(e){}
     }
   },
 
@@ -301,6 +299,11 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
           breakpointParentId: breakpointParentId,
           translatorObj: translatorObj
         }).replaceAll("\n", "\n\t");
+
+        //if searching for object which generates line try it here for wires
+        if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
+          if (GraphLang.Utils.getLineCount(cCode) >= lineNumberToFind) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = figObj;
+        }
       }
 
       GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({

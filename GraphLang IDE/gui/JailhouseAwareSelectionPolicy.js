@@ -154,7 +154,7 @@ draw2d.policy.canvas.JailhouseAwareSelectionPolicy = draw2d.policy.canvas.Boundi
     createLoopAroundSelectedObjects: function(canvas, x, y, shiftKey, ctrlKey){
         //loop mode is used ie. while of for loop is created around selected nodes
         if (
-            GLOBAL_SELECTION_NODE_MODE && ['forloop', 'whilelayer', 'multilayered'].includes(GLOBAL_SELECTION_NODE_MODE) &&
+            GLOBAL_SELECTION_NODE_MODE && ['forloop', 'whilelayer', 'multilayered', 'multilayeredenhanced'].includes(GLOBAL_SELECTION_NODE_MODE) &&
             this.selectionWidth !== null && this.selectionHeight !== null
         ){
             console.log(`--> ${GLOBAL_SELECTION_NODE_MODE} will be created from selection!`);
@@ -184,6 +184,7 @@ draw2d.policy.canvas.JailhouseAwareSelectionPolicy = draw2d.policy.canvas.Boundi
             if (GLOBAL_SELECTION_NODE_MODE === "forloop"){loopClassName = "GraphLang.Shapes.Basic.Loop2.ForLoop";}
             if (GLOBAL_SELECTION_NODE_MODE === "whilelayer"){loopClassName = "GraphLang.Shapes.Basic.Loop2.WhileLayer";}
             if (GLOBAL_SELECTION_NODE_MODE === "multilayered"){loopClassName = "GraphLang.Shapes.Basic.Loop2.Multilayered3";}
+            if (GLOBAL_SELECTION_NODE_MODE === "multilayeredenhanced"){loopClassName = "GraphLang.Shapes.Basic.Loop2.Multilayered3_enhanced";}
 
             let newLoopFigure = eval(`new ${loopClassName}()`);
             newLoopFigure.setWidth(this.selectionWidth);
@@ -196,20 +197,20 @@ draw2d.policy.canvas.JailhouseAwareSelectionPolicy = draw2d.policy.canvas.Boundi
             }
 
             //additional things specific for multilayered case structure
-            if (GLOBAL_SELECTION_NODE_MODE === "multilayered"){
+            if (["multilayered", "multilayeredenhanced"].includes(GLOBAL_SELECTION_NODE_MODE.toLowerCase())){
                 newLoopFigure.addLayer();
                 newLoopFigure.switchActiveLayer();
-                newLoopFigure = newLoopFigure.getActiveLayer(); //change fiugre to active layer of multilayered structure
+                newLoopFigure = newLoopFigure.getActiveLayer(); //change figure to active layer of multilayered structure
             }
 
             //write to console names of figures which will be grouped into loop, this is for debugging during development
-            let refCurrentJailhous = this.currentJailhouse;
+            let refCurrentJailhouse = this.currentJailhouse;
 
             // Temporarily override parent's setBoundingBox to prevent auto-resize during assignment
             let parentOriginalSetBoundingBox = null;
-            if (refCurrentJailhous !== null && refCurrentJailhous.setBoundingBox){
-                parentOriginalSetBoundingBox = refCurrentJailhous.setBoundingBox;
-                refCurrentJailhous.setBoundingBox = function(){};
+            if (refCurrentJailhouse !== null && refCurrentJailhouse.setBoundingBox){
+                parentOriginalSetBoundingBox = refCurrentJailhouse.setBoundingBox;
+                refCurrentJailhouse.setBoundingBox = function(){};
             }
 
             selectionFigures.each(function(objIndex, objRef){
@@ -217,21 +218,28 @@ draw2d.policy.canvas.JailhouseAwareSelectionPolicy = draw2d.policy.canvas.Boundi
 
                 newLoopFigure.assignFigure(objRef);
 
-                if (refCurrentJailhous !== null){
-                    refCurrentJailhous.unassignFigure(objRef);
+                if (refCurrentJailhouse !== null){
+                    refCurrentJailhouse.unassignFigure(objRef);
                 }
             });
 
             // Restore parent's original setBoundingBox method after assignment is complete
-            if (refCurrentJailhous !== null && parentOriginalSetBoundingBox !== null){
-                refCurrentJailhous.setBoundingBox = parentOriginalSetBoundingBox;
+            if (refCurrentJailhouse !== null && parentOriginalSetBoundingBox !== null){
+                refCurrentJailhouse.setBoundingBox = parentOriginalSetBoundingBox;
             }
 
-            //detect tunnels if needed
-            //snapshot: detectTunnels2 adds new HoverConnections to the canvas, so never iterate the live list
-            let linesSnapshot = canvas.getLines().clone();
+            //Take ONLY LINES which are going from selectionFigures list
+            let linesSnapshot = new draw2d.util.ArrayList();
+            selectionFigures.each(function(figureIndex, figureObj){
+                figureObj.getPorts().each(function(portIndex, portObj){
+                    linesSnapshot.addAll(portObj.getConnections());
+                });
+            });
+
+            //Detect tunnels over lines going from selected objects
             linesSnapshot.each(function(connectionIndex, connectionRef){
                 if (connectionRef.getCanvas() === null) return;   // wire was removed meanwhile
+
                 GraphLang.Utils.detectTunnels2(canvas, connectionRef);
             });
 

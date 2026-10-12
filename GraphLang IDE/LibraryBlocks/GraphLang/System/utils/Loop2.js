@@ -5,15 +5,13 @@
  */
 
 GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
+
   NAME: "GraphLang.Shapes.Basic.Loop2",
+
   constructor(obj){
     obj && Object.assign(this, obj);
   },
-  // //This doesn't run, don't know why, so initialization for userData is done in init()
-  // userData: {
-  //   executionOdrder: -1,
-  //   wasTranslatedToCppCode: false
-  // },
+
   init:function(attr, setter, getter){
     this._super(attr, setter, getter);
     this.userData = {};
@@ -38,6 +36,35 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
       }
       return;
     };
+  },
+
+  /**
+   * @method toFront
+   * @description Override original method add brings tunnel to fron since .toFront() is called even when .assignFigure(figureObj) is used and in case of jailhouse
+   * it brings to fron jailhouse canvas and tunnels are overllaped so their ports inside jailhouse are not visible and wire seems to finish in canvas.
+   * @param figure
+   */
+  toFront: function(figure){
+    this._super(figure)
+
+    //TODO: Need check but brings tunnels to front only in case that loop is set to visible.
+    if (this.isVisible() === true){
+        this.bringsAllTunnelsToFront();
+    }
+  },
+  toBack: function(figure){
+    this._super(figure)
+    this.bringsAllTunnelsToBack();
+  },
+  setVisible: function(flag){
+    this._super(flag);
+
+    //setVisible for all child tunnels also
+    this.getChildren().each(function (childIndex, childObj) {
+      if (typeof childObj.isTunnel === "function" && childObj.isTunnel() === true) {
+        childObj.setVisible(flag);
+      }
+    });
   },
 
   //THIS IS MY FUNCTION TO GET INPUT PORTS LIST FOR THIS Loop
@@ -246,7 +273,7 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
      let multilayeredList = new draw2d.util.ArrayList();
      multilayeredList.push(this);
      childrenList.each(function(figureIndex, figureObj){
-       if (figureObj.NAME.toLowerCase().search("multilayered") > -1){
+       if (typeof figureObj.isMultilayered === "function" && figureObj.isMultilayered() === true){
            let nestedMultilayeredList = figureObj.getVisibleLoopAndMultilayered();
            if (!nestedMultilayeredList.isEmpty()) multilayeredList.addAll(nestedMultilayeredList); //recursive call to add all nested multilayered figures
        }else{
@@ -268,12 +295,19 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
    */
   bringsAllTunnelsToFront: function(){
     this.getChildren().each(function(childIndex, childObj){
-      if (childObj.NAME.toLowerCase().search("tunnel") >= 0){
+      if (typeof childObj.isTunnel === "function" && childObj.isTunnel() === true) {
         childObj.toFront();
       }
     });
   },
-  
+  bringsAllTunnelsToBack: function () {
+    this.getChildren().each(function (childIndex, childObj) {
+      if (typeof childObj.isTunnel === "function" && childObj.isTunnel() === true) {
+        childObj.toBack();
+      }
+    });
+  },
+
   getActiveLayer: function(){
   	return this;
   },

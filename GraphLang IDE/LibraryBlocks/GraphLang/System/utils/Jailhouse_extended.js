@@ -34,7 +34,7 @@ draw2d.shape.composite.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
         if (!this.getUserData()){
             this.userData = {isCluster: isCluster};
         }else{
-            this.getUserData().isCluster = isClass;
+            this.getUserData().isCluster = isCluster;
         }
     },
 

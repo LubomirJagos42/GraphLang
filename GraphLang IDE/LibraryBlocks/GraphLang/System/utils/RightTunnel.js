@@ -5,5 +5,9 @@
  *  from structure into case, loop structure into parent structure (canvas, another parent loop or case structure).
  */
 GraphLang.Shapes.Basic.RightTunnel = GraphLang.Shapes.Basic.Tunnel.extend({
-    NAME: "GraphLang.Shapes.Basic.RightTunnel"
+    NAME: "GraphLang.Shapes.Basic.RightTunnel",
+
+    isRightTunnel: function(){
+        return true;
+    },
 });

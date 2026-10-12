@@ -247,7 +247,11 @@ ConvertDatatype = GraphLang.UserDefinedNode.extend({
         /*
          *  General implementation for all output and just first input wire as they cannot be more than one
          */
-        let outputDatatype = this.getInputPort("castDatatype").getConnections().first().getDatatype();
+        let outputDatatype = "undefined";
+        try {
+            outputDatatype = this.getInputPort("castDatatype").getConnections().first().getDatatype();
+        }catch(e){
+        }
 
         let outputPort = this.getOutputPort("convertedVariable");
         let inputWire = this.getInputPort(0).getConnections().first();  //get just first connected wire

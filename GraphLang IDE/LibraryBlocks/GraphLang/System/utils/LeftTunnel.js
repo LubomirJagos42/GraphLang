@@ -5,5 +5,9 @@
  *  from outside world into case, loop structure.
  */
 GraphLang.Shapes.Basic.LeftTunnel = GraphLang.Shapes.Basic.Tunnel.extend({
-    NAME: "GraphLang.Shapes.Basic.LeftTunnel"
+    NAME: "GraphLang.Shapes.Basic.LeftTunnel",
+
+    isLeftTunnel: function(){
+        return true;
+    },
 });
