@@ -21,41 +21,46 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
         /**********************************************************************************
          *  LAYERS
          **********************************************************************************/
-
         this.setParent(null);
 
         this.activeLayer = 0;
-        /*
-         *  ADD BY DEFAULT 3 LAYERS, for debugging purposes now
-         */
         this.layers = new draw2d.util.ArrayList();
-        /*  NOT POSSIBLE TO ADD LAYER BECAUSE OBJECT DOESN'T EXISTS ON CANVAS PHYSICALLY SO IT WILL HAVE NO EFFECT THIS
-        this.addLayer();
-        */
 
         /**********************************************************************************
-         *  LAYER SELECTOR
+         *  Default helper ornaments for node
+         *      - layer selector input port
+         *      - layer chooser on top to switch by click between layers
+         *      - page indicator
          **********************************************************************************/
-
         this.renewLayerChooser();
-        this.renewLayerSelector();  //NOT WORKING WHEN LOADING FROM FILE
+        this.renewLayerSelector();  //TODO: NOT WORKING WHEN LOADING FROM FILE, need check
+        this.renewPageIndicator();
 
-        //USER DATA/
-        if (this.getUserData() == false) this.userData = {};
+        /**********************************************************************************
+         *  Creates userData property if not exists and set additional flags needed for
+         *  transcription process to code.
+         **********************************************************************************/
+        if (this.getUserData() == false){
+            this.userData = {};
+        }
         this.userData.executionOrder = 1;
-        // Tunnel detection scans top-level loops on the canvas. Multilayered3
-        // must identify itself as a loop so its own boundary is included.
-        this.setIsLoop(true);
-        this.setIsMultilayered(true);
         this.userData.wasTranslatedToCppCode = false;
 
-        this.renewPageIndicator();
+        /**********************************************************************************
+         *  Flags for node
+         *      - isLoop = false
+         *      - isMultilayered = true
+         *  Multilayered structure is not loop, but tunnel detection algorithm must also
+         *  check them and apply tunnels when wire is crossing their boundaries.
+         **********************************************************************************/
+        this.setIsLoop(false);
+        this.setIsMultilayered(true);
     },
 
+    /**
+     * @description Creates page indicator label in bottom left corner
+     */
     renewPageIndicator: function(){
-        /**********************************************************************************
-         *  Page indicator in bottom left corner
-         */
         this.pageIndicator = new draw2d.shape.basic.Label({text: "page 0", outlineStroke: 0, stroke: 0});
         this.add(this.pageIndicator, new draw2d.layout.locator.XYRelPortLocator(0, 100));
     },
@@ -274,10 +279,11 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
     getPersistentAttributes: function () {
         var memento = this._super();
 
+        memento.userData.activeLayer = this.activeLayer; //add activeLayer index into userData to be saved
+
         // add all decorations to the memento
-        //
-        memento.labels = [];                                        //custom labels save, here will be tunnles and label for switch layers saved
-        memento.ports = [];                                         //custom ports save
+        memento.labels = []; //custom labels save, here will be tunnels and label for switch layers saved
+        memento.ports = [];  //custom ports save
 
         this.children.each(function (i, e) {
             var labelJSON = e.figure.getPersistentAttributes();
@@ -318,11 +324,15 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
         memento.ports = [];
         memento.labels = [];
         this._super(memento);           //CALLING PARENT METHOD, these will re-recreate this showSelectedObjExecutionOrder
-        // Older saved multilayered structures may not have the isLoop flag.
-        this.setIsLoop(true);
+
+        this.setIsLoop(false);  // older saved multilayered structures may not have the isLoop flag
+        try {
+            this.activeLayer = memento.userData.activeLayer || 0;   //backward compatibility
+        }catch(e){
+            console.log(e)
+        }
 
         // remove all decorations created in the constructor of this element
-        //
         this.resetChildren();
 
         // and add all children of the JSON document.
@@ -330,7 +340,6 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
 
             //FOR TUNNELS THERE IS NEEDED FOR THEIR RESTORE ALSO READ LOCATORS POSITION which is stored in previous function getPers...
             curDatatype = json.type;
-
 
             /*
              *  HERE IS REALLY IMPORTANT TO SET SAME ID TO TUNNEL AS IT WAS SAVED, it then creates ports for that tunnel with same id as from file and wires can be connected to that
@@ -344,7 +353,7 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
                 var locator = eval("new draw2d.layout.locator.XYAbsPortLocator(" + json.x + "," + json.y + ")"); //DEFAULT LOCATOR
             }
 
-            this.add(figure, locator);                                                                    // add the new figure as child to this figure
+            this.add(figure, locator);  //add the new figure as child to this figure
 
 
         }, this));
@@ -490,34 +499,6 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
         layerChooserEditor = new draw2d.ui.LabelEditor();			//prompt editor at top of page
         layerChooserEditor.start(this.layerChooser);
         this.layers.get(this.activeLayer).userData.layerText = this.layerChooser.getText();
-    },
-
-    /**
-     * @method getVisibleLoopAndMultilayered
-     * @description Return all loops and multilayered objects from all nested loops and multilayered objects.
-     * @returns {draw2d.util.ArrayList}
-     */
-    getVisibleLoopAndMultilayered: function () {
-        if (this.layers.isEmpty()) return new draw2d.util.ArrayList();  //if empty return empty ArrayList
-
-        let childrenList = this.layers.get(this.activeLayer).getAssignedFigures();
-        let multilayeredList = new draw2d.util.ArrayList();
-        multilayeredList.push(this);
-        childrenList.each(function (figureIndex, figureObj) {
-            if (typeof figureObj.isMultilayered === "function" && figureObj.isMultilayered() === true) {
-                let nestedMultilayeredList = figureObj.getVisibleLoopAndMultilayered();
-                if (!nestedMultilayeredList.isEmpty()) multilayeredList.addAll(nestedMultilayeredList); //recursive call to add all nested multilayered figures
-            } else {
-                if (
-                    // figureObj.NAME.toLowerCase().search("loop") > -1    //DEPRECATED this was done here in beginning where not much code was written and figures were recognized based on their names
-                   figureObj.getUserData() && figureObj.isLoop && figureObj.isLoop() == true
-                ){
-                    multilayeredList.push(figureObj); //add also loop into list
-                }
-            }
-        });
-
-        return multilayeredList;
     },
 
     /**

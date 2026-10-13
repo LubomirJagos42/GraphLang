@@ -240,6 +240,7 @@ In progress features
     - it will look into userData.datatype variable, parent node or somewhere else
 
 
+- whe wire going tunnel to tunnel between multiple loops and multilayered wire connection is not generated at the last one between two tunnels
 
 
 

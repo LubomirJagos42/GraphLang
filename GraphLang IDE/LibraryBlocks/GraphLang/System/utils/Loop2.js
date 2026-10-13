@@ -268,25 +268,47 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
    * @returns {draw2d.util.ArrayList}
    */
    getVisibleLoopAndMultilayered: function(){
+       let structureObj = this;
+       // console.log(`--> ${structureObj.getId()}`);
 
-     let childrenList = this.getAssignedFigures();
-     let multilayeredList = new draw2d.util.ArrayList();
-     multilayeredList.push(this);
-     childrenList.each(function(figureIndex, figureObj){
-       if (typeof figureObj.isMultilayered === "function" && figureObj.isMultilayered() === true){
-           let nestedMultilayeredList = figureObj.getVisibleLoopAndMultilayered();
-           if (!nestedMultilayeredList.isEmpty()) multilayeredList.addAll(nestedMultilayeredList); //recursive call to add all nested multilayered figures
-       }else{
-         if (
-             // figureObj.NAME.toLowerCase().search("loop") > -1    //DEPRECATED this was done here in beginning where not much code was written and figures were recognized based on their names
-            figureObj.getUserData() && figureObj.isLoop && figureObj.isLoop() == true
-         ){
-           multilayeredList.push(figureObj); //add also loop into list
-         }
+       let loopAndMultilayeredList = new draw2d.util.ArrayList();
+
+       //loop
+       let currentAssignedFiguresList = new draw2d.util.ArrayList();
+       if (
+           (typeof structureObj.isLoop === "function" && structureObj.isLoop() === true)
+       ){
+           loopAndMultilayeredList.push(structureObj);
+           currentAssignedFiguresList = structureObj.getAssignedFigures();
        }
-     });
 
-     return multilayeredList;
+       //multilayered
+       if (
+           (typeof structureObj.isMultilayered === "function" && structureObj.isMultilayered() === true)
+       ){
+           loopAndMultilayeredList.push(structureObj);
+
+           //TODO: There is some error with loading multilayered structure, probably layerChooser is wrong renewd what causing error, this will stop everything
+           //so in error case return empty arraylist
+           try{
+               currentAssignedFiguresList = structureObj.getActiveLayer().getAssignedFigures();
+           }catch(e){
+               console.warn(`--> TODO: Following is error, needs to be repaired, look into code for comment! (object id: ${structureObj.getId()})`);
+               console.error(e);
+               return loopAndMultilayeredList;
+           }
+       }
+
+       currentAssignedFiguresList.each(function (nestedFigureIndex, nestedLayerFigureObj) {
+           if (
+               typeof nestedLayerFigureObj.getVisibleLoopAndMultilayered === "function"
+           ) {
+               //recursive call to add all nested multilayered figures
+               loopAndMultilayeredList.addAll(nestedLayerFigureObj.getVisibleLoopAndMultilayered());
+           }
+       });
+
+     return loopAndMultilayeredList;
    },
 
   /**

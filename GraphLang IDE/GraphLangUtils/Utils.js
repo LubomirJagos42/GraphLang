@@ -105,41 +105,8 @@ var createConnection=function(sourcePort, targetPort){
 GraphLang.Utils.detectTunnels2 = function(canvas, wire = null){
   if (wire == null) return;		//tunnel detection is for particular wire, if not set this ends
 
-  let loopList = new draw2d.util.ArrayList();
+  let loopList = GraphLang.Utils.getVisibleLoopsAndMultilayered(canvas);
   let connectionList = new draw2d.util.ArrayList();
-
-  /*
-   *  Gathering all multilayered structures
-   *      - THIS IS IMPORTANT part of this method since it collects all child or assigned loops, here are figures/loops collected into array
-   *        and later that loopList is just evaluated by traversing throug all gathered referencies
-   *      
-   *      IMPORTANT: We need to collect ALL loops from canvas, not just from one parent loop, to handle nested loops properly
-   */
-  canvas.getFigures().each(function(figureIndex, figureObj){
-    if (
-        // DEPRECATED - this was old way from beginning, later there was added method .isLoop() for real loops
-        // figureObj.NAME.search("GraphLang.Shapes.Basic.Loop") > -1 &&
-        // figureObj.NAME.toLowerCase().search("clusterdatatype") == -1 &&
-        figureObj.getComposite() == null &&
-        figureObj.isLoop && figureObj.isLoop() === true
-    ){
-      // Add the loop itself first if it's not already added since this loop iterate over all loops even nested ones
-      if (!loopList.contains(figureObj)) {
-          loopList.push(figureObj);
-      }
-      
-      // Then add all nested loops from getVisibleLoopAndMultilayered
-      let nestedLayeredList = figureObj.getVisibleLoopAndMultilayered();
-      if (!nestedLayeredList.isEmpty()) {
-        // Add all nested loops, but avoid duplicates
-        nestedLayeredList.each(function(nestedIndex, nestedObj){
-          if (!loopList.contains(nestedObj)) {
-            loopList.push(nestedObj);
-          }
-        });
-      }
-    }
-  });
 
   /*
    *	DETECT INTERSECTION WITH WIRE AND EACH MULTILAYERED STRUCTURED AND GATHER ALL NEEDED INFORMATION
@@ -401,7 +368,7 @@ GraphLang.Utils.detectTunnels2 = function(canvas, wire = null){
 
   for (k = 0; k < addedTunnels.length; k++){
          /*
-          *		This calculation of realtive position is not totaly correct, because when resizing loop its width and height
+          *		This calculation of relative position is not totally correct, because when resizing loop its width and height
           *		is changing, but locator percentage is still same and not changing accordingly to new width and height of loop,
           *		it was normalized by the previous dimensions and dimension of tunnels is not changing, so right resize method
           *		would be recalculate relative locator, or figure out how to snap tunnels to right and left and top and
@@ -457,7 +424,7 @@ GraphLang.Utils.detectTunnels2 = function(canvas, wire = null){
 		*/
 
 		/*
-		 *	If source is tunnel and it's going through structure WireConnection is added to wire to not broke multilayer structure
+		 *	If source is tunnel and directly connects tunnels of same structure WireConnection is added to wire to not broke multilayer structure
 		 */
 		if (
 			wire.getSource().getParent().NAME.toLowerCase().search("tunnel") > -1 &&
@@ -550,9 +517,8 @@ GraphLang.Utils.detectTunnels2 = function(canvas, wire = null){
   }
   */
 
-  /*
-   *  PUTTING LABELS ON WIRES
-y  *?
+   /*
+    *  PUTTING LABELS ON WIRES
    /*
   let lineSegments = wire.getSegments();
   orderCounter = 0;
@@ -883,7 +849,7 @@ GraphLang.Utils.getNodeLoopOwner = function(canvas, nodeObj){
   loopList.each(function(loopIndex, loopObj){
     if (
         (typeof loopObj.isLoop === "function" && loopObj.isLoop() == true) &&
-        !(typeof loopObj.isMultilayered === "function" || loopObj.isMultilayered() === false)   //this condition part excludes multilayered case structures
+        !(typeof loopObj.isMultilayered === "function" && loopObj.isMultilayered() === true)   //this condition part excludes multilayered case structures
     ){
 
       //CASE 1 - node is inside while loop, for loop
@@ -2099,26 +2065,20 @@ GraphLang.Utils.saveSchematic2 = function(canvas, filename, type) {
 /**
  *  @method getVisibleLoopsAndMultilayered
  *  @param {draw2d.canvas} canvas - Canvas where schematic is located.
- *  @description Returns visible loops and multilayered structures. So if there are some loops on hidden layers they are not returned.
+ *  @description Ask canvas for just loop and multilayered structures and then each of them ask about their visible loops and multilayered.
  */
 GraphLang.Utils.getVisibleLoopsAndMultilayered = function(canvas) {
     let loopList = new draw2d.util.ArrayList();
     canvas.getFigures().each(function(figureIndex, figureObj){
-      //searching for loops starts from top canvast, therefore there must be condition that node is not assigned to any other loop or multilayered node
-      //and that it's loop
       if (
           figureObj.getComposite() == null &&
-          figureObj.isLoop && typeof figureObj.isLoop === "function" && figureObj.isLoop() == true
+          (
+              (typeof figureObj.isLoop === "function" && figureObj.isLoop() == true) ||
+              (typeof figureObj.isMultilayered === "function" && figureObj.isMultilayered() == true)
+          )
       ){
-        let nestedLayeredList = figureObj.getVisibleLoopAndMultilayered();
-
-        // add loop reference just in case it's not already in list
-        nestedLayeredList.each(function(nestedLoopIndex, nestedLoopRef){
-            if (!loopList.contains(nestedLoopRef)) {
-                loopList.push(nestedLoopRef);
-            }
-        });
-
+        //this will produce ArrayList of visible structure with their reference also!!! No need to add it, this is how it is correct!
+        loopList.addAll(figureObj.getVisibleLoopAndMultilayered());
       }
     });
 
