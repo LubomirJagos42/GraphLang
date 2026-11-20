@@ -2,14 +2,63 @@
  *  Utils.js by LuboJ
  */
 
+/**
+ * Top-level GraphLang namespace initialized in the host HTML page.
+ * @namespace GraphLang
+ * @global
+ */
+
+/**
+ * drawd2d library used for this app
+ * @namespace draw2d
+ * @global
+ */
+
+/**
+ * drawd2d UI part of library used for this app
+ * @namespace draw2d.ui
+ * @memberOf draw2d
+ */
+
+/**
+ * drawd2d policy part of library to extend its functionality
+ * @namespace draw2d.policy
+ * @memberOf draw2d
+ */
+
+/**
+ * drawd2d policy for canvas extensions
+ * @namespace draw2d.policy.canvas
+ * @memberOf draw2d.policy
+ */
+
+/**
+ * drawd2d connection wire extended methods
+ * @namespace draw2d.Connection
+ * @memberOf draw2d
+ */
+
 lastCreatedConnection = null;
+/**
+ * Currently loaded node
+ * @var {Object}
+ */
 GLOBAL_MAIN_CANVAS_LOADED_NODE = null;
+/**
+ * Currently loaded node, helper object
+ * @var {Object}
+ */
 GLOBAL_HELPER_CANVAS_LOADED_NODE = null;
+/**
+ * Selection mode used at the moment identified by string used on multiple app locations in code.
+ * @var {("forloop" | "whilelayer" | "multilayered" | "multilayeredenhanced" | null)}
+ */
 GLOBAL_SELECTION_NODE_MODE = null;
 
 /**
- *  @class GraphLang.Utils
+ *  @namespace GraphLang.Utils
  *  @description Base class for GraphLang utils
+ *  @memberOf GraphLang
  */
 GraphLang.Utils = Class.extend({
   NAME: "GraphLang.Utils",
@@ -22,6 +71,7 @@ GraphLang.Utils = Class.extend({
 
 /**
  *  @method detectJoints
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas - from where is taken schematic
  *  @description This function puts some mark at wires crossing. For now there will be point inserted.
  */
@@ -66,6 +116,7 @@ GraphLang.Utils.detectJoints = function(canvas){
 
 /**
  *  @method createConnection
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.InputPort} sourcePort - beginning of wire
  *  @param {draw2d.OutputPort} targetPort - end of wire
  *  @description CREATES wire connection btw source and target
@@ -99,6 +150,7 @@ var createConnection=function(sourcePort, targetPort){
 
 /**
  *  @method detectTunnels2
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas - schematic in which is loop located
  *  @description Rework function to detectTunnels.
  */
@@ -564,6 +616,7 @@ GraphLang.Utils.detectTunnels2 = function(canvas, wire = null){
 
 /**
  *  @method initAllPortToDefault
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas - schematic where ports will be set to default
  *  @description Set default value for all ports. FOR NOW SET VALUE OF EACH PORT TO 0.
  */
@@ -729,6 +782,7 @@ GraphLang.Utils.initAllPortToDefault = function(canvas){
 
 /**
  *  @method showPortExecutionOrder
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas - schematic where will be displayed execution order for nodes and tunnels
  *  @description Put label with port execution order next to each port which is children of canvas. Means it was added to canvas no to object like loop.
  */
@@ -758,6 +812,7 @@ GraphLang.Utils.showPortExecutionOrder = function(canvas){
 }
 /**
  *  @method bringToFront
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas - from where is taken actual selection
  *  @description Bring to front actual selected figure in canvas.
  */
@@ -772,6 +827,7 @@ GraphLang.Utils.bringToFront = function(canvas){
 
 /**
  *  @method bringToBack
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas
  *  @description Moves selected objects to back.
  */
@@ -786,6 +842,7 @@ GraphLang.Utils.bringToBack = function(canvas){
 
 /**
  *  @method showNodes
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas - schematic where will be place labels next to ports
  *  @description Put label "-1" into middle of all nodes. This is method for debugging to see how IDE see nodes, what all is node.
  */
@@ -823,6 +880,7 @@ GraphLang.Utils.showNodes = function(canvas){
 
 /**
  *  @method getNodeLoopOwner
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas - schematic from which is node or loop
  *  @param {draw2d.shape.Node} nodeObj=null - node or loop objec which is inspected for its loop owner
  *  @description Return loop which owns node, if there's no loop return null.
@@ -876,6 +934,7 @@ GraphLang.Utils.getNodeLoopOwner = function(canvas, nodeObj){
 
 /**
  *  @method getLoopDirectChildrenNodes
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas - schematic in which is loop located
  *  @param {GraphLang.Shapes.Basic.Loop} parentLoop - loop which children are required, default value null
  *  @description Returns nodes which are direct descendant of loop, so there are no nodes nested inside other inner loops. If parent loop is not provided or undefined it return all nodes which are direct children of canvas.
@@ -897,6 +956,7 @@ GraphLang.Utils.getLoopDirectChildrenNodes = function(canvas, parentLoop = null)
 
 /**
  *  @method getDirectChildrenWithoutTunnels
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas - schematic in which is loop located
  *  @param {GraphLang.Shapes.Basic.Loop} parentLoop - loop which children are required, default value null
  *  @description Returns direct children of provided object. These returns objects which are not nested inside loop. Also return loops objects. If parent object is not provided it returns direct canvas children.
@@ -926,6 +986,7 @@ GraphLang.Utils.getDirectChildrenWithoutTunnels = function(canvas, parentObj){
 
 /**
  *  @method executionOrder
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas
  *  @description Returns execution order in which nodes run.
  */
@@ -1118,6 +1179,7 @@ GraphLang.Utils.executionOrder = function executionOrder(canvas){
 
 /**
  *  @method loopsRecalculateAbroadFigures
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas - schematic which will be recalculated
  *  @description Reevaluate children nodes of every loop on canvas. This function was implemented because sometimes it looks like there are problems with this when new loops are added.
  *
@@ -1137,6 +1199,7 @@ GraphLang.Utils.loopsRecalculateAbroadFigures = function(canvas){
 
 /**
  *  @method initLoopsZOrder
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas - schematic where correcting z-order should happen
  *  @description EXPERIMENTAL! STILL WRONG. <br/><br/>Go through all loops in schematic and setup right their z-order. This function is implemented because z-order is probably not right after loading schematic, so this function set it. If it's loaded correctly it should have no imapct on schematic.
  */
@@ -1194,6 +1257,7 @@ GraphLang.Utils.initLoopsZOrder = function(canvas){
 
 /**
  *  @method showSelectedObjExecutionOrder
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas - fromt here is taken selected object
  *  @description Display execution order of current highlighted object.
  */
@@ -1204,6 +1268,7 @@ GraphLang.Utils.showSelectedObjExecutionOrder = function(canvas){
 
 /**
  * @method setWiresColorByPorts
+ * @memberOf GraphLang.Utils
  * @param {draw2d.Canvas} canvas - schematic where wire will be colorized
  * @description Colorize all wires in schematic according to port datatypes.
  */
@@ -1280,6 +1345,7 @@ GraphLang.Utils.setWiresColorByPorts = function setWiresColorByPorts(canvas){
 
 /**
  * @method getCanvasJson
+ * @memberOf GraphLang.Utils
  * @param {draw2d.Canvas} canvas - schematic which will be serialized to JSON
  * @returns {object} JSON which should go to output: file or server sql
  * @description For selected loop show number of tunnels.
@@ -1320,8 +1386,9 @@ GraphLang.Utils.getCanvasJson = function (canvas) {
 
 /**
  * @method getCanvasAsObjectString
+ * @memberOf GraphLang.Utils
  * @param {draw2d.Canvas} canvas - schematic which will be serialized to JSON
- * @returns {String}  string containing whole class definition
+ * @returns {string}  string containing whole class definition
  * @description Creates class definition for GraphLang to load.
  */
 GraphLang.Utils.getCanvasAsObjectString = function(canvas){
@@ -1466,6 +1533,7 @@ GraphLang.Utils.getCanvasAsObjectString = function(canvas){
 
 /**
  * @method getCanvasAsPNG
+ * @memberOf GraphLang.Utils
  * @param {draw2d.Canvas} canvas - schematic which will be exported as PNG base64 encoded.
  * @description Copy diagram as PNG image.
  */
@@ -1539,6 +1607,7 @@ GraphLang.Utils.getCanvasAsPNG = function(canvas){
 
 /**
  * @method setPortsColorByDatatype
+ * @memberOf GraphLang.Utils
  * @param {draw2d.Canvas} canvas - schematic where ports will be colorized
  * @description Colorize all ports in schematic according to theirs datatypes.
  */
@@ -1557,6 +1626,7 @@ GraphLang.Utils.setPortsColorByDatatype = function setWiresColorByPorts(canvas){
 
 /**
  *  @method setTunnelColorByWire
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas - source canvas from where take tunnels, all included one which belongs to loop structures
  *  @description Change color of each tunnel by connected wire datatype.
  */
@@ -1587,9 +1657,10 @@ GraphLang.Utils.setTunnelColorByWire = function(canvas){
 
 /**
  *  @method rewriteIDtoNumbers
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas
  *  @description Rewrite in output code all IDs to normal numbers to make output code more readible
- *  @returns {String} Translated code with rewiritten ID to something more readible - normal numbers, so code is shorter and nicer looking.
+ *  @returns {string} Translated code with rewiritten ID to something more readible - normal numbers, so code is shorter and nicer looking.
  */
 GraphLang.Utils.rewriteIDtoNumbers = function(canvas, cCode, additionalIdList = null, additionalIdNoHyphenList = null){
   var allIdList = new draw2d.util.ArrayList();
@@ -1645,6 +1716,7 @@ GraphLang.Utils.rewriteIDtoNumbers = function(canvas, cCode, additionalIdList = 
 
 /**
  *  @method correctWiresAfterLoad
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas
  *  @description Correct wires targets, because some connection have attribute tunnel to which they are attached so need to set this target also here.
  */
@@ -1690,6 +1762,7 @@ GraphLang.Utils.correctWiresAfterLoad = function(canvas){
 
 /**
  *  @method readSingleFile
+ *  @memberOf GraphLang.Utils
  *  @param {HTMLInputFileTag} e Javascript object for input file tag placed somewhere in toolbar or else.
  *  @description Registered on some file input, at it change it will read chosen file and display its content.
  */
@@ -1708,6 +1781,7 @@ GraphLang.Utils.readSingleFile = function(e){
 
 /**
  *  @method readSingleFile2
+ *  @memberOf GraphLang.Utils
  *  @param {HTMLInputFileTag} e Javascript object for input file tag placed somewhere in toolbar or else.
  *  @description Registered on some file input, at it change it will read chosen file and display its content.
  */
@@ -1732,7 +1806,8 @@ GraphLang.Utils.readSingleFile2 = function(e){
 
 /**
  *  @method displayContents
- *  @param {String} content String content to display
+ *  @memberOf GraphLang.Utils
+ *  @param {string} content String content to display
  *  @description Translates schematic on given canvas to C/C++ code as function which can be called in other diagrams using symbol with assign schematic.
  */
 GraphLang.Utils.displayContents = function(contents){
@@ -1801,7 +1876,8 @@ GraphLang.Utils.loadedNodeShapeAndSchematicStr = null;
 
 /**
  *  @method displayContentsFromClass
- *  @param {String} content String content to display
+ *  @memberOf GraphLang.Utils
+ *  @param {string} content String content to display
  *  @param {Object} canvas  Target canvas where content should be displayed
  *  @description Translates schematic on given canvas to C/C++ code as function which can be called in other diagrams using symbol with assign schematic.
  */
@@ -1930,6 +2006,7 @@ GraphLang.Utils.displayContentsFromClass = function(contents, canvasObj){
 
 /**
  *  @method displayContents2
+ *  @memberOf GraphLang.Utils
  *  @param {Object} jsonDocument JSON object which will be display
  *  @param {canvas} canvasObj  Target canvas where content is displayed
  *  @description Translates schematic on given canvas to C/C++ code as function which can be called in other
@@ -2007,10 +2084,11 @@ GraphLang.Utils.displayContents2 = function (jsonDocument, canvasObj, schematicN
 }
 
 /**
- *  @method `saveSchematic`
+ *  @method saveSchematic
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.canvas} canvas - Canvas where schematic is located.
- *  @param {String} filename
- *  @param {String} type
+ *  @param {string} filename
+ *  @param {string} type
  *  @description Download current schematic as txt file with provided name.
  */
 GraphLang.Utils.saveSchematic = function(canvas, filename, type) {
@@ -2035,9 +2113,10 @@ GraphLang.Utils.saveSchematic = function(canvas, filename, type) {
 
 /**
  *  @method saveSchematic2
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.canvas} canvas - Canvas where schematic is located.
- *  @param {String} filename
- *  @param {String} type
+ *  @param {string} filename
+ *  @param {string} type
  *  @description Download current schematic as txt file with provided name.
  */
 GraphLang.Utils.saveSchematic2 = function(canvas, filename, type) {
@@ -2064,6 +2143,7 @@ GraphLang.Utils.saveSchematic2 = function(canvas, filename, type) {
 
 /**
  *  @method getVisibleLoopsAndMultilayered
+ *  @memberOf GraphLang.Utils
  *  @param {draw2d.canvas} canvas - Canvas where schematic is located.
  *  @description Ask canvas for just loop and multilayered structures and then each of them ask about their visible loops and multilayered.
  */
@@ -2100,12 +2180,11 @@ GraphLang.Utils.getUniqueNodeLabel = function(canvas, nodeLabel = "nodeLabel"){
 }
 
 /**
- * This will scan all user defined nodes and return array, cluster, ... names, all names what is possible to use for pointers.
- *
- * TODO now it's traversing through all user defined nodes JSON and not canvas of current opened node so there should be added scan
- * through canvas
- *
- * @returns {*}
+ * @memberOf GraphLang.Utils
+ * @description This will scan all user defined nodes and return array, cluster, ... names, all names what is possible to use for pointers.
+ *  TODO now it's traversing through all user defined nodes JSON and not canvas of current opened node so there should be added scan
+ *  through canvas
+ * @returns null
  */
 GraphLang.Utils.getAllDatatypesForPointers = function(){
     let allDatatypesForPointersList = new draw2d.util.ArrayList();
@@ -2159,6 +2238,7 @@ GraphLang.Utils.getAllDatatypesForPointers = function(){
 
 /**
  * @method getAllDatatypesForConstant
+ * @memberOf GraphLang.Utils
  * @description This will scan all user defined nodes and return cluster datatypes for constant node and classic datatypes.
  *    TODO now it's traversing through all user defined nodes JSON and not canvas of current opened node so there should be added scan through canvas
  *
@@ -2215,10 +2295,11 @@ GraphLang.Utils.getAllDatatypesForConstant = function(){
 
 /**
  * @method getClusterDatatypeDefinitionFromUserDefinedNode
+ * @memberOf GraphLang.Utils
  * @description This will scan all user defined nodes and return cluster datatypes for constant node and classic datatypes.
  *    This is using 2nd helper canvas to load schematic with cluster definition if found and return it's reference to be alive and have all functions
  *    which are available when node is loaded on canvas.
- * @returns {name: string, displayName: string}
+ * @returns {Object} Object containing `name` and `displayName` strings.
  */
 GraphLang.Utils.getClusterDatatypeDefinitionFromUserDefinedNode = function(clusterName){
     let clusterObj = null;
@@ -2263,9 +2344,10 @@ GraphLang.Utils.ErrorList = {
 
 /**
  *  @method validateCanvas
+ *  @memberOf GraphLang.Utils
  *  @param {Object} canvasObj - Canvas which will be checked
- *  @param {String} canvasOwnerName - if provided this is name of owner node, ie. this canvas is diagram of some node
- *  @param {[]} clusterDefinitionArray - array of defined cluster for nodes which are manipulating with clusters to know about cluster variables names and datatype
+ *  @param {string} canvasOwnerName - if provided this is name of owner node, ie. this canvas is diagram of some node
+ *  @param {Array.<Object>} clusterDefinitionArray - array of defined cluster for nodes which are manipulating with clusters to know about cluster variables names and datatype
  *  @description Check canvas for errors like multiple wires for input port, wrong datatypes, ...
  */
 GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clusterDefinitionArray = null) {
@@ -2416,6 +2498,8 @@ GraphLang.Utils.validateCanvas = function(canvasObj, canvasOwnerName = null, clu
 }
 
 /**
+ * @method
+ * @memberOf GraphLang.Utils
  * @description This method interactively after click shows user error.
  */
 GraphLang.Utils.userInteractiveErrorOnClick = function(errorObj){
@@ -2487,6 +2571,13 @@ GraphLang.Utils.userInteractiveErrorOnClick = function(errorObj){
     }
 }
 
+/**
+ * @method
+ * @desccription General method which convert hexadecimal string to ascii
+ * @memberOf GraphLang.Utils
+ * @param {string} str1
+ * @return {string}
+ */
 GraphLang.Utils.hex_to_ascii = function (str1) {
     // Convert the input hexadecimal string to a regular string
     var hex = str1.toString();
@@ -2519,6 +2610,7 @@ GraphLang.Utils.hex2ascii = function(hexx) {
 
 /**
  * @method GraphLang.Utils.serverSendReceive
+ * @memberOf GraphLang.Utils
  * @param operationStr
  * @param projectId
  * @param additionalGetStr
@@ -2555,6 +2647,7 @@ GraphLang.Utils.serverSendReceive = function(operationStr, projectId, additional
 
 /**
  * @method GraphLang.Utils.serverAjaxPostSendReceive
+ * @memberOf GraphLang.Utils
  * @param getParams - array of string which are serialized into HTTP request as GET parameters which are part of url
  * @param postParams - array of string which are serialized into HTTP body part as POST parameters
  * @descritpion Send request to server and receive and parse JSON response into global object GLOBAL_AJAX_RESPONSE, this one has method parameters order done right :)
@@ -2638,6 +2731,7 @@ GraphLang.Utils.serverAjaxPostSendReceive = function(getParams = [], postParams 
 
 /**
  * @method GraphLang.Utils.getNodeAsString
+ * @memberOf GraphLang.Utils
  * @param nodeClassName
  * @returns {string}
  * @description DO NOT USE THIS, this is experiment but it's not returning init() correctly, seems like it's little complicated to get all function as string right.
@@ -2666,9 +2760,14 @@ GraphLang.Utils.getNodeAsString = function(nodeClassName){
 
 /**
  * @method GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram
- * @param options: {projectId: string, nodeId: int, nodeClassName: string, nodeDisplayName: string}
- * @returns {string}
+ * @memberOf GraphLang.Utils
  * @description Update node with class name on server with current schematic. This will replace jsonDocument inside node javascript code with current canvas code.
+ * @param {Object} options
+ * @param {string} options.projectId
+ * @param {number} options.nodeId
+ * @param {string} options.nodeClassName
+ * @param {string} options.nodeDisplayName
+ * @returns {string}
  */
 GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(parametersObj){
     /*
@@ -2790,6 +2889,8 @@ GraphLang.Utils.serverNodeReplaceSchematicWithCurrentDiagram = function(paramete
 }
 
 /**
+ * @method
+ * @memberOf GraphLang.Utils
  * @param projectId
  * @param nodeClassName
  * @param nodeCodeContent
@@ -2811,6 +2912,7 @@ GraphLang.Utils.serverUpdateNodeCodeContent = function(projectId, nodeClassName,
 
 /**
  * @method serverUploadNodeSchematic
+ * @memberOf GraphLang.Utils
  * @description Upload schematic to server.
  */
 GraphLang.Utils.serverUploadNodeSchematic = function(canvasObj){
@@ -2932,6 +3034,13 @@ GraphLang.Utils.getNodeCodeWithReplacedSchematicWithCurrentCanvas = function(cla
     return GLOBAL_HELPER_VARIABLE_2;
 }
 
+/**
+ * @method
+ * @memberOf GraphLang.Utils
+ * @description Return line count of specified string, now it is just using regexp to cound \n symbols
+ * @param {string} inputStr
+ * @return {number}
+ */
 GraphLang.Utils.getLineCount = function(inputStr){
     //this using regular expression should be more performant than split and count array length
     //source: https://stackoverflow.com/questions/8488729/how-to-count-the-number-of-lines-of-a-string-in-javascript
@@ -2940,8 +3049,9 @@ GraphLang.Utils.getLineCount = function(inputStr){
 
 /**
  * @method errorLinesObjectAssignSourceCanvasObject
+ * @memberOf GraphLang.Utils
  * @param {Object}   funcParams
- * @param {String}   funcParams.inputStr
+ * @param {string}   funcParams.inputStr
  * @param {int}      funcParams.startLine             - start line from where to check if error started, if negative value than it starts checkErrordFromLine from end
  * @param {Object[]} funcParams.errorLines            - object with keys of line numbers which contains objects about errors from g++
  * @param {int}      funcParams.lineOffset            - there can be already generated code from template this is that line offset count
@@ -2978,8 +3088,9 @@ GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject = function(funcParams){
 
 /**
  * @method animateBlinkObject
+ * @memberOf GraphLang.Utils
  * @param {Canvas}   canvasOrOwnerObj - canvas object where to look for object
- * @param {String}   objId            - object id
+ * @param {string}   objId            - object id
  * @param {Object}   attributes       - attributes objet which will be modified to these values
  * @param {function} callbackFunction - this function is called at the end, there was sometimes incorrect end of animation so here you can put object into default state
  */
@@ -3035,7 +3146,8 @@ GraphLang.Utils.animateBlinkObject = function(canvasOrOwnerObj, objId, attribute
 
 /**
  * @method animateDotAlongWire
- * @param {Connection}   wireObj        - wire object along which red circle is moving
+ * @memberOf GraphLang.Utils
+ * @param {Connection} wireObj - wire object along which red circle is moving
  * @description This will put filled red circle on wire and move along it. This is to signalized during breakpoint on which wires are at actual step in program for user to be
  * better visible at which step program si actualy paused.
  */
@@ -3079,6 +3191,7 @@ GraphLang.Utils.animateDotAlongWire = function(wireObj, attributes = {}){
 
 /**
  * @method rotateSelectedNodeOnCanvas
+ * @memberOf GraphLang.Utils
  * @description Rotate selected object on provided canvas by angle 15deg or by specified angle
  * @param canvas            canvas reference
  * @param angle {double}    rotation angle in degrees
@@ -3092,6 +3205,12 @@ GraphLang.Utils.rotateSelectedNodeOnCanvas = function(canvas, angle = 15){
     });
 }
 
+/**
+ * @method
+ * @description Return current project ID from URL which is visible in browser top bar
+ * @memberOf GraphLang.Utils
+ * @return {string}
+ */
 GraphLang.Utils.getCurrentProjectId = function(){
     let currUrl = window.location.href;
     const urlParams = new URLSearchParams(currUrl);
@@ -3100,6 +3219,12 @@ GraphLang.Utils.getCurrentProjectId = function(){
     return projectId;
 }
 
+/**
+ * @method
+ * @memberOf GraphLang.Utils
+ * @description Return node class name from URL in top browser bar.
+ * @return {string}
+ */
 GraphLang.Utils.getCurrentNodeName = function(){
     let currUrl = window.location.href;
     const urlParams = new URLSearchParams(currUrl);
@@ -3112,6 +3237,14 @@ GraphLang.Utils.getCurrentNodeName = function(){
     return nodeClassName;
 }
 
+/**
+ * @method
+ * @description Async method which asks server backend for specified project ID information
+ * @memberOf GraphLang.Utils
+ * @param {int|string} projectId
+ * @returns {Promise<*|string>}
+ * @async
+ */
 GraphLang.Utils.getProjectCodeTemplate = async function(projectId = null){
     if (GLOBAL_PROJECT_INFO_CODE_TEMPLATE && GLOBAL_PROJECT_INFO_CODE_TEMPLATE !== ""){
         return GLOBAL_PROJECT_INFO_CODE_TEMPLATE;
@@ -3132,6 +3265,7 @@ GraphLang.Utils.getProjectCodeTemplate = async function(projectId = null){
 
 /**
  * @method GraphLang.Utils.objectDeepEqual
+ * @memberOf GraphLang.Utils
  * @param {object} x
  * @param {object} y
  * @returns {boolean}
@@ -3157,6 +3291,7 @@ GraphLang.Utils.objectDeepEqual = function(x, y) {
 
 /**
  * @method GraphLang.Utils.getObjectInProjectFromJSON
+ * @memberOf GraphLang.Utils
  * @param funcParams
  * @param {string} funcParams.id - search object id
  * @param {string|objects} funcParams.name - search object name, for wires in its variable name, for node in its node label, also regular expression can be used for example /enumDatatype_.*_COLORS/
@@ -3405,6 +3540,7 @@ GraphLang.Utils.getObjectInProjectFromJSON = function(funcParams){
 
 /**
  * @method GraphLang.Utils.getObjectInProjectFromJSONById
+ * @memberOf GraphLang.Utils
  * @param {string} searchObjectId - search object id
  * @returns {null|object} serialized node object in JSON
  * @description Search whole project nodes JSON and returns JSON serialized node from schematic (or node object variable for schematic called jsonDocument)
@@ -3458,21 +3594,41 @@ GraphLang.Utils.getObjectInProjectFromJSONById = function(searchObjectId = ""){
     return null;
 }
 
+/**
+ * @memberOf GraphLang.Utils
+ * @description Return global variable used in whole application which store main canvas for draw2d.
+ * @return {*}
+ */
 GraphLang.Utils.getMainCanvas = function(){
     return appCanvas;
 }
 
+/**
+ * @method
+ * @memberOf GraphLang.Utils
+ * @description Returns node schematic from local browser cache (browser storage).
+ * @param nodeClassName
+ * @return {string}
+ */
 GraphLang.Utils.getNodeSchematicFromStorageVariable = function(nodeClassName) {
     console.log(`--> getting ${nodeClassName} from GraphLang.StorageHexNodeSchematics array`);
     return GraphLang.Utils.hex2ascii(GraphLang.StorageHexNodeSchematics[nodeClassName]);
 }
 
+/**
+ * @method
+ * @memberOf GraphLang.Utils
+ * @description Returns node schematic in hex from local browser storage.
+ * @param nodeClassName
+ * @param nodeCodeContent
+ */
 GraphLang.Utils.setNodeSchematicStorageHexVariable = function(nodeClassName, nodeCodeContent) {
     console.log(`--> set ${nodeClassName} in GraphLang.StorageHexNodeSchematics array`);
     GraphLang.StorageHexNodeSchematics[nodeClassName] = GraphLang.Utils.toHex(nodeCodeContent);
 }
 
 /**
+ * @memberOf GraphLang.Utils
  * @description Set cursor type based on selection mode and global variable which indicates what will be performed when in loop mode instead of selecting nodes it creates loop around selected nodes.
  * @param modeType {string} : 'forloop' | 'whileloop' | ''
  */

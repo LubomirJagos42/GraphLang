@@ -5,7 +5,11 @@
 GraphLang.Utils.KeyboardDeletePolicy = draw2d.policy.canvas.DefaultKeyboardPolicy.extend({
   NAME: "GraphLang.Utils.KeyboardDeletePolicy",
 
-  //this function is my own for deleting objects, because when deleting loop it's needed to remove also tunnels and wires connected to them
+  /**
+   *  @method
+   *  @memberOf GraphLang.Utils.KeyboardDeletePolicy
+   *  @description this function is my own for deleting objects, because when deleting loop it's needed to remove also tunnels and wires connected to them
+   */
   onKeyDown: function(canvas, keyCode, shiftKey, ctrlKey)
   {
     var node = canvas.getPrimarySelection();

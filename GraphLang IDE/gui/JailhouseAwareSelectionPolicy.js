@@ -1,5 +1,9 @@
-// Create a custom canvas-level selection policy that handles selection inside jailhouses
-// This extends the canvas SelectionPolicy to intercept mouse events when inside jailhouses
+/**
+ * @class
+ * @augments draw2d.policy.canvas
+ * @description Create a custom canvas-level selection policy that handles selection inside jailhouses
+ * This extends the canvas SelectionPolicy to intercept mouse events when inside jailhouses
+ */
 draw2d.policy.canvas.JailhouseAwareSelectionPolicy = draw2d.policy.canvas.BoundingboxSelectionPolicy.extend({
     NAME: "draw2d.policy.canvas.JailhouseAwareSelectionPolicy",
 
@@ -142,6 +146,7 @@ draw2d.policy.canvas.JailhouseAwareSelectionPolicy = draw2d.policy.canvas.Boundi
     },
 
     /**
+     * @memberOf draw2d.policy.canvas.JailhouseAwareSelectionPolicy
      * @description If selection is loop creation mode then create forloop or whileloop around selected nodes instead of their selection
      * @param canvas
      * @param x

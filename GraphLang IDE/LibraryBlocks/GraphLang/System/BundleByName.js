@@ -218,7 +218,7 @@ GraphLang.Shapes.Basic.BundleByName = draw2d.shape.layout.FlexGridLayout.extend(
      * This method removes the entity without care of existing connections. Use
      * a draw2d.command.CommandDelete command if you want to delete the connections to this entity too
      *
-     * @param {String} txt the label to show
+     * @param {string} txt the label to show
      * @param {Number} [optionalIndex] index where to insert the entity
      */
     removeEntity: function(item)
@@ -234,7 +234,7 @@ GraphLang.Shapes.Basic.BundleByName = draw2d.shape.layout.FlexGridLayout.extend(
     /**
      * @method addEntity
      * @description Add an entity to the db shape
-     * @param {String} txt the label to show
+     * @param {string} txt the label to show
      * @param {Number} [optionalIndex] index where to insert the entity
      */
     addEntity: function(txt, optionalIndex)

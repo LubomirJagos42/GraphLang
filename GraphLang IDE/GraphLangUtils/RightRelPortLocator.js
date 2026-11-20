@@ -1,10 +1,18 @@
 /**
- *  @method RightRelPortLocator
- *  @name GraphLang.Utils.RightRelPortLocator
+ *  @class RightRelPortLocator
+ *  @memberOf GraphLang.Utils
+ *  @augments draw2d.layout.locator.XYRelPortLocator
  *  @description To snap objects inside structure relative to right side.
  */
 GraphLang.Utils.RightRelPortLocator = draw2d.layout.locator.XYRelPortLocator.extend({
   NAME: "GraphLang.Utils.RightRelPortLocator",
+
+  /**
+   * @method
+   * @memberOf GraphLang.Utils.RightRelPortLocator
+   * @param index
+   * @param figure
+   */
   relocate: function(index, figure)
   {
       var node = figure.getParent();

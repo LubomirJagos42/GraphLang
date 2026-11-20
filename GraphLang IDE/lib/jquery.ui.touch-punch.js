@@ -26,7 +26,7 @@
   /**
    * Simulate a mouse event based on a corresponding touch event
    * @param {Object} event A touch event
-   * @param {String} simulatedType The corresponding mouse event
+   * @param {string} simulatedType The corresponding mouse event
    */
   function simulateMouseEvent (event, simulatedType) {
 

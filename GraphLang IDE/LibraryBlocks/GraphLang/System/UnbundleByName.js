@@ -281,7 +281,7 @@ GraphLang.Shapes.Basic.UnbundleByName = draw2d.shape.layout.FlexGridLayout.exten
     /**
      * @method addEntity
      * @description Add an entity to the db shape
-     * @param {String} txt the label to show
+     * @param {string} txt the label to show
      * @param {Number} [optionalIndex] index where to insert the entity
      */
     addEntity: function(txt, optionalIndex)

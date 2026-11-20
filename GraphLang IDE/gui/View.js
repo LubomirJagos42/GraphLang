@@ -2,6 +2,12 @@
 
 example.View = draw2d.Canvas.extend({
 
+	/**
+	 * @method
+	 * @memberOf example.View
+	 * @description init() used by draw
+	 * @param id
+	 */
 	init:function(id){
 		this._super(id);
 
@@ -12,9 +18,9 @@ example.View = draw2d.Canvas.extend({
 
     /**
      * @method
-     * Called if the DragDrop object is moving around.<br>
-     * <br>
-     * Graphiti use the jQuery draggable/droppable lib. Please inspect
+	 * @memberOf example.View
+     * @description Called if the DragDrop object is moving around.<br /><br />
+     * GraphLang use the jQuery draggable/droppable lib. Please inspect
      * http://jqueryui.com/demos/droppable/ for further information.
      *
      * @param {HTMLElement} droppedDomNode The dragged DOM element.
@@ -29,8 +35,8 @@ example.View = draw2d.Canvas.extend({
 
     /**
      * @method
-     * Called if the user drop the droppedDomNode onto the canvas.<br>
-     * <br>
+	 * @memberOf example.View
+     * @description Called if the user drop the droppedDomNode onto the canvas.<br /><br />
      * Draw2D use the jQuery draggable/droppable lib. Please inspect
      * http://jqueryui.com/demos/droppable/ for further information.
      *

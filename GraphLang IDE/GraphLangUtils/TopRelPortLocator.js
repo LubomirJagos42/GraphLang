@@ -1,10 +1,18 @@
 /**
- *  @method TopRelPortLocator
- *  @name GraphLang.Utils.TopRelPortLocator
+ *  @class TopRelPortLocator
+ *  @memberOf GraphLang.Utils
+ *  @augments draw2d.layout.locator.XYRelPortLocator
  *  @description To snap objects to top edge of structure.
  */
 GraphLang.Utils.TopRelPortLocator = draw2d.layout.locator.XYRelPortLocator.extend({
   NAME: "GraphLang.Utils.TopRelPortLocator",
+
+  /**
+   * @method
+   * @memberOf GraphLang.Utils.TopRelPortLocator
+   * @param index
+   * @param figure
+   */
   relocate: function(index, figure)
   {
       var node = figure.getParent();

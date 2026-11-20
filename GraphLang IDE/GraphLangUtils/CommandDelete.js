@@ -8,8 +8,10 @@ GraphLang.Utils.CommandDelete = draw2d.command.CommandDelete.extend({
 
     cmdStack = this.figure.getCanvas().getCommandStack();
 
-    //THIS REMOVES ALL PARTS OF MULTILAYERED STRUCTURE
-    if (typeof this.figure.isMultilayered === "function" && this.figure.isMultilayered === true){
+    if (typeof this.figure.isMultilayered === "function" && this.figure.isMultilayered() === true){
+      /*
+       *  THIS REMOVES ALL PARTS OF MULTILAYERED STRUCTURE
+       */
 
       //ITERATE OVER ALL LAYERS, DELETE ALL LAYERS FIGURES
       this.figure.getAllLayers().each(function(layerIndex, layerObj){
@@ -42,9 +44,11 @@ GraphLang.Utils.CommandDelete = draw2d.command.CommandDelete.extend({
         });
       }
 
-      //LOOP (ForLoop / WhileLayer): either preserve contents (direct user delete)
-      //or actually delete them (cascading teardown from a parent structure)
-    }else if (this.figure.userData && this.figure.userData.isLoop){
+    }else if (typeof this.figure.userData.isLoop === "function" && this.figure.userData.isLoop() === true){
+      /*
+       *  LOOP (ForLoop / WhileLayer): either preserve contents (direct user delete)
+       *  or actually delete them (cascading teardown from a parent structure)
+       */
 
       let outerComposite = this.figure.getComposite();
 

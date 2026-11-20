@@ -1,8 +1,8 @@
 /**
+ * @class
  * @author Lubomir Jagos
  * @description General object to translate schematic to code
  */
-
 class TranslateToPythonCode_2_TranslatorObject {
 
     translatorCanvasObj = null;
@@ -35,30 +35,59 @@ class TranslateToPythonCode_2_TranslatorObject {
         if (Object.keys(paramsObj).includes(paramsObj.canvasObj) && typeof paramsObj.canvasObj === "object") this.translatorCanvasObj = paramsObj.canvasObj;
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @param canvasObj
+     */
     setCanvas = (canvasObj) => {
         this.translatorCanvasObj = canvasObj;
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     */
     getCurrentTranslateLineOffset = () => {
         return this.GLOBAL_CODE_LINE_OFFSET;
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     */
     getBreakpointList = () => {
         return this.translateToCppCodeBreakpointList;
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     */
     getErrorList = () => {
         return this.translateToCppCodeErrorList;
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     */
     getWatchList = () => {
         return this.translateToCppCodeWatchList;
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     */
     getLibrariesList = () => {
         return this.translateToCppCodeLibrariesList;
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     */
     getCppCodeImport = () => {
         var cCode = "";
         this.translateToCppCodeImportArray.unique();                               //remove duplicities
@@ -68,6 +97,10 @@ class TranslateToPythonCode_2_TranslatorObject {
         return cCode;
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     */
     getCppCodeTypeDefinition = () => {
         var cCode = "";
         this.translateToCppCodeTypeDefinitionArray.unique();                               //remove duplicities
@@ -78,7 +111,9 @@ class TranslateToPythonCode_2_TranslatorObject {
     }
 
     /**
-     *  Init buffers which collects information about current diagram which is translated.
+     *  @method
+     *  @memberOf TranslateToPythonCode_2_TranslatorObject
+     *  @description Init buffers which collects information about current diagram which is translated.
      */
     initTranslateToCppBuffers = () => {
         this.translateToCppCodeImportArray.clear();          //import statements
@@ -98,11 +133,23 @@ class TranslateToPythonCode_2_TranslatorObject {
         this.translateToCppCodeLibrariesList.clear();
     }
 
-    //wrapper around internal code generate method, this is here to have general function with general name as interface to outside code
+    /**
+     * @method
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @description Wrapper around internal code generate method, this is here to have general function with general name as interface to outside code
+     */
     getCode = (canvas, showCode = true, codeTemplate = "desktop") => {
         return this.getCppCode(canvas, showCode, codeTemplate);
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @param canvas
+     * @param showCode
+     * @param codeTemplate
+     * @return {string}
+     */
     getCppCode = (canvas, showCode = true, codeTemplate = "") => {
         let cCode = "";
 
@@ -123,13 +170,14 @@ class TranslateToPythonCode_2_TranslatorObject {
 
     /**
      * @method translateCanvasToCppCode
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
      * @param {Object}        funcParam - object with input parameters
      * @param {draw2d.Canvas} funcParam.canvas - schematic which will be serialize to JSON
      * @param {boolean}       funcParam.translateTerminalsDeclaration - if set to false input/output terminals for outside world declaration are not written in C/C++, this is for translate subnodes
-     * @param {String}        funcParam.nodeName - name of current node which schematic is being translated into code, this is set when subnode diagram is translated into code
+     * @param {string}        funcParam.nodeName - name of current node which schematic is being translated into code, this is set when subnode diagram is translated into code
      * @param {Object[]}      funcParam.compileErrorLines - array of error lines which should be searched during translation process
      * @param {int}           funcParam.codeLinesOffset - number of lines which are generated before, this is to got right line number when searching for error line
-     * @returns {String} C/C++ code as string
+     * @returns {string} C/C++ code as string
      * @description Copy diagram as C/C++ code into clipboard, uses inside translateToCppCode2() function.
      */
     translateCanvasToCppCode = (funcParams) =>{
@@ -681,6 +729,11 @@ class TranslateToPythonCode_2_TranslatorObject {
         return cCode;
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @param funcParams
+     */
     translateToCppCodeSubNode = (funcParams) => {
         let translatorObj = this;
 
@@ -849,8 +902,9 @@ class TranslateToPythonCode_2_TranslatorObject {
 
     /**
      * @method translateToCppCodeClusterTypeDefinitionFromNode
-     * @param {Strin} className - class in which cluster is defined
-     * @returns {String} clusterName - cluster which typedefinition should be obtained
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @param {string} className - class in which cluster is defined
+     * @returns {string} clusterName - cluster which typedefinition should be obtained
      * @description Load node schematic in auxiliary canvas and run translate process for cluster typedefinition.
      */
     translateToCppCodeClusterTypeDefinitionFromNode = (className, clusterName) => {
@@ -898,6 +952,7 @@ class TranslateToPythonCode_2_TranslatorObject {
 
     /**
      * @method getObjectWhichGenerateCodeAtLine
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
      * @param {integer} lineNumberToFind - code line which is going to be find which object generates its code
      * @returns {figure} canvas figure responsible for specified code line number
      * @description Transcript code and when line which is specified is generated returns object from canvas which generates it.
@@ -922,9 +977,10 @@ class TranslateToPythonCode_2_TranslatorObject {
 
     /**
      * @method getCppCodeUsingTemplate_embedded
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
      * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
      * @param {bool} showCode - if true there is code showed in alert message after click on button
-     * @returns {String} C/C++ code as string
+     * @returns {string} C/C++ code as string
      * @description Generate C/C++ code using template written in this function.
      */
     getCppCodeUsingTemplate_embedded = (canvas, showCode = true, translateCanvasToCodeFunction) =>{
@@ -1084,10 +1140,11 @@ SerialClass Serial;
     }
 
     /**
-     * @method getCppCodeUsingTemplate_desktop
+     * @method
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
      * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
      * @param {bool} showCode - if true there is code showed in alert message after click on button
-     * @returns {String} C/C++ code as string
+     * @returns {string} C/C++ code as string
      * @description Generate C/C++ code for desktop.
      */
     getCppCodeUsingTemplate_desktop = (canvas, showCode = true, translateCanvasToCodeFunction) =>{

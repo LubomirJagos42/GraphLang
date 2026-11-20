@@ -6,6 +6,10 @@ translateToPythonCodeDeclarationArray = new draw2d.util.ArrayList();
  *    TRANSLATE TO Python functions
  *****************************************************************************************************************************************************/
 
+/**
+ * @memberOf GraphLang.Utils
+ * @deprecated @deprecated USE TRANSLATION OBJECT {@link TranslateToPythonCode_2_TranslatorObject}
+ */
 GraphLang.Utils.translateCanvasToPythonCode = function(canvas, translateTerminalsDeclaration = true){
     let pythonCode = "";
     translateToPythonCodeDeclarationArray.clear();
@@ -89,6 +93,10 @@ GraphLang.Utils.translateCanvasToPythonCode = function(canvas, translateTerminal
     return pythonCode;
 },
 
+/**
+ * @memberOf GraphLang.Utils
+ * @deprecated @deprecated USE TRANSLATION OBJECT {@link TranslateToPythonCode_2_TranslatorObject}
+ */
 GraphLang.Utils.translateToPythonCodeSubNode = function(nodeObj){
     let pythonCode = "";
     pythonCodeParams = "";
@@ -126,10 +134,11 @@ GraphLang.Utils.translateToPythonCodeSubNode = function(nodeObj){
 },
 
 /**
- * @method getPythonCode
+ * @deprecated USE TRANSLATION OBJECT {@link TranslateToPythonCode_2_TranslatorObject}
+ * @memberOf GraphLang.Utils
  * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
  * @param {bool} showCode - if true there is code showed in alert message after click on button
- * @returns {String} python code as string
+ * @returns {string} python code as string
  * @description Generate python code using template defined in this function.
  */
 GraphLang.Utils.getPythonCode = function(canvas, showCode = true){

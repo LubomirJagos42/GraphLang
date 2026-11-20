@@ -254,7 +254,7 @@ GraphLang.Shapes.Basic.FeedbackNode = draw2d.SetFigure.extend({
     /**
      *  @name getDeclaration
      *  @desc Just feedback declaration to define its datatype.
-     *  @returns {String} C code string, each line is finished with newline symbol \n
+     *  @returns {string} C code string, each line is finished with newline symbol \n
      */
     translateToCppCodeDeclaration:function(){
       cCode = "";

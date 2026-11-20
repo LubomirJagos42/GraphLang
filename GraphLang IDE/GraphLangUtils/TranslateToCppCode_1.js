@@ -36,7 +36,8 @@ GraphLang.Utils.getCppCodeImport = function(){
 }
 
 /**
- *  @method getCppCodeTypeDefinition
+ *  @deprecated USE TRANSLATION OBJECT {@link TranslateToGeneralCode_1}
+ *  @memberOf GraphLang.Utils
  *  @description Returns C/C++ string type definitions used in schematic.
  */
 GraphLang.Utils.getCppCodeTypeDefinition = function(){
@@ -49,14 +50,15 @@ GraphLang.Utils.getCppCodeTypeDefinition = function(){
 }
 
 /**
- * @method translateCanvasToCppCode
+ * @deprecated USE TRANSLATION OBJECT {@link TranslateToGeneralCode_1}
+ * @memberOf GraphLang.Utils
  * @param {Object}        funcParam - object with input parameters
  * @param {draw2d.Canvas} funcParam.canvas - schematic which will be serialize to JSON
  * @param {boolean}       funcParam.translateTerminalsDeclaration - if set to false input/output terminals for outside world declaration are not written in C/C++, this is for translate subnodes
- * @param {String}        funcParam.nodeName - name of current node which schematic is being translated into code, this is set when subnode diagram is translated into code
+ * @param {string}        funcParam.nodeName - name of current node which schematic is being translated into code, this is set when subnode diagram is translated into code
  * @param {Object[]}      funcParam.compileErrorLines - array of error lines which should be searched during translation process
  * @param {int}           funcParam.codeLinesOffset - number of lines which are generated before, this is to got right line number when searching for error line
- * @returns {String} C/C++ code as string
+ * @returns {string} C/C++ code as string
  * @description Copy diagram as C/C++ code into clipboard, uses inside translateToCppCode2() function.
  */
 GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
@@ -577,9 +579,10 @@ GraphLang.Utils.translateCanvasToCppCode = function(funcParams){
 },
 
 /**
- * @method translateToCppCodeClusterTypeDefinitionFromNode
+ * @deprecated USE TRANSLATION OBJECT {@link TranslateToGeneralCode_1}
+ * @memberOf GraphLang.Utils
  * @param {Strin} className - class in which cluster is defined
- * @returns {String} clusterName - cluster which typedefinition should be obtained
+ * @returns {string} clusterName - cluster which typedefinition should be obtained
  * @description Load node schematic in auxiliary canvas and run translate process for cluster typedefinition.
  */
 GraphLang.Utils.translateToCppCodeClusterTypeDefinitionFromNode = function(className, clusterName){
@@ -623,9 +626,10 @@ GraphLang.Utils.translateToCppCodeClusterTypeDefinitionFromNode = function(class
 }
 
 /**
- * @method translateToCppCodeSubNode
+ * @deprecated USE TRANSLATION OBJECT {@link TranslateToGeneralCode_1}
+ * @memberOf GraphLang.Utils
  * @param {draw2d.Figure} nodeObj - node object to be translated to CPP code
- * @returns {String} C/C++ code as string
+ * @returns {string} C/C++ code as string
  * @description Load node schematic in auxiliary canvas and run translate process for it, result should be function definition for particular node.
  */
 GraphLang.Utils.translateToCppCodeSubNode = function(funcParams){
@@ -793,7 +797,9 @@ GraphLang.Utils.translateToCppCodeSubNode = function(funcParams){
 }
 
 /**
- *  Init buffers which collects information about current diagram which is translated.
+ *  @deprecated USE TRANSLATION OBJECT {@link TranslateToGeneralCode_1}
+ *  @memberOf GraphLang.Utils
+ *  @description Init buffers which collects information about current diagram which is translated.
  */
 GraphLang.Utils.initTranslateToCppBuffers = function(){
     translateToCppCodeImportArray.clear();          //import statements
@@ -814,10 +820,11 @@ GraphLang.Utils.initTranslateToCppBuffers = function(){
 }
 
 /**
- * @method getCppCode3
+ * @deprecated USE TRANSLATION OBJECT {@link TranslateToGeneralCode_1}
+ * @memberOf GraphLang.Utils
  * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
  * @param {bool} showCode - if true there is code showed in alert message after click on button
- * @returns {String} C/C++ code as string
+ * @returns {string} C/C++ code as string
  * @description Generate C/C++ code using template written in this function.
  */
 GraphLang.Utils.getCppCode3 = function(canvas, showCode = true){
@@ -977,7 +984,8 @@ SerialClass Serial;
 }
 
 /**
- * @method getObjectWhichGenerateCodeAtLine
+ * @deprecated USE TRANSLATION OBJECT {@link TranslateToGeneralCode_1}
+ * @memberOf GraphLang.Utils
  * @param {integer} lineNumberToFind - code line which is going to be find which object generates its code
  * @returns {figure} canvas figure responsible for specified code line number
  * @description Transcript code and when line which is specified is generated returns object from canvas which generates it.
@@ -999,10 +1007,11 @@ GraphLang.Utils.getObjectWhichGenerateCodeAtLine = function(lineNumberToFind){
 }
 
 /**
- * @method getCppCode4
+ * @deprecated USE TRANSLATION OBJECT {@link TranslateToGeneralCode_1}
+ * @memberOf GraphLang.Utils
  * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
  * @param {bool} showCode - if true there is code showed in alert message after click on button
- * @returns {String} C/C++ code as string
+ * @returns {string} C/C++ code as string
  * @description Generate C/C++ code for desktop.
  */
 GraphLang.Utils.getCppCode4 = function(canvas, showCode = true){

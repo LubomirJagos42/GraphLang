@@ -1,8 +1,8 @@
 /**
+ * @class
  * @author Lubomir Jagos
  * @description General object to translate schematic to code
  */
-
 class TranslateToGeneralCode_1 {
 
     language = "cpp";
@@ -16,6 +16,11 @@ class TranslateToGeneralCode_1 {
         this.setProgrammingLanguage(languageName);
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToGeneralCode_1
+     * @param canvasObj
+     */
     setCanvas = (canvasObj) => {
         if (this.translatorObj !== null && this.translatorObj !== undefined && Object.keys(this.translatorObj).length > 0){
             this.translatorObj.setCanvas(canvasObj);
@@ -24,6 +29,11 @@ class TranslateToGeneralCode_1 {
         }
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToGeneralCode_1
+     * @param languageName
+     */
     setProgrammingLanguage = (languageName) => {
         if (languageName !== "") this.language = languageName;
 
@@ -36,28 +46,49 @@ class TranslateToGeneralCode_1 {
         }
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToGeneralCode_1
+     */
     initTranslateBuffers = () => {
         this.translatorObj.initTranslateToCppBuffers();
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToGeneralCode_1
+     */
     getErrorList = () => {
         return this.translatorObj.getErrorList();
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToGeneralCode_1
+     */
     getBreakpointList = () => {
         return this.translatorObj.getBreakpointList();
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToGeneralCode_1
+     */
     getWatchList = () => {
         return this.translatorObj.getWatchList();
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToGeneralCode_1
+     */
     getLibrariesList = () => {
         return this.translatorObj.getLibrariesList();
     }
 
     /**
-     * @method getCode
+     * @method
+     * @memberOf TranslateToGeneralCode_1
      * @param {draw2d.Canvas} canvas - this canvas is used to generate ode
      * @param {boolean} showCode - display alert window with translated code
      * @param {string} codeTemplate - code template which is used as wrapper around code ie. for desktop code frame is different than for arduino or embedded native code
@@ -72,14 +103,37 @@ class TranslateToGeneralCode_1 {
         return this.translatorObj.getCode(canvas, showCode, codeTemplate);
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToGeneralCode_1
+     * @param {Object}        funcParam - object with input parameters
+     * @param {draw2d.Canvas} funcParam.canvas - schematic which will be serialized to JSON
+     * @param {boolean}       funcParam.translateTerminalsDeclaration - if set to false input/output terminals for outside world declaration are not written in C/C++, this is for translate subnodes
+     * @param {string}        funcParam.nodeName - name of current node which schematic is being translated into code, this is set when subnode diagram is translated into code
+     * @param {Object[]}      funcParam.compileErrorLines - array of error lines which should be searched during translation process
+     * @param {number}        funcParam.codeLinesOffset - number of lines which are generated before, this is to got right line number when searching for error line
+     * @returns {string} C/C++ code as string
+     * @return {string|*}
+     */
     translateCanvasToCode = (funcParams) => {
         return this.translatorObj.translateCanvasToCode(funcParams);
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToGeneralCode_1
+     * @return {number|*}
+     */
     getCurrentTranslateLineOffset = () => {
         return this.translatorObj.getCurrentTranslateLineOffset();
     }
 
+    /**
+     * @method
+     * @memberOf TranslateToGeneralCode_1
+     * @param {number} lineNumberToFind
+     * @return {*}
+     */
     getObjectWhichGenerateCodeAtLine = (lineNumberToFind)=> {
         return this.translatorObj.getObjectWhichGenerateCodeAtLine(lineNumberToFind);
     }

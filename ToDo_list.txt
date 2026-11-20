@@ -6,7 +6,6 @@ This is list features what to do due I always forget on what to work
 - python code generator
     - this would be heavily copied from C/C++ code generator when finished
 - general weak typed language generator class
-- list of errors click on item and focus on graph somewhere
 - 2D array node
 
 - translate polymorphic datatype into right C/C++ code datatype in C/C++
@@ -242,8 +241,15 @@ In progress features
 
 - whe wire going tunnel to tunnel between multiple loops and multilayered wire connection is not generated at the last one between two tunnels
 
++ multilayered delete command not working, delete just top multilayered but layers stayed on canvas
+    + CommandDelete.js is where delete command is located
+    + there was condition written wrong, missing () to call isMultilayered()
 
+- list of errors click on item and focus on graph somewhere
 
+- constant node when type is string do #import <string>
+
+- node to create file is not working, check if produces line fopen...
 
 Design notes
 ============

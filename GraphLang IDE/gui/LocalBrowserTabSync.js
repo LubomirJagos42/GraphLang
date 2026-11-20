@@ -1,9 +1,9 @@
 /**
+ *  @class
  *  @author LuboJ
  *  @description This was proposed by Claude AI as way how to do local synchronization of javascript variables between different tabs from
  *  same origin (localhost server)
  */
-
 class LocalBrowserTabSync{
     constructor() {
         this.projectId = GraphLang.Utils.getCurrentProjectId();

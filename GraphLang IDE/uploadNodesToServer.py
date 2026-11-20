@@ -17,22 +17,22 @@ NODE_ISHIDDEN = 0
 NODE_SEARCH_DIR_LIST = []
 
 if __name__ == "__main__":
-    loginInfo, username, passwordMD5 = login.loginUsingNamePassword()
-    usertoken = loginInfo['token']
-
-    if (loginInfo['isLogged'] == 0):
-        print("user not logged, exit")
-        exit(0)
 
     parser = argparse.ArgumentParser(
         description='GraphLang uploadNodesToServer argument parser'
     )
     parser.add_argument('--projectId', type=int, help='Project ID')
     parser.add_argument('--nodeLibrarySearchDir', type=str, default=None)
+    parser.add_argument('--serverIP', type=str, help='Server IP')
 
     # Parse
     args, unknown = parser.parse_known_args()
     print(args)
+
+    if args.serverIP:
+       URL = URL.replace("localhost", args.serverIP)
+    print(f"Current URL server set to: {URL}")
+
     NODE_PROJECT = -1
     if args.projectId:
         NODE_PROJECT = args.projectId
@@ -44,6 +44,21 @@ if __name__ == "__main__":
     
     if args.nodeLibrarySearchDir is not None:
         NODE_SEARCH_DIR_LIST.append(args.nodeLibrarySearchDir)
+
+
+
+
+
+
+    loginInfo, username, passwordMD5 = login.loginUsingNamePassword()
+    usertoken = loginInfo['token']
+
+    if (loginInfo['isLogged'] == 0):
+        print("user not logged, exit")
+        exit(0)
+
+
+
 
     start_time = time.time()
     
@@ -73,8 +88,8 @@ if __name__ == "__main__":
         myData['nodeDir'] = nodeToUpload[0].replace('\\', '/')
         myData['nodeClassParent'] = nodeToUpload[3]
         myData['nodeDisplayName'] = os.path.splitext(os.path.basename(nodeToUpload[1]))[0]
-        myData['nodeCategory'] = nodeToUpload[4];
-        myData['nodeIsHidden'] = 1 if nodeToUpload[5] else 0;    #conver True/False to 1/0 because this is going into SQL DB and without this it wasn't handled on PHP side correctly
+        myData['nodeCategory'] = nodeToUpload[4]
+        myData['nodeIsHidden'] = 1 if nodeToUpload[5] else 0    #conver True/False to 1/0 because this is going into SQL DB and without this it wasn't handled on PHP side correctly
 
         #
         # for debugging, there is long output due there is whole class code printed into command line
@@ -82,7 +97,7 @@ if __name__ == "__main__":
         #print(f"#REQUEST 1 - data:\n");
         #print(myData)
 
-        print(f"#REQUEST 1 - result:\n");
+        print(f"#REQUEST 1 - result:\n")
         x = requests.post(URL, data = myData)
         print(x.text)
         

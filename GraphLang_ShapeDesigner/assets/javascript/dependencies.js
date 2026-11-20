@@ -15323,7 +15323,7 @@ if (!Object.prototype.unwatch) {
        * @method
        * Base64-decode a string.
        *
-       * @param {String} input to decode (length not required to be a multiple of 4).
+       * @param {string} input to decode (length not required to be a multiple of 4).
        * @param {boolean=} opt_webSafe True if we should use the
        *     alternative alphabet.
        * @return {Array} bytes representing the decoded value.
@@ -15773,7 +15773,7 @@ draw2d.util.Color = Class.extend({
     /**
      * @method
      * Convert the color object into a HTML CSS representation
-     * @return {String} the color in rgb(##,##,##) representation
+     * @return {string} the color in rgb(##,##,##) representation
      **/
     getHTMLStyle: function()
     {
@@ -15855,7 +15855,7 @@ draw2d.util.Color = Class.extend({
     /**
      * @method
      * Convert the color object into a HTML CSS representation
-     * @return {String} the color in #RRGGBB representation
+     * @return {string} the color in #RRGGBB representation
      **/
     hash: function()
     {
@@ -16470,7 +16470,7 @@ Raphael.fn.polygon = function(pointString) {
          * based on the structure of the string with the desired value
          *
          * @param {Object} data   the json object to modify
-         * @param {String} path   path indicating where value should be placed
+         * @param {string} path   path indicating where value should be placed
          * @param {Object} value  the value desired to be set at the location determined by path
          */
         set: function(data, path, value) {
@@ -16525,7 +16525,7 @@ Raphael.fn.polygon = function(pointString) {
          * Returns the value defined by the path passed in
          *
          * @param  {Object} data the JSON data object
-         * @param  {String} path string leading to a desired value
+         * @param  {string} path string leading to a desired value
          */
         get: function(data, path) {
           var regex = /[\w-]+|\[\]|([^\[[\w]\]]|["'](.*?)['"])/g;
@@ -16619,7 +16619,7 @@ draw2d.util.UUID=function()
  * with the output that looks like a GUID. <br>
  * But may be also useful.
  *
- * @returns {String} the  UUID in the format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (8-4-4-4-12) 
+ * @returns {string} the  UUID in the format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (8-4-4-4-12)
  **/
 draw2d.util.UUID.create=function()
 {
@@ -18333,7 +18333,7 @@ draw2d.command.CommandType = Class.extend({
      * @constructor
      * Create a new edit policy object
      * 
-     * @param {String} policy 
+     * @param {string} policy
      */
     init: function( policy)
     {
@@ -18344,7 +18344,7 @@ draw2d.command.CommandType = Class.extend({
      * @method
      * Return the String representation of the policy
      * 
-     * @return {String}
+     * @return {string}
      **/
     getPolicy: function()
     {
@@ -18389,7 +18389,7 @@ draw2d.command.Command = Class.extend({
      * @constructor
      * Create a new Command objects which can be execute via the CommandStack.
      * 
-     * @param {String} label
+     * @param {string} label
      */
     init: function( label)
     {
@@ -18401,7 +18401,7 @@ draw2d.command.Command = Class.extend({
      * @method
      * Returns a label of the Command. e.g. "move figure".
      *
-     * @return {String} the label for this command
+     * @return {string} the label for this command
      **/
     getLabel: function()
     {
@@ -18489,7 +18489,7 @@ draw2d.command.CommandCollection = draw2d.command.Command.extend({
      * @constructor
      * Create a new CommandConnect objects which can be execute via the CommandStack.
      * 
-     * @param {String} [commandLabel] the label to show on the command stack for the undo/redo operation
+     * @param {string} [commandLabel] the label to show on the command stack for the undo/redo operation
      */
     init: function(commandLabel)
      {
@@ -18502,7 +18502,7 @@ draw2d.command.CommandCollection = draw2d.command.Command.extend({
      * @method
      * Returns a label of the Command. e.g. "move figure".
      *
-     * @return {String} the label for this command
+     * @return {string} the label for this command
      **/
     getLabel: function()
     {
@@ -18721,7 +18721,7 @@ draw2d.command.CommandStack = Class.extend({
      * Opens a transaction for further multiple commands. If you execute a command all
      * {@ #execute} calls will be ignored until you commit the current transaction.
      * 
-     * @param {String} [commandLabel] the label to show for the undo/redo operation
+     * @param {string} [commandLabel] the label to show for the undo/redo operation
      * 
      * @since 4.0.0
      */
@@ -18800,7 +18800,7 @@ draw2d.command.CommandStack = Class.extend({
      * @method
      * Return the label of the next REDO command.
      *
-     * @return {String}
+     * @return {string}
     **/
     getRedoLabel: function()
     {
@@ -18820,7 +18820,7 @@ draw2d.command.CommandStack = Class.extend({
      * @method
      * Return the label of the next UNDO command.
      *
-     * @return {String}
+     * @return {string}
      **/
     getUndoLabel: function()
     {
@@ -26162,7 +26162,7 @@ draw2d.policy.canvas.CanvasPolicy = draw2d.policy.EditPolicy.extend({
      * @param h
      * @param d
      * @param color
-     * @returns {String}
+     * @returns {string}
      *
      * @private
      */

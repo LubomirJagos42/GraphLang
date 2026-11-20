@@ -122,7 +122,7 @@ shape_designer.Application = Class.extend(
     /**
      * @constructor
      * 
-     * @param {String} canvasId the id of the DOM element to use as paint container
+     * @param {string} canvasId the id of the DOM element to use as paint container
      */
     init : function()
     {
@@ -4624,7 +4624,7 @@ shape_designer.FigureWriter = draw2d.io.Writer.extend({
      * the callback instead of return the result.
      * 
      * @param {draw2d.Canvas} canvas
-     * @parma {String} className
+     * @parma {string} className
      * @param {Function} resultCallback the method to call on success. The first argument is the result object, the second the base64 representation of the file content
      */
     marshal: function(canvas, className, resultCallback){

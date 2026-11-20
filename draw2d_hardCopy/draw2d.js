@@ -6755,7 +6755,7 @@ _packages2.default.Canvas = Class.extend({
    * @constructor
    * Create a new canvas with the given HTML DOM references.
    *
-   * @param {String} canvasId the id of the DOM element to use a parent container
+   * @param {string} canvasId the id of the DOM element to use a parent container
    */
   init: function init(canvasId, width, height) {
     var _this = this;
@@ -7734,7 +7734,7 @@ _packages2.default.Canvas = Class.extend({
    * @method
    * Returns the line or connection with the given id.
    *
-   * @param {String} id The id of the line.
+   * @param {string} id The id of the line.
    *
    * @return {draw2d.shape.basic.Line}
    **/
@@ -7753,7 +7753,7 @@ _packages2.default.Canvas = Class.extend({
    * @method
    * Returns the figure with the given id.
    *
-   * @param {String} id The id of the figure.
+   * @param {string} id The id of the figure.
    * @return {draw2d.Figure}
    **/
   getFigure: function getFigure(id) {
@@ -8302,7 +8302,7 @@ _packages2.default.Canvas = Class.extend({
    * Execute all handlers and behaviors attached to the canvas for the given event type.
    *
    *
-   * @param {String} event the event to trigger
+   * @param {string} event the event to trigger
    * @param {Object} [args] optional parameters for the triggered event callback
    *
    * @since 5.0.0
@@ -8350,7 +8350,7 @@ _packages2.default.Canvas = Class.extend({
    *          }
    *      });
    *
-   * @param {String}   event One or more space-separated event types
+   * @param {string}   event One or more space-separated event types
    * @param {Function} callback A function to execute when the event is triggered.
    * @param {draw2d.Canvas} callback.emitter the emitter of the event
    * @param {Object} [callback.obj] optional event related data
@@ -9447,7 +9447,7 @@ _packages2.default.Figure = Class.extend({
     var _this2 = this;
 
     this.setterWhitelist = (0, _extend2.default)({
-      /** @attr {String} id the unique id of the figure */
+      /** @attr {string} id the unique id of the figure */
       id: this.setId,
       /** @attr {Number} x the x offset of the figure in relation to the parent figure or canvas */
       x: this.setX,
@@ -9463,7 +9463,7 @@ _packages2.default.Figure = Class.extend({
       minWidth: this.setMinWidth,
       /** @attr {Number} minHeight the new min height of the figure. */
       minHeight: this.setMinHeight,
-      /** @attr {String} cssClass the css class of the shape. can be used to style the shape via CSS3 (SVG only) */
+      /** @attr {string} cssClass the css class of the shape. can be used to style the shape via CSS3 (SVG only) */
       cssClass: this.setCssClass,
       /** @attr {Object} userData additional custom data which can be stored by the shape */
       userData: this.setUserData,
@@ -9920,7 +9920,7 @@ _packages2.default.Figure = Class.extend({
    * @method
    * Return the UUID of this element.
    *
-   * @return {String}
+   * @return {string}
    */
   getId: function getId() {
     return this.id;
@@ -9935,7 +9935,7 @@ _packages2.default.Figure = Class.extend({
    *       id: newId
    *     });
    *
-   * @param {String} newId the new id for this figure
+   * @param {string} newId the new id for this figure
    */
   setId: function setId(newId) {
     this.id = newId;
@@ -9948,7 +9948,7 @@ _packages2.default.Figure = Class.extend({
    * Return the css styling class name of the element.
    *
    *
-   * @return {String}
+   * @return {string}
    */
   getCssClass: function getCssClass() {
     return this.cssClass;
@@ -9963,7 +9963,7 @@ _packages2.default.Figure = Class.extend({
    *        "cssClass": "red_border_figure"
    *      });
    *
-   * @param {String} cssClass the new css class name of the node
+   * @param {string} cssClass the new css class name of the node
    * @since 2.9.0
    */
   setCssClass: function setCssClass(cssClass) {
@@ -9987,7 +9987,7 @@ _packages2.default.Figure = Class.extend({
    * @method
    * The method will return true if the class is assigned to the element, even if other classes also are.
    *
-   * @param {String} className the class name to check
+   * @param {string} className the class name to check
    * @since 2.9.0
    */
   hasCssClass: function hasCssClass(className) {
@@ -10004,7 +10004,7 @@ _packages2.default.Figure = Class.extend({
    * It's important to note that this method does not replace a class. It simply adds the class,
    * appending it to any which may already be assigned to the elements.
    *
-   * @param {String} className
+   * @param {string} className
    * @since 2.9.0
    */
   addCssClass: function addCssClass(className) {
@@ -10026,7 +10026,7 @@ _packages2.default.Figure = Class.extend({
    *
    * Remove the given css class name from the figure
    *
-   * @param {String} className the css class name to add
+   * @param {string} className the css class name to add
    */
   removeCssClass: function removeCssClass(className) {
     className = className.trim();
@@ -10047,7 +10047,7 @@ _packages2.default.Figure = Class.extend({
    *
    * Add or remove the given css class name from the figure
    *
-   * @param {String} className the class name to toggle
+   * @param {string} className the class name to toggle
    */
   toggleCssClass: function toggleCssClass(className) {
     className = className.trim();
@@ -11802,7 +11802,7 @@ _packages2.default.Figure = Class.extend({
    * Execute all handlers and behaviors attached to the figure for the given event type.
    *
    *
-   * @param {String} event the event to trigger
+   * @param {string} event the event to trigger
    * @param {Object} [args] optional parameters for the triggered event callback
    *
    * @since 5.0.0
@@ -11857,7 +11857,7 @@ _packages2.default.Figure = Class.extend({
    *   <li>change:[attr]</li>
    * </ul>
    *
-   * @param {String}   event One or more space-separated event types
+   * @param {string}   event One or more space-separated event types
    * @param {Function} callback A function to execute when the event is triggered.
    * @param {draw2d.Figure} callback.emitter the emitter of the event
    * @param {Object} [callback.obj] optional event related data
@@ -12137,7 +12137,7 @@ _packages2.default.HeadlessCanvas = Class.extend({
      * @constructor
      * Create a new canvas with the given HTML DOM references.
      *
-     * @param {String} canvasId the id of the DOM element to use a parent container
+     * @param {string} canvasId the id of the DOM element to use a parent container
      */
     init: function init() {
         // internal document with all figures, ports, ....
@@ -12259,7 +12259,7 @@ _packages2.default.HeadlessCanvas = Class.extend({
      * @method
      * Returns the line or connection with the given id.
      *
-     * @param {String} id The id of the line.
+     * @param {string} id The id of the line.
      *
      * @return {draw2d.shape.basic.Line}
      **/
@@ -12278,7 +12278,7 @@ _packages2.default.HeadlessCanvas = Class.extend({
      * @method
      * Returns the figure with the given id.
      *
-     * @param {String} id The id of the figure.
+     * @param {string} id The id of the figure.
      * @return {draw2d.Figure}
      **/
     getFigure: function getFigure(id) {
@@ -12333,7 +12333,7 @@ _packages2.default.HeadlessCanvas = Class.extend({
      * Execute all handlers and behaviors attached to the canvas for the given event type.
      *
      *
-     * @param {String} event the event to trigger
+     * @param {string} event the event to trigger
      * @param {Object} [args] optional parameters for the triggered event callback
      *
      * @since 5.0.0
@@ -12381,7 +12381,7 @@ _packages2.default.HeadlessCanvas = Class.extend({
      *          }
      *      });
      *
-     * @param {String}   event One or more space-separated event types
+     * @param {string}   event One or more space-separated event types
      * @param {Function} callback A function to execute when the event is triggered.
      * @param {draw2d.Canvas} callback.emitter the emitter of the event
      * @param {Object} [callback.obj] optional event related data
@@ -13112,7 +13112,7 @@ _packages2.default.Port = _packages2.default.shape.basic.Circle.extend({
    * @method
    * Return the name of this port.
    *
-   * @return {String}
+   * @return {string}
    **/
   getName: function getName() {
     return this.name;
@@ -13124,7 +13124,7 @@ _packages2.default.Port = _packages2.default.shape.basic.Circle.extend({
    * ports in the node.
    *
    *
-   * @param {String} name The new name of this port.
+   * @param {string} name The new name of this port.
    **/
   setName: function setName(name) {
     this.name = name;
@@ -13458,7 +13458,7 @@ _packages2.default.ResizeHandle = _packages2.default.shape.basic.Rectangle.exten
    * @method
    * Returns the current used SVG as string
    *
-   * @returns {String}
+   * @returns {string}
    */
   getOwner: function getOwner() {
     return this.owner;
@@ -13474,7 +13474,7 @@ _packages2.default.ResizeHandle = _packages2.default.shape.basic.Rectangle.exten
    * @method
    * Returns the current used SVG as string
    *
-   * @returns {String}
+   * @returns {string}
    */
   getType: function getType() {
     return this.type;
@@ -13984,7 +13984,7 @@ _packages2.default.SVGFigure = _packages2.default.SetFigure.extend({
      * @method
      * Returns the current used SVG as string
      *
-     * @returns {String}
+     * @returns {string}
      */
     getSVG: function getSVG() {
         return this.svg;
@@ -13994,7 +13994,7 @@ _packages2.default.SVGFigure = _packages2.default.SetFigure.extend({
      * @method
      * Set the SVG of this shape
      *
-     * @param {String} svg The new SVG to render as String
+     * @param {string} svg The new SVG to render as String
      * @param {Number} [duration] the optional duration for the change of the SVG of the figure
      *
      * @returns {draw2d.SVGFigure}
@@ -14515,7 +14515,7 @@ _packages2.default.SetFigure = _packages2.default.shape.basic.Rectangle.extend({
    * @method
    * Set the css class if the node.
    *
-   * @param {String} cssClass the new css class name of the node
+   * @param {string} cssClass the new css class name of the node
    * @since 2.9.0
    */
   setCssClass: function setCssClass(cssClass) {
@@ -14887,7 +14887,7 @@ _packages2.default.VectorFigure = _packages2.default.shape.node.Node.extend({
         this.glowIsActive = false;
 
         this._super(attr, (0, _extend2.default)({
-            /** @attr {String} dasharray the line pattern see {@link draw2d.shape.basic.Line#setDashArray} for more information*/
+            /** @attr {string} dasharray the line pattern see {@link draw2d.shape.basic.Line#setDashArray} for more information*/
             dasharray: this.setDashArray,
             /** @attr {Number} radius the radius to render the line edges */
             radius: this.setRadius,
@@ -14941,7 +14941,7 @@ _packages2.default.VectorFigure = _packages2.default.shape.node.Node.extend({
     *        dash: dashPattern
     *      });
      *
-     * @param {String} dash can be one of this ["", "-", ".", "-.", "-..", ". ", "- ", "--", "- .", "--.", "--.."]
+     * @param {string} dash can be one of this ["", "-", ".", "-.", "-..", ". ", "- ", "--", "- .", "--.", "--.."]
      */
     setDashArray: function setDashArray(dashPattern) {
         this.dasharray = dashPattern;
@@ -15193,7 +15193,7 @@ _packages2.default.command.Command = Class.extend({
    * @constructor
    * Create a new Command objects which can be execute via the CommandStack.
    *
-   * @param {String} label
+   * @param {string} label
    */
   init: function init(label) {
     this.label = label;
@@ -15203,7 +15203,7 @@ _packages2.default.command.Command = Class.extend({
    * @method
    * Returns a label of the Command. e.g. "move figure".
    *
-   * @return {String} the label for this command
+   * @return {string} the label for this command
    **/
   getLabel: function getLabel() {
     return this.label;
@@ -15773,7 +15773,7 @@ _packages2.default.command.CommandCollection = _packages2.default.command.Comman
    * @constructor
    * Create a new CommandConnect objects which can be execute via the CommandStack.
    *
-   * @param {String} [commandLabel] the label to show on the command stack for the undo/redo operation
+   * @param {string} [commandLabel] the label to show on the command stack for the undo/redo operation
    */
   init: function init(commandLabel) {
     this._super(typeof commandLabel === 'undefined' ? _packages2.default.Configuration.i18n.command.collection : commandLabel);
@@ -15785,7 +15785,7 @@ _packages2.default.command.CommandCollection = _packages2.default.command.Comman
    * @method
    * Returns a label of the Command. e.g. "move figure".
    *
-   * @return {String} the label for this command
+   * @return {string} the label for this command
    **/
   getLabel: function getLabel() {
     //return the label of the one and only command
@@ -17527,7 +17527,7 @@ _packages2.default.command.CommandStack = Class.extend({
    * Opens a transaction for further multiple commands. If you execute a command all
    * {@ #execute} calls will be ignored until you commit the current transaction.
    *
-   * @param {String} [commandLabel] the label to show for the undo/redo operation
+   * @param {string} [commandLabel] the label to show for the undo/redo operation
    *
    * @since 4.0.0
    */

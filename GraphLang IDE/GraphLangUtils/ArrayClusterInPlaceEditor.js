@@ -1,16 +1,16 @@
 /**
- * @class GraphLang.Utils.ClusterInPlaceEditor
+ * @class GraphLang.Utils.ArrayClusterInPlaceEditor
  * @author Lubomir Jagos
  * @description Editor for cluster, takes available clusters names and listed them in combobox which appears in place of cluster name.
  * For editing array items.
  */
-
 GraphLang.Utils.ArrayClusterInPlaceEditor = draw2d.ui.LabelEditor.extend({
 
     NAME : "GraphLang.Utils.ArrayClusterInPlaceEditor",
 
     /**
-     * @constructor
+     * @method
+     * @memberOf GraphLang.Utils.ArrayClusterInPlaceEditor
      * @private
      */
     init: function(listener)
@@ -24,8 +24,8 @@ GraphLang.Utils.ArrayClusterInPlaceEditor = draw2d.ui.LabelEditor.extend({
     
     /**
      * @method
-     * Trigger the edit of the label text.
-     * 
+     * @memberOf GraphLang.Utils.ArrayClusterInPlaceEditor
+     * @description Trigger the edit of the label text.
      * @param {draw2d.shape.basic.Label} label the label to edit
      */
     start: function(label)
@@ -114,9 +114,9 @@ GraphLang.Utils.ArrayClusterInPlaceEditor = draw2d.ui.LabelEditor.extend({
     
     /**
      * @method
-     * Transfer the data from the editor into the label.<br>
+     * @memberOf GraphLang.Utils.ArrayClusterInPlaceEditor
+     * @description Transfer the data from the editor into the label.<br>
      * Remove the editor.<br>
-     *
      * @private
      */
     commit: function()
@@ -164,7 +164,8 @@ GraphLang.Utils.ArrayClusterInPlaceEditor = draw2d.ui.LabelEditor.extend({
     
     /**
      * @method
-     * Transfer the data from the editor into the label.<br>
+     * @memberOf GraphLang.Utils.ArrayClusterInPlaceEditor
+     * @description Transfer the data from the editor into the label.<br>
      * Remove the editor.<br>
      * @private
      */

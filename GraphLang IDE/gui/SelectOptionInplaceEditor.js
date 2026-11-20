@@ -1,3 +1,9 @@
+/**
+ * @class
+ * @memberOf draw2d.ui
+ * @augments draw2d.ui.LabelInplaceEditor
+ * @description Add html select option editor into draw2d
+ */
 draw2d.ui.SelectOptionInplaceEditor =  draw2d.ui.LabelInplaceEditor.extend({
 
     NAME: "draw2d.ui.SelectOptionInplaceEditor",
@@ -9,8 +15,8 @@ draw2d.ui.SelectOptionInplaceEditor =  draw2d.ui.LabelInplaceEditor.extend({
 
     /**
      * @method
-     * Trigger the edit of the label text.
-     *
+     * @memberOf drawd2d.ui
+     * @description Trigger the edit of the label text.
      * @param {draw2d.shape.basic.Label} label the label to edit
      */
     start: function( label)

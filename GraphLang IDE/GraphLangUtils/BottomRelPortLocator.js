@@ -1,10 +1,19 @@
 /**
- *  @method BottomRelPortLocator
- *  @name GraphLang.Utils.BottomRelPortLocator
+ *  @class
+ *  @memberOf GraphLang.Utils
+ *  @augments draw2d.layout.locator.XYRelPortLocator
  *  @description To snap objects to botom edge of structure.
  */
 GraphLang.Utils.BottomRelPortLocator = draw2d.layout.locator.XYRelPortLocator.extend({
   NAME: "GraphLang.Utils.BottomRelPortLocator",
+
+  /**
+   * @method
+   * @memberOf GraphLang.Utils.BottomRelPortLocator
+   * @param index
+   * @param figure
+   * @override
+   */
   relocate: function(index, figure)
   {
       var node = figure.getParent();

@@ -1,11 +1,17 @@
+/**
+ * @class
+ * @augments draw2d.ui.LabelInplaceEditor
+ * @memberOf draw2d.ui
+ * @description Extend draw2d single line edit to create multiple line code edit using html5 div edit property
+ */
 draw2d.ui.MultilineInplaceEditor =  draw2d.ui.LabelInplaceEditor.extend({
 
     NAME: "draw2d.ui.MultilineInplaceEditor",
 
     /**
      * @method
-     * Trigger the edit of the label text.
-     *
+     * @memberOf draw2d.ui.MultilineInplaceEditor
+     * @description Trigger the edit of the label text.
      * @param {draw2d.shape.basic.Label} label the label to edit
      */
     start: function( label)

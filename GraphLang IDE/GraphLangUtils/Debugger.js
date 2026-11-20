@@ -3,7 +3,7 @@
  */
 
 /**
- *  @class GraphLang.Utils
+ *  @namespace GraphLang.Debugger
  *  @description Base class for GraphLang utils
  */
 GraphLang.Debugger = Class.extend({
@@ -15,15 +15,39 @@ GraphLang.Debugger = Class.extend({
     }
 });
 
+/**
+ * @namespace GraphLang.Debugger.Cpp
+ * @description C++ debugger class, creates websocket to communicate with python script and control trhough it GDB, can makes steps through code, search for code breakpoint lines and other things.
+ */
 GraphLang.Debugger.Cpp = {};
 
+/**
+ * Browser websocket object - used to communicate with backend python script to control GDB
+ * @memberOf GraphLang.Debugger
+ * @var {Object}
+ */
 GraphLang.Debugger.websocket = {};
+
+/**
+ * Websocket port number, hardwired to be <b>8888</b> for now
+ * @memberOf GraphLang.Debugger
+ * @var {number}
+ */
 GraphLang.Debugger.websocketPort = 8888;
 
+/**
+ * Response from GDB obtained from python backend script using browser websocket.
+ * @var {string}
+ */
 GLOBAL_DEBUGGER_CPP_RESPONSE = null;
+/**
+ * Response from GDB obtained from python backend script using browser websocket.
+ * @function
+ */
 GLOBAL_DEBUGGER_CPP_WEBSOCKET_CALLBACK = null;
 
 /**
+ * @memberOf GraphLang.Debugger.Cpp
  * @method createWebScoket
  * @param options
  * @description Opens websocket on javascript side, looking for python opened port, if python server script is not running this will not connect and display it for user.
@@ -73,6 +97,11 @@ GraphLang.Debugger.Cpp.createWebSocket = function(options = null){
     }
 }
 
+/**
+ * @method
+ * @memberOf GraphLang.Debugger.Cpp
+ * @param event
+ */
 GraphLang.Debugger.Cpp.logResponse = function(event){
     console.log(event.data);
 
@@ -152,6 +181,13 @@ GraphLang.Debugger.Cpp.logResponse = function(event){
     }
 }
 
+/**
+ * @async
+ * @memberOf GraphLang.Debugger.Cpp
+ * @param message
+ * @param callbackFunction
+ * @return {Promise<unknown>}
+ */
 GraphLang.Debugger.Cpp.sendMessageAndAddToLog = async function(message = null, callbackFunction = null){
     return new Promise((resolve, reject) => {
         GLOBAL_DEBUGGER_CPP_RESPONSE = null;
@@ -183,7 +219,8 @@ GraphLang.Debugger.Cpp.sendMessageAndAddToLog = async function(message = null, c
 }
 
 /**
- * @param options
+ * @memberOf GraphLang.Debugger.Cpp
+ * @param {Object} options
  * @description This function is tied to button and after click it try to send message to websocket port, if not opened try to reopen it.
  */
 GraphLang.Debugger.Cpp.onclickSendButton = function(options = null){
@@ -205,7 +242,9 @@ GraphLang.Debugger.Cpp.onclickSendButton = function(options = null){
 }
 
 /**
- *  @method startDebuggerServer
+ *  @async
+ *  @memberOf GraphLang.Debugger.Cpp
+ *  @param {Object} options
  *  @description This will start python script which acts as debugger server, asking interface between GDB and websocket and send and receive messages betweeen them.
  */
 GraphLang.Debugger.Cpp.startDebuggerServer = async function(options = null){
@@ -314,6 +353,7 @@ GraphLang.Debugger.Cpp.startDebuggerServer = async function(options = null){
 }
 
 /**
+ * @async
  * @method GraphLang.Debugger.Cpp.endDebuggerServer
  * @param options
  * @param options.onopen - function(event) to be called when websocket opens
@@ -355,7 +395,9 @@ GraphLang.Debugger.Cpp.endDebuggerServer = async function(options = null) {
 }
 
 /**
+ *  @async
  *  @method compileCurrentNode
+ *  @memberOf GraphLang.Debugger.Cpp
  *  @description This will send AJAX request to PHP server to run compile process of current generated code.
  */
 GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
@@ -611,7 +653,9 @@ GraphLang.Debugger.Cpp.compileCurrentNode = async function(options = null){
 }
 
 /**
+ *  @async
  *  @method debugSchematic
+ *  @memberOf GraphLang.Debugger.Cpp
  *  @description This will set breakpoints into loaded code, load coad and run it.
  */
 GraphLang.Debugger.Cpp.debugSchematic = async function(options = null){
@@ -639,6 +683,12 @@ GraphLang.Debugger.Cpp.debugSchematic = async function(options = null){
     }
 }
 
+/**
+ * @async
+ * @memberOf GraphLang.Debugger.Cpp
+ * @param {Object} options
+ * @return {Promise<void>}
+ */
 GraphLang.Debugger.Cpp.debugSchematicDesktop = async function(options = null){
     document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `START DEBUGGING DESKTOP APP<hr/>`);
 
@@ -668,6 +718,12 @@ GraphLang.Debugger.Cpp.debugSchematicDesktop = async function(options = null){
     await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`start`);
 }
 
+/**
+ * @async
+ * @memberOf GraphLang.Debugger.Cpp
+ * @param {Object} options
+ * @return {Promise<unknown>}
+ */
 GraphLang.Debugger.Cpp.debugSchematicEmbedded = async function(options = null){
     return new Promise(async (resolve, reject) => {
         document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `START DEBUGGING EMBEDDED APP<hr/>`);
@@ -699,7 +755,7 @@ GraphLang.Debugger.Cpp.debugSchematicEmbedded = async function(options = null){
 }
 
 /**
- *  @method debugGetWireValue
+ *  @memberOf GraphLang.Debugger.Cpp
  *  @description Send message to GDB debugger to get wire variable value, evaluate output message and try to put it's value on screen on wire.
  */
 GraphLang.Debugger.Cpp.debugGetWireValue = function(options = null){
@@ -850,8 +906,8 @@ GraphLang.Debugger.Cpp.debugGetWireValue = function(options = null){
 }
 
 /**
- *  @method putWireValueOnScreen
- *  @param {Object}   watchObj    - info about breakpoint which should contain these attributes: objectId {String}
+ *  @memberOf GraphLang.Debugger.Cpp
+ *  @param {Object}   watchObj    - info about breakpoint which should contain these attributes: objectId {string}
  *  @param {string}   wireValue   - value which will be placed as label on wire
  *  @param {boolean}  doAnimation - default true, indicate if label after placement on wire should blink for moment to be more easily recognized
  *  @description Put label on wire on screen if node is opened on main screen.
@@ -896,7 +952,8 @@ GraphLang.Debugger.Cpp.putWireValueOnScreen = function(watchObj, wireValue, doAn
 
 /**
  *  @method breakpointAnimateDotAlongWire
- *  @param {Object}   breakpointObj - info about breakpoint which should contain these attributes: objectId {String}
+ *  @memberOf GraphLang.Debugger.Cpp
+ *  @param {Object}   breakpointObj - info about breakpoint which should contain these attributes: objectId {string}
  *  @description Infinite animation of dot along wire, this will highlight wire during debugging when breakpoint was reached. Breakpoint object must be set on wire, this will do nothing
  *  in case that breakpoint is set on figure.
  */
@@ -918,6 +975,7 @@ GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWire = function(breakpointObj) {
 
 /**
  *  @method breakpointAnimateDotAlongWireDeleteAll
+ *  @memberOf GraphLang.Debugger.Cpp
  *  @param {Object}   wireObj - wire connection object
  *  @description Delete all red dots assigned to wire which are moving along wire from source to target
  */
@@ -936,6 +994,11 @@ GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWireDeleteAll = function(wireObj
     });
 }
 
+/**
+ * @memberOf GraphLang.Debugger.Cpp
+ * @param {Object} breakpointObj
+ * @param {string} breakpointObj.objectId
+ */
 GraphLang.Debugger.Cpp.breakpointAnimateNodeBlinking = function(breakpointObj) {
     //check input breakpoint object if is right and if wire was found
     if (breakpointObj === null || !(typeof breakpointObj === "object" && typeof breakpointObj.objectId === "string")){
@@ -952,6 +1015,10 @@ GraphLang.Debugger.Cpp.breakpointAnimateNodeBlinking = function(breakpointObj) {
     GraphLang.Utils.animateBlinkObject(nodeObj.getCanvas(), nodeObj.getId(), {userData: {isDebugBreakpointAnimated: true}}, null, true);
 }
 
+/**
+ * @memberOf GraphLang.Debugger.Cpp
+ * @param nodeObj
+ */
 GraphLang.Debugger.Cpp.breakpointAnimateNodeBlinkingStop = function(nodeObj) {
     if (nodeObj === undefined || nodeObj === null){
         console.log(`> breakpointAnimateNodeBlinkingStop - entered - node not found`);
@@ -964,6 +1031,9 @@ GraphLang.Debugger.Cpp.breakpointAnimateNodeBlinkingStop = function(nodeObj) {
     }
 }
 
+/**
+ * @memberOf GraphLang.Debugger.Cpp
+ */
 GraphLang.Debugger.Cpp.breakpointAnimateStopAll = function() {
     //delete animated dots from all wires
     appCanvas.getLines().each((wireIndex, wireObj) => {
@@ -979,7 +1049,8 @@ GraphLang.Debugger.Cpp.breakpointAnimateStopAll = function() {
 }
 
 /**
- *  @method getCodeLocation
+ *  @async
+ *  @memberOf GraphLang.Debugger.Cpp
  *  @description ???This will blink on current code location, it scans source code, ask debugger
  *  on which line it is and find it in schematic and focus screen on it, should work on nested nodes.
  */
@@ -1058,8 +1129,9 @@ GraphLang.Debugger.Cpp.getCodeLocation = async function(){
 }
 
 /**
- * @method open
- * @param options - {targetElementId: string}
+ * @memberOf GraphLang.Debugger.Cpp
+ * @param {Object} options
+ * @param {string} options.targetElementId
  * @descritption Open debugger in target element, start websocket, creates GUI for user ie. buttons to control debugging process and also output for messages from GDB and others sources (it creates HTML element for messages)
  */
 GraphLang.Debugger.Cpp.open = function(options = null){
@@ -1093,14 +1165,15 @@ GraphLang.Debugger.Cpp.open = function(options = null){
     );
 }
 
-
-
-
+/******************************************************************************************************************************
+ *  BREAKPONTS - Functions to open breakpoint list to see variables current value
+ ******************************************************************************************************************************/
 
 /**
- *  Functions to open breakpoint list to see variables current value
+ * @memberOf GraphLang.Debugger.Cpp
+ * @description Clear all breakpoints in right debugger list and create new one which match current canvas.
+ * @param funcParams
  */
-
 GraphLang.Debugger.Cpp.refreshBreakpointList = function(funcParams){
     console.log(`REFRESHING BREAKPOINT LIST obtained during C++ code translation, breakpoint list content:`);
     console.log(GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList());
@@ -1129,16 +1202,24 @@ GraphLang.Debugger.Cpp.toggleBreakpointList = function(funcParams = null){
 
 
 
+/******************************************************************************************************************************
+ *  Functions to open watch list to see variables current value
+ ******************************************************************************************************************************/
 
 
 /**
- *  Functions to open watch list to see variables current value
+ * @memberOf GraphLang.Debugger.Cpp
+ * @param funcParams
  */
 GraphLang.Debugger.Cpp.toggleVariablesWatch = function(funcParams = null){
     alert('watch open - not implemented yet');
     let outputElement = document.querySelector("#variablesWatch");
 }
 
+/**
+ * @memberOf GraphLang.Debugger.Cpp
+ * @param funcParams
+ */
 GraphLang.Debugger.Cpp.refreshWatchList = function(funcParams = null){
     console.log(`REFRESHING WATCH LIST obtained during C++ code translation, watch list content:`);
     console.log(GraphLang.Utils.TranslateToGeneralCodeObj.getWatchList());
@@ -1154,7 +1235,8 @@ GraphLang.Debugger.Cpp.refreshWatchList = function(funcParams = null){
 }
 
 /**
- * @method readGdbWatchValueAndDisplayOnScreen
+ * @async
+ * @memberOf GraphLang.Debugger.Cpp@method readGdbWatchValueAndDisplayOnScreen
  * @param {Object}  watchObj    - JSON watch object
  * @param {bool}    doAnimation - if true label placed on wire blink for moment to show where it is placed on screen
  * @returns {Promise<void>}
@@ -1170,7 +1252,8 @@ GraphLang.Debugger.Cpp.readGdbWatchValueAndDisplayOnScreen = async function(watc
 }
 
 /**
- * @method readAllWatchValues
+ * @async
+ * @memberOf GraphLang.Debugger.Cpp
  * @description Go through current all watch list and read their values from GDB and put them on screen.
  * @param {Object} funcParams
  */
@@ -1186,7 +1269,8 @@ GraphLang.Debugger.Cpp.readAllWatchValues = async function(funcParams = null) {
 }
 
 /**
- *  @method runCurrentNode
+ *  @async
+ *  @memberOf GraphLang.Debugger.Cpp
  *  @description This will sen AJAX request to PHP server to run compile process of current generated code.
  */
 GraphLang.Debugger.Cpp.runCurrentNode = async function(options = null){
@@ -1232,7 +1316,8 @@ GraphLang.Debugger.Cpp.runCurrentNode = async function(options = null){
 }
 
 /**
- *  @method stepForward
+ *  @async
+ *  @memberOf GraphLang.Debugger.Cpp
  *  @description Do step in GDB and try to animate where application is at moment.
  *  In GDB stepping is done:
  *      step (s) - step to next instruction, stepping into subroutines

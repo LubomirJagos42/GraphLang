@@ -1,3 +1,8 @@
+/**
+ * @class HoverConnection
+ * @augments draw2d.Connection
+ * @description Extend original draw2d hover connection class and modify it for GraphLang needs.
+ */
 HoverConnection = draw2d.Connection.extend({
     NAME: "HoverConnection",
     init: function ( sourcePort, targetPort) {
@@ -185,10 +190,10 @@ HoverConnection = draw2d.Connection.extend({
     },
 
     /**
-     * required to receive dragEnter/dragLeave request.
-     * This figure ignores drag/drop events if it is not a valid target
-     * for the draggedFigure
-     *
+     * @method
+     * @instance
+     * @memberOf HoverConnection
+     * @description Required to receive dragEnter/dragLeave request. This figure ignores drag/drop events if it is not a valid target for the draggedFigure
      * @param draggedFigure
      * @returns {HoverConnection}
      */
@@ -197,18 +202,12 @@ HoverConnection = draw2d.Connection.extend({
         return this;
     },
 
-
-/*********************************************************************************************************************************************
- *    EXPERIMENT SAVING ATTRIBUTES AND RESTORE DIAGRAM FROM FILE
- *********************************************************************************************************************************************/
-
   /**
    * @method
-   * Return an objects with all important attributes for XML or JSON serialization
-   *
+   * @memberOf HoverConnection
+   * @description Return an objects with all important attributes for XML or JSON serialization
    * FUNCTION ALTERED (LuboJ), added portId into connection target attributes to know exact port id not just element,
    * because there could be tunnels on loop and I need to know when restoring connection to which tunnels they were connected
-   *
    * @returns {Object}
    */
   getPersistentAttributes: function()
@@ -269,10 +268,10 @@ HoverConnection = draw2d.Connection.extend({
 
   /**
    * @method
-   * Read all attributes from the serialized properties and transfer them into the shape.
-   *
+   * @memberOf HoverConnection
+   * @description Read all attributes from the serialized properties and transfer them into the shape.
    * @param {Object} memento
-   * @returns
+   * @returns null
    */
   setPersistentAttributes: function(memento)
   {
@@ -290,12 +289,12 @@ HoverConnection = draw2d.Connection.extend({
           this.setSourceDecorator( eval("new "+memento.source.decoration));
       }
 
-      /*********************************************************************************************
+      /* ********************************************************************************************
        *  LuboJ, added connection TARGET
        *    Because  draw2d.Reader is treating inside it objects like original from draw2d LIB
        *    and I haven't override classes, it will use default setPersistentAttributes() from
        *    draw2d library and this function is ignored. But previous function is used in code.
-       *********************************************************************************************/
+       * ********************************************************************************************/
 /*
        if(typeof memento.targetTunnel !=="undefined" && memento.targeTunnel != null){
            //this.setTarget(this.getCanvas().getFigure(memento.target.tunnel).getInputPort(0));

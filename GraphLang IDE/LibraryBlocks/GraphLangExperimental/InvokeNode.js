@@ -45,7 +45,7 @@ GraphLang.Shapes.ItemsNode.InvokeNode = draw2d.shape.layout.VerticalLayout.exten
      * @method
      * Add an entity to the db shape
      *
-     * @param {String} txt the label to show
+     * @param {string} txt the label to show
      * @param {Number} [optionalIndex] index where to insert the entity
      */
     addEntity: function(txt, optionalIndex)

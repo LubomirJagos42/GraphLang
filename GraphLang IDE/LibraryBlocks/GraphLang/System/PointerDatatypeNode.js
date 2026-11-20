@@ -139,7 +139,7 @@ GraphLang.Shapes.Basic.PointerDatatypeNode = GraphLang.Shapes.Basic.ConstantNode
     /**
      *  @name translateToCppCodeDeclaration
      *  @desc Returns constant declaration. NOW INTENTIONALLY SAME AS TRANLSATE TO CPP, BECAUSE it's used during translating function to have translate them before wires declaration
-     *  @returns {String} C code string, each line is finished with newline symbol \n
+     *  @returns {string} C code string, each line is finished with newline symbol \n
      */
     translateToCppCodeDeclaration:function(){
       cCode = "";

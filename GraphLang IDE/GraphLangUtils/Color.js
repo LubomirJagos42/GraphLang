@@ -1,12 +1,13 @@
 /**
  *  @class GraphLang.Utils.Color
  *  @description This is wrapper around draw2d.util.Color class, to provide my method and my functionality for GraphLang.
+ *  @memberOf GraphLang.Utils
  */
 GraphLang.Utils.Color = draw2d.util.Color.extend({
   NAME: "GraphLang.Utils.Color",
 
   /**
-   *  @method init
+   *  @memberOf GraphLang.Utils.Color
    *  @param attr
    *  @param setter
    *  @param getter
@@ -17,11 +18,11 @@ GraphLang.Utils.Color = draw2d.util.Color.extend({
   },
 
   /**
-   *  @method getByNameFontColor
-   *  @param {String} colorName Datatype or some word like int, float, bool, String, undefined, unknown, ...
+   *  @memberOf GraphLang.Utils.Color
+   *  @param {string} colorName Datatype or some word like int, float, bool, String, undefined, unknown, ...
    *  @description Returns color for font (this is used at least in ArrayNode) to have consistent color through
    *  whole core of GraphLang somehow. At least to know how colors should be to be right.
-   *  @returns {String} Hexadecimal color representation ie. #FFFFFF for bool
+   *  @returns {string} Hexadecimal color representation ie. #FFFFFF for bool
    */
   getByName: function(colorName){
   
@@ -63,11 +64,11 @@ GraphLang.Utils.Color = draw2d.util.Color.extend({
   },
 
   /**
-   *  @method getByNameFontColor
-   *  @param {String} colorName Datatype or some word like int, float, bool, String, undefined, unknown, ...
+   *  @memberOf GraphLang.Utils.Color
+   *  @param {string} colorName Datatype or some word like int, float, bool, String, undefined, unknown, ...
    *  @description Returns color for font (this is used at least in ArrayNode) to have consistent color through
    *  whole core of GraphLang somehow. At least to know how colors should be to be right.
-   *  @returns {String} Hexadecimal color representation ie. #FFFFFF for bool
+   *  @returns {string} Hexadecimal color representation ie. #FFFFFF for bool
    */
   getByNameFontColor: function(colorName){
 
@@ -108,11 +109,11 @@ GraphLang.Utils.Color = draw2d.util.Color.extend({
   },
 
   /**
-   *  @method getByNameFontColor
-   *  @param {String} colorName Datatype or some word like int, float, bool, String, undefined, unknown, ...
+   *  @memberOf GraphLang.Utils.Color
+   *  @param {string} colorName Datatype or some word like int, float, bool, String, undefined, unknown, ...
    *  @description Returns color for font (this is used at least in ArrayNode) to have consistent color through
    *  whole core of GraphLang somehow. At least to know how colors should be to be right.
-   *  @returns {String} Hexadecimal color representation ie. #009900 for bool
+   *  @returns {string} Hexadecimal color representation ie. #009900 for bool
    */
   getByNameBackgroundColor: function(colorName){
 
@@ -152,8 +153,8 @@ GraphLang.Utils.Color = draw2d.util.Color.extend({
   },
 
   /**
-   *  @method getColorObjByName
-   *  @param {String} colorName Datatype or some word like int, float, bool, String, undefined, unknown, ...
+   *  @memberOf GraphLang.Utils.Color
+   *  @param {string} colorName Datatype or some word like int, float, bool, String, undefined, unknown, ...
    *  @description Returns whole GraphLang color object if somewhere needed.
    *  @returns {GraphLang.Utils.Color} GraphLang color object
    */

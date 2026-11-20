@@ -1,6 +1,16 @@
-
+/**
+ * @class
+ * @memberOf example
+ * @description Toolbar in top of window which contains buttons to run methods over current schematic, ie. generate C++ code, move object to front/back, delete object and others
+ * @type {Class}
+ */
 example.Toolbar = Class.extend({
 
+	/**
+	 * @memberOf example.Toolbar
+	 * @param elementId
+	 * @param view
+	 */
 	init:function(elementId, view){
 		this.html = $("#"+elementId);
 		this.view = view;
@@ -63,45 +73,45 @@ example.Toolbar = Class.extend({
 		this.delimiter  = $("<span class='toolbar_delimiter'>&nbsp;</span>");
 		this.html.append(this.delimiter);
 
-		/**
-		*	Bring to Front Button
-		*/
+		/*
+		 *	Bring to Front Button
+		 */
 		this.bringToFrontButton  = $("<button id=\"bringToFrontButton\">To Front</button>");
 		this.bringToFrontButton.button().click($.proxy(function(){
 			GraphLang.Utils.bringToFront(appCanvas);
 		}));
 		this.html.append(this.bringToFrontButton);
 
-		/**
-		*	Bring to Back Button
-		*/
+		/*
+		 *	Bring to Back Button
+		 */
 		this.bringToBackButton  = $("<button id=\"bringToBackButton\">To Back</button>");
 		this.bringToBackButton.button().click($.proxy(function(){
 			GraphLang.Utils.bringToBack(appCanvas);
 		}));
 		this.html.append(this.bringToBackButton);
 
-		/**
-		*	getCppCode3 Button
-		*/
+		/*
+		 *	getCppCode3 Button
+		 */
 		this.getCppCode3Button  = $("<button id=\"getCppCode3Button\">C/C++</button>");
 		this.getCppCode3Button.button().click($.proxy(function(){
 			GraphLang.Utils.TranslateToGeneralCodeObj.getCode(appCanvas);
 		}));
 		this.html.append(this.getCppCode3Button);
 
-		/**
-		*	getPythonCode Button
-		*/
+		/*
+		 *	getPythonCode Button
+		 */
 		this.getPythonCodeButton  = $("<button id=\"getPythonCodeButton\">Python</button>");
 		this.getPythonCodeButton.button().click($.proxy(function(){
 			GraphLang.Utils.getPythonCode(appCanvas);
 		}));
 		this.html.append(this.getPythonCodeButton);
 
-		/**
-		*	loadSchematic Button
-		*/
+		/*
+		 *	loadSchematic Button
+		 */
 		//this.loadSchematicButton  = $("<button id=\"loadSchematicButton\">loadSchematic</button>");
 		//
 		this.loadSchematicButton  = $('<input type="file" id="file-input2" />');
@@ -114,46 +124,46 @@ example.Toolbar = Class.extend({
 		this.html.append(this.loadSchematicButton);
 		document.getElementById('file-input2').addEventListener('change', GraphLang.Utils.readSingleFile2, false);
 
-		/**
-		*	zoomIn Button
-		*/
+		/*
+		 *	zoomIn Button
+		 */
 		this.zoomInButton  = $("<button id=\"zoomInButton\">+</button>");
 		this.zoomInButton.button().click($.proxy(function(){
             appCanvas.setZoom(appCanvas.getZoom()*0.7, true);
 		}));
 		this.html.append(this.zoomInButton);
 
-		/**
-		*	zoomOut Button
-		*/
+		/*
+		 *	zoomOut Button
+		 */
 		this.zoomOutButton  = $("<button id=\"zoomOutButton\">-</button>");
 		this.zoomOutButton.button().click($.proxy(function(){
             appCanvas.setZoom(appCanvas.getZoom()*1.3, true);
 		}));
 		this.html.append(this.zoomOutButton);
 
-		/**
-		*	zoomNormal Button, makes 1:1 zoom
-		*/
+		/*
+		 *	zoomNormal Button, makes 1:1 zoom
+		 */
 		this.zoomNormalButton  = $("<button id=\"zoomNormalButton\">1:1</button>");
 		this.zoomNormalButton.button().click($.proxy(function(){
             appCanvas.setZoom(1.0, true);
 		}));
 		this.html.append(this.zoomNormalButton);
 
-		/**
+		/*
 		 *	Schematic name input
 		 */
 		this.schematicNameInput  = $("<span>&nbsp; Schematic name: <input id=\"schematicName\" type=\"input\" value=\"GraphLangTestShape\"/></span>");
 		this.html.append(this.schematicNameInput);
 
-		/**
+		/*
 		 *	Schematic display name input
 		 */
 		this.schematicDisplayNameInput  = $("<span>&nbsp; Schematic display name: <input id=\"schematicDisplayName\" type=\"input\" value=\"\"/></span>");
 		this.html.append(this.schematicDisplayNameInput);
 
-		/**
+		/*
 		 *	saveSchematic Button
 		 */
 		this.saveSchematicButton  = $("<button id=\"saveSchematicButton\">saveSchematic</button>");
@@ -163,7 +173,7 @@ example.Toolbar = Class.extend({
 		}));
 		this.html.append(this.saveSchematicButton);
 
-		/**
+		/*
 		 *	uploadSchematic Button
 		 */
 		this.uploadSchematicButton  = $("<button id=\"uploadSchematicButton\">Upload</button>");
@@ -172,7 +182,7 @@ example.Toolbar = Class.extend({
 		}));
 		this.html.append(this.uploadSchematicButton);
 
-		/**
+		/*
 		 *	debuggerOpen Button
 		 */
 		this.debuggerOpenButton  = $("<button id=\"debuggerOpenButton\">Open Debugger</button>");
@@ -183,7 +193,7 @@ example.Toolbar = Class.extend({
 		}));
 		this.html.append(this.debuggerOpenButton);
 
-		/**
+		/*
 		 *	variablesWatchToggle Button
 		 */
 		this.variablesWatchToggleButton  = $("<button id=\"variablesWatchToggleButton\">Watch</button>");
@@ -192,7 +202,7 @@ example.Toolbar = Class.extend({
 		}));
 		this.html.append(this.variablesWatchToggleButton);
 
-		/**
+		/*
 		 *	breakpointListToggle Button
 		 */
 		this.breakpointListToggleButton  = $("<button id=\"breakpointListToggleButton\">Breakpoint List</button>");
@@ -201,7 +211,7 @@ example.Toolbar = Class.extend({
 		}));
 		this.html.append(this.breakpointListToggleButton);
 
-		/**
+		/*
 		 *	mouseRightClick Button - for tablet mostly
 		 *		TODO: There is still problem that jQuery context menu is not displayed, but this event seems to be working properly
 		 */
@@ -223,13 +233,13 @@ example.Toolbar = Class.extend({
 		}));
 		this.html.append(this.mouseRightClickButton);
 
-		/**
+		/*
 		 *	codeRewriteIdFlag checkbox to change internal IDs in generated code to human readible counting from 1..inf
 		 */
 		this.codeRewriteIdFlag  = $("<span>&nbsp; Rewrite ID: <input id=\"codeRewriteIdFlag\" type=\"checkbox\" checked/></span>");
 		this.html.append(this.codeRewriteIdFlag);
 
-		/**
+		/*
 		 *	breakpointListToggle Button
 		 */
 		this.rotateSelectedNodeButton  = $("<button id=\"rotateSelectedNodeButton\">rotate selected</button>");
@@ -243,7 +253,7 @@ example.Toolbar = Class.extend({
 		 *		- TODO: Still inside forloop or whilelayer cursor is 'default' inside
 		 ******************************************************************************************************************************/
 
-		/**
+		/*
 		 *	normalselection Button
 		 */
 		this.normalselectionButton  = $("<button id=\"normalselectionButton\">normalselection</button>");
@@ -252,7 +262,7 @@ example.Toolbar = Class.extend({
 		}));
 		this.html.append(this.normalselectionButton);
 
-		/**
+		/*
 		 *	forloop select Button
 		 */
 		this.forloopButton  = $("<button id=\"forloopButton\">forloop</button>");
@@ -261,7 +271,7 @@ example.Toolbar = Class.extend({
 		}));
 		this.html.append(this.forloopButton);
 
-		/**
+		/*
 		 *	whilelayer select Button
 		 */
 		this.whilelayerButton  = $("<button id=\"whilelayerButton\">whilelayer</button>");
@@ -270,7 +280,7 @@ example.Toolbar = Class.extend({
 		}));
 		this.html.append(this.whilelayerButton);
 
-		/**
+		/*
 		 *	multilayered select Button
 		 */
 		this.multilayeredButton  = $("<button id=\"multilayeredButton\">multilayered</button>");
@@ -279,7 +289,7 @@ example.Toolbar = Class.extend({
 		}));
 		this.html.append(this.multilayeredButton);
 
-		/**
+		/*
 		 *	multilayered select Button
 		 */
 		this.multilayeredEnhancedButton  = $("<button id=\"multilayeredEnhancedButton\">multilayered_enhanced</button>");
@@ -292,7 +302,8 @@ example.Toolbar = Class.extend({
 
 	/**
 	 * @method
-	 * Called if the selection in the cnavas has been changed. You must register this
+	 * @memberOf exmaple.Toolbar
+	 * @description Called if the selection in the cnavas has been changed. You must register this
 	 * class on the canvas to receive this event.
 	 *
      * @param {draw2d.Canvas} emitter
@@ -305,12 +316,11 @@ example.Toolbar = Class.extend({
 
 	/**
 	 * @method
-	 * Sent when an event occurs on the command stack. draw2d.command.CommandStackEvent.getDetail()
+	 * @memberOf exmaple.Toolbar
+	 * @descritption Sent when an event occurs on the command stack. draw2d.command.CommandStackEvent.getDetail()
 	 * can be used to identify the type of event which has occurred.
-	 *
-	 * @template
-	 *
 	 * @param {draw2d.command.CommandStackEvent} event
+	 * @template
 	 **/
 	stackChanged:function(event)
 	{

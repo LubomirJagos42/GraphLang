@@ -6,10 +6,16 @@
     "test": "node test/ui_test.js"
   },
   "dependencies": {
-    "puppeteer": "^22.15.0"
+    "puppeteer": "^22.15.0",
+    "taffydb": "^2.7.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
-    "jest": "^30.5.2"
+    "better-docs": "^2.7.3",
+    "clean-jsdoc-theme": "^5.3.0",
+    "docdash": "^2.0.2",
+    "jest": "^30.5.2",
+    "jsdoc": "^4.0.5",
+    "minami": "^1.2.3"
   }
 }

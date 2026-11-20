@@ -1,8 +1,8 @@
 /**
+ * @class
  * @author Lubomir Jagos
  * @description General object to translate schematic to code
  */
-
 class TranslateToCppCode_2_TranslatorObject {
 
     translatorCanvasObj = null;
@@ -29,38 +29,95 @@ class TranslateToCppCode_2_TranslatorObject {
     translateToCppCodeBreakpointList = new draw2d.util.ArrayList();
     translateToCppCodeWatchList = new draw2d.util.ArrayList();
 
+    /**
+     * @memberOf TranslateToCppCode_2_TranslatorObject
+     * @description Line offset used to find breakpoint, watch during debugging.
+     * @type {number}
+     */
     GLOBAL_CODE_LINE_OFFSET = 0;
+    /**
+     * @memberOf TranslateToCppCode_2_TranslatorObject
+     * @description Auxiliary line offset used to find breakpoint, watch during debugging.
+     * @type {number}
+     */
     GLOBAL_CODE_LINE_OFFSET_BEFORE_SUBNODES = 0;
+    /**
+     * @memberOf TranslateToCppCode_2_TranslatorObject
+     * @description Object reference returned when asked this API which line generates specific code line.
+     * @type {number}
+     */
     GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = null;
 
     constructor(paramsObj) {
         if (Object.keys(paramsObj).includes(paramsObj.canvasObj) && typeof paramsObj.canvasObj === "object") this.translatorCanvasObj = paramsObj.canvasObj;
     }
 
+    /**
+     * @method
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
+     * @param {Object} - canvasObj
+     */
     setCanvas = (canvasObj) => {
         this.translatorCanvasObj = canvasObj;
     }
 
+    /**
+     * @method
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
+     * @returns {number} line offset from internal class instance variable
+     */
     getCurrentTranslateLineOffset = () => {
         return this.GLOBAL_CODE_LINE_OFFSET;
     }
 
+    /**
+     * @method
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
+     * @returns {draw2d.util.ArrayList}
+     */
     getBreakpointList = () => {
         return this.translateToCppCodeBreakpointList;
     }
 
+    /**
+     * @method
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
+     * @returns {draw2d.util.ArrayList}
+     */
     getErrorList = () => {
         return this.translateToCppCodeErrorList;
     }
 
+    /**
+     * @method
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
+     * @returns {draw2d.util.ArrayList}
+     */
     getWatchList = () => {
         return this.translateToCppCodeWatchList;
     }
 
+    /**
+     * @method
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
+     * @returns {draw2d.util.ArrayList}
+     */
     getLibrariesList = () => {
         return this.translateToCppCodeLibrariesList;
     }
 
+    /**
+     * @method
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
+     * @returns {string} C++ includes string code block
+     */
     getCppCodeImport = () => {
         var cCode = "";
         this.translateToCppCodeImportArray.unique();                               //remove duplicities
@@ -70,6 +127,12 @@ class TranslateToCppCode_2_TranslatorObject {
         return cCode;
     }
 
+    /**
+     * @method
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
+     * @returns {string}
+     */
     getCppCodeTypeDefinition = () => {
         var cCode = "";
         this.translateToCppCodeTypeDefinitionArray.unique();                               //remove duplicities
@@ -80,7 +143,10 @@ class TranslateToCppCode_2_TranslatorObject {
     }
 
     /**
-     *  Init buffers which collects information about current diagram which is translated.
+     * @method
+     * @description Init buffers which collects information about current diagram which is translated.
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
      */
     initTranslateToCppBuffers = () => {
         this.translateToCppCodeImportArray.clear();          //import statements
@@ -101,11 +167,30 @@ class TranslateToCppCode_2_TranslatorObject {
         this.translateToCppCodeSubnodeInputTerminalsDefaultValuesArray.clear();
     }
 
-    //wrapper around internal code generate method, this is here to have general function with general name as interface to outside code
+    /**
+     * @method
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
+     * @description Wrapper around internal code generate method, this is here to have general function with general name as interface to outside code
+     * @param canvas
+     * @param showCode
+     * @param codeTemplate
+     * @returns {string} Class instance method wrapper over to code translate method.
+     */
     getCode = (canvas, showCode = true, codeTemplate = "desktop") => {
         return this.getCppCode(canvas, showCode, codeTemplate);
     }
 
+    /**
+     * @method
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
+     * @param canvas
+     * @param showCode
+     * @param codeTemplate
+     * @param lineNumberToFind
+     * @returns {string} C++ code as string
+     */
     getCppCode = (canvas, showCode = true, codeTemplate = "", lineNumberToFind = null) => {
         let cCode = "";
 
@@ -125,8 +210,10 @@ class TranslateToCppCode_2_TranslatorObject {
 
     /**
      * @method translateCanvasToCode
-     * @param {Object}        funcParam - object with input parameters
-     * @returns {String} C/C++ code as string
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
+     * @param {Object} funcParams - object with input parameters
+     * @returns {string} C/C++ code as string
      * @description General named wrapper function for translateCanvasToCppCode().
      */
     translateCanvasToCode = (funcParams) => {
@@ -134,14 +221,16 @@ class TranslateToCppCode_2_TranslatorObject {
     }
 
     /**
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
      * @method translateCanvasToCppCode
      * @param {Object}        funcParam - object with input parameters
-     * @param {draw2d.Canvas} funcParam.canvas - schematic which will be serialize to JSON
+     * @param {draw2d.Canvas} funcParam.canvas - schematic which will be serialized to JSON
      * @param {boolean}       funcParam.translateTerminalsDeclaration - if set to false input/output terminals for outside world declaration are not written in C/C++, this is for translate subnodes
-     * @param {String}        funcParam.nodeName - name of current node which schematic is being translated into code, this is set when subnode diagram is translated into code
+     * @param {string}        funcParam.nodeName - name of current node which schematic is being translated into code, this is set when subnode diagram is translated into code
      * @param {Object[]}      funcParam.compileErrorLines - array of error lines which should be searched during translation process
-     * @param {int}           funcParam.codeLinesOffset - number of lines which are generated before, this is to got right line number when searching for error line
-     * @returns {String} C/C++ code as string
+     * @param {number}        funcParam.codeLinesOffset - number of lines which are generated before, this is to got right line number when searching for error line
+     * @returns {string} C/C++ code as string
      * @description Copy diagram as C/C++ code into clipboard, uses inside translateToCppCode2() function.
      */
     translateCanvasToCppCode = (funcParams) =>{
@@ -745,6 +834,18 @@ class TranslateToCppCode_2_TranslatorObject {
         return cCode;
     }
 
+    /**
+     * @method
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
+     * @description Get C++ code for subnode, as there could be recursive translation of that same method therefore this must be separate method.
+     * @param {Object} funcParams
+     * @param {number} funcParams.schematicOwnerId
+     * @param {string} funcParams.schematicOwnerName
+     * @param {Object} funcParams.nodeObj
+     * @param {number} funcParams.lineNumberToFind
+     * @return {null}
+     */
     translateToCppCodeSubNode = (funcParams) => {
         let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : this;
 
@@ -957,9 +1058,11 @@ class TranslateToCppCode_2_TranslatorObject {
     }
 
     /**
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
      * @method translateToCppCodeClusterTypeDefinitionFromNode
-     * @param {Strin} className - class in which cluster is defined
-     * @returns {String} clusterName - cluster which typedefinition should be obtained
+     * @param {string} className - class in which cluster is defined
+     * @returns {string} clusterName which type definition should be obtained
      * @description Load node schematic in auxiliary canvas and run translate process for cluster typedefinition.
      */
     translateToCppCodeClusterTypeDefinitionFromNode = (className, clusterName) => {
@@ -1009,10 +1112,12 @@ class TranslateToCppCode_2_TranslatorObject {
     }
 
     /**
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
      * @method getObjectWhichGenerateCodeAtLine
-     * @param {integer} lineNumberToFind - code line which is going to be find which object generates its code
-     * @returns {figure} canvas figure responsible for specified code line number
-     * @description Transcript code and when line which is specified is generated returns object from canvas which generates it.
+     * @param {integer} lineNumberToFind - code line which is going to be found which object generates its code
+     * @returns {Object} figure object - canvas figure responsible for specified code line number
+     * @description Transcript code and when line which is specified is generated returns object from canvas which has generated it.
      */
     getObjectWhichGenerateCodeAtLine = async (lineNumberToFind)=> {
         this.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = null;
@@ -1036,10 +1141,12 @@ class TranslateToCppCode_2_TranslatorObject {
     }
 
     /**
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
      * @method getCppCodeUsingTemplate_embedded
-     * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
-     * @param {bool} showCode - if true there is code showed in alert message after click on button
-     * @returns {String} C/C++ code as string
+     * @param {draw2d.Canvas} canvas - schematic which will be serialized to JSON
+     * @param {boolean} showCode - if true there is code showed in alert message after click on button
+     * @returns {string} C/C++ code as string
      * @description Generate C/C++ code using template written in this function.
      */
     getCppCodeUsingTemplate_embedded = (canvas, showCode = true, translateCanvasToCodeFunction, lineNumberToFind = null) =>{
@@ -1154,10 +1261,12 @@ class TranslateToCppCode_2_TranslatorObject {
     }
 
     /**
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
      * @method getCppCodeUsingTemplate_desktop
      * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
-     * @param {bool} showCode - if true there is code showed in alert message after click on button
-     * @returns {String} C/C++ code as string
+     * @param {boolean} showCode - if true there is code showed in alert message after click on button
+     * @returns {string} C/C++ code as string
      * @description Generate C/C++ code for desktop.
      */
     getCppCodeUsingTemplate_desktop = (canvas, showCode = true, translateCanvasToCodeFunction, lineNumberToFind = null) =>{
@@ -1277,6 +1386,17 @@ class TranslateToCppCode_2_TranslatorObject {
         return cCode; //return C/C++ code as string
     }
 
+    /**
+     * @method
+     * @instance
+     * @memberOf TranslateToCppCode_2_TranslatorObject
+     * @description Get C++ code top template for webassembly for ecmascript.
+     * @param {Object} canvas
+     * @param {boolean} showCode
+     * @param {function} translateCanvasToCodeFunction
+     * @param {number|null} lineNumberToFind
+     * @return {null}
+     */
     getCppCodeUsingTemplate_webassembly = (canvas, showCode = true, translateCanvasToCodeFunction, lineNumberToFind = null) =>{
         let translatorObj = this;
 

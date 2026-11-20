@@ -11,12 +11,14 @@ USERPASSWORD = ""
 def parseNamePasswordFromArguments():
     USERNAME = ""
     USERPASSWORD = ""
+    global URL
 
     parser = argparse.ArgumentParser(
         description='GraphLang LoginClient argument parser'
     )
     parser.add_argument('--user', type=str, help='Username')
     parser.add_argument('--password', type=str, help='Password')
+    parser.add_argument('--serverIP', type=str, help='Server IP address')
 
     # Parse
     args, unknown = parser.parse_known_args()
@@ -25,12 +27,14 @@ def parseNamePasswordFromArguments():
         USERNAME = args.user
     if args.password:
         USERPASSWORD = hashlib.md5(args.password.encode()).hexdigest()
+    if args.serverIP:
+        URL = URL.replace("localhost", args.serverIP)
 
-    return USERNAME, USERPASSWORD
+    return USERNAME, USERPASSWORD, URL
 
-def loginUsingNamePassword(USERNAME = "", PASSWORD = ""):
+def loginUsingNamePassword(USERNAME = "", PASSWORD = "", SERVERIP="localhost"):
 
-    USERNAME, USERPASSWORD = parseNamePasswordFromArguments()
+    USERNAME, USERPASSWORD, URL = parseNamePasswordFromArguments()
 
     if USERNAME == "":
         USERNAME = input("username (email): ")
@@ -38,6 +42,9 @@ def loginUsingNamePassword(USERNAME = "", PASSWORD = ""):
     if USERPASSWORD == "":
         USERPASSWORD = input("password: ")
         USERPASSWORD = hashlib.md5(USERPASSWORD.encode()).hexdigest()
+
+    if SERVERIP != "localhost":
+        URL = URL.replace("localhost", SERVERIP)
 
     #
     #   login - using username and password
@@ -55,7 +62,7 @@ def loginUsingNamePassword(USERNAME = "", PASSWORD = ""):
 
     return response, USERNAME, USERPASSWORD
 
-def loginUsingNameToken(USERNAME = "", USERPASSWORD = "", USERTOKEN = ""):
+def loginUsingNameToken(USERNAME = "", USERPASSWORD = "", USERTOKEN = "", SERVERIP="localhost"):
 
     USERNAME, USERPASSWORD = parseNamePasswordFromArguments()
 
@@ -65,6 +72,9 @@ def loginUsingNameToken(USERNAME = "", USERPASSWORD = "", USERTOKEN = ""):
     if USERPASSWORD == "":
         USERPASSWORD = input("password: ")
         USERPASSWORD = hashlib.md5(USERPASSWORD.encode()).hexdigest()
+
+    if SERVERIP != "localhost":
+        URL = URL.replace("localhost", SERVERIP)
 
     myData = {}
     myData['username'] = USERNAME
@@ -86,7 +96,7 @@ def loginUsingNameToken(USERNAME = "", USERPASSWORD = "", USERTOKEN = ""):
 
 if __name__ == "__main__":
 
-    USERNAME, USERPASSWORD = parseNamePasswordFromArguments()
+    USERNAME, USERPASSWORD, URL = parseNamePasswordFromArguments()
 
     if USERNAME == "":
         USERNAME = input("username (email): ")

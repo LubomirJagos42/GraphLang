@@ -1,20 +1,23 @@
-// declare the namespace for this example
+/**
+ * @namespace
+ * @description Declare the namespace for this example GraphLang application
+ */
 var example = {};
 
 /**
- *
- * The **GraphicalEditor** is responsible for layout and dialog handling.
- *
+ * @class
+ * @memberOf example
  * @author Andreas Herz
  * @extends draw2d.ui.parts.GraphicalEditor
+ * @description The **GraphicalEditor** is responsible for layout and dialog handling.
  */
 example.Application = Class.extend({
 	NAME: "example.Application",
 
 	/**
-	 * @constructor
-	 *
-	 * @param {String} canvasId the id of the DOM element to use as paint container
+	 * @method
+	 * @memberOf example.Application
+	 * @param {string} canvasId the id of the DOM element to use as paint container
 	 */
 	init: function () {
 		this.view = new example.View("canvas");
