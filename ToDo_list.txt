@@ -251,6 +251,14 @@ In progress features
 
 - node to create file is not working, check if produces line fopen...
 
+- selected node display help
+    - store node help in variable docString
+    - display node help in right column in <div id="nodeDocString">...</div>
+
+
+
+
+
 Design notes
 ============
 + wire list must be stored at the end of serialized JSON what in our case is, since wires must be created as last

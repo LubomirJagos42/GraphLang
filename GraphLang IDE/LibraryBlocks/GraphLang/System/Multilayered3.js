@@ -236,8 +236,9 @@ GraphLang.Shapes.Basic.Loop2.Multilayered3 = GraphLang.Shapes.Basic.Loop2.extend
             try{ assignedFigureObj.updateNode(); }catch(e){}
         });
 
-        this.hideAllLayers();
-        this.makeActiveLayerVisible();
+        //apply visibility recursively (also through nested loops), structure placed on hidden layer stays hidden
+        GraphLang.Utils.setFigureVisibilityRecursive(this, this.isVisible());
+        GraphLang.Utils.refreshConnectionsVisibility(this.getCanvas());
         this.bringsAllTunnelsToFront();
 
         this.layerChooser.setText(this.layers.get(this.activeLayer).userData.layerText);

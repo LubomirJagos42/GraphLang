@@ -251,6 +251,16 @@ draw2d.policy.canvas.JailhouseAwareSelectionPolicy = draw2d.policy.canvas.Boundi
             //return selection mode back to normal
             GraphLang.Utils.setSelectionMode();
         }
+    },
+
+    select: function(canvas, figure){
+        this._super(canvas, figure);
+        GraphLang.Utils.displayNodeDocString(figure);
+    },
+
+    unselect: function(canvas, figure){
+        this._super(canvas, figure);
+        GraphLang.Utils.clearNodeDocString(figure);
     }
 
 });

@@ -1867,6 +1867,121 @@ GraphLang.Utils.displayContents = function(contents){
     }
   });
 
+  //hide not active layers of multilayered structures including everything nested inside them (loops, wires, ...)
+  GraphLang.Utils.refreshStructuresVisibility(appCanvas);
+
+}
+
+/**
+ *  @method setFigureVisibilityRecursive
+ *  @memberOf GraphLang.Utils
+ *  @param {draw2d.Figure} figureObj - Node, loop or multilayered structure.
+ *  @param {boolean} visibleFlag - Visibility which should be applied.
+ *  @param {Set} [visited] - Already processed figures, protection against cycles.
+ *  @description Sets visibility of figure, its ports and children (labels, tunnels, layer chooser) and recursively of everything
+ *  placed inside it. Loops pass visibility to all assigned figures, multilayered structures make visible only their active layer,
+ *  all other layers and everything inside them (also nested loops and multilayered structures at any depth) are hidden.
+ *  Wires are not handled here, call GraphLang.Utils.refreshConnectionsVisibility(canvas) afterwards.
+ */
+GraphLang.Utils.setFigureVisibilityRecursive = function(figureObj, visibleFlag, visited = new Set()){
+    if (!figureObj || visited.has(figureObj)) return;
+    visited.add(figureObj);
+
+    //wires assigned to layers are resolved later in refreshConnectionsVisibility()
+    if (figureObj instanceof draw2d.Connection) return;
+
+    if (typeof figureObj.setVisible === "function") figureObj.setVisible(visibleFlag);
+
+    //children (labels, tunnels, layer chooser, page indicator) are not hidden by draw2d together with their parent,
+    //child which was hidden by node itself (ie. cluster labels) is marked and restored only if it was hidden here
+    if (typeof figureObj.getChildren === "function"){
+        figureObj.getChildren().each(function(childIndex, childObj){
+            if (visibleFlag === false){
+                if (childObj.isVisible() === true) childObj.__hiddenByStructureVisibility = true;
+                childObj.setVisible(false);
+            }else if (childObj.__hiddenByStructureVisibility === true || (typeof childObj.isTunnel === "function" && childObj.isTunnel() === true)){
+                childObj.setVisible(true);
+                delete childObj.__hiddenByStructureVisibility;
+            }
+        });
+    }
+
+    //ports, set explicitly after figure since draw2d restores ports to their previous state when node is shown
+    if (typeof figureObj.getPorts === "function"){
+        figureObj.getPorts().each(function(portIndex, portObj){
+            portObj.setVisible(visibleFlag);
+        });
+    }
+
+    //multilayered structure, only active layer is visible
+    if (typeof figureObj.isMultilayered === "function" && figureObj.isMultilayered() === true && figureObj.layers){
+        let layersCount = figureObj.layers.getSize();
+        if (layersCount === 0) return;
+        if (!(figureObj.activeLayer >= 0 && figureObj.activeLayer < layersCount)) figureObj.activeLayer = 0;
+
+        figureObj.layers.each(function(layerIndex, layerObj){
+            let layerVisibleFlag = visibleFlag && layerIndex === figureObj.activeLayer;
+            visited.add(layerObj);
+            layerObj.setVisible(layerVisibleFlag);
+            layerObj.getAssignedFigures().each(function(assignedIndex, assignedObj){
+                GraphLang.Utils.setFigureVisibilityRecursive(assignedObj, layerVisibleFlag, visited);
+            });
+        });
+
+        //update layer name and page number, after load they are not set
+        let activeLayerObj = figureObj.layers.get(figureObj.activeLayer);
+        if (figureObj.layerChooser && activeLayerObj.userData) figureObj.layerChooser.setText(activeLayerObj.userData.layerText);
+        if (figureObj.pageIndicator) figureObj.pageIndicator.setText("page " + (figureObj.activeLayer + 1) + "/" + layersCount);
+        return;
+    }
+
+    //loops and other composite nodes pass visibility to everything inside them
+    if (typeof figureObj.getAssignedFigures === "function"){
+        figureObj.getAssignedFigures().each(function(assignedIndex, assignedObj){
+            GraphLang.Utils.setFigureVisibilityRecursive(assignedObj, visibleFlag, visited);
+        });
+    }
+}
+
+/**
+ *  @method refreshConnectionsVisibility
+ *  @memberOf GraphLang.Utils
+ *  @param {draw2d.Canvas} canvasObj
+ *  @description Wire is visible only if both its endpoints (node or tunnel owning the port) are visible and if it is assigned
+ *  to some layer or loop also that one must be visible (ie. tunnel -> tunnel wire going through hidden layer).
+ */
+GraphLang.Utils.refreshConnectionsVisibility = function(canvasObj){
+    if (!canvasObj) return;
+    let isEndpointVisible = function(portObj){
+        if (!portObj) return true;
+        if (portObj.getParent() && portObj.getParent().isVisible() === false) return false;
+        return true;
+    };
+    canvasObj.getLines().each(function(lineIndex, lineObj){
+        let compositeObj = typeof lineObj.getComposite === "function" ? lineObj.getComposite() : null;
+        let visibleFlag =
+            isEndpointVisible(lineObj.getSource()) &&
+            isEndpointVisible(lineObj.getTarget()) &&
+            (!compositeObj || compositeObj.isVisible() === true);
+        lineObj.setVisible(visibleFlag);
+    });
+}
+
+/**
+ *  @method refreshStructuresVisibility
+ *  @memberOf GraphLang.Utils
+ *  @param {draw2d.Canvas} canvasObj
+ *  @description Applies visibility of layers for whole schematic starting from top level figures, so nested loops and multilayered
+ *  structures placed on not active layers are hidden including their wires. Must be called after schematic is loaded.
+ */
+GraphLang.Utils.refreshStructuresVisibility = function(canvasObj){
+    if (!canvasObj) return;
+    let visited = new Set();
+    canvasObj.getFigures().each(function(figureIndex, figureObj){
+        if (typeof figureObj.getComposite === "function" && figureObj.getComposite() !== null) return;   //processed by its owner
+        GraphLang.Utils.setFigureVisibilityRecursive(figureObj, true, visited);
+    });
+    GraphLang.Utils.refreshConnectionsVisibility(canvasObj);
 }
 
 /**
@@ -2002,6 +2117,9 @@ GraphLang.Utils.displayContentsFromClass = function(contents, canvasObj){
 
   });
 
+  //hide not active layers of multilayered structures including everything nested inside them (loops, wires, ...)
+  GraphLang.Utils.refreshStructuresVisibility(canvasObj);
+
 }
 
 /**
@@ -2057,6 +2175,9 @@ GraphLang.Utils.displayContents2 = function (jsonDocument, canvasObj, schematicN
             });
         }
     });
+
+    //hide not active layers of multilayered structures including everything nested inside them (loops, wires, ...)
+    GraphLang.Utils.refreshStructuresVisibility(canvasObj);
 
     if (schematicName){
         document.querySelector("input[id='schematicName']").value = schematicName;
@@ -3653,4 +3774,41 @@ GraphLang.Utils.setSelectionMode = function(modeType = ""){
         GLOBAL_SELECTION_NODE_MODE = null;
         document.getElementById('canvas').style.cursor = `default`;
     }
+}
+
+/**
+ * @method
+ * @memberOf GraphLang.Utils
+ * @param nodeObj
+ * @descritpion Add node docString content into right helperPane in <div id="schematicBlockDocumentation">
+ */
+GraphLang.Utils.displayNodeDocString = function(nodeObj = null){
+    if (nodeObj === null){
+        console.warn(`display node docString function, provided node object is null, check traceback`);
+        return;
+    }
+
+    if (nodeObj.symbolPicture){
+        document.querySelector('#schematicBlockDocumentation').insertAdjacentHTML('afterbegin', `<img src="${nodeObj.symbolPicture}" /><br />`);
+    }
+
+    if (nodeObj.docString){
+        document.querySelector('#schematicBlockDocumentation').insertAdjacentHTML('beforeend', nodeObj.docString);
+    }else{
+        document.querySelector('#schematicBlockDocumentation').insertAdjacentHTML('beforeend', `NO DOCUMENTATION for<br/>${nodeObj.NAME}`);
+    }
+}
+
+/**
+ * @method
+ * @memberOf GraphLang.Utils
+ * @param nodeObj
+ * @descritpion This will clear node docString content from right helperPane in <div id="schematicBlockDocumentation">
+ */
+GraphLang.Utils.clearNodeDocString = function(nodeObj = null){
+    if (nodeObj === null){
+        console.warning(`display node docString function, provided node object is null, check traceback`);
+        return;
+    }
+    document.querySelector('#schematicBlockDocumentation').innerHTML = '';
 }
