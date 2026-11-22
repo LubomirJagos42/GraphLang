@@ -263,31 +263,10 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
 
       this._super(droppedFigure, x, y, shiftKey, ctrlKey);
 
-      if (
-          (droppedFigure.getComposite() && droppedFigure.getComposite().getId() == this.getId())
-      ){
-          //alert('no layer change')
-      }else{
-        //alert('new layer assignment')
-        let self = this;
-
-        droppedFigure.getPorts().each(function(portIndex, portObj){
-            console.log(`--> ${self.NAME} > ${self.getId()} > onCatch() > ${droppedFigure.NAME} > ${droppedFigure.getId()} > ${portObj.getParent().NAME}, ${portObj.getName()}`);
-
-          //this excludes connection going inside some loop or multilayered structure, wire going from tunnel inside or wire going from structure to rightTunnel input port what is still inside structure
-          if (
-              (typeof portObj.getParent().isLeftTunnel === "function" && portObj.getParent().isLeftTunnel() === true && portObj.NAME.toLowerCase().search(".outputport") > -1) ||
-              (typeof portObj.getParent().isRightTunnel === "function" && portObj.getParent().isRightTunnel() === true && portObj.NAME.toLowerCase().search(".inputport") > -1)
-          ){
-            console.log(`----> port excluded from tunnel detection, all its wire connection are ignored`);
-          }else{
-            portObj.getConnections().each(function(connectionIndex, connectionObj){
-              console.log(`----> detecting tunnels for wire id: ${connectionObj.getId()}`)
-              GraphLang.Utils.detectTunnels2(droppedFigure.getCanvas(), connectionObj);
-            });
-          }
-  		});
-      }
+      /*
+       *  No tunnels are generated when figure changes layer. Wires which would leave the new layer are
+       *  deleted after drop in JailhouseAwareSelectionPolicy.onMouseUp() -> GraphLang.Utils.removeWiresLeavingContainer()
+       */
 
       try{
         droppedFigure.bringsAllTunnelsToFront()
@@ -309,15 +288,8 @@ GraphLang.Shapes.Basic.Jailhouse = draw2d.shape.composite.Jailhouse.extend({
       // unassign from composite first
       previousComposite.unassignFigure(draggedFigure);
 
-      // re-evaluate tunnels for all connections of the moved figure
-      try{
-        draggedFigure.getPorts().each(function(portIndex, portObj){
-          portObj.getConnections().each(function(connIndex, connObj){
-            console.log(`--> ${self.NAME} > onDragLeave() > detecting tunnel for port ${portObj.getId()} > wire ${connectionObj.getId()}`);
-            GraphLang.Utils.detectTunnels2(draggedFigure.getCanvas(), connObj);
-          });
-        });
-      }catch(e){/* ignore if ports/connections not present */}
+      // NO tunnel detection here, this is called also in middle of dragging, wires leaving new container
+      // are deleted after drop in JailhouseAwareSelectionPolicy.onMouseUp()
 
       // bring moved figure to front so it stays visible after leaving
       try{ draggedFigure.toFront(); }catch(e){}

@@ -58,6 +58,15 @@ draw2d.policy.canvas.JailhouseAwareSelectionPolicy = draw2d.policy.canvas.Boundi
         this.currentJailhouse = null;   // <-- the missing reset
         this._super(canvas, x, y, shiftKey, ctrlKey);
 
+        //remember in which container (layer, loop or top canvas) are figures before they are dragged,
+        //after drop it's checked if container changed and wires leaving new container are deleted
+        this.dragStartComposites = [];
+        let dragStartComposites = this.dragStartComposites;
+        canvas.getSelection().getAll().each(function(i, f){
+            if (f.getParent && f.getParent() !== null) return;   //children like tunnels are not moved between containers
+            dragStartComposites.push({figure: f, composite: f.getComposite ? f.getComposite() : null});
+        });
+
         //reset selection with, height they are used when creates while or for loop in particular selection mode
         this.selectionWidth = null;
         this.selectionHeight = null;
@@ -140,9 +149,38 @@ draw2d.policy.canvas.JailhouseAwareSelectionPolicy = draw2d.policy.canvas.Boundi
             this.selectionHeight = this.boundingBoxFigure1.getHeight();
         }
 
+        let wasDragging = this.mouseDraggingElement !== null && !this.mouseDraggingElement.isResizeHandle;
+
         this._super(canvas, x, y, shiftKey, ctrlKey);
 
+        if (wasDragging){
+            this.removeWiresOfFiguresMovedToOtherContainer();
+        }
+        this.dragStartComposites = [];
+
         this.createLoopAroundSelectedObjects(canvas, x, y, shiftKey, ctrlKey);
+    },
+
+    /**
+     * @memberOf draw2d.policy.canvas.JailhouseAwareSelectionPolicy
+     * @description After drop, figures which were moved into another container (layer of multilayered structure,
+     * loop or top canvas) lose wires which would go out of new container, no tunnels are generated for them.
+     */
+    removeWiresOfFiguresMovedToOtherContainer: function(){
+        if (!this.dragStartComposites) return;
+        let movedFigures = [];
+        this.dragStartComposites.forEach(function(entry){
+            let figureObj = entry.figure;
+            if (figureObj.getCanvas() === null) return;
+            let currentComposite = figureObj.getComposite ? figureObj.getComposite() : null;
+            if (currentComposite !== entry.composite) movedFigures.push(figureObj);
+        });
+
+        //first all figures are at their final place, then wires are checked, so wires between figures moved together are kept
+        movedFigures.forEach(function(figureObj){
+            console.log(`--> ${figureObj.NAME} > ${figureObj.getId()} moved into another container, removing wires leaving it`);
+            GraphLang.Utils.removeWiresLeavingContainer(figureObj);
+        });
     },
 
     /**

@@ -615,6 +615,152 @@ GraphLang.Utils.detectTunnels2 = function(canvas, wire = null){
 };
 
 /**
+ *  @method getLoopOuterOwnPorts
+ *  @memberOf GraphLang.Utils
+ *  @param {draw2d.Figure} loopObj - loop or multilayered structure
+ *  @returns {Array} loop own ports (not tunnels) which are connected from outside of loop
+ *  @description Multilayered structure selector and ForLoop iteration count input are wired from outside.
+ */
+GraphLang.Utils.getLoopOuterOwnPorts = function(loopObj){
+  let ports = [];
+  if (loopObj.selectorPort) ports.push(loopObj.selectorPort);
+  if (loopObj.iterationTerminal) ports.push(loopObj.iterationTerminal);
+  return ports;
+};
+
+/**
+ *  @method isPortInContainer
+ *  @memberOf GraphLang.Utils
+ *  @param {draw2d.Port} portObj - port to check
+ *  @param {draw2d.Figure|null} containerObj - layer (Jailhouse), loop or null for top canvas level
+ *  @returns {boolean} true if wire attached to this port is drawn inside given container
+ *  @description Tells in which container (top canvas, loop, layer of multilayered structure) is wire endpoint located.
+ *  Tunnels have two sides, inner side (LeftTunnel output, RightTunnel input) belongs to loop or any of its layers,
+ *  outer side belongs to container in which is loop itself located.
+ */
+GraphLang.Utils.isPortInContainer = function(portObj, containerObj = null){
+  let figureObj = portObj.getParent();
+  if (figureObj === null) return false;
+
+  let isInnerSideOf = function(loopObj){
+    if (containerObj === null) return false;
+    if (containerObj === loopObj) return true;
+    if (typeof loopObj.getAllLayers === "function" && loopObj.getAllLayers()){
+      return loopObj.getAllLayers().contains(containerObj);
+    }
+    return false;
+  };
+  let outerContainerOf = function(loopObj){
+    return (loopObj && loopObj.getComposite()) ? loopObj.getComposite() : null;
+  };
+
+  //TUNNEL - port is either inside or outside its loop
+  if (typeof figureObj.isTunnel === "function" && figureObj.isTunnel() === true){
+    let loopObj = figureObj.getParent();
+    let isInnerSide =
+      (typeof figureObj.isLeftTunnel === "function" && figureObj.isLeftTunnel() === true && figureObj.getOutputPorts().contains(portObj)) ||
+      (typeof figureObj.isRightTunnel === "function" && figureObj.isRightTunnel() === true && figureObj.getInputPorts().contains(portObj));
+    if (isInnerSide) return isInnerSideOf(loopObj);
+    return outerContainerOf(loopObj) === containerObj;
+  }
+
+  //LOOP OWN PORTS - selector of multilayered structure and ForLoop iteration count input are outside,
+  //iteration output, while loop stop terminal are inside
+  if (typeof figureObj.getActiveLayer === "function"){
+    if (GraphLang.Utils.getLoopOuterOwnPorts(figureObj).indexOf(portObj) > -1){
+      return outerContainerOf(figureObj) === containerObj;
+    }
+    return isInnerSideOf(figureObj);
+  }
+
+  //REGULAR NODE (also WireConnection which is assigned into layer)
+  let figureContainer = figureObj.getComposite() ? figureObj.getComposite() : null;
+  return figureContainer === containerObj;
+};
+
+/**
+ *  @method deleteWireWithDanglingTunnels
+ *  @memberOf GraphLang.Utils
+ *  @param {draw2d.Connection} wireObj - wire to delete
+ *  @description Deletes wire using command stack. If wire ends in tunnel or WireConnection and that side
+ *  has no other wire left, the tunnel is useless so it's deleted together with its remaining wires, this continues
+ *  recursively so whole wire chain going through structures is removed.
+ */
+GraphLang.Utils.deleteWireWithDanglingTunnels = function(wireObj){
+  let canvas = wireObj.getCanvas();
+  if (canvas === null) return;  //already deleted
+  let cmdStack = canvas.getCommandStack();
+
+  let endpointPorts = [wireObj.getSource(), wireObj.getTarget()];
+  cmdStack.execute(new draw2d.command.CommandDelete(wireObj));
+
+  endpointPorts.forEach(function(portObj){
+    if (!portObj) return;
+    let figureObj = portObj.getParent();
+    if (!figureObj || figureObj.getCanvas() === null) return;
+    if (!(figureObj instanceof GraphLang.Shapes.Basic.Tunnel)) return;    //only tunnels and WireConnection are pass-through
+    if (portObj.getConnections().getSize() > 0) return;                    //this side still used by other wire, keep it
+
+    //snapshot remaining wires of pass-through figure, then remove them and figure itself
+    let remainingWires = [];
+    figureObj.getPorts().each(function(portIndex, otherPortObj){
+      otherPortObj.getConnections().each(function(connIndex, connObj){
+        if (remainingWires.indexOf(connObj) === -1) remainingWires.push(connObj);
+      });
+    });
+    remainingWires.forEach(function(connObj){
+      GraphLang.Utils.deleteWireWithDanglingTunnels(connObj);
+    });
+    if (figureObj.getCanvas() !== null){
+      cmdStack.execute(new GraphLang.Utils.CommandDelete(figureObj));
+    }
+  });
+};
+
+/**
+ *  @method removeWiresLeavingContainer
+ *  @memberOf GraphLang.Utils
+ *  @param {draw2d.Figure} figureObj - figure which was moved into another container (layer, loop, top canvas)
+ *  @description Called after figure was moved into different structure. Wires which would have to go
+ *  out of the new container are deleted (no tunnels are generated for them). Wires to figures in the same
+ *  container stay as they are.
+ */
+GraphLang.Utils.removeWiresLeavingContainer = function(figureObj){
+  if (figureObj.getCanvas() === null) return;
+  let containerObj = figureObj.getComposite() ? figureObj.getComposite() : null;
+
+  //ports which have wires going out of figure
+  let outerPorts = [];
+  if (typeof figureObj.getActiveLayer === "function"){
+    //loop or multilayered structure, outer side of its tunnels and selector
+    figureObj.getChildren().each(function(childIndex, childObj){
+      if (typeof childObj.isTunnel === "function" && childObj.isTunnel() === true){
+        if (typeof childObj.isLeftTunnel === "function" && childObj.isLeftTunnel() === true) childObj.getInputPorts().each(function(i, p){ outerPorts.push(p); });
+        if (typeof childObj.isRightTunnel === "function" && childObj.isRightTunnel() === true) childObj.getOutputPorts().each(function(i, p){ outerPorts.push(p); });
+      }
+    });
+    GraphLang.Utils.getLoopOuterOwnPorts(figureObj).forEach(function(p){ outerPorts.push(p); });
+  }else if (typeof figureObj.getPorts === "function"){
+    figureObj.getPorts().each(function(portIndex, portObj){ outerPorts.push(portObj); });
+  }
+
+  let wiresToDelete = [];
+  outerPorts.forEach(function(portObj){
+    portObj.getConnections().each(function(connIndex, connObj){
+      let otherPort = connObj.getSource() === portObj ? connObj.getTarget() : connObj.getSource();
+      if (!GraphLang.Utils.isPortInContainer(otherPort, containerObj) && wiresToDelete.indexOf(connObj) === -1){
+        wiresToDelete.push(connObj);
+      }
+    });
+  });
+
+  wiresToDelete.forEach(function(connObj){
+    console.log(`--> removeWiresLeavingContainer() > ${figureObj.NAME} > ${figureObj.getId()} > deleting wire ${connObj.getId()}`);
+    GraphLang.Utils.deleteWireWithDanglingTunnels(connObj);
+  });
+};
+
+/**
  *  @method initAllPortToDefault
  *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas - schematic where ports will be set to default

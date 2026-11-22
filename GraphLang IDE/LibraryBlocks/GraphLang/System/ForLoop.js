@@ -50,16 +50,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     //run super() or continue just in case there is not dropped tunnel inside layer, tunnel is possible to move
     if ( !(typeof droppedFigure.isTunnel === "function" && droppedFigure.isTunnel() === true) === true ){
       this._super(droppedFigure, x, y, shiftKey, ctrlKey);
-      if (droppedFigure.getComposite() && droppedFigure.getComposite().getId() == this.getId()){
-        //alert('no layer change')
-      }else{
-        //alert('new layer assignment')
-        droppedFigure.getPorts().each(function(portIndex, portObj){
-          portObj.getConnections().each(function(connectionIndex, connectionObj){
-            GraphLang.Utils.detectTunnels2(droppedFigure.getCanvas(), connectionObj);
-          });
-        });
-      }
+      //no tunnels generated, wires leaving loop are deleted in JailhouseAwareSelectionPolicy.onMouseUp()
     }
   },
 
@@ -70,14 +61,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     var previousComposite = draggedFigure.getComposite();
     if (previousComposite){
       previousComposite.unassignFigure(draggedFigure);
-
-      try{
-        draggedFigure.getPorts().each(function(portIndex, portObj){
-          portObj.getConnections().each(function(connIndex, connObj){
-            GraphLang.Utils.detectTunnels2(draggedFigure.getCanvas(), connObj);
-          });
-        });
-      }catch(e){/* ignore */}
+      //no tunnel detection, called also in middle of dragging, see JailhouseAwareSelectionPolicy.onMouseUp()
 
       try{ draggedFigure.toFront(); }catch(e){}
       try{ previousComposite.bringsAllTunnelsToFront(); }catch(e){}
