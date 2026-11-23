@@ -4,7 +4,7 @@
  */
 // GraphLang.Shapes.Basic.UserFunctionMultilineCodeBlock = draw2d.SetFigure.extend({
 GraphLang.Shapes.Basic.UserFunctionMultilineCodeBlock = draw2d.shape.basic.Label.extend({
-  NAME: "GraphLang.Shapes.Basic.Node.UserFunctionMultilineCodeBlock",
+  NAME: "GraphLang.Shapes.Basic.UserFunctionMultilineCodeBlock",
   init:function(attr, setter, getter){
     this._super( $.extend({},attr), setter, getter);
     this.installEditor(new draw2d.ui.MultilineInplaceEditor());

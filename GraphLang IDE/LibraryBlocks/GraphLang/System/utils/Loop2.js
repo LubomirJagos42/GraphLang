@@ -549,8 +549,18 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
                     });
 
                     //add loop input port connections, similar like for other nodes - for now it's for forLoop iteration terminal output mostly
+                    //tunnel ports are also in loop ports list, skip them: left tunnels are added above and right tunnel inputs
+                    //are wires inside nested loop which are declared by nested loop itself (otherwise wires are declared twice)
+                    let tunnelPortNames = [];
+                    figureObj.getChildren().each(function(childIndex, childObj){
+                        if (childObj.NAME.toLowerCase().search('tunnel') > -1 && childObj.getPorts){
+                            childObj.getPorts().each(function(tunnelPortIndex, tunnelPortObj){ tunnelPortNames.push(tunnelPortObj.getName()); });
+                        }
+                    });
                     figureObj.getInputPorts().each(function(portIndex, portObj){
-                        allConnections.addAll(portObj.getConnections());
+                        if (portObj && tunnelPortNames.indexOf(portObj.getName()) == -1){
+                            allConnections.addAll(portObj.getConnections());
+                        }
                     });
                 }
             }
@@ -575,14 +585,24 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
     /*
      *  Generate wires declaration.
      */
+    let declaredConnections = new draw2d.util.ArrayList();
   	allConnections.each(function(connectionIndex, connectionObj){
+        //each wire is declared just once
+        if (declaredConnections.contains(connectionObj)) return;
+        declaredConnections.add(connectionObj);
+
         let datatypeStr = "";
         let datatypeStr_orig = connectionObj.getSource().userData.datatype;
         //if (connectionObj.getSource().getDatatype) datatypeStr = connectionObj.getSource().getDatatype();    //use getDatatype function if available
 
         try {
             // datatypeStr = connectionObj.getSource().getParent().getDatatype();    //use getDatatype function if available
-            datatypeStr = connectionObj.getSource().getDatatype();                   //this is better as each port have function to return datatype
+            let sourceParent = connectionObj.getSource().getParent();
+            if (sourceParent && sourceParent.NAME.toLowerCase().search('tunnel') > -1 && sourceParent.getDatatype && sourceParent.getDatatype()){
+                datatypeStr = sourceParent.getDatatype();                            //tunnel datatype is evaluated from wire connected to its input
+            }else{
+                datatypeStr = connectionObj.getSource().getDatatype();               //this is better as each port have function to return datatype
+            }
         }catch(e){
             datatypeStr = datatypeStr_orig;
         }

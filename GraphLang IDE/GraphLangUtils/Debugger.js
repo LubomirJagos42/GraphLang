@@ -7,7 +7,7 @@
  *  @description Base class for GraphLang utils
  */
 GraphLang.Debugger = Class.extend({
-    NAME: "GraphLang.Debuger",
+    NAME: "GraphLang.Debugger",
 
     init:function(attr, setter, getter){
         this._super(attr, setter, getter);
@@ -1135,31 +1135,80 @@ GraphLang.Debugger.Cpp.getCodeLocation = async function(){
  * @descritption Open debugger in target element, start websocket, creates GUI for user ie. buttons to control debugging process and also output for messages from GDB and others sources (it creates HTML element for messages)
  */
 GraphLang.Debugger.Cpp.open = function(options = null){
+    /*
+     *  DEBUGGER BUTTON GRAPHICS
+     *      Inline SVG icons (24x24 viewBox, drawn with currentColor so they follow button text color).
+     *      Any of them can be replaced by base64 image, ie. '<img src="data:image/png;base64,iVBORw0..." width="20" height="20"/>'
+     */
+    const SVG_START = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">';
+    const SVG_END = '</svg>';
+    const COLOR_GREEN = '#2e7d32';
+    const COLOR_RED = '#d32f2f';
+
+    // const BUTTON_IMAGE_START_DEBUGGER = SVG_START + '<rect x="3" y="3" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="18" height="7" rx="1.5"/><path d="M7 6.5h.01M7 17.5h.01"/><path d="M14 4.8v3.4l3-1.7z" fill="' + COLOR_GREEN + '" stroke="' + COLOR_GREEN + '" stroke-width="1.2"/>' + SVG_END;
+    // const BUTTON_IMAGE_OPEN_WEBSOCKET = SVG_START + '<path d="M9 2v6M15 2v6"/><path d="M6 8h12v3a6 6 0 0 1-12 0z"/><path d="M12 17v5"/>' + SVG_END;
+    // const BUTTON_IMAGE_RUN_CURRENT = SVG_START + '<path d="M6 3.5v17L20 12z" fill="' + COLOR_GREEN + '" stroke="' + COLOR_GREEN + '"/>' + SVG_END;
+    // const BUTTON_IMAGE_COMPILE = SVG_START + '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>' + SVG_END;
+    // const BUTTON_IMAGE_SEND_MESSAGE = SVG_START + '<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/>' + SVG_END;
+    // const BUTTON_IMAGE_CLEAR_MESSAGES = SVG_START + '<path d="m7 21-4.3-4.3a1 1 0 0 1 0-1.4l10-10a1 1 0 0 1 1.4 0l5.6 5.6a1 1 0 0 1 0 1.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/>' + SVG_END;
+    // const BUTTON_IMAGE_DEBUG_SCHEMATIC = SVG_START + '<rect x="5" y="7" width="8" height="13" rx="4"/><path d="M6.5 7.5 5 4M11.5 7.5 13 4M5 12H2M5 17H2.5M13 12h1"/><path d="M9 11v7"/><path d="M15.5 13v8l6-4z" fill="' + COLOR_GREEN + '" stroke="' + COLOR_GREEN + '" stroke-width="1.5"/>' + SVG_END;
+    // const BUTTON_IMAGE_CONTINUE = SVG_START + '<path d="M5 4v16" stroke-width="2.6"/><path d="M10 4v16l11-8z" fill="' + COLOR_GREEN + '" stroke="' + COLOR_GREEN + '"/>' + SVG_END;
+    // const BUTTON_IMAGE_END_DEBUGGING = SVG_START + '<rect x="5" y="5" width="14" height="14" rx="1.5" fill="' + COLOR_RED + '" stroke="' + COLOR_RED + '"/>' + SVG_END;
+    // const BUTTON_IMAGE_FRAME = SVG_START + '<rect x="3" y="3" width="18" height="5" rx="1"/><rect x="3" y="10" width="18" height="5" rx="1" fill="currentColor"/><rect x="3" y="17" width="18" height="4" rx="1"/>' + SVG_END;
+    // const BUTTON_IMAGE_GET_CODE_LOCATION = SVG_START + '<path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>' + SVG_END;
+    // const BUTTON_IMAGE_KILL_PROGRAM = SVG_START + '<circle cx="12" cy="12" r="10" stroke="' + COLOR_RED + '"/><path d="m15 9-6 6M9 9l6 6" stroke="' + COLOR_RED + '"/>' + SVG_END;
+    // const BUTTON_IMAGE_RANDOM_NUMBER = SVG_START + '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="16" cy="8" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="8" cy="16" r="1.3" fill="currentColor"/><circle cx="16" cy="16" r="1.3" fill="currentColor"/>' + SVG_END;
+    // const BUTTON_IMAGE_BREAKPOINT_LIST = SVG_START + '<circle cx="5" cy="6" r="2.2" fill="' + COLOR_RED + '" stroke="' + COLOR_RED + '"/><circle cx="5" cy="12" r="2.2" fill="' + COLOR_RED + '" stroke="' + COLOR_RED + '"/><circle cx="5" cy="18" r="2.2" fill="' + COLOR_RED + '" stroke="' + COLOR_RED + '"/><path d="M10 6h11M10 12h11M10 18h11"/>' + SVG_END;
+    // const BUTTON_IMAGE_WATCH_LIST = SVG_START + '<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>' + SVG_END;
+    // const BUTTON_IMAGE_STEP_FORWARD = SVG_START + '<path d="M3 14a8 8 0 0 1 15-3.9"/><path d="M19 4v6h-6"/><circle cx="12" cy="19" r="2.2" fill="currentColor"/>' + SVG_END;
+    // const BUTTON_IMAGE_INFO_BREAKPOINT = SVG_START + '<circle cx="12" cy="12" r="10" fill="' + COLOR_RED + '" stroke="' + COLOR_RED + '"/><path d="M12 11v6" stroke="#fff" stroke-width="2.4"/><path d="M12 7.5h.01" stroke="#fff" stroke-width="2.8"/>' + SVG_END;
+
+    const BUTTON_IMAGE_START_DEBUGGER = 'start debugger';
+    const BUTTON_IMAGE_OPEN_WEBSOCKET = 'open websocket';
+    const BUTTON_IMAGE_RUN_CURRENT = 'run current schematic';
+    const BUTTON_IMAGE_COMPILE = 'compile';
+    const BUTTON_IMAGE_SEND_MESSAGE = 'send';
+    const BUTTON_IMAGE_CLEAR_MESSAGES = 'clear';
+    const BUTTON_IMAGE_DEBUG_SCHEMATIC = 'debug schematic';
+    const BUTTON_IMAGE_CONTINUE = 'continue';
+    const BUTTON_IMAGE_END_DEBUGGING = 'end debugging';
+    const BUTTON_IMAGE_FRAME = 'frame';
+    const BUTTON_IMAGE_GET_CODE_LOCATION = 'get code location';
+    const BUTTON_IMAGE_KILL_PROGRAM = 'kill program';
+    const BUTTON_IMAGE_RANDOM_NUMBER = 'random number';
+    const BUTTON_IMAGE_BREAKPOINT_LIST = 'breakpoint list';
+    const BUTTON_IMAGE_WATCH_LIST = 'watch list';
+    const BUTTON_IMAGE_STEP_FORWARD = 'step forward';
+    const BUTTON_IMAGE_INFO_BREAKPOINT = 'info breakpoint';
+
     //erase target element content
     document.querySelector('#'+options.targetElementId).innerHTML = "";
 
-    //add control elements for debugging
+    //add control elements for debugging, button text is displayed as tooltip when mouse hover over it
     document.querySelector('#'+options.targetElementId).insertAdjacentHTML(
         'afterbegin',
         `<b>Interactive debugger:</b><br/><br />
-        <input name="startDebuggerServerButton" type="button" value="START DEBUGGER" onclick="GraphLang.Debugger.Cpp.startDebuggerServer()" />
-        <input name="createWebsocketButton" type="button" value="OPEN WEBSOCKET" onclick="GraphLang.Debugger.Cpp.createWebSocket()" />
-        <input name="runCurrentNode" type="button" value="RUN CURRENT" onclick="GraphLang.Debugger.Cpp.runCurrentNode()" />
-        <input name="compileCurrentNode" type="button" value="COMPILE" onclick="GraphLang.Debugger.Cpp.compileCurrentNode()" />
-        <input id="cmdStr" name="cmdStr" type="text" value="" />
-        <input name="sendButton" type="button" value="SEND MESSAGE" onclick="GraphLang.Debugger.Cpp.onclickSendButton()" />
-        <input name="clearDebugMesaages" type="button" value="CLEAR MESSAGES" onclick="document.querySelector('#generatedContent').innerHTML=''" />
-        <input name="setBreakpointsButton" type="button" value="DEBUG SCHEMATIC" onclick="GraphLang.Debugger.Cpp.debugSchematic()" />
-        <input name="nextStepButton" type="button" value="CONTINUE" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('c')" />
-        <input name="endDebuggingButton" type="button" value="END DEBUGGING" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('end debugging')" />
-        <input name="frameButton" type="button" value="FRAME" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('frame')" />
-        <input name="getCodeLocationButton" type="button" value="?" onclick="GraphLang.Debugger.Cpp.getCodeLocation()" />
-        <input name="killProgramButton" type="button" value="KILL" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('kill')" />
-        <input name="randomNumberButton" type="button" value="test random number" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('get random number')" />
-        <input name="codeBreakpointListButton" type="button" value="breakpoint list" onclick="GraphLang.Debugger.Cpp.refreshBreakpointList()" />
-        <input name="codeWatchListButton" type="button" value="watch list" onclick="GraphLang.Debugger.Cpp.refreshWatchList()" />
-        <input name="stepForwardButton" type="button" value="step >" onclick="GraphLang.Debugger.Cpp.stepForward({stepUntilBreakpoint: false})" />
-        <input name="gdbBreakpointListButton" type="button" value="info breakpoint" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('info breakpoint')" />
+        <button class="debugger_icon_button" name="startDebuggerServerButton" type="button" title="Start debugger" onclick="GraphLang.Debugger.Cpp.startDebuggerServer()">${BUTTON_IMAGE_START_DEBUGGER}</button>
+        <button class="debugger_icon_button" name="createWebsocketButton" type="button" title="Open websocket" onclick="GraphLang.Debugger.Cpp.createWebSocket()">${BUTTON_IMAGE_OPEN_WEBSOCKET}</button>
+        <button class="debugger_icon_button" name="runCurrentNode" type="button" title="Run current" onclick="GraphLang.Debugger.Cpp.runCurrentNode()">${BUTTON_IMAGE_RUN_CURRENT}</button>
+        <button class="debugger_icon_button" name="compileCurrentNode" type="button" title="Compile" onclick="GraphLang.Debugger.Cpp.compileCurrentNode()">${BUTTON_IMAGE_COMPILE}</button>
+        <span class="debugger_icon_delimiter"></span>
+        <button class="debugger_icon_button" name="setBreakpointsButton" type="button" title="Debug schematic" onclick="GraphLang.Debugger.Cpp.debugSchematic()">${BUTTON_IMAGE_DEBUG_SCHEMATIC}</button>
+        <button class="debugger_icon_button" name="nextStepButton" type="button" title="Continue" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('c')">${BUTTON_IMAGE_CONTINUE}</button>
+        <button class="debugger_icon_button" name="stepForwardButton" type="button" title="Step forward" onclick="GraphLang.Debugger.Cpp.stepForward({stepUntilBreakpoint: false})">${BUTTON_IMAGE_STEP_FORWARD}</button>
+        <button class="debugger_icon_button" name="endDebuggingButton" type="button" title="End debugging" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('end debugging')">${BUTTON_IMAGE_END_DEBUGGING}</button>
+        <button class="debugger_icon_button" name="killProgramButton" type="button" title="Kill program" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('kill')">${BUTTON_IMAGE_KILL_PROGRAM}</button>
+        <span class="debugger_icon_delimiter"></span>
+        <button class="debugger_icon_button" name="frameButton" type="button" title="Frame" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('frame')">${BUTTON_IMAGE_FRAME}</button>
+        <button class="debugger_icon_button" name="getCodeLocationButton" type="button" title="Get code location" onclick="GraphLang.Debugger.Cpp.getCodeLocation()">${BUTTON_IMAGE_GET_CODE_LOCATION}</button>
+        <button class="debugger_icon_button" name="codeBreakpointListButton" type="button" title="Breakpoint list" onclick="GraphLang.Debugger.Cpp.refreshBreakpointList()">${BUTTON_IMAGE_BREAKPOINT_LIST}</button>
+        <button class="debugger_icon_button" name="codeWatchListButton" type="button" title="Watch list" onclick="GraphLang.Debugger.Cpp.refreshWatchList()">${BUTTON_IMAGE_WATCH_LIST}</button>
+        <button class="debugger_icon_button" name="gdbBreakpointListButton" type="button" title="Info breakpoint (GDB)" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('info breakpoint')">${BUTTON_IMAGE_INFO_BREAKPOINT}</button>
+        <button class="debugger_icon_button" name="randomNumberButton" type="button" title="Test random number" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('get random number')">${BUTTON_IMAGE_RANDOM_NUMBER}</button>
+        <br/>
+        <input id="cmdStr" name="cmdStr" type="text" value="" title="Message for debugger" />
+        <button class="debugger_icon_button" name="sendButton" type="button" title="Send message" onclick="GraphLang.Debugger.Cpp.onclickSendButton()">${BUTTON_IMAGE_SEND_MESSAGE}</button>
+        <button class="debugger_icon_button" name="clearDebugMesaages" type="button" title="Clear messages" onclick="document.querySelector('#generatedContent').innerHTML=''">${BUTTON_IMAGE_CLEAR_MESSAGES}</button>
         <hr/>
         <div id="generatedContent"></div>`
     );

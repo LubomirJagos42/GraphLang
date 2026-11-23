@@ -101,3 +101,64 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cecece', end
  /* For IE 5.5 - 7 */
  filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#000000');
 }
+
+/* square toolbar buttons with graphic, text is in title attribute (tooltip) */
+#toolbar .toolbar_icon_button {
+  width:36px;
+  height:36px;
+  padding:0;
+  margin:0 1px;
+  vertical-align:middle;
+  color:#333;
+}
+#toolbar .toolbar_icon_button .ui-button-text {
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100%;
+}
+#toolbar .toolbar_icon_button svg,
+#toolbar .toolbar_icon_button img {
+  width:22px;
+  height:22px;
+  display:block;
+}
+#toolbar .toolbar_delimiter {
+  margin-left:12px;
+}
+
+/* square debugger buttons in right pane with graphic, text is in title attribute (tooltip) */
+.debugger_icon_button {
+  /*width:32px;*/
+  /*height:32px;*/
+  padding:5px;
+  margin:1px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  vertical-align:middle;
+  color:#333;
+  background:linear-gradient(to bottom, #f6f6f6 0%, #dcdcdc 100%);
+  border:1px solid #9a9a9a;
+  border-radius:4px;
+  cursor:pointer;
+}
+.debugger_icon_button:hover {
+  background:linear-gradient(to bottom, #ffffff 0%, #e6e6e6 100%);
+  border-color:#666;
+}
+.debugger_icon_button:active {
+  background:#c8c8c8;
+}
+.debugger_icon_button svg,
+.debugger_icon_button img {
+  width:20px;
+  height:20px;
+  display:block;
+}
+.debugger_icon_delimiter {
+  display:inline-block;
+  width:8px;
+}

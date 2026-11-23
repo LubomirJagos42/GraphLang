@@ -5,7 +5,7 @@
 //                                                        
 GraphLang.SignalProcessing.Convolution = GraphLang.UserDefinedNode.extend({
 
-   NAME: "SignalProcessing.Convolution",
+   NAME: "GraphLang.SignalProcessing.Convolution",
 
    init:function(attr, setter, getter)
    {

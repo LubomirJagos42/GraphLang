@@ -3,7 +3,7 @@
  *  @descritpition User written own code directly included in generated source code. This class is here to have parent obj for similar things. User defined source code is lowest level way for programmer how to put hand written code directly into generated code.
  */
 GraphLang.Shapes.Basic.UserCodeBlock = draw2d.shape.basic.Label.extend({
-  NAME: "GraphLang.Shapes.Basic.Node.UserCodeBlock",
+  NAME: "GraphLang.Shapes.Basic.UserCodeBlock",
   init:function(attr, setter, getter){
     this._super( $.extend({},attr), setter, getter);
     this.installEditor(new draw2d.ui.LabelInplaceEditor());

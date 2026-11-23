@@ -6,7 +6,6 @@ This is list features what to do due I always forget on what to work
 - python code generator
     - this would be heavily copied from C/C++ code generator when finished
 - general weak typed language generator class
-- 2D array node
 
 - translate polymorphic datatype into right C/C++ code datatype in C/C++
 
@@ -255,6 +254,8 @@ In progress features
     - store node help in variable docString
     - display node help in right column in <div id="nodeDocString">...</div>
 
++ 2D array node
+    + implemented by claude in ArrayNode2D, seems it's working, need to be tested on some example
 
 
 

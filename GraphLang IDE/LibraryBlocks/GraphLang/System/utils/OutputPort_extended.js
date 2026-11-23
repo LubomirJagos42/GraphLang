@@ -54,6 +54,16 @@ draw2d.OutputPort = draw2d.OutputPort.extend({
   getDatatype: function(){
     let datatypeStr = "undefined";
     if (this.userData && this.userData.datatype) datatypeStr = this.userData.datatype;
+
+    /*
+     *  Tunnel output port datatype is evaluated from wire connected to tunnel input (stored port datatype is often "undefined")
+     */
+    let parentObj = this.getParent();
+    if (parentObj && parentObj.NAME && parentObj.NAME.toLowerCase().search('tunnel') > -1 && parentObj.getDatatype){
+      let tunnelDatatype = parentObj.getDatatype();
+      if (tunnelDatatype && tunnelDatatype != "undefined") datatypeStr = tunnelDatatype;
+    }
+
     return datatypeStr;
   },
 

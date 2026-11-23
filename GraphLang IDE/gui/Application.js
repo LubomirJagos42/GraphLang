@@ -59,7 +59,7 @@ example.Application = Class.extend({
 				closable: false,
 				spacing_open: 0,
 				spacing_closed: 0,
-				size: 200,                  // <--- TOOLBAR HEIGHT
+				size: 100,                  // <--- TOOLBAR HEIGHT
 				paneSelector: "#toolbar"
 			},
 			center: {

@@ -1272,6 +1272,26 @@ GraphLang.Utils.executionOrder = function executionOrder(canvas){
         }
       }
 
+      /*
+       *  FOR LOOP ITERATION TERMINAL OUTPUT
+       *      - loop iterator index is available as soon as iteration count input is prepared, it must not wait for
+       *        all loop input ports because they contain also RIGHT TUNNELs inputs which are fed from inside of loop,
+       *        otherwise every node inside loop connected to iterator index never gets execution order (deadlock)
+       */
+      if (nodeObj.isLoop && nodeObj.isLoop() === true && nodeObj.iterationTerminal &&
+          nodeObj.iterationTerminal.getUserData() && nodeObj.iterationTerminal.getUserData().executionOrder > 0
+      ){
+        nodeObj.getOutputPorts().each(function(portIndex, portObj){
+          if (portObj && portObj.getName() === "iterationTerminalOutput" &&
+              !(portObj.getUserData() && portObj.getUserData().executionOrder > 0)
+          ){
+            if (portObj.userData == undefined) portObj.userData = {};
+            portObj.userData.executionOrder = actualStepNum + 1;
+            actualStepNumberWasAssigned = true;
+          }
+        });
+      }
+
       /***************************************************************************************
        *  PLACING LABEL INTO MIDDLE OF NODE
        ***************************************************************************************/

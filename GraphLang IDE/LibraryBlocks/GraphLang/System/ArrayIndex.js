@@ -5,7 +5,7 @@
 //                                                        
 GraphLang.Shapes.Basic.ArrayIndex = GraphLang.UserDefinedNode.extend({
 
-   NAME: "GraphLang.Basic.Shapes.ArrayIndex",
+   NAME: "GraphLang.Shapes.Basic.ArrayIndex",
 
    init:function(attr, setter, getter)
    {
@@ -23,6 +23,27 @@ GraphLang.Shapes.Basic.ArrayIndex = GraphLang.UserDefinedNode.extend({
      port.userData.datatype = "undefined";
      port.userData.allowMultipleConnections = undefined;
      port.userData.connectionMandatory = undefined;
+
+     /*
+      *  Output element datatype is evaluated from array connected to array_in:
+      *     vector<T> -> T, T* -> T, otherwise connected port datatype is returned (1D ArrayNode port holds its item datatype)
+      */
+     port.getDatatype = function(){
+       let arrayInPort = this.getParent() ? this.getParent().getInputPort("array_in") : null;
+       if (!arrayInPort || arrayInPort.getConnections().getSize() == 0) return "undefined";
+
+       let sourcePort = arrayInPort.getConnections().first().getSource();
+       let sourceParent = sourcePort.getParent();
+       let arrayDatatype;
+       if (sourceParent && sourceParent.NAME.toLowerCase().search('tunnel') > -1 && sourceParent.getDatatype){
+         arrayDatatype = sourceParent.getDatatype();
+       }else if (sourcePort.getDatatype){
+         arrayDatatype = sourcePort.getDatatype();
+       }else if (sourcePort.userData){
+         arrayDatatype = sourcePort.userData.datatype;
+       }
+       return GraphLang.Shapes.Basic.ArrayIndex.getElementDatatype(arrayDatatype);
+     };
 
      // index_in
      port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(-1.061302982270655, 100.24967493685875));
@@ -129,3 +150,17 @@ GraphLang.Shapes.Basic.ArrayIndex = GraphLang.UserDefinedNode.extend({
     },
 
 });
+/**
+ *  @name getElementDatatype
+ *  @memberOf GraphLang.Shapes.Basic.ArrayIndex
+ *  @param {String} arrayDatatype - datatype of indexed array, ie. "vector<vector<string>>", "int*"
+ *  @returns {String} datatype of one array element, ie. "vector<string>", "int"
+ */
+GraphLang.Shapes.Basic.ArrayIndex.getElementDatatype = function(arrayDatatype){
+    if (!arrayDatatype) return "undefined";
+    let datatypeStr = String(arrayDatatype).trim();
+    let vectorMatch = datatypeStr.match(/^(?:std::)?vector\s*<(.*)>$/);
+    if (vectorMatch) return vectorMatch[1].trim();
+    if (datatypeStr.endsWith("*")) return datatypeStr.slice(0, -1).trim();
+    return datatypeStr;
+};

@@ -6,7 +6,7 @@ init: function(attr)
 },
 jsonDocument: [
   {
-    "type": "GraphLang.Basic.Shapes.ArrayIndex",
+    "type": "GraphLang.Shapes.Basic.ArrayIndex",
     "id": "ceef2f14-360c-1e5d-13cf-eaf897b26944",
     "x": 634,
     "y": 246,

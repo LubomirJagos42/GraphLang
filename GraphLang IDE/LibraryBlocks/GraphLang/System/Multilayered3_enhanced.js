@@ -144,7 +144,44 @@ GraphLang.policy.figure.MultilayeredResizeHandle = draw2d.ResizeHandle.extend({
         this.commandResize = this.owner.createCommand(new draw2d.command.CommandType(draw2d.command.CommandType.RESIZE));
 
         this._contentBounds = this._getAssignedFigureBounds();   // measured once, before the handle can be dropped into a layer
+
+        this._showResizePreview(this._multilayerResizeStart.absX, this._multilayerResizeStart.absY, this._multilayerResizeStart.w, this._multilayerResizeStart.h);
         return true;
+    },
+
+    /**
+     * Shows (or updates) a temporary black rectangle on the canvas with the new owner bounds while resizing.
+     * It is drawn directly on the Raphael paper, so it is not a draw2d figure and can't be assigned into layers
+     * or recorded in the command stack.
+     */
+    _showResizePreview: function (x, y, w, h) {
+        var canvas = this.canvas || (this.owner && this.owner.getCanvas ? this.owner.getCanvas() : null);
+        if (!canvas || !canvas.paper) return;
+
+        if (!this._resizePreviewRect) {
+            this._resizePreviewRect = canvas.paper.rect(x, y, w, h).attr({
+                "stroke": "#000000",
+                "stroke-width": 1,
+                "stroke-dasharray": "- ",
+                "fill": "none"
+            });
+        } else {
+            this._resizePreviewRect.attr({ x: x, y: y, width: w, height: h });
+        }
+        this._resizePreviewRect.toFront();
+    },
+
+    // when the handle is removed from canvas (e.g. selection changed in the middle of a drag) drop the preview too
+    setCanvas: function (canvas) {
+        if (!canvas) this._removeResizePreview();
+        return this._super(canvas);
+    },
+
+    _removeResizePreview: function () {
+        if (this._resizePreviewRect) {
+            this._resizePreviewRect.remove();
+            this._resizePreviewRect = null;
+        }
     },
 
     _applyFinalResizeFromHandle: function () {
@@ -262,6 +299,9 @@ GraphLang.policy.figure.MultilayeredResizeHandle = draw2d.ResizeHandle.extend({
         var hx = left ? r.x - S : (right ? r.x + r.w : this._multilayerHandleStartX);
         var hy = top  ? r.y - S : (bottom ? r.y + r.h : this._multilayerHandleStartY);
         this.setPosition(hx, hy);
+
+        // 3) show the new dimensions as a temporary rectangle
+        this._showResizePreview(r.x, r.y, r.w, r.h);
     },
 
     _computeFinalBounds: function () {
@@ -309,6 +349,9 @@ GraphLang.policy.figure.MultilayeredResizeHandle = draw2d.ResizeHandle.extend({
     },
 
     onDragEnd: function (x, y, shiftKey, ctrlKey) {
+        // resizing by handle ended, temporary preview rectangle is not needed anymore
+        this._removeResizePreview();
+
         if (!this.isDraggable()) return;
 
         var owner = this.owner;
