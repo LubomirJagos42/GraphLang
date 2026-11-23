@@ -149,6 +149,23 @@ GraphLang.Shapes.Basic.ArrayIndex = GraphLang.UserDefinedNode.extend({
         return cCode;
     },
 
+    translateToPythonCode: function(){
+        let pythonCode = "";
+        let arrayConnections = this.getInputPort("array_in").getConnections();
+        let indexConnections = this.getInputPort("index_in").getConnections();
+        if (arrayConnections.getSize() == 0 || indexConnections.getSize() == 0){
+            return "# ERROR: ArrayIndex has not connected array or index input\n";
+        }
+        let arrayName = arrayConnections.first().getVariableName();    //TODO: takes just first connection
+        let indexVariableName = indexConnections.first().getVariableName();
+
+        this.getOutputPort("arrayElement_out").getConnections().each(function(outWireIndex, outWireObj){
+            pythonCode += `${outWireObj.getVariableName()} = ${arrayName}[${indexVariableName}]\n`;
+        });
+
+        return pythonCode;
+    },
+
 });
 /**
  *  @name getElementDatatype

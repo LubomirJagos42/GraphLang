@@ -262,9 +262,9 @@ GraphLang.Debugger.Cpp.startDebuggerServer = async function(options = null){
         await GraphLang.Debugger.Cpp.endDebuggerServer();
 
         /*
-         *  Rerecreate websocket as in endDebuggerServer there is created customized websocket.
+         *  Websocket is (re)created after python layer is started (below), creating it here causes only connection error
+         *  since old python layer is just shutting down and new one is not running yet.
          */
-        GraphLang.Debugger.Cpp.createWebSocket();
 
         /*
          *  Writing message while waiting for server debugger python interface to start
@@ -327,28 +327,63 @@ GraphLang.Debugger.Cpp.startDebuggerServer = async function(options = null){
         } else if (codeTemplate === "desktop") {
 
             /*
-             *  There was error that here was no waiting for websocket to be opened and then next command caused crash.
+             *  Websocket created above (right after "end debugging") is usually already CLOSED, it was created while old python layer
+             *  was shutting down and new one was not listening yet. Waiting on it would hang forever as its 'open' event never fires.
+             *  Also PHP returns before python layer + gdb are listening, therefore connect with retries here.
              */
-            function waitForConnection(ws) {
-                return new Promise((resolve, reject) => {
-                    if (ws.readyState === WebSocket.OPEN) {
-                        resolve();
-                    } else {
-                        ws.addEventListener('open', () => resolve());
-                        ws.addEventListener('error', (err) => reject(err));
-                    }
-                });
+            try {
+                await GraphLang.Debugger.Cpp.connectWebSocketWithRetry();
+            } catch (e) {
+                document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `<span style="color: #ff0000">ERROR: ${e}</span><hr/>`);
+                reject(e);
+                return;
             }
-
-            // Usage
-            await waitForConnection(GraphLang.Debugger.websocket);            
-
-
 
             resolve("debbuger running for desktop app");
         } else {
             reject(`undefined codeTemplate: ${codeTemplate}, python debugger layer running`);
         }
+    });
+}
+
+/**
+ * @async
+ * @memberOf GraphLang.Debugger.Cpp
+ * @param {number} maxAttempts - how many times try to connect
+ * @param {number} delayMs - delay between attempts in milliseconds
+ * @returns {Promise<WebSocket>}
+ * @description Create websocket to python debugger layer and resolve when it is OPEN, if connection fails (python layer not listening yet)
+ * try it again after delay. Rejects after maxAttempts failed tries.
+ */
+GraphLang.Debugger.Cpp.connectWebSocketWithRetry = function(maxAttempts = 20, delayMs = 500){
+    return new Promise((resolve, reject) => {
+        let attempt = 0;
+        let tryConnect = () => {
+            attempt++;
+            let opened = false;
+            GraphLang.Debugger.Cpp.createWebSocket({
+                onopen: (event) => {
+                    opened = true;
+                    document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `<span>CONNECTION ESTABLISHED (attempt ${attempt})</span><br/><hr/>\n`);
+                    resolve(GraphLang.Debugger.websocket);
+                },
+                onerror: (event) => {
+                    console.log(`websocket connect attempt ${attempt} failed`);
+                },
+                onclose: (event) => {
+                    if (opened) {
+                        document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', "<span>CONNECTION CLOSED</span><br/><hr/>\n");
+                        return;
+                    }
+                    if (attempt < maxAttempts) {
+                        setTimeout(tryConnect, delayMs);
+                    } else {
+                        reject(`cannot connect to python debugger layer websocket after ${attempt} attempts`);
+                    }
+                },
+            });
+        };
+        tryConnect();
     });
 }
 
@@ -710,9 +745,10 @@ GraphLang.Debugger.Cpp.debugSchematicDesktop = async function(options = null){
      *  Check there is breakpoint list variable from CPP translate process.
      */
     if (GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList()){
-        GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList().each(async function(breakpointIndex, breakpointObj){
+        //each() doesn't await async callbacks, use for cycle so breakpoints are set one by one before "start"
+        for (const breakpointObj of GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList().asArray()){
             await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`b ${breakpointObj.lineNumber}`);
-        });
+        }
     }
 
     await GraphLang.Debugger.Cpp.sendMessageAndAddToLog(`start`);
@@ -774,6 +810,16 @@ GraphLang.Debugger.Cpp.debugGetWireValue = function(options = null){
             let wireValue = "NOT EVALUATED!";
             // let wireDatatype = appCanvas.getLine(options.objectId).getSource().getUserData().datatype;
             let wireDatatype = appCanvas.getLine(options.objectId).getDatatype();
+
+            /*
+             *  ARRAY - gdb output for array is too long and tells user nothing, therefore there is just its datatype displayed
+             *  ie. Array<int>, Array<Array<string>>, nothing is sent to gdb
+             */
+            let wireArrayDatatype = GraphLang.Debugger.Cpp.getWireArrayDatatype(appCanvas.getLine(options.objectId));
+            if (wireArrayDatatype !== null){
+                resolve(wireArrayDatatype);
+                return;
+            }
 
             //extract wire value from response based on its datatype, for number it's easy for string little more complicated
             if (wireDatatype === "string"){
@@ -906,6 +952,32 @@ GraphLang.Debugger.Cpp.debugGetWireValue = function(options = null){
 }
 
 /**
+ * @memberOf GraphLang.Debugger.Cpp
+ * @param {draw2d.Connection} wireObj - wire
+ * @return {string|null} array datatype description for user ie. "Array<int>", "Array<Array<string>>" or null if wire doesn't carry array
+ * @description Wire carries array when it goes out of array node (node.isArray() === true) or when its datatype is C++ vector
+ * (ie. array going through tunnel or out of ArrayIndex from 2D array). Array node output port has just item datatype, vector is
+ * converted into Array<...> notation.
+ */
+GraphLang.Debugger.Cpp.getWireArrayDatatype = function(wireObj){
+    if (!wireObj) return null;
+
+    let wireDatatype = String(wireObj.getDatatype() || "").trim();
+    let vectorToArray = (datatype) => datatype.replace(/(std::)?vector\s*</g, "Array<").replace(/\s+/g, "");
+
+    //C++ vector datatype, ie. vector<vector<string>> -> Array<Array<string>>
+    if (/(std::)?vector\s*</.test(wireDatatype)) return vectorToArray(wireDatatype);
+
+    //wire going out of array node, its port has just array item datatype
+    let sourceNode = wireObj.getSource() ? wireObj.getSource().getParent() : null;
+    if (sourceNode && typeof sourceNode.isArray === "function" && sourceNode.isArray() === true){
+        return `Array<${wireDatatype.replace(/\*+$/, "") || "?"}>`;
+    }
+
+    return null;
+}
+
+/**
  *  @memberOf GraphLang.Debugger.Cpp
  *  @param {Object}   watchObj    - info about breakpoint which should contain these attributes: objectId {string}
  *  @param {string}   wireValue   - value which will be placed as label on wire
@@ -970,8 +1042,35 @@ GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWire = function(breakpointObj) {
         return;
     }
 
+    //remove previous dots on this wire so animations never pile up
+    GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWireDeleteAll(wireObj);
+
     GraphLang.Utils.animateDotAlongWire(wireObj, {userData: {isDebugBreakpointAnimated: true}});
+
+    //register stop function, dot is last added child of wire
+    let dotObj = null;
+    wireObj.getChildren().each(function(childIndex, childObj){
+        if (childObj.userData && childObj.userData.isDebugBreakpointAnimated) dotObj = childObj;
+    });
+    GraphLang.Debugger.Cpp.activeBreakpointAnimations.push({
+        objectId: wireObj.getId(),
+        stop: () => {
+            if (dotObj){
+                try { dotObj.stopTimer(); } catch (e) {}
+                try { dotObj.off("timer"); } catch (e) {}
+            }
+            GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWireDeleteAll(wireObj);
+        }
+    });
 }
+
+/**
+ * List of currently running breakpoint highlight animations, each item is {objectId: string, stop: function}, stop() stops
+ * timer and puts object back into its original state. Used to reliably clear all breakpoint animations.
+ * @memberOf GraphLang.Debugger.Cpp
+ * @var {Array}
+ */
+GraphLang.Debugger.Cpp.activeBreakpointAnimations = [];
 
 /**
  *  @method breakpointAnimateDotAlongWireDeleteAll
@@ -985,13 +1084,16 @@ GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWireDeleteAll = function(wireObj
         return;
     }
 
-    //find all debug red dots on wires and stops them
+    //find all debug red dots on wires and stops them, collect them first as removing while iterating skips items
+    let dotsToRemove = [];
     wireObj.getChildren().each(function(childIndex, childObj){
-        if (childObj.userData && childObj.userData.isDebugBreakpointAnimated){
-            // childObj.off("timer");
-            wireObj.remove(childObj);
-        }
+        if (childObj.userData && childObj.userData.isDebugBreakpointAnimated) dotsToRemove.push(childObj);
     });
+    for (let childObj of dotsToRemove){
+        try { childObj.stopTimer(); } catch (e) {}      //without this the timer keeps running even after removal
+        try { childObj.off("timer"); } catch (e) {}
+        wireObj.remove(childObj);
+    }
 }
 
 /**
@@ -1012,12 +1114,42 @@ GraphLang.Debugger.Cpp.breakpointAnimateNodeBlinking = function(breakpointObj) {
         return;
     }
 
-    GraphLang.Utils.animateBlinkObject(nodeObj.getCanvas(), nodeObj.getId(), {userData: {isDebugBreakpointAnimated: true}}, null, true);
+    /*
+     *  Own blinking, GraphLang.Utils.animateBlinkObject() with blinkForever was used before but it overwrote node userData
+     *  (so stop never recognized node), never stopped timer and left node half transparent -> animation got stuck.
+     *  Here original state is saved and stop function registered which restores it.
+     */
+    GraphLang.Debugger.Cpp.breakpointAnimateNodeBlinkingStop(nodeObj);
+
+    let originalAlpha = typeof nodeObj.getAlpha === "function" ? nodeObj.getAlpha() : 1;
+    let originalStroke = typeof nodeObj.getStroke === "function" ? nodeObj.getStroke() : null;
+    let toggle = true;
+
+    let timerHandler = function(){
+        nodeObj.setAlpha(toggle ? 0.3 : originalAlpha);
+        if (typeof nodeObj.setStroke === "function") nodeObj.setStroke(toggle ? 4 : (originalStroke === null ? 0 : originalStroke));
+        toggle = !toggle;
+    };
+    nodeObj.on("timer", timerHandler);
+    nodeObj.startTimer(250);
+
+    nodeObj.isDebugBreakpointAnimated = true;
+    GraphLang.Debugger.Cpp.activeBreakpointAnimations.push({
+        objectId: nodeObj.getId(),
+        stop: () => {
+            try { nodeObj.stopTimer(); } catch (e) {}
+            try { nodeObj.off("timer", timerHandler); } catch (e) {}
+            nodeObj.setAlpha(originalAlpha);
+            if (typeof nodeObj.setStroke === "function" && originalStroke !== null) nodeObj.setStroke(originalStroke);
+            nodeObj.isDebugBreakpointAnimated = false;
+        }
+    });
 }
 
 /**
  * @memberOf GraphLang.Debugger.Cpp
  * @param nodeObj
+ * @description Stops breakpoint blinking of node (if it is blinking) and puts node into original state.
  */
 GraphLang.Debugger.Cpp.breakpointAnimateNodeBlinkingStop = function(nodeObj) {
     if (nodeObj === undefined || nodeObj === null){
@@ -1025,27 +1157,240 @@ GraphLang.Debugger.Cpp.breakpointAnimateNodeBlinkingStop = function(nodeObj) {
         return;
     }
 
-    if (nodeObj.userData && nodeObj.userData.isDebugBreakpointAnimated){
-        nodeObj.off("timer");
-        //nodeObj.stopTimer();
+    let remaining = [];
+    for (let animation of GraphLang.Debugger.Cpp.activeBreakpointAnimations){
+        if (animation.objectId === nodeObj.getId()){
+            try { animation.stop(); } catch (e) { console.warn(e); }
+        }else{
+            remaining.push(animation);
+        }
+    }
+    GraphLang.Debugger.Cpp.activeBreakpointAnimations = remaining;
+}
+
+/**
+ * @memberOf GraphLang.Debugger.Cpp
+ * @description Stops all breakpoint animations (blinking nodes, dots moving along wires) and put objects into original state.
+ */
+GraphLang.Debugger.Cpp.breakpointAnimateStopAll = function() {
+    //stop all registered animations, they restore original state of objects
+    for (let animation of GraphLang.Debugger.Cpp.activeBreakpointAnimations){
+        try { animation.stop(); } catch (e) { console.warn(e); }
+    }
+    GraphLang.Debugger.Cpp.activeBreakpointAnimations = [];
+
+    //delete leftover animated dots from all wires (ie. when schematic was reloaded and registry lost references)
+    appCanvas.getLines().each((wireIndex, wireObj) => {
+        GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWireDeleteAll(wireObj);
+    });
+}
+
+/**
+ * @memberOf GraphLang.Debugger.Cpp
+ * @param {string} gdbResponseStr - raw string received from python layer
+ * @return {Array} list of gdb MI records, empty array if response is not gdb JSON list
+ */
+GraphLang.Debugger.Cpp.parseGdbResponse = function(gdbResponseStr){
+    try {
+        let parsed = JSON.parse(gdbResponseStr);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+        return [];
     }
 }
 
 /**
  * @memberOf GraphLang.Debugger.Cpp
+ * @param {Array} gdbRecords - parsed gdb MI records
+ * @return {Object|null} payload of last "*stopped" async record or null
  */
-GraphLang.Debugger.Cpp.breakpointAnimateStopAll = function() {
-    //delete animated dots from all wires
-    appCanvas.getLines().each((wireIndex, wireObj) => {
-        console.log(`> remove animated dot for wire id: ${wireObj.getId()}`);
-        GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWireDeleteAll(wireObj);
-    });
+GraphLang.Debugger.Cpp.findStoppedRecord = function(gdbRecords){
+    let stopped = null;
+    for (let record of gdbRecords){
+        if (record.type === "notify" && record.message === "stopped") stopped = record.payload || {};
+    }
+    return stopped;
+}
 
-    //delete all animated nodes for breakpoint
-    appCanvas.getFigures().each((figureIndex, figureObj) => {
-        console.log(`> remove blinking for figure id: ${figureObj.getId()}`);
-        GraphLang.Debugger.Cpp.breakpointAnimateNodeBlinkingStop(figureObj);
-    });
+/**
+ * @memberOf GraphLang.Debugger.Cpp
+ * @var {boolean}
+ * @description True while step to next breakpoint is running, prevents concurrent gdb commands which would mix up responses.
+ */
+GraphLang.Debugger.Cpp.stepToNextBreakpointRunning = false;
+
+/**
+ *  @async
+ *  @memberOf GraphLang.Debugger.Cpp
+ *  @description Continue program in GDB until it hits next breakpoint, find which object in schematic is responsible
+ *  for that code line, stop all current breakpoint animations and highlight that object.
+ *      1. send "-exec-continue" and wait for "*stopped" record (poll gdb if program still runs)
+ *      2. stopped.bkptno -> gdb breakpoint original line (from -break-list) -> GraphLang breakpoint list item
+ *      3. if nothing found use stopped frame line and search object which generated that code line
+ *      4. stop all animations, highlight object (wire: dot moving along, node: blinking)
+ *      5. if there are watches on canvas renew their values (see renewWatchValues())
+ *  @return {Promise<Object>} {status: "breakpoint"|"exited"|"stopped"|"error", lineNumber, breakpointInfo, watchValues}
+ */
+GraphLang.Debugger.Cpp.stepToNextBreakpoint = async function(){
+    let result = await GraphLang.Debugger.Cpp.continueToNextBreakpoint();
+
+    /*
+     *  Program is paused, renew values of all watches on canvas, done after step finished (busy flag cleared) so gdb
+     *  commands are not mixed. Skipped silently when there is no watch on canvas.
+     */
+    if (["breakpoint", "stopped"].includes(result.status)){
+        let hasWatch = false;
+        appCanvas.getLines().each((wireIndex, wireObj) => {
+            if (wireObj.getUserData() && wireObj.getUserData().isSetWatch) hasWatch = true;
+        });
+        if (hasWatch) result.watchValues = await GraphLang.Debugger.Cpp.renewWatchValues();
+    }
+
+    return result;
+}
+
+/**
+ *  @async
+ *  @memberOf GraphLang.Debugger.Cpp
+ *  @description Continue in GDB until next breakpoint and highlight responsible object, without renewing watch values.
+ *  Used by stepToNextBreakpoint(), see its description.
+ *  @return {Promise<Object>} {status: "breakpoint"|"exited"|"stopped"|"running"|"busy"|"error", lineNumber, breakpointInfo}
+ */
+GraphLang.Debugger.Cpp.continueToNextBreakpoint = async function(){
+    let log =(msg) => document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `<span style="background-color: #e0ffe0"><b>step to next breakpoint:</b> ${msg}</span><br/><hr/>\n`);
+
+    if (GraphLang.Debugger.Cpp.stepToNextBreakpointRunning || GraphLang.Debugger.Cpp.renewWatchValuesRunning){
+        log("debugger busy, click ignored");
+        return {status: "busy"};
+    }
+    if (!(GraphLang.Debugger.websocket && GraphLang.Debugger.websocket.readyState === WebSocket.OPEN)){
+        log("websocket not opened, click on debug schematic first");
+        return {status: "error"};
+    }
+
+    let stepButton = document.querySelector('button[name="stepToNextBreakpointButton"]');
+    GraphLang.Debugger.Cpp.stepToNextBreakpointRunning = true;
+    if (stepButton) stepButton.disabled = true;
+
+    try {
+        /*
+         *  1. continue and wait for program to stop
+         */
+        let records = GraphLang.Debugger.Cpp.parseGdbResponse(await GraphLang.Debugger.Cpp.sendMessageAndAddToLog('-exec-continue'));
+        for (let record of records){
+            if (record.type === "result" && record.message === "error"){
+                let errorMsg = record.payload && record.payload.msg ? record.payload.msg : JSON.stringify(record.payload);
+                log(`gdb error: ${errorMsg}`);
+                return {status: "error", message: errorMsg};
+            }
+        }
+
+        let stopped = GraphLang.Debugger.Cpp.findStoppedRecord(records);
+        const MAX_POLLS = 60;  //pygdbmi reads ~1s per command, so this is about one minute
+        for (let poll = 0; stopped === null && poll < MAX_POLLS; poll++){
+            //harmless command allowed while target runs, gives python layer another read window to catch "*stopped"
+            records = GraphLang.Debugger.Cpp.parseGdbResponse(await GraphLang.Debugger.Cpp.sendMessageAndAddToLog('-gdb-show confirm'));
+            stopped = GraphLang.Debugger.Cpp.findStoppedRecord(records);
+        }
+        if (stopped === null){
+            log("program is still running, no breakpoint hit yet");
+            return {status: "running"};
+        }
+
+        let reason = stopped.reason || "";
+        if (reason.startsWith("exited")){
+            GraphLang.Debugger.Cpp.breakpointAnimateStopAll();
+            log(`PROGRAM EXITED (${reason}${stopped["exit-code"] ? ", exit code " + stopped["exit-code"] : ""})`);
+            return {status: "exited"};
+        }
+
+        let frameLine = stopped.frame && stopped.frame.line ? parseInt(stopped.frame.line) : -1;
+
+        /*
+         *  2. map gdb breakpoint number to line used in "b <line>" command, gdb can move breakpoint to next code line
+         *     (ie. programStart 27 -> 28) therefore stopped frame line can differ from GraphLang breakpoint list line
+         */
+        let requestedLine = -1;
+        if (stopped.bkptno){
+            let breakListRecords = GraphLang.Debugger.Cpp.parseGdbResponse(await GraphLang.Debugger.Cpp.sendMessageAndAddToLog('-break-list'));
+            for (let record of breakListRecords){
+                if (record.type !== "result" || !record.payload || !record.payload.BreakpointTable) continue;
+                for (let bkpt of record.payload.BreakpointTable.body || []){
+                    if (String(bkpt.number) === String(stopped.bkptno)){
+                        let match = /:([0-9]+)\s*$/.exec(bkpt["original-location"] || "");
+                        if (match) requestedLine = parseInt(match[1]);
+                    }
+                }
+            }
+        }
+
+        let breakpointInfo = null;
+        let breakpointList = GraphLang.Utils.TranslateToGeneralCodeObj.getBreakpointList();
+        if (breakpointList){
+            for (let breakpointObj of breakpointList.asArray()){
+                if (requestedLine > -1 && breakpointObj.lineNumber == requestedLine) breakpointInfo = breakpointObj;
+            }
+            if (breakpointInfo === null){
+                for (let breakpointObj of breakpointList.asArray()){
+                    if (breakpointObj.lineNumber == frameLine) breakpointInfo = breakpointObj;
+                }
+            }
+        }
+
+        /*
+         *  3. not a GraphLang breakpoint (ie. user typed "b ..." manually), find object which generated this code line
+         */
+        if (breakpointInfo === null && frameLine > -1){
+            let codeLineResponsibleObject = await GraphLang.Utils.TranslateToGeneralCodeObj.getObjectWhichGenerateCodeAtLine(frameLine);
+            if (codeLineResponsibleObject){
+                breakpointInfo = {
+                    lineNumber: frameLine,
+                    objectId: codeLineResponsibleObject.getId(),
+                    type: codeLineResponsibleObject instanceof draw2d.Connection ? "wire" : "node",
+                    parentId: null,
+                    parentName: null
+                };
+            }
+        }
+
+        /*
+         *  4. clear all animations and highlight responsible object
+         */
+        GraphLang.Debugger.Cpp.breakpointAnimateStopAll();
+
+        if (breakpointInfo === null){
+            log(`stopped at line ${frameLine} (${reason}), can't find object responsible for this line`);
+            return {status: "stopped", lineNumber: frameLine, breakpointInfo: null};
+        }
+
+        if (breakpointInfo.type === "programStart"){
+            log(`PROGRAM AT BEGINNING (line ${frameLine})`);
+            return {status: "breakpoint", lineNumber: frameLine, breakpointInfo: breakpointInfo};
+        }
+
+        //if breakpoint is in subnode load it into main canvas
+        if (breakpointInfo.parentName){
+            let nodeWithBreakpointObj = eval("new " + breakpointInfo.parentName + "();");
+            GraphLang.Utils.displayContents(nodeWithBreakpointObj.jsonDocument);
+        }
+
+        if (appCanvas.getLine(breakpointInfo.objectId)){
+            GraphLang.Debugger.Cpp.breakpointAnimateDotAlongWire(breakpointInfo);
+        }else{
+            GraphLang.Debugger.Cpp.breakpointAnimateNodeBlinking(breakpointInfo);
+        }
+
+        log(`stopped at line ${frameLine} (gdb breakpoint ${stopped.bkptno || "-"}), highlighted ${breakpointInfo.type} ${breakpointInfo.objectId}`);
+        return {status: "breakpoint", lineNumber: frameLine, breakpointInfo: breakpointInfo};
+
+    } catch (e) {
+        console.error(e);
+        log(`ERROR: ${e && e.message ? e.message : e}`);
+        return {status: "error", message: String(e)};
+    } finally {
+        GraphLang.Debugger.Cpp.stepToNextBreakpointRunning = false;
+        if (stepButton) stepButton.disabled = false;
+    }
 }
 
 /**
@@ -1178,7 +1523,9 @@ GraphLang.Debugger.Cpp.open = function(options = null){
     const BUTTON_IMAGE_RANDOM_NUMBER = 'random number';
     const BUTTON_IMAGE_BREAKPOINT_LIST = 'breakpoint list';
     const BUTTON_IMAGE_WATCH_LIST = 'watch list';
+    const BUTTON_IMAGE_RENEW_WATCH_VALUES = 'renew watch values';
     const BUTTON_IMAGE_STEP_FORWARD = 'step forward';
+    const BUTTON_IMAGE_STEP_TO_NEXT_BREAKPOINT = 'step to next breakpoint';
     const BUTTON_IMAGE_INFO_BREAKPOINT = 'info breakpoint';
 
     //erase target element content
@@ -1188,6 +1535,7 @@ GraphLang.Debugger.Cpp.open = function(options = null){
     document.querySelector('#'+options.targetElementId).insertAdjacentHTML(
         'afterbegin',
         `<b>Interactive debugger:</b><br/><br />
+        <b>C++:</b><br />
         <button class="debugger_icon_button" name="startDebuggerServerButton" type="button" title="Start debugger" onclick="GraphLang.Debugger.Cpp.startDebuggerServer()">${BUTTON_IMAGE_START_DEBUGGER}</button>
         <button class="debugger_icon_button" name="createWebsocketButton" type="button" title="Open websocket" onclick="GraphLang.Debugger.Cpp.createWebSocket()">${BUTTON_IMAGE_OPEN_WEBSOCKET}</button>
         <button class="debugger_icon_button" name="runCurrentNode" type="button" title="Run current" onclick="GraphLang.Debugger.Cpp.runCurrentNode()">${BUTTON_IMAGE_RUN_CURRENT}</button>
@@ -1196,16 +1544,20 @@ GraphLang.Debugger.Cpp.open = function(options = null){
         <button class="debugger_icon_button" name="setBreakpointsButton" type="button" title="Debug schematic" onclick="GraphLang.Debugger.Cpp.debugSchematic()">${BUTTON_IMAGE_DEBUG_SCHEMATIC}</button>
         <button class="debugger_icon_button" name="nextStepButton" type="button" title="Continue" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('c')">${BUTTON_IMAGE_CONTINUE}</button>
         <button class="debugger_icon_button" name="stepForwardButton" type="button" title="Step forward" onclick="GraphLang.Debugger.Cpp.stepForward({stepUntilBreakpoint: false})">${BUTTON_IMAGE_STEP_FORWARD}</button>
+        <button class="debugger_icon_button" name="stepToNextBreakpointButton" type="button" title="Step to next breakpoint" onclick="GraphLang.Debugger.Cpp.stepToNextBreakpoint()">${BUTTON_IMAGE_STEP_TO_NEXT_BREAKPOINT}</button>
         <button class="debugger_icon_button" name="endDebuggingButton" type="button" title="End debugging" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('end debugging')">${BUTTON_IMAGE_END_DEBUGGING}</button>
-        <button class="debugger_icon_button" name="killProgramButton" type="button" title="Kill program" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('kill')">${BUTTON_IMAGE_KILL_PROGRAM}</button>
+        <button class="debugger_icon_button" name="killProgramButton" type="button" title="Kill program" onclick="GraphLang.Debugger.Cpp.killProgram()">${BUTTON_IMAGE_KILL_PROGRAM}</button>
         <span class="debugger_icon_delimiter"></span>
         <button class="debugger_icon_button" name="frameButton" type="button" title="Frame" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('frame')">${BUTTON_IMAGE_FRAME}</button>
         <button class="debugger_icon_button" name="getCodeLocationButton" type="button" title="Get code location" onclick="GraphLang.Debugger.Cpp.getCodeLocation()">${BUTTON_IMAGE_GET_CODE_LOCATION}</button>
         <button class="debugger_icon_button" name="codeBreakpointListButton" type="button" title="Breakpoint list" onclick="GraphLang.Debugger.Cpp.refreshBreakpointList()">${BUTTON_IMAGE_BREAKPOINT_LIST}</button>
         <button class="debugger_icon_button" name="codeWatchListButton" type="button" title="Watch list" onclick="GraphLang.Debugger.Cpp.refreshWatchList()">${BUTTON_IMAGE_WATCH_LIST}</button>
+        <button class="debugger_icon_button" name="renewWatchValuesButton" type="button" title="Renew watch values" onclick="GraphLang.Debugger.Cpp.renewWatchValues()">${BUTTON_IMAGE_RENEW_WATCH_VALUES}</button>
         <button class="debugger_icon_button" name="gdbBreakpointListButton" type="button" title="Info breakpoint (GDB)" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('info breakpoint')">${BUTTON_IMAGE_INFO_BREAKPOINT}</button>
         <button class="debugger_icon_button" name="randomNumberButton" type="button" title="Test random number" onclick="GraphLang.Debugger.Cpp.sendMessageAndAddToLog('get random number')">${BUTTON_IMAGE_RANDOM_NUMBER}</button>
         <br/>
+        ${GraphLang.Debugger.Python ? GraphLang.Debugger.Python.getButtonsHtml() : ""}
+        <b>General debugger message:</b><br />
         <input id="cmdStr" name="cmdStr" type="text" value="" title="Message for debugger" />
         <button class="debugger_icon_button" name="sendButton" type="button" title="Send message" onclick="GraphLang.Debugger.Cpp.onclickSendButton()">${BUTTON_IMAGE_SEND_MESSAGE}</button>
         <button class="debugger_icon_button" name="clearDebugMesaages" type="button" title="Clear messages" onclick="document.querySelector('#generatedContent').innerHTML=''">${BUTTON_IMAGE_CLEAR_MESSAGES}</button>
@@ -1315,6 +1667,155 @@ GraphLang.Debugger.Cpp.readAllWatchValues = async function(funcParams = null) {
     }
 
     GraphLang.Debugger.Cpp.logResponse({data: `> readAllWatchValues - finished`});
+}
+
+/**
+ * @memberOf GraphLang.Debugger.Cpp
+ * @description Remove all watch value labels from all wires on canvas.
+ * @return {number} count of removed labels
+ */
+GraphLang.Debugger.Cpp.clearWatchValuesFromCanvas = function(){
+    let removedCount = 0;
+    appCanvas.getLines().each((wireIndex, wireObj) => {
+        let labelsToRemove = [];
+        wireObj.getChildren().each((childIndex, childObj) => {
+            if (childObj.userData && childObj.userData.isDebugWatchObject) labelsToRemove.push(childObj);
+        });
+        for (let labelObj of labelsToRemove){
+            try { labelObj.stopTimer(); } catch (e) {}     //label can be still blinking after renew
+            try { labelObj.off("timer"); } catch (e) {}
+            wireObj.remove(labelObj);
+            removedCount++;
+        }
+    });
+    return removedCount;
+}
+
+/**
+ * @async
+ * @memberOf GraphLang.Debugger.Cpp
+ * @description Kill currently debugged program in GDB, remove all watch values and breakpoint highlights from canvas.
+ * GDB and python layer keep running, so program can be started again (ie. by "debug schematic").
+ * @return {Promise<Object>} {status: "killed"|"notRunning"|"busy"|"error", message}
+ */
+GraphLang.Debugger.Cpp.killProgram = async function(){
+    let log = (msg) => document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `<span style="background-color: #ffe0e0"><b>kill program:</b> ${msg}</span><br/><hr/>\n`);
+
+    if (GraphLang.Debugger.Cpp.stepToNextBreakpointRunning || GraphLang.Debugger.Cpp.renewWatchValuesRunning){
+        log("debugger busy, click ignored");
+        return {status: "busy"};
+    }
+
+    //canvas cleanup is done always, also when websocket is not opened, user wants to have clear schematic
+    let cleanupCanvas = () => {
+        GraphLang.Debugger.Cpp.breakpointAnimateStopAll();
+        return GraphLang.Debugger.Cpp.clearWatchValuesFromCanvas();
+    };
+
+    if (!(GraphLang.Debugger.websocket && GraphLang.Debugger.websocket.readyState === WebSocket.OPEN)){
+        let removed = cleanupCanvas();
+        log(`websocket not opened, nothing to kill, ${removed} watch value(s) removed from canvas`);
+        return {status: "error", message: "websocket not opened"};
+    }
+
+    let result = {status: "killed", message: ""};
+    try {
+        let records = GraphLang.Debugger.Cpp.parseGdbResponse(await GraphLang.Debugger.Cpp.sendMessageAndAddToLog('kill'));
+        for (let record of records){
+            if (record.type === "result" && record.message === "error"){
+                result.message = record.payload && record.payload.msg ? record.payload.msg : JSON.stringify(record.payload);
+                result.status = result.message.toLowerCase().search("not being run") > -1 ? "notRunning" : "error";
+            }
+        }
+    } catch (e) {
+        result = {status: "error", message: String(e)};
+    }
+
+    let removed = cleanupCanvas();
+    if (result.status === "killed") log(`PROGRAM KILLED, ${removed} watch value(s) removed from canvas`);
+    else if (result.status === "notRunning") log(`program is not running, ${removed} watch value(s) removed from canvas`);
+    else log(`gdb error: ${result.message}, ${removed} watch value(s) removed from canvas`);
+
+    return result;
+}
+
+/**
+ * @memberOf GraphLang.Debugger.Cpp
+ * @var {boolean}
+ * @description True while watch values are renewed, prevents concurrent gdb commands which would mix up responses.
+ */
+GraphLang.Debugger.Cpp.renewWatchValuesRunning = false;
+
+/**
+ * @async
+ * @memberOf GraphLang.Debugger.Cpp
+ * @description Look on current canvas for wires with watch set (userData.isSetWatch), read their current values from GDB
+ * and update value labels on wires. Wires are taken from canvas, not from translated watch list, so it works also for
+ * watches set after compilation and for wires inside loops. Variable which can't be read at current program location
+ * (ie. out of scope) is displayed as "n/a".
+ * @return {Promise<Array>} list of {objectId, objectVariableName, value}
+ */
+GraphLang.Debugger.Cpp.renewWatchValues = async function(){
+    let log = (msg) => document.querySelector('#generatedContent').insertAdjacentHTML('afterbegin', `<span style="background-color: #e0ecff"><b>renew watch values:</b> ${msg}</span><br/><hr/>\n`);
+
+    if (GraphLang.Debugger.Cpp.renewWatchValuesRunning || GraphLang.Debugger.Cpp.stepToNextBreakpointRunning){
+        log("debugger busy, click ignored");
+        return [];
+    }
+    if (!(GraphLang.Debugger.websocket && GraphLang.Debugger.websocket.readyState === WebSocket.OPEN)){
+        log("websocket not opened, click on debug schematic first");
+        return [];
+    }
+
+    //collect wires with watch from canvas
+    let watchWires = [];
+    appCanvas.getLines().each((wireIndex, wireObj) => {
+        if (wireObj.getUserData() && wireObj.getUserData().isSetWatch) watchWires.push(wireObj);
+    });
+    if (watchWires.length === 0){
+        log("no watch set on any wire on canvas");
+        return [];
+    }
+
+    let renewButton = document.querySelector('button[name="renewWatchValuesButton"]');
+    GraphLang.Debugger.Cpp.renewWatchValuesRunning = true;
+    if (renewButton) renewButton.disabled = true;
+
+    let results = [];
+    try {
+        //one by one, gdb answers must not be mixed
+        for (let wireObj of watchWires){
+            let watchObj = {
+                lineNumber: null,
+                objectId: wireObj.getId(),
+                objectVariableName: wireObj.getVariableName(),
+                type: "wire",
+                parentId: null,
+                parentName: null
+            };
+
+            let wireValue;
+            try {
+                wireValue = await GraphLang.Debugger.Cpp.debugGetWireValue(watchObj);
+            } catch (e) {
+                console.warn(e);
+                wireValue = undefined;
+            }
+            if (wireValue === undefined || wireValue === null || wireValue === "__undefined__" || wireValue === "NOT EVALUATED!"){
+                wireValue = "n/a";
+            }
+
+            GraphLang.Debugger.Cpp.putWireValueOnScreen(watchObj, String(wireValue), true);
+            results.push({objectId: watchObj.objectId, objectVariableName: watchObj.objectVariableName, value: String(wireValue)});
+        }
+
+        log(`${results.length} watch value(s) renewed<br/>` + results.map(r => `&nbsp;&nbsp;${r.objectVariableName} = ${r.value}`).join("<br/>"));
+    } finally {
+        GraphLang.Debugger.Cpp.renewWatchValuesRunning = false;
+        if (renewButton) renewButton.disabled = false;
+    }
+
+    return results;
 }
 
 /**

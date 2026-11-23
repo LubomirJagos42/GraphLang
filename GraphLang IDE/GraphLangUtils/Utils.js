@@ -126,7 +126,7 @@ var createConnection=function(sourcePort, targetPort){
 
     //var conn= new draw2d.Connection({
     var conn= new HoverConnection({
-        router:new draw2d.layout.connection.InteractiveManhattanConnectionRouter(),
+        // router:new draw2d.layout.connection.InteractiveManhattanConnectionRouter(),  //LuboJ. old default router, HoverConnection now sets AI_Router_1 by default
         outlineStroke:1,
         outlineColor:"#303030",
         stroke:2,
@@ -1134,9 +1134,13 @@ GraphLang.Utils.getDirectChildrenWithoutTunnels = function(canvas, parentObj){
  *  @method executionOrder
  *  @memberOf GraphLang.Utils
  *  @param {draw2d.Canvas} canvas
- *  @description Returns execution order in which nodes run.
+ *  @param {boolean} [showLabels=GraphLang.Utils.EXECUTION_ORDER_LABELS_ENABLED] If true, red label with step number is placed into middle of each node.
+ *  @description Returns execution order in which nodes run. Execution order is stored in userData.executionOrder of nodes and ports.
+ *  Labels are off by default: each draw2d Label forces SVG layout (getBBox) of whole canvas, with 300 nodes this took ~9s
+ *  of ~9.1s code generation (Demo.Math.ComplexPerformance300), generated code is same with or without labels.
  */
-GraphLang.Utils.executionOrder = function executionOrder(canvas){
+GraphLang.Utils.EXECUTION_ORDER_LABELS_ENABLED = false;
+GraphLang.Utils.executionOrder = function executionOrder(canvas, showLabels = GraphLang.Utils.EXECUTION_ORDER_LABELS_ENABLED){
   var allNodes = canvas.getFigures();
 
   //ADDING LOOP TUNNELS TO OTHER NODES, tunnels are part of loop not canvas so they are not detected by canvas.getFigures()
@@ -1311,7 +1315,7 @@ GraphLang.Utils.executionOrder = function executionOrder(canvas){
 			nodeObj.NAME.toLowerCase().search("jailhouse") == -1		//DON'T PUT LABEL FOR jailhouse, they are layers of multilayered structure
 		){
 		  nodeObj.userData.executionOrder = actualStepNum;
-          nodeObj.add(
+          if (showLabels) nodeObj.add(
             new draw2d.shape.basic.Label({
               text:new String(actualStepNum),
               stroke:1, color:"#FF0000", fontColor:"#0d0d0d", bgColor: "#FF0000",
@@ -1993,7 +1997,7 @@ GraphLang.Utils.displayContents = function(contents){
   //need to do put connection into separate list and create them after all fgures are created to have phzsically on canvas ports to have place for them
   //var connectionList = new draw2d.utils.ArrayList
 
-  reader.unmarshal(appCanvas, jsonDocument);  //this variable was evaluated inside eval() function
+  GraphLang.Utils.batchConnectionsRepaint(appCanvas, function(){ reader.unmarshal(appCanvas, jsonDocument); });  //this variable was evaluated inside eval() function
   //just for now, uncomment in future //this.initAllPortToDefault();  //this must be here, without this canvas behave non/standard, it's not possible to remove wires etc.
 
   //here are composite object repaired, they are assigned back to their ownership
@@ -2225,7 +2229,7 @@ GraphLang.Utils.displayContentsFromClass = function(contents, canvasObj){
   var jsonDocument = newObject.jsonDocument;
 
   if (jsonDocument && jsonDocument.length > 0){
-    reader.unmarshal(canvasObj, jsonDocument);  //this variable was evaluated inside eval() function
+    GraphLang.Utils.batchConnectionsRepaint(canvasObj, function(){ reader.unmarshal(canvasObj, jsonDocument); });  //this variable was evaluated inside eval() function
   }
 
   /*
@@ -2289,6 +2293,41 @@ GraphLang.Utils.displayContentsFromClass = function(contents, canvasObj){
 }
 
 /**
+ *  @method batchConnectionsRepaint
+ *  @memberOf GraphLang.Utils
+ *  @param {draw2d.Canvas} canvasObj Canvas where figures are added.
+ *  @param {function} callback Function which adds figures/connections to canvas (ie. reader.unmarshal).
+ *  @description draw2d canvas.add() for every connection recalculates intersections of all connections and repaints
+ *  ALL connections, so adding N wires costs O(N^2) repaints (300 nodes/366 wires took ~10s). During callback this is
+ *  suppressed and done just once at the end.
+ */
+GraphLang.Utils.batchConnectionsRepaint = function(canvasObj, callback){
+    var origCalculateIntersection = canvasObj.calculateConnectionIntersection;
+    var emptyList = new draw2d.util.ArrayList();
+    canvasObj.calculateConnectionIntersection = function(){};
+    Object.defineProperty(canvasObj, "linesToRepaintAfterDragDrop", {
+        configurable: true,
+        get: function(){ return emptyList; },
+        set: function(value){}
+    });
+    try {
+        callback();
+    } finally {
+        delete canvasObj.linesToRepaintAfterDragDrop;
+        canvasObj.linesToRepaintAfterDragDrop = new draw2d.util.ArrayList();
+        canvasObj.calculateConnectionIntersection = origCalculateIntersection;
+        if (canvasObj.calculateConnectionIntersection === draw2d.Canvas.prototype.calculateConnectionIntersection){
+            delete canvasObj.calculateConnectionIntersection;   //was not own property before, keep instance clean
+        }
+        canvasObj.calculateConnectionIntersection();
+        canvasObj.getLines().each(function(lineIndex, lineObj){
+            lineObj.svgPathString = null;
+            lineObj.repaint();
+        });
+    }
+};
+
+/**
  *  @method displayContents2
  *  @memberOf GraphLang.Utils
  *  @param {Object} jsonDocument JSON object which will be display
@@ -2310,7 +2349,9 @@ GraphLang.Utils.displayContents2 = function (jsonDocument, canvasObj, schematicN
 
     //jsonDocumentCopy = jsonDocument;
     jsonDocumentCopy = JSON.parse(JSON.stringify(jsonDocument));
-    reader.unmarshal(canvasObj, jsonDocumentCopy);  //this variable was evaluated inside eval() function
+    GraphLang.Utils.batchConnectionsRepaint(canvasObj, function(){
+        reader.unmarshal(canvasObj, jsonDocumentCopy);  //this variable was evaluated inside eval() function
+    });
     //just for now, uncomment in future //this.initAllPortToDefault();  //this must be here, without this canvas behave non/standard, it's not possible to remove wires etc.
 
     //here are composite object repaired, they are assigned back to their ownership
@@ -2877,6 +2918,42 @@ GraphLang.Utils.hex_to_ascii = function (str1) {
     }
     // Return the resulting ASCII string
     return str;
+}
+
+/**
+ * @method parseComplexLiteral
+ * @memberOf GraphLang.Utils
+ * @description Parse complex number text as typed into constant node, ie. "1.0 + 2.5i", "3-4j", "2i", "-i", "5", "(1.0, 2.0)".
+ * Imaginary unit can be written as 'i' or 'j'.
+ * @param {string} text - complex number as text
+ * @returns {{re: string, im: string}|null} real and imaginary part as numeric strings, null when text is not complex number
+ */
+GraphLang.Utils.parseComplexLiteral = function(text){
+    if (text === undefined || text === null) return null;
+    let s = String(text).replace(/\s+/g, '');
+    if (s === '') return null;
+
+    const num = '(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?';
+    const stripPlus = (v) => v.startsWith('+') ? v.substring(1) : v;
+    let m;
+
+    //(re, im) form
+    m = s.match(new RegExp(`^\\(([+-]?${num}),([+-]?${num})\\)$`));
+    if (m) return {re: stripPlus(m[1]), im: stripPlus(m[2])};
+
+    //pure real number
+    m = s.match(new RegExp(`^([+-]?${num})$`));
+    if (m) return {re: stripPlus(m[1]), im: '0'};
+
+    //pure imaginary number
+    m = s.match(new RegExp(`^([+-]?)(${num})?[ijIJ]$`));
+    if (m) return {re: '0', im: (m[1] === '-' ? '-' : '') + (m[2] !== undefined ? m[2] : '1')};
+
+    //real +/- imaginary
+    m = s.match(new RegExp(`^([+-]?${num})([+-])(${num})?[ijIJ]$`));
+    if (m) return {re: stripPlus(m[1]), im: (m[2] === '-' ? '-' : '') + (m[3] !== undefined ? m[3] : '1')};
+
+    return null;
 }
 
 GraphLang.Utils.toHex = function (str) {

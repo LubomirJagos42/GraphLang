@@ -8,7 +8,8 @@ HoverConnection = draw2d.Connection.extend({
     init: function ( sourcePort, targetPort) {
         var self = this;
         this._super({
-            router: new draw2d.layout.connection.InteractiveManhattanConnectionRouter(),
+            // router: new draw2d.layout.connection.InteractiveManhattanConnectionRouter(),     //LuboJ. old default router, replaced by AI_Router_1 (gui/AI_Router_1.js)
+            router: (typeof AI_Router_1 === "function" && AI_Router_1.IS_DEFAULT) ? new AI_Router_1() : new draw2d.layout.connection.InteractiveManhattanConnectionRouter(),
             radius: 5,
             source: sourcePort,
             target: targetPort,
@@ -131,6 +132,12 @@ HoverConnection = draw2d.Connection.extend({
                         case "setManhattenRouter":
                             emitter.setRouter(new draw2d.layout.connection.InteractiveManhattanConnectionRouter());
                             break;
+                        case "setAIRouter":
+                            emitter.setRouter(new AI_Router_1());
+                            break;
+                        case "rerouteAllAIRouter":
+                            AI_Router_1.installOnAllConnections(emitter.getCanvas());
+                            break;
                         case "setLabel":
                             let wireLabel = window.prompt("Wire label:");
                             console.log(`--> wire ${emitter.getId()} label to set: ${wireLabel}`);
@@ -180,6 +187,8 @@ HoverConnection = draw2d.Connection.extend({
                         "separator3": "--------------",
                         "autorouteWire": {name: "Auto route"},
                         "setManhattenRouter": {name: "Set Manhattan router"},
+                        "setAIRouter": {name: "Set AI router (AI_Router_1)", disabled: function(){ return typeof AI_Router_1 !== "function"; }},
+                        "rerouteAllAIRouter": {name: "Reroute all wires (AI_Router_1)", disabled: function(){ return typeof AI_Router_1 !== "function"; }},
                         "separator4": "--------------",
                         "setLabel": {name: "Set Label"},
                         "showLabel": {name: "Show Label"},
@@ -277,7 +286,15 @@ HoverConnection = draw2d.Connection.extend({
   {
       this._super(memento);
 
-      // nothing to to for the connection creation. This will be done in the draw2d.io.Reader
+      /*
+       *  LuboJ, schematics saved with old default manhattan router are loaded with AI_Router_1 (gui/AI_Router_1.js)
+       */
+      if (typeof AI_Router_1 === "function" && AI_Router_1.IS_DEFAULT &&
+          (typeof memento.router === "undefined" || AI_Router_1.REPLACED_ROUTERS.indexOf(memento.router) > -1)){
+          this.setRouter(new AI_Router_1());
+      }
+
+      // nothing to do for the connection creation. This will be done in the draw2d.io.Reader
       // implementation
       //
       // restore your custom attributes here

@@ -396,6 +396,41 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
       return this.translateToCppCodeWatchList;
   },
 
+  /**
+   * @description Add watches for wires going OUT of this loop tunnels into watch list. Such wires have tunnel as source, not node,
+   * so they are not found when going through nodes output ports (ie. left tunnel -> node inside loop, left tunnel -> nested loop
+   * tunnel, right tunnel -> node after loop). Wire already in watch list is not added again.
+   * @param {Object} funcParams - {leftTunnelsLineNumber, rightTunnelsLineNumber, parentId}
+   */
+  addTunnelWiresToWatchList: function(funcParams = {}){
+      let loopObj = this;
+      let leftTunnelsLineNumber = Object.hasOwn(funcParams, "leftTunnelsLineNumber") ? funcParams.leftTunnelsLineNumber : null;
+      let rightTunnelsLineNumber = Object.hasOwn(funcParams, "rightTunnelsLineNumber") ? funcParams.rightTunnelsLineNumber : null;
+      let parentId = Object.hasOwn(funcParams, "parentId") ? funcParams.parentId : null;
+
+      let alreadyInList = (wireObj) => loopObj.translateToCppCodeWatchList.asArray().some((watchObj) => watchObj.objectId === wireObj.getId());
+
+      this.getChildren().each(function(childIndex, childObj){
+          let childName = childObj.NAME.toLowerCase();
+          let isLeftTunnel = childName.search("lefttunnel") > -1;
+          let isRightTunnel = childName.search("righttunnel") > -1;
+          if (!isLeftTunnel && !isRightTunnel) return;
+
+          childObj.getOutputPort(0).getConnections().each(function(wireIndex, wireObj){
+              if (!(wireObj.getUserData() && wireObj.getUserData().isSetWatch)) return;
+              if (alreadyInList(wireObj)) return;
+              loopObj.translateToCppCodeWatchList.add({
+                  lineNumber: isLeftTunnel ? leftTunnelsLineNumber : rightTunnelsLineNumber,
+                  objectId: wireObj.getId(),
+                  objectVariableName: wireObj.getVariableName(),
+                  type: "wire",
+                  parentId: parentId,
+                  parentName: null
+              });
+          });
+      });
+  },
+
   /*****************************************************************************************************************************************************
    *    TRANSLATE TO C/C++ functions
    *****************************************************************************************************************************************************/
@@ -680,26 +715,295 @@ GraphLang.Shapes.Basic.Loop2 = draw2d.shape.composite.Jailhouse.extend({
    *    TRANSLATE TO Python functions
    *****************************************************************************************************************************************************/ 
 
-  getRightTunnelsAssignementOutputPythonCode:function(){
-    return this.getRightTunnelsAssignementOutputCppCode().replaceAll(";\n", "\n");
+  /**
+   *  @description Python code import statements collected from nodes inside loop during translateToPythonCode().
+   */
+  translateToPythonCodeImport: function(){
+      if (!this.translateToPythonCodeImportArray) this.translateToPythonCodeImportArray = new draw2d.util.ArrayList();
+      return this.translateToPythonCodeImportArray;
   },
 
-  getLeftTunnelsWiresAssignementPythonCode:function(){
-    return this.getLeftTunnelsWiresAssignementCppCode();
+  /**
+   *  @description Python breakpoints list filled during translateToPythonCode(), separate from C++ list.
+   */
+  getPythonBreakpointList: function(){
+      if (!this.translateToPythonCodeBreakpointList) this.translateToPythonCodeBreakpointList = new draw2d.util.ArrayList();
+      return this.translateToPythonCodeBreakpointList;
   },
 
-  getTunnelsDeclarationPythonCode:function(){
-    cCode = "";
+  /**
+   *  @description Python watch list filled during translateToPythonCode(), separate from C++ list.
+   */
+  getPythonWatchList: function(){
+      if (!this.translateToPythonCodeWatchList) this.translateToPythonCodeWatchList = new draw2d.util.ArrayList();
+      return this.translateToPythonCodeWatchList;
+  },
+
+  /**
+   *  @description Clear python lists before loop is translated.
+   */
+  initPythonTranslateBuffers: function(){
+      this.translateToPythonCodeImport().clear();
+      this.getPythonBreakpointList().clear();
+      this.getPythonWatchList().clear();
+  },
+
+  /**
+   * RIGHT TUNNEL ASSIGNMENTS OUTPUT, copy value of wire inside loop to the wire outside loop, python code (not indented)
+   */
+  getRightTunnelsAssignementOutputPythonCode:function(funcParams = {}){
+    let pythonCode = "";
     this.getChildren().each(function(childIndex, childObj){
-      if (childObj.NAME.toLowerCase().search("lefttunnel") > -1){
-        //generates code just for tunnel which has connected input
-        if (childObj.getInputPort(0).getConnections().getSize() > 0){
-          cCode += childObj.getVariableName() + " = " + childObj.getInputPort(0).getConnections().get(0).getVariableName() + ";\n";
+      if (childObj.NAME.toLowerCase().search("righttunnel") > -1){
+        if (childObj.getOutputPort(0).getConnections().getSize() > 0 && childObj.getInputPort(0).getConnections().getSize() > 0){
+          let inputWireName = childObj.getInputPort(0).getConnections().get(0).getVariableName();
+          childObj.getOutputPort(0).getConnections().each(function(connectionIndex, connectionObj){
+            pythonCode += connectionObj.getVariableName() + " = " + inputWireName + "\n";
+          });
         }
       }
     });
+    return pythonCode;
+  },
 
-    return cCode;
+  /**
+   * LEFT TUNNEL LOOP WIRES INPUT ASSIGNMENTS, python code (not indented)
+   */
+  getLeftTunnelsWiresAssignementPythonCode:function(funcParams = {}){
+    let pythonCode = "";
+    this.getChildren().each(function(childIndex, childObj){
+      if (childObj.NAME.toLowerCase().search("lefttunnel") > -1){
+        childObj.getOutputPort(0).getConnections().each(function(connectionIndex, connectionObj){
+          pythonCode += connectionObj.getVariableName() + " = " + childObj.getVariableName() + "\n";
+        });
+      }
+    });
+    return pythonCode;
+  },
+
+  /**
+   * LEFT TUNNELS DECLARATION, python code (not indented), not connected tunnel is None
+   */
+  getTunnelsDeclarationPythonCode:function(funcParams = {}){
+    let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+
+    let pythonCode = "";
+    pythonCode += "# LEFT TUNNELs declarations\n";
+    this.getChildren().each(function(childIndex, childObj){
+      if (childObj.NAME.toLowerCase().search("lefttunnel") > -1){
+        let datatypeStr = childObj.getDatatype ? childObj.getDatatype() : "";
+        let datatypeComment = datatypeStr ? `  # ${datatypeStr}` : "";
+        if (childObj.getInputPort(0).getConnections().getSize() > 0){
+          pythonCode += childObj.getVariableName() + " = " + childObj.getInputPort(0).getConnections().get(0).getVariableName() + datatypeComment + "\n";
+        }else{
+          pythonCode += childObj.getVariableName() + " = None" + datatypeComment + "\n";
+        }
+        if (translatorObj !== null && translatorObj.addAdditionalId) translatorObj.addAdditionalId(childObj.getId());
+      }
+    });
+
+    /*
+     *  Feedback nodes declarations.
+     */
+    this.getAssignedFigures().each(function(figureIndex, figureObj){
+        if (figureObj.NAME.toLowerCase().search("feedbacknode") > -1 && figureObj.translateToPythonCodeDeclaration){
+            pythonCode += figureObj.translateToPythonCodeDeclaration({translatorObj: translatorObj});
+        }
+    });
+
+    return pythonCode;
+  },
+
+  /**
+   * WIRES INSIDE LOOP DECLARATION, python code (not indented), each wire is set to None, same wires as in getWiresInsideLoopDeclarationCppCode()
+   */
+  getWiresInsideLoopDeclarationPythonCode:function(funcParams = {}){
+    let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+
+    let pythonCode = "# inside loop wires declaration\n";
+    this.sortAssignedFiguresByExecutionOrderPermanently();
+
+    let allConnections = new draw2d.util.ArrayList();
+    this.getAssignedFigures().each(function(figureIndex, figureObj){
+        if (figureObj.getPorts){
+            if (figureObj.NAME.toLowerCase().search('loop') == -1 && figureObj.NAME.toLowerCase().search('tunnel') == -1){
+                figureObj.getInputPorts().each(function(inputPortIndex, inputPortObj){
+                    allConnections.addAll(inputPortObj.getConnections());
+                });
+            }else if (figureObj.NAME.toLowerCase().search('loop') > -1){
+                //nested loop: left tunnels input wires and loop own input ports (iteration terminal), not tunnel ports
+                let tunnelPortNames = [];
+                figureObj.getChildren().each(function(childIndex, childObj){
+                    if (childObj.NAME.toLowerCase().search('lefttunnel') > -1){
+                        allConnections.addAll(childObj.getInputPort(0).getConnections());
+                    }
+                    if (childObj.NAME.toLowerCase().search('tunnel') > -1 && childObj.getPorts){
+                        childObj.getPorts().each(function(tunnelPortIndex, tunnelPortObj){ tunnelPortNames.push(tunnelPortObj.getName()); });
+                    }
+                });
+                figureObj.getInputPorts().each(function(portIndex, portObj){
+                    if (portObj && tunnelPortNames.indexOf(portObj.getName()) == -1){
+                        allConnections.addAll(portObj.getConnections());
+                    }
+                });
+            }
+        }
+        if (translatorObj !== null && translatorObj.addAdditionalId) translatorObj.addAdditionalId(figureObj.getId());
+    });
+
+    //wires connected to input port of right tunnel
+    this.getChildren().each(function(childIndex, childObj){
+        if (childObj.NAME.toLowerCase().search("righttunnel") > -1){
+            allConnections.addAll(childObj.getInputPort(0).getConnections());
+        }
+    });
+
+    let declaredConnections = new draw2d.util.ArrayList();
+    allConnections.each(function(connectionIndex, connectionObj){
+        if (declaredConnections.contains(connectionObj)) return;
+        declaredConnections.add(connectionObj);
+        if (translatorObj !== null && translatorObj.getWireDeclarationPythonCode){
+            pythonCode += translatorObj.getWireDeclarationPythonCode(connectionObj);
+        }else{
+            pythonCode += connectionObj.getVariableName() + " = None\n";
+        }
+    });
+
+    return pythonCode;
+  },
+
+  /**
+   * @description Translate nodes assigned to loop into python code (NOT INDENTED, caller indents it as loop body). Also fills python breakpoint and watch list.
+   * @param {Object} funcParams - {codeLinesOffset, compileErrorLines, breakpointParentId, translatorObj, nodeName}
+   * @param {number} bodyStartLine - number of lines generated by loop before body code starts, used to compute breakpoints line numbers
+   * @returns {string} python code
+   */
+  translateAssignedFiguresToPythonCode: function(funcParams = {}, bodyLinesBefore = 0){
+    let loopObj = this;
+    let codeLinesOffset = Object.hasOwn(funcParams, "codeLinesOffset") ? funcParams.codeLinesOffset : 0;
+    let compileErrorLines = Object.hasOwn(funcParams, "compileErrorLines") ? funcParams.compileErrorLines : null;
+    let breakpointParentId = Object.hasOwn(funcParams, "breakpointParentId") ? funcParams.breakpointParentId : null;
+    let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+    let nodeName = Object.hasOwn(funcParams, "nodeName") ? funcParams.nodeName : "";
+
+    //imports of nodes inside loop go directly into translator list, loop imports are asked by translator before loop is translated
+    let importArray = translatorObj !== null && translatorObj.translateToPythonCodeImportArray ? translatorObj.translateToPythonCodeImportArray : this.translateToPythonCodeImport();
+    let breakpointList = this.getPythonBreakpointList();
+    let watchList = this.getPythonWatchList();
+
+    let pythonCode = "";
+    let currentAbsoluteLine = () => codeLinesOffset + bodyLinesBefore + GraphLang.Utils.getLineCount(pythonCode);
+
+    this.sortAssignedFiguresByExecutionOrderPermanently();
+    this.getAssignedFigures().each(function(figIndex, figObj){
+      if (figObj.NAME.search('HoverConnection') > -1 || figObj.NAME.toLowerCase().search('connection') > -1) return;    //wires are declared above
+
+      //import statements
+      if (figObj.translateToPythonCodeImport && translatorObj !== null){
+        translatorObj.collectStrings(figObj.translateToPythonCodeImport(), importArray);
+      }
+
+      //type definitions
+      if (figObj.translateToPythonCodeTypeDefinition && translatorObj !== null){
+        translatorObj.translateToPythonCodeTypeDefinitionArray.push(figObj.translateToPythonCodeTypeDefinition({translatorObj: translatorObj}));
+        if (figObj.getDatatype && String(figObj.getDatatype()).startsWith("clusterDatatype_")) {
+          translatorObj.typeDefinitionUsedList.push(`${nodeName} -> ${figObj.getNodeLabelText()}`);
+        }
+      }
+
+      let nodeStartLine = currentAbsoluteLine() + 1;
+
+      //declaration
+      if (figObj.translateToPythonCodeDeclaration && figObj.NAME.toLowerCase().search("feedbacknode") == -1){
+        pythonCode += figObj.translateToPythonCodeDeclaration({translatorObj: translatorObj});
+      }
+
+      //code
+      let lineCountBefore = GraphLang.Utils.getLineCount(pythonCode);
+      if (figObj.translateToPythonCode){
+        pythonCode += figObj.translateToPythonCode({
+          nodeId: figObj.getId(),
+          codeLinesOffset: codeLinesOffset + bodyLinesBefore + lineCountBefore,
+          compileErrorLines: compileErrorLines,
+          breakpointParentId: breakpointParentId,
+          translatorObj: translatorObj,
+          nodeName: nodeName
+        });
+      }else if (!figObj.translateToPythonCodeDeclaration){
+        pythonCode += `# ERROR: node "${figObj.NAME}" has no python translation (translateToPythonCode() not defined)\n`;
+      }
+      if (pythonCode.length > 0 && !pythonCode.endsWith("\n")) pythonCode += "\n";
+
+      GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
+        inputStr: pythonCode,
+        startLine: lineCountBefore,
+        errorLines: compileErrorLines,
+        lineOffset: codeLinesOffset + bodyLinesBefore,
+        errorSourceObj: figObj
+      });
+
+      //breakpoint on node, first line of node code
+      if (figObj.getUserData() && figObj.getUserData().isSetBreakpoint){
+        breakpointList.add({lineNumber: nodeStartLine, objectId: figObj.getId(), type: "node", parentId: breakpointParentId, parentName: loopObj.NAME});
+      }
+
+      //nested structure breakpoints and watches, their line numbers are already absolute
+      if (figObj.getPythonBreakpointList) breakpointList.addAll(figObj.getPythonBreakpointList());
+      if (figObj.getPythonWatchList) watchList.addAll(figObj.getPythonWatchList());
+
+      //post code (ie. nested loop end), nested loop post code is inside nested loop therefore it's indented same as nested loop body
+      if (figObj.translateToPythonCodePost){
+        pythonCode += figObj.translateToPythonCodePost({translatorObj: translatorObj});
+        if (pythonCode.length > 0 && !pythonCode.endsWith("\n")) pythonCode += "\n";
+      }
+
+      //breakpoints and watches on wires going out of node, value is available on line after node code
+      if (figObj.getOutputPorts){
+        figObj.getOutputPorts().each(function(portIndex, portObj){
+          portObj.getConnections().each(function(wireIndex, wireObj){
+            let wireLine = currentAbsoluteLine() + 1;
+            if (wireObj.getUserData() && wireObj.getUserData().isSetBreakpoint){
+              breakpointList.add({lineNumber: wireLine, objectId: wireObj.getId(), objectVariableName: wireObj.getVariableName(), type: "wire", parentId: breakpointParentId, parentName: null});
+            }
+            if (wireObj.getUserData() && wireObj.getUserData().isSetWatch){
+              watchList.add({lineNumber: wireLine, objectId: wireObj.getId(), objectVariableName: wireObj.getVariableName(), type: "wire", parentId: breakpointParentId, parentName: null});
+            }
+          });
+        });
+      }
+    });
+
+    return pythonCode;
+  },
+
+  /**
+   * @description Watches on wires going out of tunnels (source is tunnel, not node), python version of addTunnelWiresToWatchList().
+   */
+  addTunnelWiresToPythonWatchList: function(funcParams = {}){
+      let watchList = this.getPythonWatchList();
+      let leftTunnelsLineNumber = Object.hasOwn(funcParams, "leftTunnelsLineNumber") ? funcParams.leftTunnelsLineNumber : null;
+      let rightTunnelsLineNumber = Object.hasOwn(funcParams, "rightTunnelsLineNumber") ? funcParams.rightTunnelsLineNumber : null;
+      let parentId = Object.hasOwn(funcParams, "parentId") ? funcParams.parentId : null;
+
+      this.getChildren().each(function(childIndex, childObj){
+          let childName = childObj.NAME.toLowerCase();
+          let isLeftTunnel = childName.search("lefttunnel") > -1;
+          let isRightTunnel = childName.search("righttunnel") > -1;
+          if (!isLeftTunnel && !isRightTunnel) return;
+
+          childObj.getOutputPort(0).getConnections().each(function(wireIndex, wireObj){
+              if (!(wireObj.getUserData() && wireObj.getUserData().isSetWatch)) return;
+              if (watchList.asArray().some((watchObj) => watchObj.objectId === wireObj.getId())) return;
+              watchList.add({
+                  lineNumber: isLeftTunnel ? leftTunnelsLineNumber : rightTunnelsLineNumber,
+                  objectId: wireObj.getId(),
+                  objectVariableName: wireObj.getVariableName(),
+                  type: "wire",
+                  parentId: parentId,
+                  parentName: null
+              });
+          });
+      });
   }
 
 

@@ -363,5 +363,14 @@ translateToCppCode: function(){
         return cCode;
     },
 
+    translateToPythonCode: function(){
+        let pythonCode = "";
+        this.getInputPort("fileRef").getConnections().each(function(connIndex, connObj){
+            pythonCode += `${connObj.getVariableName()}.close()\n`;
+        });
+        if (pythonCode === "") pythonCode = "# ERROR: fclose has not connected file reference\n";
+        return pythonCode;
+    },
+
 
 });

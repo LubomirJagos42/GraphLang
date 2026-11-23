@@ -407,5 +407,27 @@ translateToCppCode: function(){
         return cCode;
     },
 
+    /*
+     *  Python: file object is returned by open(), it's same reference as FILE* in C
+     */
+    translateToPythonCode: function(){
+        let connectionsIn = this.getInputPort("fileName").getConnections();
+        let connectionsOut = this.getOutputPort("fileRef").getConnections();
+
+        let pythonCode = "";
+        if (connectionsIn.getSize() > 0 && connectionsOut.getSize() > 0){
+            let fileName = connectionsIn.first().getVariableName();
+            let filePtr = "filePtr_" + connectionsOut.first().getVariableName();
+            pythonCode = `${filePtr} = open(${fileName}, "w+")\n`;
+
+            connectionsOut.each(function(connIndex, connObj){
+                pythonCode += `${connObj.getVariableName()} = ${filePtr}\n`;
+            });
+        }else{
+            pythonCode = "# ERROR: fopen has not connected file name or file reference\n";
+        }
+        return pythonCode;
+    },
+
 
 });

@@ -137,7 +137,7 @@ example.Toolbar = Class.extend({
 		 */
 		this.getPythonCodeButton  = this.createIconButton("getPythonCodeButton", BUTTON_IMAGE_PYTHON_CODE, "Generate Python code");
 		this.getPythonCodeButton.button().click($.proxy(function(){
-			GraphLang.Utils.getPythonCode(appCanvas);
+			GraphLang.Utils.TranslateToPythonCodeObj.getCode(appCanvas, true, "desktop");
 		}));
 		this.html.append(this.getPythonCodeButton);
 

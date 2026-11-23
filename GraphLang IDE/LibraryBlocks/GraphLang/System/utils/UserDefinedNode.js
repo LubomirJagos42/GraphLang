@@ -470,9 +470,62 @@ GraphLang.UserDefinedNode = draw2d.SetFigure.extend({
      *    THESE FUNCTIONS BELOW ARE SPECIFIC TO TRANSLATE NODE TO PYTHON CODE
      *****************************************************************************************************************/
     translateToPythonCodeFunctionName: function(){
-        //pyCode = this.NAME.replaceAll('.', '_');
-        pyCode = this.NAME;
-        return pyCode;
+        //python identifier cannot contain '.', same naming as for C++
+        return this.NAME.replaceAll('.', '__');
+    },
+
+    /**
+     * @description Python call of function generated from node schematic. Input ports are function params, output ports are returned
+     * as list in same order (see TranslateToPythonCode_2_TranslatorObject.translateToPythonCodeSubNode()), ie.:
+     *      [outputPort_a, outputPort_b] = Node__Name(wire_1, wire_2)
+     *      wire_3 = outputPort_a
+     * @returns {string} python code
+     */
+    translateToPythonCodeTemplate: function(){
+        let pythonCode = "";
+        let portOwnerNode = this;
+
+        let paramsList = [];
+        this.getInputPorts().each(function(portIndex, portObj){
+            let connections = portObj.getConnections();
+            if (connections.getSize() > 0){
+                paramsList.push(connections.first().getVariableName());
+            }else{
+                //default value is defined before this call by translator
+                paramsList.push(`node_${portOwnerNode.getId()}_inputPort_${portObj.getName()}`);
+            }
+        });
+
+        let outputNamesList = [];
+        let assignmentCode = "";
+        this.getOutputPorts().each(function(portIndex, portObj) {
+            let portName = 'outputPort_' + portOwnerNode.getId() + '_' + String(portObj.getName()).replace(/[^A-Za-z0-9_]/g, '_');
+            outputNamesList.push(portName);
+            portObj.getConnections().each(function(connectionIndex, connectionObj){
+                assignmentCode += connectionObj.getVariableName() + " = " + portName + "\n";
+            });
+        });
+
+        let callCode = this.translateToPythonCodeFunctionName() + '(' + paramsList.join(', ') + ')';
+        if (outputNamesList.length > 0){
+            pythonCode += `[${outputNamesList.join(', ')}] = ${callCode}\n`;
+        }else{
+            pythonCode += callCode + "\n";
+        }
+        pythonCode += assignmentCode;
+
+        return pythonCode;
+    },
+
+    /**
+     * @description Node with schematic inside is translated as function call, node without schematic has to define its own translateToPythonCode().
+     * @returns {string} python code
+     */
+    translateToPythonCode: function(){
+        if (this.jsonDocument === undefined || this.jsonDocument.length == 0){
+            return `# ERROR: node "${this.NAME}" has no python translation (translateToPythonCode() not defined)\n`;
+        }
+        return this.translateToPythonCodeTemplate();
     },
 
 });

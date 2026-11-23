@@ -43,6 +43,16 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
     port.userData = {};
     port.userData.datatype = defaultDatatype;
 
+    /*
+     *  Wire going out of array carries whole array, ie. "vector<int>" (same as ArrayNode2D returns "vector<vector<int>>"),
+     *  port.userData.datatype holds just item datatype. Cluster arrays keep item datatype (they are declared as C array).
+     */
+    port.getDatatype = function(){
+      let itemDatatype = this.userData.datatype;
+      if (String(itemDatatype).toLowerCase().search('cluster') > -1) return itemDatatype;
+      return "vector<" + itemDatatype + ">";
+    };
+
     //port is pushed little away not to be inside outline, otherwise tunnels would be detected
     //due wire are crossing or touching outline
 
@@ -232,6 +242,14 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
     return cCode;    
   },
   
+  /**
+   *  @name isArray
+   *  @returns {boolean} always true, node is array, similar to isLoop() for loops, used ie. by debugger to not print whole array content into watch
+   */
+  isArray: function(){
+    return true;
+  },
+
   getArraySize: function(){
     arraySize = 0;
     this.getChildren().each(function(childIndex, childObj){
@@ -323,6 +341,12 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
   {
       this._super(memento);           //CALLING PARENT METHOD, these will rerecreate this showSelectedObjExecutionOrder
 
+      //output port is not persisted (persistPorts=false), restore its item datatype from node datatype, ie. "double*" -> "double"
+      if (this.userData && typeof this.userData.datatype === "string" && this.userData.datatype.endsWith("*") &&
+          this.userData.datatype.toLowerCase().search('cluster') == -1){
+          this.getOutputPort(0).userData.datatype = this.userData.datatype.slice(0, -1);
+      }
+
       // and add all children of the JSON document.
       $.each(memento.labels, $.proxy(function(i,json){
           //FOR TUNNELS THERE IS NEEDED FOR THEIR RESTORE ALSO READ LOCATORS POSITION which is stored in previous function getPers...
@@ -362,15 +386,17 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
       if (arrayDatatype.toLowerCase().search('cluster') > -1){
         cCode = arrayDatatype + ' ' + variableName + "[" +  this.getArraySize() + "];\n";       //translate as ie. "int array_clusterDatatypeName[42];"
       }else{
-        cCode = arrayDatatype + " " + this.getVariableName() + "[] = {";             //translate as ie. "int array_5[];"
+        cCode = this.getOutputPort(0).getDatatype() + " " + this.getVariableName() + " = {";             //translate as ie. "vector<int> array_5 = {1,2,3};"
+        let hasItems = false;
         this.getChildren().each(function(childIndex, childObj){
           /*
            *    Translation of each array item.
            *    Translate just datatype children (no cluster indexes or node labels)
            */
           if (childObj.userData && childObj.userData.datatype){
+            if (childObj.userData.datatype.toLowerCase().search('executionorder') == -1) hasItems = true;
             if (childObj.userData.datatype.toLowerCase().search('string') > -1){
-              cCode += "'" + childObj.getText() + "',";
+              cCode += JSON.stringify(String(childObj.getText())) + ",";
             }else if (childObj.userData.datatype.toLowerCase().search('cluster') > -1){
               /*
                *    THIS IS IMPROVISATION, there is cluster datatype label, so it has not translateToCpp() and instead there is placed datatype name
@@ -389,12 +415,16 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
             }
           }
         });
-        cCode = cCode.slice(0,-1);  //remove last ','
+        if (hasItems) cCode = cCode.slice(0,-1);  //remove last ','
         cCode += "};\n";
       }
 
 
       return cCode;
+  },
+
+  translateToCppCodeImport: function(){
+      return ["#include <vector>", "#include <cstdint>"];     //cstdint for fixed width item datatypes, ie. uint8_t, int16_t
   },
 
   translateToCppCode: function(){
@@ -405,6 +435,42 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
       cCode += connectionObj.getVariableName() + " = " + variableName + ";\n";
     });
     return cCode;
+  },
+
+  /*************************************************************************************************************************************************************
+   *    TRANSLATE TO Python code functions
+   *************************************************************************************************************************************************************/
+
+  /**
+   *  @name translateToPythonCodeDeclaration
+   *  @desc Translate array into python list, ie. "array_5 = [1, 2, 3]"
+   */
+  translateToPythonCodeDeclaration: function(){
+      let arrayDatatype = this.getDatatype();
+      let variableName = this.getVariableName();
+
+      if (arrayDatatype.toLowerCase().search('cluster') > -1){
+          return `${variableName} = [None] * ${this.getArraySize()}  # ${arrayDatatype}\n`;
+      }
+
+      let items = [];
+      this.getChildren().each(function(childIndex, childObj){
+          if (!(childObj.userData && childObj.userData.datatype)) return;
+          let itemDatatype = childObj.userData.datatype;
+          if (itemDatatype.toLowerCase().search('executionorder') > -1) return;      //execution order label is not array item
+          if (!childObj.getText) return;
+          items.push(GraphLang.Utils.toPythonLiteral(childObj.getText(), itemDatatype));
+      });
+      return `${variableName} = [${items.join(", ")}]\n`;
+  },
+
+  translateToPythonCode: function(){
+    let pythonCode = "";
+    let variableName = this.getVariableName();
+    this.getOutputPort(0).getConnections().each(function(connectionIndex, connectionObj){
+      pythonCode += connectionObj.getVariableName() + " = " + variableName + "\n";
+    });
+    return pythonCode;
   }
 
 });

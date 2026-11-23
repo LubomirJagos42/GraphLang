@@ -209,6 +209,7 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
     });
     cCode += "\t" + leftTunnelsWiresAssignementCppCode.replaceAll("\n", "\n\t");
     cCode += "\n\t";
+    let leftTunnelsWatchLineNumber = GraphLang.Utils.getLineCount(cCode) + codeLinesOffset;    //wires from left tunnels have value from here
 
     /*
      *  - getAddignedFigures() also returns nodes and wires
@@ -312,8 +313,8 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
        *    Add nested breakpoints in subnodes to loop object breakpoint list which is handled to owner
        */
       if (figObj.getBreakpointList){
+          //NO OFFSET ADDED HERE: nested object got codeLinesOffset + lineCountBefore when translated, so its breakpoint line numbers are already absolute
           figObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
-              breakpointObj.lineNumber += lineCountBefore;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
               loopObj.translateToCppCodeBreakpointList.add(breakpointObj);
           });
       }
@@ -364,6 +365,15 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
       }
 
       /*
+       *  Add nested watches in subnodes (ie. loop inside this while loop), line numbers are already absolute
+       */
+      if (figObj.getWatchList){
+          figObj.getWatchList().each(function(watchIndex, watchObj){
+              loopObj.translateToCppCodeWatchList.add(watchObj);
+          });
+      }
+
+      /*
        *  Trigger translateToCppCodePost() if available
        */
       if (figObj.translateToCppCodePost){
@@ -374,6 +384,13 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
           }).replaceAll("\n", "\n\t");
       }
 
+    });
+
+    //watches on wires going out of tunnels, right tunnel output wires are assigned in translateToCppCodePost() which follows this code
+    this.addTunnelWiresToWatchList({
+      leftTunnelsLineNumber: leftTunnelsWatchLineNumber,
+      rightTunnelsLineNumber: GraphLang.Utils.getLineCount(cCode) + codeLinesOffset + 1,
+      parentId: breakpointParentId
     });
 
     return cCode;

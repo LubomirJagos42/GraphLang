@@ -116,6 +116,19 @@ GraphLang.Shapes.Basic.TerminalOutput = draw2d.shape.basic.Label.extend({
   
   getDatatype: function(){
     return this.getConnectedDatatype();
+  },
+
+  /*****************************************************************************************************************************************************
+   *    TRANSLATE TO Python functions
+   *      - output terminal is variable which is returned from subnode function, see TranslateToPythonCode_2_TranslatorObject.translateToPythonCodeSubNode()
+   *****************************************************************************************************************************************************/
+
+  translateToPythonCode: function(){
+    let terminalConnections = this.getInputPort(0).getConnections();
+    if (terminalConnections.getSize() > 0){
+      return this.getVariableName() + ' = ' + terminalConnections.first().getVariableName() + '\n';
+    }
+    return '# ERROR: Output terminal has no connection\n';
   }
     
 });

@@ -54,12 +54,14 @@
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/Application.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/View.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/Toolbar.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/AI_Router_1.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/HoverConnection.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/MultilineInplaceEditor.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/gui/SelectOptionInplaceEditor.js"></script>
 
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Utils.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/Debugger.js"></script>
+    <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/DebuggerPython.js"></script>
 <!--    <script src="--><?php //echo $htmlIncludeDirPrefix; ?><!--/GraphLangUtils/TranslateToCppCode_1.js"></script>--><!-- obsolete, replaced by 2nd translator which is object -->
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToCppCode_2_TranslatorObject.js"></script>
     <script src="<?php echo $htmlIncludeDirPrefix; ?>/GraphLangUtils/TranslateToPythonCode_1.js"></script>

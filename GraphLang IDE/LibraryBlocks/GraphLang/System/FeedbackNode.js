@@ -46,11 +46,11 @@ GraphLang.Shapes.Basic.FeedbackNode = draw2d.SetFigure.extend({
          try {
              if (this.getConnections().getSize() > 0) {
                  let sourceConnectionPort = this.getConnections().get(0).getSource();
-                 if (sourceConnectionPort.getDatatype) datatypeStr = sourceConnectionPort.getDatatype;
+                 if (sourceConnectionPort.getDatatype) datatypeStr = sourceConnectionPort.getDatatype();
                  else datatypeStr = this.getConnections().get(0).getSource().userData.datatype;
              }else if (this.getInputPort("in1").getConnections().getSize() > 0){
                  let sourceConnectionPort = this.getInputPort("in1").getConnections().get(0).getSource();
-                 if (sourceConnectionPort.getDatatype) datatypeStr = sourceConnectionPort.getDatatype;
+                 if (sourceConnectionPort.getDatatype) datatypeStr = sourceConnectionPort.getDatatype();
                  else datatypeStr = this.getConnections().get(0).getSource().userData.datatype;
              }
          }catch (e){

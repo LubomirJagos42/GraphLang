@@ -6909,7 +6909,12 @@ shape_designer.loadSymbolFromGraphLangClass = function(contents, appCanvas, appC
 
 }
 
-shape_designer.checkSymbolAndSchematic = function(canvas){
+/**
+ *  @deprecated Replaced by shape_designer.checkSymbolAndSchematic, kept for reference.
+ *  Known problems: TerminalOutput nodes were added twice (once by isTerminal with undefined name, once by ".terminaloutput" test),
+ *  symbol ports with status "ok" were never consumed and therefore deleted at the end, missing ports lost their default userData.
+ */
+shape_designer.checkSymbolAndSchematic_old_1 = function(canvas){
     var symbolPortList = new draw2d.util.ArrayList();
     var symbolPortList2 = new draw2d.util.ArrayList();
     canvas.getExtFigures().each(function(figureIndex, figureObj){
@@ -7038,6 +7043,290 @@ shape_designer.checkSymbolAndSchematic = function(canvas){
         $("#layerElement_"+e.id).addClass("layerSelectedElement");
     });
     */
+}
+
+/**
+ *  @method shape_designer.isTerminalValue
+ *  @param {*} value - value of userData.isTerminal
+ *  @returns {boolean} true if value means terminal, same rules as used in C++/Python translators (1, true, "true")
+ */
+shape_designer.isTerminalValue = function(value){
+    return value === 1 || value === true || String(value).toLowerCase() === "true";
+}
+
+/**
+ *  @method shape_designer.getPortColorByDatatype
+ *  @param {string} datatype - port datatype ie. int, string, vector<vector<string>>, string**
+ *  @returns {string} hex color from GraphLang.Utils.Color, for unknown datatype returns white #FFFFFF
+ *  @description Color is first looked up for whole datatype, then for its base type (pointers, references, vector<>/Array<> wrappers removed).
+ */
+shape_designer.getPortColorByDatatype = function(datatype){
+    var UNKNOWN_COLOR = "#FFFFFF";
+    if (!datatype || typeof GraphLang === "undefined" || !GraphLang.Utils || !GraphLang.Utils.Color) return UNKNOWN_COLOR;
+
+    var colorPicker = new GraphLang.Utils.Color();
+    var fallbackColor = colorPicker.getByName("__graphlang_nonexisting_datatype__");     //color returned for not known names
+    var isKnown = function(name){
+        var lowerName = String(name).toLowerCase().trim();
+        if (lowerName === "" || lowerName === "undefined" || lowerName === "unknown" || lowerName === "polymorphic" || lowerName === "broken") return false;
+        return colorPicker.getByName(name) !== fallbackColor;
+    };
+
+    if (isKnown(datatype)) return colorPicker.getByName(datatype);
+
+    //base type: const string& -> string, string** -> string, vector<vector<string>> -> string, Array<int> -> int
+    var baseType = String(datatype).trim().replace(/^const\s+/, "");
+    var wrapperRegex = /^(?:std::)?(?:vector|array)\s*<\s*(.*)\s*>$/i;
+    while (wrapperRegex.test(baseType)) baseType = baseType.replace(wrapperRegex, "$1").trim();
+    baseType = baseType.replace(/[\s\*&]+$/g, "").replace(/(\[\s*\d*\s*\])+$/g, "").trim();
+
+    if (isKnown(baseType)) return colorPicker.getByName(baseType);
+    return UNKNOWN_COLOR;
+}
+
+/**
+ *  @method shape_designer.getSchematicTerminals
+ *  @param {Array} jsonDocument - schematic of node as JSON array
+ *  @returns {Array} list of {name, datatype, type: "input"|"output"}
+ *  @description Evaluate terminals of schematic same way as GraphLang translators do:
+ *      - node is terminal when userData.isTerminal is 1/true/"true" (ConstantNode, ArrayNode, ClusterDatatypeNode, ..., TerminalOutput)
+ *      - terminal without input ports (only outputs, ie. constant) is INPUT of subnode, terminal without output ports (ie. TerminalOutput) is OUTPUT of subnode
+ *      - return node is added as output, same as UserDefinedNode.createPortsFromJson does it
+ *      - terminals are unique by name, each is added just once
+ *  Schematic is rendered into hidden temporary canvas so datatypes resolved through wires (TerminalOutput.getDatatype()) are right,
+ *  if this fails nodes are only instantiated and their persistent attributes are set.
+ */
+shape_designer.getSchematicTerminals = function(jsonDocument){
+    var terminalList = [];
+    if (!jsonDocument || !Array.isArray(jsonDocument)) return terminalList;
+
+    var isUsableDatatype = function(datatype){
+        return datatype && datatype !== "undefined" && datatype !== "polymorphic" && datatype !== "unknown";
+    };
+    var getPortDatatype = function(port){
+        if (!port) return null;
+        if (typeof port.getDatatype === "function"){
+            try{ var portDatatype = port.getDatatype(); if (isUsableDatatype(portDatatype)) return portDatatype; }catch(e){}
+        }
+        if (port.userData && isUsableDatatype(port.userData.datatype)) return port.userData.datatype;
+        return null;
+    };
+    var addTerminal = function(terminalObj){
+        if (!terminalObj.name) return;
+        if (terminalList.find(function(item){return item.name === terminalObj.name;})) return;   //each terminal only once
+        terminalList.push(terminalObj);
+    };
+
+    /*
+     *  1. Get node objects, preferably from hidden canvas with wires.
+     */
+    var nodeList = [];
+    var tempCanvasDivId = "shapeDesignerCheckSymbolTempCanvas";
+    try{
+        $("#" + tempCanvasDivId).remove();
+        $("body").append('<div id="' + tempCanvasDivId + '" style="position: absolute; left: -10000px; top: -10000px; width: 3000px; height: 3000px; visibility: hidden;"></div>');
+        var tempCanvas = new draw2d.Canvas(tempCanvasDivId);
+        if (GraphLang.Utils.displayContents2) GraphLang.Utils.displayContents2(jsonDocument, tempCanvas);
+        else (new draw2d.io.json.Reader()).unmarshal(tempCanvas, JSON.parse(JSON.stringify(jsonDocument)));
+        tempCanvas.getFigures().each(function(figureIndex, figureObj){ nodeList.push(figureObj); });
+    }catch(e){
+        console.warn("shape_designer.getSchematicTerminals: cannot render schematic to temporary canvas, using direct instantiation.", e);
+        nodeList = [];
+        jsonDocument.forEach(function(element){
+            if (!element || !element.type || element.type.toLowerCase().search("connection") > -1) return;
+            try{
+                var nodeObj = eval('new ' + element.type + '()');
+                if (typeof nodeObj.setPersistentAttributes === "function") nodeObj.setPersistentAttributes(JSON.parse(JSON.stringify(element)));
+                nodeList.push(nodeObj);
+            }catch(e2){
+                console.warn("shape_designer.getSchematicTerminals: cannot instantiate " + element.type, e2);
+            }
+        });
+    }
+    $("#" + tempCanvasDivId).remove();
+
+    /*
+     *  2. Evaluate terminals.
+     */
+    nodeList.forEach(function(nodeObj){
+        var userData = nodeObj.userData ? nodeObj.userData : {};
+        var nodeName = nodeObj.NAME ? nodeObj.NAME.toLowerCase() : "";
+
+        var terminalType = null;
+        var terminalPort = null;
+        if (shape_designer.isTerminalValue(userData.isTerminal)){
+            var inputCount = nodeObj.getInputPorts ? nodeObj.getInputPorts().getSize() : 0;
+            var outputCount = nodeObj.getOutputPorts ? nodeObj.getOutputPorts().getSize() : 0;
+            if (inputCount === 0 && outputCount > 0){
+                terminalType = "input";
+                terminalPort = nodeObj.getOutputPort(0);
+            }else if (outputCount === 0 && inputCount > 0){
+                terminalType = "output";
+                terminalPort = nodeObj.getInputPort(0);
+            }
+        }else if (nodeName.search("\\.return") > -1){
+            terminalType = "output";
+            terminalPort = (nodeObj.getInputPorts && nodeObj.getInputPorts().getSize() > 0) ? nodeObj.getInputPort(0) : null;
+        }
+        if (!terminalType) return;
+
+        //name: nodeLabel, else text of label (TerminalOutput), else "return" for return node
+        var name = userData.nodeLabel;
+        if (!name && typeof nodeObj.getText === "function") name = nodeObj.getText();
+        if (!name && nodeName.search("\\.return") > -1) name = "return";
+
+        //datatype: connected/node datatype, then terminal port datatype, then userData datatype
+        var datatype = null;
+        if (terminalType === "output" && typeof nodeObj.getDatatype === "function"){
+            try{ var nodeDatatype = nodeObj.getDatatype(); if (isUsableDatatype(nodeDatatype)) datatype = nodeDatatype; }catch(e){}
+        }
+        if (!datatype) datatype = getPortDatatype(terminalPort);
+        if (!datatype && isUsableDatatype(userData.datatype)) datatype = userData.datatype;
+        if (!datatype) datatype = "undefined";
+
+        addTerminal({name: name, datatype: datatype, type: terminalType});
+    });
+
+    return terminalList;
+}
+
+/**
+ *  @method shape_designer.checkSymbolAndSchematic
+ *  @param {draw2d.Canvas} canvas - shape designer canvas with symbol
+ *  @param {boolean} showReport - show alert with result, default true
+ *  @returns {Object} {symbolPorts, terminals, status} report
+ *  @description Compare symbol ports (ExtPort figures) against terminals of schematic of loaded node and correct symbol:
+ *      1. exact match (name, direction, datatype) -> "ok"
+ *      2. same name and datatype -> "wrong direction", same name and direction -> "wrong datatype",
+ *         same name only -> "wrong direction and datatype", same direction and datatype -> "wrong name"
+ *      3. no port for terminal -> "missing", new port is created (inputs on left, outputs on right side of symbol)
+ *      4. symbol ports without terminal are removed
+ *  Every symbol port is matched to at most one terminal. All ports get background color by their datatype using GraphLang.Utils.Color,
+ *  unknown datatype is white #FFFFFF.
+ */
+shape_designer.checkSymbolAndSchematic = function(canvas, showReport = true){
+    canvas = canvas ? canvas : app.view;
+
+    var loadedObject = shape_designer.loadedObject;
+    var terminalList = (loadedObject && loadedObject.jsonDocument) ? shape_designer.getSchematicTerminals(loadedObject.jsonDocument) : [];
+
+    /*
+     *  Symbol ports
+     */
+    var symbolPortList = [];
+    canvas.getExtFigures().each(function(figureIndex, figureObj){
+        if (figureObj.NAME.toLowerCase().search("extport") > -1) symbolPortList.push(figureObj);
+    });
+    var portInfo = function(port){
+        return {name: port.getUserData().name, datatype: port.getDatatype(), type: String(port.getInputType()).toLowerCase()};
+    };
+    var symbolPortInfoList = symbolPortList.map(portInfo);
+
+    /*
+     *  Matching terminals with ports, each port can be used only once, passes go from strictest to weakest rule
+     */
+    var availablePorts = symbolPortList.slice();
+    var matchList = terminalList.map(function(){ return {status: "missing", port: null}; });
+    var matchRules = [
+        {status: "ok",                              test: function(p, t){ return p.name === t.name && p.type === t.type && p.datatype === t.datatype; }},
+        {status: "wrong direction",                 test: function(p, t){ return p.name === t.name && p.datatype === t.datatype; }},
+        {status: "wrong datatype",                  test: function(p, t){ return p.name === t.name && p.type === t.type; }},
+        {status: "wrong direction and datatype",    test: function(p, t){ return p.name === t.name; }},
+        {status: "wrong name",                      test: function(p, t){ return p.type === t.type && p.datatype === t.datatype; }},
+    ];
+    matchRules.forEach(function(rule){
+        terminalList.forEach(function(terminalObj, terminalIndex){
+            if (matchList[terminalIndex].port) return;
+            var port = availablePorts.find(function(portObj){ return rule.test(portInfo(portObj), terminalObj); });
+            if (port){
+                matchList[terminalIndex] = {status: rule.status, port: port};
+                availablePorts.splice(availablePorts.indexOf(port), 1);
+            }
+        });
+    });
+
+    /*
+     *  Placement for missing ports: inputs on left side, outputs on right side of symbol (bounding box of non port figures)
+     */
+    var symbolBox = null;
+    canvas.getExtFigures().each(function(figureIndex, figureObj){
+        if (figureObj.NAME.toLowerCase().search("extport") > -1) return;
+        var box = figureObj.getBoundingBox();
+        if (!symbolBox) symbolBox = box.clone();
+        else symbolBox.merge(box);
+    });
+    if (!symbolBox) symbolBox = new draw2d.geo.Rectangle(100, 100, 100, 100);
+    var missingInputCount = terminalList.filter(function(t, i){ return matchList[i].status === "missing" && t.type === "input"; }).length;
+    var missingOutputCount = terminalList.filter(function(t, i){ return matchList[i].status === "missing" && t.type === "output"; }).length;
+    var missingInputIndex = 0;
+    var missingOutputIndex = 0;
+
+    /*
+     *  Correcting symbol ports
+     */
+    terminalList.forEach(function(terminalObj, terminalIndex){
+        var match = matchList[terminalIndex];
+        var port = match.port;
+
+        if (match.status === "missing"){
+            port = new shape_designer.figure.ExtPort();
+            port.getUserData().name = terminalObj.name;
+            port.setDatatype(terminalObj.datatype);
+            port.setInputType(terminalObj.type);
+            port.setConnectionDirection(terminalObj.type === "input" ? 3 : 1);
+            port.setMaxFanOut(20);
+            port.setMultipleConnections(terminalObj.type === "output");
+            port.setConnectionMandatory(false);
+
+            var isInput = terminalObj.type === "input";
+            var index = isInput ? ++missingInputIndex : ++missingOutputIndex;
+            var count = isInput ? missingInputCount : missingOutputCount;
+            var posX = isInput ? symbolBox.getX() - port.getWidth()/2 : symbolBox.getX() + symbolBox.getWidth() - port.getWidth()/2;
+            var posY = symbolBox.getY() + symbolBox.getHeight() * index / (count + 1) - port.getHeight()/2;
+
+            canvas.getCommandStack().execute(new draw2d.command.CommandAdd(canvas, port, posX, posY));
+        }else{
+            if (match.status.search("direction") > -1){
+                port.setInputType(terminalObj.type);
+                port.setConnectionDirection(terminalObj.type === "input" ? 3 : 1);
+            }
+            if (match.status.search("datatype") > -1) port.setDatatype(terminalObj.datatype);
+            if (match.status === "wrong name") port.getUserData().name = terminalObj.name;
+        }
+
+        port.setBackgroundColor(shape_designer.getPortColorByDatatype(terminalObj.datatype));
+    });
+
+    //ports without terminal in schematic
+    var removedPortInfoList = availablePorts.map(portInfo);
+    availablePorts.forEach(function(portObj){
+        canvas.getCommandStack().execute(new draw2d.command.CommandDelete(portObj));
+    });
+
+    if (app && app.layer) app.layer.stackChanged(null);
+
+    /*
+     *  Report
+     */
+    var report = {
+        symbolPorts: symbolPortInfoList,
+        terminals: terminalList,
+        status: terminalList.map(function(t, i){ return matchList[i].status; }),
+        removedPorts: removedPortInfoList
+    };
+
+    var msg = "------- SYMBOL PORTS (before check) ------\n";
+    symbolPortInfoList.forEach(function(element, index){ msg += index + " " + JSON.stringify(element) + "\n"; });
+    msg += "\n--- SCHEMATIC TERMINALS --------\n";
+    terminalList.forEach(function(element, index){ msg += index + " " + JSON.stringify(element) + " -> " + report.status[index] + "\n"; });
+    if (removedPortInfoList.length > 0){
+        msg += "\n--- REMOVED SYMBOL PORTS (no terminal in schematic) --------\n";
+        removedPortInfoList.forEach(function(element, index){ msg += index + " " + JSON.stringify(element) + "\n"; });
+    }
+    console.log(msg);
+    if (showReport) alert(msg);
+
+    return report;
 }
 
 shape_designer.getSymbolPicture = async function(canvas){

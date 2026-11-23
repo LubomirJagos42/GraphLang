@@ -1,19 +1,91 @@
+/*****************************************************************************************************************************
+ *  PYTHON CODE HELPERS
+ *      - used by translator object below and also by nodes in their translateToPythonCode...() methods
+ *****************************************************************************************************************************/
+
+/**
+ * @memberOf GraphLang.Utils
+ * @description Indentation used for generated python code (python is indentation sensitive, therefore one string is used everywhere).
+ * @type {string}
+ */
+GraphLang.Utils.PYTHON_INDENT = "    ";
+
+/**
+ * @memberOf GraphLang.Utils
+ * @description Indent python code block, each NON EMPTY line is prefixed by indentation, empty lines stay empty. Line count is not changed.
+ * Nodes return their python code WITHOUT any base indentation and owner (loop, function, template) indents it, this way
+ * indentation is always right also for nested structures.
+ * @param {string} pythonCode - code block, lines separated by "\n"
+ * @param {number} level - how many indentation levels are added
+ * @returns {string} indented python code
+ */
+GraphLang.Utils.indentPythonCode = function(pythonCode, level = 1){
+    if (pythonCode === undefined || pythonCode === null) return "";
+    let indentStr = GraphLang.Utils.PYTHON_INDENT.repeat(level);
+    return String(pythonCode).split("\n").map((lineStr) => lineStr.trim().length > 0 ? indentStr + lineStr : lineStr).join("\n");
+}
+
+/**
+ * @memberOf GraphLang.Utils
+ * @description Python block (for, while, def, if) cannot be empty, if block contains just comments or nothing "pass" is added.
+ * @param {string} pythonCode - block body code (not indented)
+ * @returns {string} block body which is valid python block
+ */
+GraphLang.Utils.ensurePythonBlockNotEmpty = function(pythonCode){
+    let hasStatement = String(pythonCode).split("\n").some((lineStr) => lineStr.trim().length > 0 && !lineStr.trim().startsWith("#"));
+    if (hasStatement) return pythonCode;
+    if (pythonCode.length > 0 && !pythonCode.endsWith("\n")) pythonCode += "\n";
+    return pythonCode + "pass\n";
+}
+
+/**
+ * @memberOf GraphLang.Utils
+ * @description Convert GraphLang value written as text into python literal based on its datatype.
+ * @param {string} valueStr - value as written in node, ie. "true", "3.14", "hello"
+ * @param {string} datatype - GraphLang (C++ like) datatype, ie. "bool", "string", "int"
+ * @returns {string} python literal, ie. True, 3.14, "hello"
+ */
+GraphLang.Utils.toPythonLiteral = function(valueStr, datatype = ""){
+    let datatypeLower = String(datatype).toLowerCase();
+    let value = valueStr === undefined || valueStr === null ? "" : String(valueStr);
+
+    if (datatypeLower.search("string") > -1 || datatypeLower.search("char*") > -1) return JSON.stringify(value);
+    if (datatypeLower.search("bool") > -1) return value.trim().toLowerCase() === "true" || value.trim() === "1" ? "True" : "False";
+    if (value.trim() === "") return "None";
+    if (datatypeLower === "char") return JSON.stringify(value);
+    if (datatypeLower.search("complex") > -1){
+        //C++ std::complex<...> constant text ie. "1.0 + 2.0i" -> complex(1.0, 2.0)
+        let complexParts = GraphLang.Utils.parseComplexLiteral ? GraphLang.Utils.parseComplexLiteral(value) : null;
+        if (complexParts) return `complex(${complexParts.re}, ${complexParts.im})`;
+    }
+    return value;
+}
+
 /**
  * @class
  * @author Lubomir Jagos
- * @description General object to translate schematic to code
+ * @description Translator object which translates schematic into python code, this class has same interface and structure as
+ * {@link TranslateToCppCode_2_TranslatorObject}, but it calls translateToPythonCode...() methods of nodes.
+ *
+ * Python specific rules:
+ *  - each node returns its python code WITHOUT base indentation, structure which owns node code (loop, subnode function, template) indents it,
+ *    use {@link GraphLang.Utils.indentPythonCode}
+ *  - wires are "declared" as variable = None, this way each variable exists before it's used (ie. not connected input of tunnel)
+ *  - subnodes (nodes with schematic inside) are translated into functions, input terminals are function params, output terminals are
+ *    returned as list, call looks like: [out_1, out_2] = Node__Name(in_1, in_2)
  */
 class TranslateToPythonCode_2_TranslatorObject {
 
     translatorCanvasObj = null;
 
     //auxiliary ArrayList store declaration of some variables or something during translation process
-    translateToCppCodeFunctionsArray = new draw2d.util.ArrayList();
-    translateToCppCodeImportArray = new draw2d.util.ArrayList();
-    translateToCppCodeLibrariesList = new draw2d.util.ArrayList();              //additional CPP libraries which must be provided to linker
-    translateToCppCodeTypeDefinitionArray = new draw2d.util.ArrayList();
-    translateToCppCodeSubnodeArray = new draw2d.util.ArrayList();
-    translateToCppCodeSubnodeInputTerminalsDefaultValuesArray = new draw2d.util.ArrayList();
+    translateToPythonCodeFunctionsArray = new draw2d.util.ArrayList();
+
+    translateToPythonCodeImportArray = new draw2d.util.ArrayList();
+    translateToPythonCodeLibrariesList = new draw2d.util.ArrayList();              //additional python packages which must be installed (pip)
+    translateToPythonCodeTypeDefinitionArray = new draw2d.util.ArrayList();
+    translateToPythonCodeSubnodeArray = new draw2d.util.ArrayList();
+    translateToPythonCodeSubnodeInputTerminalsDefaultValuesArray = new draw2d.util.ArrayList();
     translateSubnodeCanvasArray = new draw2d.util.ArrayList();
 
     typeDefinitionUsedList = new draw2d.util.ArrayList();
@@ -21,24 +93,41 @@ class TranslateToPythonCode_2_TranslatorObject {
     translateClusterTypeDefinitionCanvasArray = new draw2d.util.ArrayList();
     translateClusterTypeDefinitionItems = [];          //this stores array[custer_datatype_name] = map of item labels: datatype
 
-    translateToCppCodeAdditionalId = new draw2d.util.ArrayList();
-    translateToCppCodeAdditionalIdNoHyphen = new draw2d.util.ArrayList();
+    translateToPythonCodeAdditionalId = new draw2d.util.ArrayList();
+    translateToPythonCodeAdditionalIdNoHyphen = new draw2d.util.ArrayList();
 
-    translateToCppCodeErrorList = new draw2d.util.ArrayList();
-    translateToCppCodeBreakpointList = new draw2d.util.ArrayList();
-    translateToCppCodeWatchList = new draw2d.util.ArrayList();
+    translateToPythonCodeErrorList = new draw2d.util.ArrayList();
+    translateToPythonCodeBreakpointList = new draw2d.util.ArrayList();
+    translateToPythonCodeWatchList = new draw2d.util.ArrayList();
 
+    /**
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @description Line offset used to find breakpoint, watch during debugging.
+     * @type {number}
+     */
     GLOBAL_CODE_LINE_OFFSET = 0;
+    /**
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @description Auxiliary line offset used to find breakpoint, watch during debugging.
+     * @type {number}
+     */
+    GLOBAL_CODE_LINE_OFFSET_BEFORE_SUBNODES = 0;
+    /**
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @description Object reference returned when asked this API which line generates specific code line.
+     * @type {Object}
+     */
     GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = null;
 
     constructor(paramsObj) {
-        if (Object.keys(paramsObj).includes(paramsObj.canvasObj) && typeof paramsObj.canvasObj === "object") this.translatorCanvasObj = paramsObj.canvasObj;
+        if (paramsObj && typeof paramsObj.canvasObj === "object") this.translatorCanvasObj = paramsObj.canvasObj;
     }
 
     /**
      * @method
+     * @instance
      * @memberOf TranslateToPythonCode_2_TranslatorObject
-     * @param canvasObj
+     * @param {Object} canvasObj
      */
     setCanvas = (canvasObj) => {
         this.translatorCanvasObj = canvasObj;
@@ -46,7 +135,9 @@ class TranslateToPythonCode_2_TranslatorObject {
 
     /**
      * @method
+     * @instance
      * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @returns {number} line offset from internal class instance variable
      */
     getCurrentTranslateLineOffset = () => {
         return this.GLOBAL_CODE_LINE_OFFSET;
@@ -54,133 +145,243 @@ class TranslateToPythonCode_2_TranslatorObject {
 
     /**
      * @method
+     * @instance
      * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @returns {draw2d.util.ArrayList}
      */
     getBreakpointList = () => {
-        return this.translateToCppCodeBreakpointList;
+        return this.translateToPythonCodeBreakpointList;
     }
 
     /**
      * @method
+     * @instance
      * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @returns {draw2d.util.ArrayList}
      */
     getErrorList = () => {
-        return this.translateToCppCodeErrorList;
+        return this.translateToPythonCodeErrorList;
     }
 
     /**
      * @method
+     * @instance
      * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @returns {draw2d.util.ArrayList}
      */
     getWatchList = () => {
-        return this.translateToCppCodeWatchList;
+        return this.translateToPythonCodeWatchList;
     }
 
     /**
      * @method
+     * @instance
      * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @returns {draw2d.util.ArrayList} python packages needed by nodes
      */
     getLibrariesList = () => {
-        return this.translateToCppCodeLibrariesList;
+        return this.translateToPythonCodeLibrariesList;
     }
 
     /**
      * @method
+     * @instance
      * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @description Add id into list of ids which are rewritten to human readable numbers at the end of translation.
+     * @param {string} idStr
      */
-    getCppCodeImport = () => {
-        var cCode = "";
-        this.translateToCppCodeImportArray.unique();                               //remove duplicities
-        this.translateToCppCodeImportArray.each(function (itemIndex, itemObj) {
-            cCode += itemObj + "\n";
-        });
-        return cCode;
+    addAdditionalId = (idStr) => {
+        if (!idStr) return;
+        this.translateToPythonCodeAdditionalId.add(idStr);
+        this.translateToPythonCodeAdditionalIdNoHyphen.add(idStr.replaceAll('-', ''));
     }
 
     /**
      * @method
+     * @instance
      * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @returns {string} python import statements code block
      */
-    getCppCodeTypeDefinition = () => {
-        var cCode = "";
-        this.translateToCppCodeTypeDefinitionArray.unique();                               //remove duplicities
-        this.translateToCppCodeTypeDefinitionArray.each(function (itemIndex, itemObj) {
-            cCode += itemObj + "\n";
+    getPythonCodeImport = () => {
+        let pythonCode = "";
+        this.translateToPythonCodeImportArray.unique();                               //remove duplicities
+        this.translateToPythonCodeImportArray.each(function (itemIndex, itemObj) {
+            pythonCode += String(itemObj).replace(/\n+$/, "") + "\n";
         });
-        return cCode;
+        return pythonCode;
     }
 
     /**
-     *  @method
-     *  @memberOf TranslateToPythonCode_2_TranslatorObject
-     *  @description Init buffers which collects information about current diagram which is translated.
+     * @method
+     * @instance
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @returns {string} python type definitions (ie. classes for clusters)
      */
-    initTranslateToCppBuffers = () => {
-        this.translateToCppCodeImportArray.clear();          //import statements
-        this.translateToCppCodeTypeDefinitionArray.clear();
-        this.translateToCppCodeFunctionsArray.clear();       //translated subnodes functions bodies
-        this.translateToCppCodeSubnodeArray.clear();         //already translated subnodes function names
+    getPythonCodeTypeDefinition = () => {
+        let pythonCode = "";
+        this.translateToPythonCodeTypeDefinitionArray.unique();                               //remove duplicities
+        this.translateToPythonCodeTypeDefinitionArray.each(function (itemIndex, itemObj) {
+            pythonCode += itemObj + "\n";
+        });
+        return pythonCode;
+    }
+
+    /**
+     * @method
+     * @description Collect strings returned by node method (string, draw2d.util.ArrayList or Array) into target list.
+     * @instance
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @param {string|draw2d.util.ArrayList|Array} items
+     * @param {draw2d.util.ArrayList} targetList
+     */
+    collectStrings = (items, targetList) => {
+        if (items === undefined || items === null) return;
+        if (typeof items === "string"){
+            if (items.trim().length > 0) targetList.push(items);
+        }else if (typeof items.each === "function"){
+            items.each(function(strIndex, strObj){
+                if (typeof strObj === "string" && strObj.trim().length > 0) targetList.push(strObj);
+            });
+        }else if (Array.isArray(items)){
+            for (let strObj of items){
+                if (typeof strObj === "string" && strObj.trim().length > 0) targetList.push(strObj);
+            }
+        }
+    }
+
+    /**
+     * @method
+     * @description Init buffers which collects information about current diagram which is translated.
+     * @instance
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     */
+    initTranslateToPythonBuffers = () => {
+        this.translateToPythonCodeImportArray.clear();          //import statements
+        this.translateToPythonCodeTypeDefinitionArray.clear();
+        this.translateToPythonCodeFunctionsArray.clear();       //translated subnodes functions bodies
+        this.translateToPythonCodeSubnodeArray.clear();         //already translated subnodes function names
         this.translateSubnodeCanvasArray.clear();
         this.typeDefinitionUsedList.clear();
         this.typeDefinitionNeededList.clear();
         this.translateClusterTypeDefinitionCanvasArray.clear();
         this.translateClusterTypeDefinitionItems = [];
-        this.translateToCppCodeAdditionalId.clear();
-        this.translateToCppCodeAdditionalIdNoHyphen.clear();
-        this.translateToCppCodeErrorList.clear();
-        this.translateToCppCodeBreakpointList.clear();
-        this.translateToCppCodeWatchList.clear();
-        this.translateToCppCodeLibrariesList.clear();
+        this.translateToPythonCodeAdditionalId.clear();
+        this.translateToPythonCodeAdditionalIdNoHyphen.clear();
+        this.translateToPythonCodeErrorList.clear();
+        this.translateToPythonCodeBreakpointList.clear();
+        this.translateToPythonCodeWatchList.clear();
+        this.translateToPythonCodeLibrariesList.clear();
+        this.translateToPythonCodeSubnodeInputTerminalsDefaultValuesArray = new draw2d.util.ArrayList();
     }
 
     /**
      * @method
+     * @description Same name as in C++ translator, {@link TranslateToGeneralCode_1} calls this method for any language.
+     * @instance
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     */
+    initTranslateToCppBuffers = () => {
+        this.initTranslateToPythonBuffers();
+    }
+
+    /**
+     * @method
+     * @instance
      * @memberOf TranslateToPythonCode_2_TranslatorObject
      * @description Wrapper around internal code generate method, this is here to have general function with general name as interface to outside code
-     */
-    getCode = (canvas, showCode = true, codeTemplate = "desktop") => {
-        return this.getCppCode(canvas, showCode, codeTemplate);
-    }
-
-    /**
-     * @method
-     * @memberOf TranslateToPythonCode_2_TranslatorObject
      * @param canvas
      * @param showCode
      * @param codeTemplate
-     * @return {string}
+     * @returns {string} python code
      */
-    getCppCode = (canvas, showCode = true, codeTemplate = "") => {
-        let cCode = "";
-
-        if (codeTemplate === "desktop"){
-            cCode = this.getCppCodeUsingTemplate_desktop(canvas, showCode, this.translateCanvasToCppCode);
-        }else if (codeTemplate === "embedded"){
-            cCode = this.getCppCodeUsingTemplate_embedded(canvas, showCode, this.translateCanvasToCppCode);
-        }else if (codeTemplate === "webassembly"){
-            //TODO: Webassembly code template not implemented yet here!
-            throw new Error("code template to generate webassembly not implemented, need check translator object implementation");
-        }else{
-            //BY DEFAULT USE DESKTOP CODE TEMPLATE
-            cCode = this.getCppCodeUsingTemplate_desktop(canvas, showCode, this.translateCanvasToCppCode);
-        }
-
-        return cCode;
+    getCode = (canvas, showCode = true, codeTemplate = "desktop") => {
+        return this.getPythonCode(canvas, showCode, codeTemplate);
     }
 
     /**
-     * @method translateCanvasToCppCode
+     * @method
+     * @instance
      * @memberOf TranslateToPythonCode_2_TranslatorObject
-     * @param {Object}        funcParam - object with input parameters
-     * @param {draw2d.Canvas} funcParam.canvas - schematic which will be serialize to JSON
-     * @param {boolean}       funcParam.translateTerminalsDeclaration - if set to false input/output terminals for outside world declaration are not written in C/C++, this is for translate subnodes
-     * @param {string}        funcParam.nodeName - name of current node which schematic is being translated into code, this is set when subnode diagram is translated into code
-     * @param {Object[]}      funcParam.compileErrorLines - array of error lines which should be searched during translation process
-     * @param {int}           funcParam.codeLinesOffset - number of lines which are generated before, this is to got right line number when searching for error line
-     * @returns {string} C/C++ code as string
-     * @description Copy diagram as C/C++ code into clipboard, uses inside translateToCppCode2() function.
+     * @param canvas
+     * @param showCode
+     * @param codeTemplate - "desktop", for other templates (embedded, webassembly) there is no python template yet, desktop is used
+     * @param lineNumberToFind
+     * @returns {string} python code as string
      */
-    translateCanvasToCppCode = (funcParams) =>{
+    getPythonCode = (canvas, showCode = true, codeTemplate = "", lineNumberToFind = null) => {
+        if (codeTemplate !== "desktop" && codeTemplate !== "" && codeTemplate !== null && codeTemplate !== undefined){
+            console.warn(`Python code template "${codeTemplate}" not implemented, desktop python template is used.`);
+        }
+        return this.getPythonCodeUsingTemplate_desktop(canvas, showCode, this.translateCanvasToPythonCode, lineNumberToFind);
+    }
+
+    /**
+     * @method translateCanvasToCode
+     * @instance
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @param {Object} funcParams - object with input parameters
+     * @returns {string} python code as string
+     * @description General named wrapper function for translateCanvasToPythonCode().
+     */
+    translateCanvasToCode = (funcParams) => {
+        return this.translateCanvasToPythonCode(funcParams);
+    }
+
+    /**
+     * @method
+     * @instance
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @description Get datatype of wire source, same rules as for C++ translator, it's used just as comment in python code.
+     * @param {Object} lineObj - wire
+     * @returns {string}
+     */
+    getWireSourceDatatype = (lineObj) => {
+        let sourceDatatype = "";
+        try{
+            let sourceParent = lineObj.getSource().getParent();
+            if (sourceParent && sourceParent.NAME.toLowerCase().search('tunnel') > -1 && sourceParent.getDatatype){
+                sourceDatatype = sourceParent.getDatatype();
+            }else if (lineObj.getSource().getDatatype) {
+                sourceDatatype = lineObj.getSource().getDatatype();
+            }else if (sourceParent && sourceParent.getConnectedCluster){
+                sourceDatatype = sourceParent.getConnectedCluster().getDatatype();
+            }else if (lineObj.getSource().getUserData()){
+                sourceDatatype = lineObj.getSource().getUserData().datatype;
+            }
+        }catch(e){
+            sourceDatatype = "";
+        }
+        return sourceDatatype ? sourceDatatype : "";
+    }
+
+    /**
+     * @method
+     * @instance
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @description Python wire "declaration", variable is created with None value, datatype is in comment.
+     * @param {Object} lineObj - wire
+     * @returns {string} ie. "wire_1 = None  # int\n"
+     */
+    getWireDeclarationPythonCode = (lineObj) => {
+        let datatypeStr = this.getWireSourceDatatype(lineObj);
+        return `${lineObj.getVariableName()} = None` + (datatypeStr ? `  # ${datatypeStr}` : "") + "\n";
+    }
+
+    /**
+     * @instance
+     * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @method translateCanvasToPythonCode
+     * @param {Object}        funcParams - object with input parameters
+     * @param {draw2d.Canvas} funcParams.canvas - schematic which will be translated
+     * @param {boolean}       funcParams.translateTerminalsDeclaration - if set to false input/output terminals declaration are not written, this is for translate subnodes
+     * @param {string}        funcParams.nodeName - name of current node which schematic is being translated into code, this is set when subnode diagram is translated into code
+     * @param {Object[]}      funcParams.compileErrorLines - array of error lines which should be searched during translation process
+     * @param {number}        funcParams.codeLinesOffset - number of lines which are generated before, this is to got right line number when searching for error line
+     * @param {number}        funcParams.lineNumberToFind - line number for which is searched object which generates it
+     * @returns {string} python code as string, NOT INDENTED
+     * @description Translate canvas schematic into python code.
+     */
+    translateCanvasToPythonCode = (funcParams) =>{
         //extract input params from input object
         let canvas = Object.hasOwn(funcParams, "canvas") ? funcParams.canvas : null;
         let translateTerminalsDeclaration = Object.hasOwn(funcParams, "translateTerminalsDeclaration") ? funcParams.translateTerminalsDeclaration : true;
@@ -193,52 +394,43 @@ class TranslateToPythonCode_2_TranslatorObject {
 
         //check canvas variable, if not defined use main canvas
         if (canvas === null){
-            let warningMessage = "Canvas not defined in call translateCanvasToCppCode(), default main canvas will be used!";
-            alert(warningMessage);
+            let warningMessage = "Canvas not defined in call translateCanvasToPythonCode(), default main canvas will be used!";
             console.warn(warningMessage);
             canvas = this.translatorCanvasObj;
         }
 
         let translatorObj = this;
-        let cCode = "";
+        let pythonCode = "";
 
         //TO BE SURE RECALCULATE NODES OWNERSHIP BY loopsRecalculateAbroadFigures
         GraphLang.Utils.loopsRecalculateAbroadFigures(canvas);
 
         //THIS ADAPT PORT DATATYPES SAME AS CONNECTED Wires
-        //this can cause some problems because it's not bullet proof function, beacuse it's running statically, need to rewrite it more adaptive but when clicked at least 3 times it's OK
         GraphLang.Utils.setWiresColorByPorts(canvas);
 
         /*********************************************************************************************************
-         *  PORT INITIALIZATION
-         *      - added by LuboJ. this CAN CAUSE SOME ERRORS IT WASN'T HERE UNTIL RECENTLY when I saw that there
-         *      is not port initialization and execution order done in this task.
+         *  PORT INITIALIZATION and EXECUTION ORDER
          */
         GraphLang.Utils.initAllPortToDefault(canvas);
-
-        /*********************************************************************************************************
-         *  Calculate execution order of nodes, if there are "loops" created in diagram it can happen that nodes
-         *  will not have execution order
-         *      - TODO: after execution order check if there are nodes without execution order and therefore this needs to be resolved by user
-         */
         GraphLang.Utils.executionOrder(canvas);
 
-        //TODO: here must be check if all nodes at canvas have execution order!!!
         let haveAllNodesExecutionOrder = true;
-        let _this = this;
         canvas.getFigures().each(function(figureIndex, figureObj){
-            if (figureObj.getUserData() && figureObj.getUserData().executionOrder && figureObj.getUserData().executionOrder <= 0){
+            if (
+                figureObj.getUserData() && figureObj.getUserData().executionOrder && figureObj.getUserData().executionOrder <= 0
+                && figureObj.NAME !== 'GraphLang.Shapes.Basic.Jailhouse'
+            ){
                 haveAllNodesExecutionOrder = false;
 
-                _this.translateToCppCodeErrorList.add({
-                    canvasOwnerName: '',
+                translatorObj.translateToPythonCodeErrorList.add({
+                    canvasOwnerName: nodeName,
                     figureName: figureObj.NAME,
                     figureId: figureObj.getId(),
-                    portName: portObj.getName(),
+                    portName: '',
                     type: GraphLang.Utils.ErrorList.NO_EXECUTION_ORDER,
                     message: `${figureObj.NAME} has no execution order`
                 });
-                console.warn(_this.translateToCppCodeErrorList.last());
+                console.warn(translatorObj.translateToPythonCodeErrorList.last());
             }
         });
         if (haveAllNodesExecutionOrder === false){
@@ -249,34 +441,19 @@ class TranslateToPythonCode_2_TranslatorObject {
 
         /*********************************************************************************************************
          *  WIRES DECLARATION
-         *
-         *  globals at level of canvas
-         *  ERROR:
-         *    - THERE IS NOT VALUE ASSIGNEMENT WHEN WIRE IS CONNECTED TO CONSTANT
+         *      - in python there is no declaration, but each wire variable is created with None value to exists before
+         *        it's used, same wires as in C++ translator are declared here (top canvas wires, wires going out from right tunnels)
          *********************************************************************************************************/
-
-            //FIRST get all top figures (they have no composite set) and then get their input ports and connections connected to them
-            //	tunnels doesn't have assigned it's loop as its parent, so iterating over tunnels is done when loop is detected, then if it
-            //	has no composite (what means it's most top structure on canvas) it's iterating over it's children and detecting left tunnels
-            //
-        let allConnections = new draw2d.util.ArrayList();
         canvas.getLines().each(function(lineIndex, lineObj){
-            let sourceDatatype = "";
-
             //here it's looking just for figures skipping loops and tunnels
             if (lineObj.NAME.toLowerCase().search('connection') > -1 &&
                 lineObj.getSource().getParent().NAME.toLowerCase().search('tunnel') == -1 &&
                 lineObj.getSource().getParent().getComposite() == null &&
-                lineObj.getSource().getName() != "iterationTerminalOutput"        //this is not to generate wire declaration for FOR LOOP iterator indexer, getName() return port name not class nae different than NAME
+                lineObj.getSource().getName() != "iterationTerminalOutput"        //for loop iterator wire is declared by loop
             ){
-                var isWireOnTopCanvas = true;
+                let isWireOnTopCanvas = true;
 
-                /*
-                 *    This is test if wire is connected to unbundler where its structure is:
-                 *        UnbundlerNode > VerticalLayout > Label > OutputPort
-                 *    then getParent() is little more complicated due there is element nesting, but there is on output port function getTopParentNode()
-                 *    which is my special function which return top figure obj reference to simplify this
-                 */
+                //wire connected to unbundler and similar nested nodes, getTopParentNode() returns top figure
                 try{
                     if (
                         lineObj.getSource().getTopParentNode &&
@@ -288,72 +465,48 @@ class TranslateToPythonCode_2_TranslatorObject {
                     //do nothing
                 }
 
-                /*
-                 *    If source has getDatatype() function use it, otherwise look for userData variable
-                 */
-                if (lineObj.getSource().getDatatype) {
-                    sourceDatatype = lineObj.getSource().getDatatype();
-                }
-                else if (lineObj.getSource().getParent().getConnectedCluster){
-                    //this is case when wires are connected to bundlers, unbundlers and so
-                    sourceDatatype = lineObj.getSource().getParent().getConnectedCluster().getDatatype();
-                }
-                else if (lineObj.getSource().getDatatype) {
-                    sourceDatatype = lineObj.getSource().getDatatype();
-                }
-                else{
-                    sourceDatatype = lineObj.getSource().getUserData().datatype;
-                }
-
-                /*
-                 *    when flag isWireOnTopCanvas is still true write wire declaration, otherwise do nothing and continue for next wire
-                 */
                 if (isWireOnTopCanvas){
-                    cCode += sourceDatatype + " " + lineObj.getVariableName() + ";\n";
+                    pythonCode += translatorObj.getWireDeclarationPythonCode(lineObj);
                     GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
-                        inputStr: cCode,
+                        inputStr: pythonCode,
                         startLine: 0,
                         errorLines: compileErrorLines,
                         lineOffset: codeLinesOffset,
                         errorSourceObj: lineObj
                     });
 
-                    //if searching for object which generates line try it here for wires
                     if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
-                        //TODO: This will need to be corrected that +1
-                        if (GraphLang.Utils.getLineCount(cCode) >= lineNumberToFind+1) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = lineObj;
+                        if (GraphLang.Utils.getLineCount(pythonCode) >= lineNumberToFind) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = lineObj;
                     }
                 }
             }
 
             /*
-             *  for tunnel it's different little, IMPORTANT are just RIGHT TUNNELs because then wire is outside structure,
-             *  in case if source is LEFT TUNNEL we are sure that wire is laying inside some structure
+             *  Wires going out of RIGHT TUNNEL of top level structure, they are outside structure
              */
             if (lineObj.NAME.toLowerCase().search('connection') > -1 &&
                 lineObj.getSource().getParent().NAME.toLowerCase().search('righttunnel') > -1 &&
                 lineObj.getSource().getParent().getParent().getComposite() == null
             ){
-                sourceDatatype = lineObj.getSource().getParent().getDatatype();
-                cCode += sourceDatatype + " " + lineObj.getVariableName() + ";\n";
+                pythonCode += translatorObj.getWireDeclarationPythonCode(lineObj);
                 GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
-                    inputStr: cCode,
+                    inputStr: pythonCode,
                     startLine: 0,
                     errorLines: compileErrorLines,
                     lineOffset: codeLinesOffset,
                     errorSourceObj: lineObj
                 });
 
-                //if searching for object which generates line try it here for wires
                 if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
-                    if (GraphLang.Utils.getLineCount(cCode) >= lineNumberToFind) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = lineObj;
+                    if (GraphLang.Utils.getLineCount(pythonCode) >= lineNumberToFind) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = lineObj;
                 }
             }
+
+            translatorObj.addAdditionalId(lineObj.getId());
         });
 
         /****************************************************************
          *  NODES TRANSLATING
-         *  Going through diagram and translate each graphical node into its text representation.
          ****************************************************************/
 
         //obtain list of top level figures, their getComposite() returns null
@@ -366,10 +519,6 @@ class TranslateToPythonCode_2_TranslatorObject {
             }
         });
 
-        /*
-         *    Translate nodes based on their execution order
-         *      - looks into all nodes on canvas and found highest execution order
-         */
         let HIGHEST_STEP_NUMBER = 0;
         canvas.getFigures().each(function(figureIndex, figureObj){
             if (figureObj.getUserData() && figureObj.getUserData().executionOrder && figureObj.getUserData().executionOrder > HIGHEST_STEP_NUMBER){
@@ -377,7 +526,30 @@ class TranslateToPythonCode_2_TranslatorObject {
             }
         });
 
-        for (var actualStep = 0; actualStep <= HIGHEST_STEP_NUMBER; actualStep++){
+        /*
+         *  Add node code into pythonCode and remember which object generates which lines.
+         */
+        let appendNodeCode = (nodeObj, codeStr) => {
+            let lineCountBefore = GraphLang.Utils.getLineCount(pythonCode);
+            if (codeStr === undefined || codeStr === null) codeStr = "";
+            pythonCode += codeStr;
+            if (codeStr.length > 0 && !pythonCode.endsWith("\n")) pythonCode += "\n";
+
+            GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
+                inputStr: pythonCode,
+                startLine: lineCountBefore,
+                errorLines: compileErrorLines,
+                lineOffset: codeLinesOffset,
+                errorSourceObj: nodeObj
+            });
+
+            if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
+                if (GraphLang.Utils.getLineCount(pythonCode) >= lineNumberToFind && lineCountBefore < lineNumberToFind) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = nodeObj;
+            }
+            return lineCountBefore;
+        };
+
+        for (let actualStep = 0; actualStep <= HIGHEST_STEP_NUMBER; actualStep++){
             /*
              *    First translate feedback nodes as they have higher priority than nodes.
              */
@@ -386,21 +558,8 @@ class TranslateToPythonCode_2_TranslatorObject {
                     nodeObj.getUserData().executionOrder == actualStep &&
                     nodeObj.NAME.toLowerCase().search("feedbacknode") > -1
                 ){
-                    if (nodeObj.translateToCppCode){
-                        let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
-                        cCode += nodeObj.translateToCppCode();
-                        GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
-                            inputStr: cCode,
-                            startLine: lineCountBefore,
-                            errorLines: compileErrorLines,
-                            lineOffset: codeLinesOffset,
-                            errorSourceObj: nodeObj
-                        });
-
-                        //if searching for object which generates line try it here for wires
-                        if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
-                            if (lineCountBefore >= lineNumberToFind) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = nodeObj;
-                        }
+                    if (nodeObj.translateToPythonCode){
+                        appendNodeCode(nodeObj, nodeObj.translateToPythonCode({translatorObj: translatorObj}));
                     }
                 }
             });
@@ -409,296 +568,213 @@ class TranslateToPythonCode_2_TranslatorObject {
              *  Translate nodes normally.
              */
             allNodes.each(function(nodeIndex, nodeObj){
-                if (nodeObj.getUserData() !== undefined &&
+                if (!(nodeObj.getUserData() !== undefined &&
                     nodeObj.getUserData().executionOrder == actualStep &&
-                    nodeObj.NAME.toLowerCase().search("feedbacknode") == -1
-                ){
-                    /*
-                     *  Collecting libraries list for compiler which needs to be later embedded from DB or external
-                     */
-                    if (nodeObj.translateToCppCodeLibraries){
-                        if (typeof nodeObj.translateToCppCodeLibraries() === "string"){
-                            translatorObj.translateToCppCodeLibrariesList.push(nodeObj.translateToCppCodeLibraries());
-                        }
-                        if (nodeObj.translateToCppCodeLibraries().each){
-                            nodeObj.translateToCppCodeLibraries().each(function(strIndex, strObj){
-                                if (typeof strObj === "string") translatorObj.translateToCppCodeLibrariesList.push(strObj);
-                            });
-                        }
-                        if(Array.isArray(nodeObj.translateToCppCodeLibraries())){
-                            for (let strObj of nodeObj.translateToCppCodeLibraries()){
-                                translatorObj.translateToCppCodeLibrariesList.push(strObj);
-                            }
-                        }
-                    }
+                    nodeObj.NAME.toLowerCase().search("feedbacknode") == -1)
+                ) return;
 
-                    /*
-                     *    Getting import statements
-                     */
-                    if (nodeObj.translateToCppCodeImport){
-                        if (typeof nodeObj.translateToCppCodeImport() === "string"){
-                            translatorObj.translateToCppCodeImportArray.push(nodeObj.translateToCppCodeImport());
-                        }
-                        if (nodeObj.translateToCppCodeImport().each){
-                            nodeObj.translateToCppCodeImport().each(function(strIndex, strObj){
-                                if (typeof strObj === "string") translatorObj.translateToCppCodeImportArray.push(strObj);
-                            });
-                        }
-                        if(Array.isArray(nodeObj.translateToCppCodeImport())){
-                            for (let strObj of nodeObj.translateToCppCodeImport()){
-                                //if (typeof strObj === "string") translatorObj.translateToCppCodeImportArray.push(strObj);
-                                translatorObj.translateToCppCodeImportArray.push(strObj);
-                            }
-                        }
-                    }
+                translatorObj.addAdditionalId(nodeObj.getId());
 
-                    /*
-                     *    Getting TYPE DEFINITION, ie. for clusters
-                     *      typeDefinitionUsedList   - stores already translated type definition nodes ie. cluster used in project
-                     *      typeDefinitionNeededList - stores typedefinition needed to be additionaly added due they are not used in project and need to be scanned from files
-                     *
-                     */
-                    if (nodeObj.translateToCppCodeTypeDefinition){
-                        translatorObj.translateToCppCodeTypeDefinitionArray.push(nodeObj.translateToCppCodeTypeDefinition());
-
-                        if (nodeObj.getDatatype && nodeObj.getDatatype().startsWith("clusterDatatype_")) {
-                            translatorObj.typeDefinitionUsedList.push(`${nodeName} -> ${nodeObj.getNodeLabelText()}`);
-                        }
-                    }
-                    if (
-                        (nodeObj.NAME.toLowerCase().search("constantnode") > -1 ||
-                         nodeObj.NAME.toLowerCase().search("pointerdatatypenode") > -1) &&
-                        nodeObj.getDatatype().toLowerCase().search("clusterdatatype") > -1 &&
-                        !translatorObj.typeDefinitionUsedList.contains(nodeObj.getText())
-                    ){
-                        translatorObj.typeDefinitionNeededList.add(nodeObj.getText());
-                    }
-
-
-                    /*************************************************************************************************************************************************
-                     *  TRANSCRIPT NODES WITH DIAGRAM INSIDE (user created blocks which has no C/C++ method to transcript but are composed from other GraphLang nodes)
-                     */
-
-                    /*
-                     *    Translate canvas most top nodes with diagram inside into separate function
-                     */
-                    if (!translatorObj.translateToCppCodeSubnodeArray.contains(nodeObj.NAME) && nodeObj.jsonDocument !== undefined && nodeObj.jsonDocument.length > 0){
-                        translatorObj.translateToCppCodeSubnodeArray.push(nodeObj.NAME);
-                        translatorObj.translateToCppCodeSubNode({nodeObj: nodeObj, schematicOwnerId: null, schematicOwnerName: null});
-                    }
-
-                    /*
-                     *      Translate blocks nested in loops or multilayered nodes, they MUST HAVE DEFINED METHOD .getSubNodesWithDiagramInside()
-                     */
-                    if (typeof nodeObj.getSubNodesWithDiagramInside == "function"){
-                        let nodeObjChildrenWithDiagram = nodeObj.getSubNodesWithDiagramInside(translatorObj.translateToCppCodeSubnodeArray);
-                        nodeObjChildrenWithDiagram.each(function(subnodeIndex, subnodeObj){
-                            if (!translatorObj.translateToCppCodeSubnodeArray.contains(subnodeObj.NAME) && subnodeObj.jsonDocument !== undefined && subnodeObj.jsonDocument.length > 0){
-                                translatorObj.translateToCppCodeSubnodeArray.push(subnodeObj.NAME);
-                                translatorObj.translateToCppCodeSubNode({nodeObj: subnodeObj, schematicOwnerId: nodeObj.getId(), schematicOwnerName: nodeObj.NAME});
-                            }
-                        });
-                    }
-
-
-                    /*************************************************************************************************************************************************
-                     *  TRANSCRIPT NODES
-                     *      - this should be after user defined blocks are transcripted to have efault terminals values stored in array
-                     *      - here is block transcripted to C/C++ code line
-                     */
-
-                    /*
-                     *    C++ code translation, getting node C++ declaration and code
-                     *        node must NOT BE TERMINAL or
-                     *        can be terminal but translateTerminalDeclaration == true    (transcripting top canvas)
-                     */
-                    if (nodeObj.translateToCppCodeDeclaration && (!nodeObj.userData.isTerminal || (nodeObj.userData.isTerminal && translateTerminalsDeclaration))){
-                        let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
-                        cCode += nodeObj.translateToCppCodeDeclaration();
-                        GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
-                            inputStr: cCode,
-                            startLine: lineCountBefore,
-                            errorLines: compileErrorLines,
-                            lineOffset: codeLinesOffset,
-                            errorSourceObj: nodeObj
-                        });
-
-                        //if searching for object which generates line try it here
-                        if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
-                            if (lineCountBefore >= lineNumberToFind) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = nodeObj;
-                        }
-                    }
-
-                    /*
-                     *  TODO here must be default values for not connected node terminals, ie:
-                     *      datatype figure_ID_port_Name = value;
-                     *  or:
-                     *      datatype figure_ID_port_Name;
-                     */
-                    if (nodeObj.jsonDocument !== undefined && nodeObj.jsonDocument.length > 0){
-                        nodeObj.getInputPorts().each(function(portIndex, portObj){
-                            if (portObj.getConnections().getSize() == 0){
-                                console.log(`getting default port value: translateToCppCodeSubnodeInputTerminalsDefaultValuesArray["${nodeObj.NAME}"]["${portObj.getName()}"]`);
-                                let defaultPortValues = translatorObj.translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[`${nodeObj.NAME}`][portObj.getName()];
-                                let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
-                                if (defaultPortValues.variableValue){
-                                    cCode += `${defaultPortValues.datatype} node_${nodeObj.getId()}_inputPort_${defaultPortValues.variableName} = ${defaultPortValues.variableValue};\n`;
-                                }else{
-                                    cCode += `${defaultPortValues.datatype} node_${nodeObj.getId()}_inputPort_${defaultPortValues.variableName};\n`;
-                                }
-                                GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
-                                    inputStr: cCode,
-                                    startLine: lineCountBefore,
-                                    errorLines: compileErrorLines,
-                                    lineOffset: codeLinesOffset,
-                                    errorSourceObj: nodeObj
-                                });
-
-                                //if searching for object which generates line try it here
-                                if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
-                                    if (lineCountBefore >= lineNumberToFind) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = nodeObj;
-                                }
-                            }
-                        });
-                    }
-
-                    /*
-                     *  C/C++ code line generated
-                     *      - input parameter to translate function is objectm this way there could be named parameters passed and easily tested and used inside function
-                     */
-                    if (nodeObj.translateToCppCode){
-                        let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
-
-                        cCode += nodeObj.translateToCppCode({
-                            nodeId: nodeObj.getId(),
-                            codeLinesOffset: codeLinesOffset + lineCountBefore,
-                            compileErrorLines: compileErrorLines,
-                            breakpointParentId: null,
-                            lineNumberToFind: lineNumberToFind - lineCountBefore,
-                            translatorObj: translatorObj
-                        });
-
-                        //console.log("--> ERROR SEARCHING NORMAL TRANSLATION NODE: " + nodeObj.NAME);  //TODO: This log message seems to be strange, needs to be check
-                        GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
-                            inputStr: cCode,
-                            startLine: lineCountBefore,
-                            errorLines: compileErrorLines,
-                            lineOffset: codeLinesOffset,
-                            errorSourceObj: nodeObj
-                        });
-
-                        /*
-                         *  If searching for some object which generates code line at some specific line check here if line was already generated
-                         *  if yes store it in global variable
-                         */
-                        if (translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null && lineCountBefore >= lineNumberToFind){
-                            translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = nodeObj;
-                        }
-                    }
-
-                    /*
-                     *  BREAKPOINT LIST FILLING FOR NODES
-                     *      - for normal canvas nodes
-                     *      - for loops and similar
-                     */
-                    if (nodeObj.getUserData() && nodeObj.getUserData().isSetBreakpoint){
-                        let currentLineNumber = cCode.split("\n").length - 1;
-                        translatorObj.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "node", parentId: null, parentName: null});
-                    }
-                    if (nodeObj.getBreakpointList){
-                        translatorObj.translateToCppCodeBreakpointList.addAll(nodeObj.getBreakpointList());
-                    }
-
-                    /*
-                     *  WATCH LIST getting from node
-                     *      If node provides watch list get it from it, this is for Loops since they have subdiagrams
-                     */
-                    if (nodeObj.getWatchList){
-                        translatorObj.translateToCppCodeWatchList.addAll(nodeObj.getWatchList());
-                    }
-
-                    /*
-                     *    Translate POST code, like ending while or for loop
-                     */
-                    if (nodeObj.translateToCppCodePost){
-                        let lineCountBefore = GraphLang.Utils.getLineCount(cCode);
-                        cCode += nodeObj.translateToCppCodePost({
-                            lineNumberToFind: lineNumberToFind - lineCountBefore,
-                            translatorObj: translatorObj
-                        });
-                        GraphLang.Utils.errorLinesObjectAssignSourceCanvasObject({
-                            inputStr: cCode,
-                            startLine: lineCountBefore,
-                            errorLines: compileErrorLines,
-                            lineOffset: codeLinesOffset,
-                            errorSourceObj: nodeObj,
-                        });
-
-                        //if searching for object which generates line try it here
-                        if (lineNumberToFind !== null && translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null){
-                            if (lineCountBefore >= lineNumberToFind) translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = nodeObj;
-                        }
-                    }
-
-                    /*
-                     *  Check if wires connected to node have set breakpoint, if yes need to add code line into breakpoint list
-                     *      - this is just for nodes on top canvas not inside loops
-                     */
-                    nodeObj.getOutputPorts().each(function(portIndex, portObj){
-                        portObj.getConnections().each(function(wireIndex, wireObj){
-                            let currentLineNumber = GraphLang.Utils.getLineCount(cCode);
-
-                            /*
-                             *  SET BREAKPOINT ON WIRE
-                             */
-                            if (wireObj.getUserData() && wireObj.getUserData().isSetBreakpoint){
-                                translatorObj.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: wireObj.getId(), objectVariableName: wireObj.getVariableName(), type: "wire", parentId: null, parentName: null});
-                            }
-
-                            /*
-                             *  SET WATCH ON WIRE - watch can be just on wire since there is where data are floating
-                             *      - this is ONLY PLACE where watch for wires is obtained
-                             */
-                            if (wireObj.getUserData() && wireObj.getUserData().isSetWatch){
-                                translatorObj.translateToCppCodeWatchList.add({lineNumber: currentLineNumber, objectId: wireObj.getId(), objectVariableName: wireObj.getVariableName(), type: "wire", parentId: null, parentName: null});
-                            }
-                        });
-                    });
-
+                /*
+                 *  Python packages which must be installed (pip)
+                 */
+                if (nodeObj.translateToPythonCodeLibraries){
+                    translatorObj.collectStrings(nodeObj.translateToPythonCodeLibraries(), translatorObj.translateToPythonCodeLibrariesList);
                 }
+
+                /*
+                 *  Import statements
+                 */
+                if (nodeObj.translateToPythonCodeImport){
+                    translatorObj.collectStrings(nodeObj.translateToPythonCodeImport(), translatorObj.translateToPythonCodeImportArray);
+                }
+
+                /*
+                 *  TYPE DEFINITION, ie. for clusters
+                 */
+                if (nodeObj.translateToPythonCodeTypeDefinition){
+                    translatorObj.translateToPythonCodeTypeDefinitionArray.push(nodeObj.translateToPythonCodeTypeDefinition({translatorObj: translatorObj}));
+
+                    if (
+                        (nodeObj.getDatatype && nodeObj.getDatatype().startsWith("clusterDatatype_")) ||
+                        (nodeObj.userData && nodeObj.userData.isCluster === true)
+                    ){
+                        translatorObj.typeDefinitionUsedList.push(`${nodeName} -> ${nodeObj.getNodeLabelText()}`);
+                    }
+                }
+                if (
+                    (
+                      (nodeObj.NAME.toLowerCase().search("constantnode") > -1 && nodeObj.getDatatype().toLowerCase().startsWith("clusterdatatype_")) ||
+                      nodeObj.NAME.toLowerCase().search("pointerdatatypenode") > -1 ||
+                      (nodeObj.userData && nodeObj.userData.isClusterRef === true) ||
+                      (typeof nodeObj.getDatatype === "function" && String(nodeObj.getDatatype()).toLowerCase().search("clusterdatatype") > -1)
+                    ) && typeof nodeObj.getNodeLabelText === "function" && translatorObj.typeDefinitionUsedList.contains(`${nodeName} -> ${nodeObj.getNodeLabelText()}`) === false
+                ){
+                    if (typeof nodeObj.getSourceFigureId === "function"){
+                        let searchClusterId = nodeObj.getSourceFigureId();
+                        let nodeInfo = GraphLang.Utils.getObjectInProjectFromJSON({id: searchClusterId}).first();
+                        let nodeJSONInfo = GraphLang.Utils.getObjectInProjectFromJSONById(searchClusterId);
+                        translatorObj.typeDefinitionNeededList.push(`${nodeInfo.parentNodeName} -> ${nodeJSONInfo.userData.nodeLabel}`);
+                    }else{
+                        translatorObj.typeDefinitionNeededList.push(`${nodeName} -> ${nodeObj.getNodeLabelText()}`);
+                    }
+                }
+
+                /*************************************************************************************************
+                 *  NODES WITH DIAGRAM INSIDE are translated into separate python functions
+                 */
+                if (!translatorObj.translateToPythonCodeSubnodeArray.contains(nodeObj.NAME) && nodeObj.jsonDocument !== undefined && nodeObj.jsonDocument.length > 0){
+                    translatorObj.translateToPythonCodeSubnodeArray.push(nodeObj.NAME);
+                    translatorObj.translateToPythonCodeSubNode({
+                        translatorObj: translatorObj,
+                        nodeObj: nodeObj,
+                        schematicOwnerId: null,
+                        schematicOwnerName: null,
+                        compileErrorLines: compileErrorLines,
+                        lineNumberToFind: lineNumberToFind
+                    });
+                }
+
+                //nested in loops or multilayered nodes, they MUST HAVE DEFINED METHOD .getSubNodesWithDiagramInside()
+                if (typeof nodeObj.getSubNodesWithDiagramInside == "function"){
+                    let nodeObjChildrenWithDiagram = nodeObj.getSubNodesWithDiagramInside(translatorObj.translateToPythonCodeSubnodeArray);
+                    nodeObjChildrenWithDiagram.each(function(subnodeIndex, subnodeObj){
+                        if (!translatorObj.translateToPythonCodeSubnodeArray.contains(subnodeObj.NAME) && subnodeObj.jsonDocument !== undefined && subnodeObj.jsonDocument.length > 0){
+                            translatorObj.translateToPythonCodeSubnodeArray.push(subnodeObj.NAME);
+                            translatorObj.translateToPythonCodeSubNode({
+                                translatorObj: translatorObj,
+                                nodeObj: subnodeObj,
+                                schematicOwnerId: nodeObj.getId(),
+                                schematicOwnerName: nodeObj.NAME
+                            });
+                        }
+                    });
+                }
+
+                /*************************************************************************************************
+                 *  NODE DECLARATION (constants, arrays, ...)
+                 *      node must NOT BE TERMINAL or can be terminal but translateTerminalDeclaration == true (top canvas)
+                 */
+                if (nodeObj.translateToPythonCodeDeclaration && (!nodeObj.userData.isTerminal || (nodeObj.userData.isTerminal && translateTerminalsDeclaration))){
+                    appendNodeCode(nodeObj, nodeObj.translateToPythonCodeDeclaration({translatorObj: translatorObj, translateTerminalsDeclaration: translateTerminalsDeclaration}));
+                }
+
+                /*
+                 *  Default values for not connected subnode input terminals: node_ID_inputPort_Name = value
+                 */
+                if (nodeObj.jsonDocument !== undefined && nodeObj.jsonDocument.length > 0){
+                    nodeObj.getInputPorts().each(function(portIndex, portObj){
+                        if (portObj.getConnections().getSize() == 0){
+                            let nodeDefaults = translatorObj.translateToPythonCodeSubnodeInputTerminalsDefaultValuesArray[`${nodeObj.NAME}`];
+                            let defaultPortValues = nodeDefaults ? nodeDefaults[portObj.getName()] : undefined;
+                            let defaultCode = "";
+                            if (defaultPortValues){
+                                defaultCode = `node_${nodeObj.getId()}_inputPort_${portObj.getName()} = ${defaultPortValues.variableValue ? defaultPortValues.variableValue : "None"}\n`;
+                            }else{
+                                defaultCode = `node_${nodeObj.getId()}_inputPort_${portObj.getName()} = None  # ERROR: No default port value for node "${nodeObj.NAME}" for input port "${portObj.getName()}"\n`;
+                            }
+                            appendNodeCode(nodeObj, defaultCode);
+                        }
+                    });
+                }
+
+                /*************************************************************************************************
+                 *  NODE CODE
+                 */
+                let nodeCodeStartLine = GraphLang.Utils.getLineCount(pythonCode);
+                if (nodeObj.translateToPythonCode){
+                    let lineCountBefore = GraphLang.Utils.getLineCount(pythonCode);
+                    appendNodeCode(nodeObj, nodeObj.translateToPythonCode({
+                        nodeId: nodeObj.getId(),
+                        codeLinesOffset: codeLinesOffset + lineCountBefore,
+                        compileErrorLines: compileErrorLines,
+                        breakpointParentId: null,
+                        lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - lineCountBefore : null,
+                        translatorObj: translatorObj,
+                        nodeName: nodeName
+                    }));
+                }else if (!nodeObj.translateToPythonCodeDeclaration && nodeObj.NAME.toLowerCase().search("connection") == -1){
+                    /*
+                     *  Node has no python translation, write comment and add error for user
+                     */
+                    appendNodeCode(nodeObj, `# ERROR: node "${nodeObj.NAME}" has no python translation (translateToPythonCode() not defined)\n`);
+                    translatorObj.translateToPythonCodeErrorList.add({
+                        canvasOwnerName: nodeName,
+                        figureName: nodeObj.NAME,
+                        figureId: nodeObj.getId(),
+                        portName: '',
+                        type: "NO_PYTHON_TRANSLATION",
+                        message: `${nodeObj.NAME} has no translateToPythonCode() method`
+                    });
+                }
+
+                /*
+                 *  BREAKPOINT LIST FILLING FOR NODES
+                 */
+                if (nodeObj.getUserData() && nodeObj.getUserData().isSetBreakpoint){
+                    translatorObj.translateToPythonCodeBreakpointList.add({lineNumber: nodeCodeStartLine + 1, objectId: nodeObj.getId(), type: "node", parentId: null, parentName: null});
+                }
+                if (nodeObj.getPythonBreakpointList){
+                    translatorObj.translateToPythonCodeBreakpointList.addAll(nodeObj.getPythonBreakpointList());
+                }
+
+                //WATCH LIST from node, this is for loops since they have subdiagrams
+                if (nodeObj.getPythonWatchList){
+                    translatorObj.translateToPythonCodeWatchList.addAll(nodeObj.getPythonWatchList());
+                }
+
+                /*
+                 *  Translate POST code, like ending loop (right tunnels assignments)
+                 */
+                if (nodeObj.translateToPythonCodePost){
+                    let lineCountBefore = GraphLang.Utils.getLineCount(pythonCode);
+                    appendNodeCode(nodeObj, nodeObj.translateToPythonCodePost({
+                        lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - lineCountBefore : null,
+                        translatorObj: translatorObj
+                    }));
+                }
+
+                /*
+                 *  Breakpoints and watches on wires going out of node, line after node code, there wire has its value
+                 */
+                nodeObj.getOutputPorts().each(function(portIndex, portObj){
+                    portObj.getConnections().each(function(wireIndex, wireObj){
+                        let currentLineNumber = GraphLang.Utils.getLineCount(pythonCode) + 1;
+
+                        if (wireObj.getUserData() && wireObj.getUserData().isSetBreakpoint){
+                            translatorObj.translateToPythonCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: wireObj.getId(), objectVariableName: wireObj.getVariableName(), type: "wire", parentId: null, parentName: null});
+                        }
+                        if (wireObj.getUserData() && wireObj.getUserData().isSetWatch){
+                            translatorObj.translateToPythonCodeWatchList.add({lineNumber: currentLineNumber, objectId: wireObj.getId(), objectVariableName: wireObj.getVariableName(), type: "wire", parentId: null, parentName: null});
+                        }
+                    });
+                });
             });
         }
 
         /*
          *  Obtain additional used type definitions
          */
+        translatorObj.typeDefinitionNeededList.unique();
         translatorObj.typeDefinitionNeededList.each(function(definitionIndex, definitionStr){
             let definition = definitionStr.split("->");
-            let className = definition[0].trim();
-            let clusterName = definition[1].trim();
-            translatorObj.translateToCppCodeClusterTypeDefinitionFromNode(className, clusterName);
+            if (definition.length < 2) return;
+            translatorObj.translateToPythonCodeClusterTypeDefinitionFromNode(definition[0].trim(), definition[1].trim());
         });
 
-        /* erase flag for for loops at the end of this operation, to be able run again correctly, otherwise
-        there will be orphans flags that loops were translated and it will make mess when multiple times
-        executed this function without initializing ports */
+        /* erase flag for loops at the end of this operation to be able run again correctly */
         allNodes.each(function(nodeIndex, nodeObj){
             if (nodeObj.NAME.toLowerCase().search("loop") >= 0){
-                nodeObj.getUserData().wasTranslatedToCppCode = false;
+                nodeObj.getUserData().wasTranslatedToPythonCode = false;
             }
         });
 
-        /*********************************************************************************************************
-         *  CPP aditional libs names remove duplicities, these libs are provided by SQL DB
-         *********************************************************************************************************/
-        translatorObj.translateToCppCodeLibrariesList.unique();
+        translatorObj.translateToPythonCodeLibrariesList.unique();
 
         /*********************************************************************************************************
          * CANVAS SCHEMATIC VALIDATION
-         * TODO this should be done as first thing, but now it's here due there is no cluster definition array
-         * filling at the beginning but should be placed there now for validation it's placed here
          *********************************************************************************************************/
-        translatorObj.translateToCppCodeErrorList.addAll(
+        translatorObj.translateToPythonCodeErrorList.addAll(
             GraphLang.Utils.validateCanvas(canvas, nodeName, translatorObj.translateClusterTypeDefinitionItems)
         );
 
@@ -706,193 +782,135 @@ class TranslateToPythonCode_2_TranslatorObject {
          *  WRITING ERRORS FOR USER INTO #helperPane
          *********************************************************************************************************/
         let outputTarget = document.getElementById("schematicErrors");
-        outputTarget.innerHTML = "<b>Schematic errors:</b><br /><br />";
-        translatorObj.translateToCppCodeErrorList.each(function(errorIndex, errorObj){
-            let errorElement = document.createElement("span");
-            errorElement.innerHTML = errorObj.type;
-            errorElement.onclick = function(){GraphLang.Utils.userInteractiveErrorOnClick(errorObj);};
-            errorElement.appendChild(document.createElement("br"));
+        if (outputTarget){
+            outputTarget.innerHTML = "<b>Schematic errors:</b><br /><br />";
+            translatorObj.translateToPythonCodeErrorList.each(function(errorIndex, errorObj){
+                let errorElement = document.createElement("span");
+                errorElement.innerHTML = errorObj.type;
+                errorElement.onclick = function(){GraphLang.Utils.userInteractiveErrorOnClick(errorObj);};
+                errorElement.appendChild(document.createElement("br"));
 
-            let errorElementMessage = document.createElement("span");
-            errorElementMessage.innerHTML = errorObj.message;
-            errorElement.appendChild(errorElementMessage);
+                let errorElementMessage = document.createElement("span");
+                errorElementMessage.innerHTML = errorObj.message;
+                errorElement.appendChild(errorElementMessage);
 
-            outputTarget.appendChild(errorElement);
-            outputTarget.appendChild(document.createElement("hr"));
-        });
+                outputTarget.appendChild(errorElement);
+                outputTarget.appendChild(document.createElement("hr"));
+            });
+        }
 
-        /******************************************************************************
-         * REWRITE IDs to HUMAN READABLE NUMBERS (starts from 1,2,...,N)
-         *******************************************************************************/
-        cCode = GraphLang.Utils.rewriteIDtoNumbers(canvas, cCode, translatorObj.translateToCppCodeAdditionalId, translatorObj.translateToCppCodeAdditionalIdNoHyphen);
-
-        return cCode;
+        return pythonCode;
     }
 
     /**
      * @method
+     * @instance
      * @memberOf TranslateToPythonCode_2_TranslatorObject
-     * @param funcParams
+     * @description Translate subnode schematic into python function. Input terminals (no input ports) are function params, output terminals
+     * (no output ports) are returned as list, order is same as order of figures in node schematic (same as ports order of node).
+     * @param {Object} funcParams
+     * @param {number} funcParams.schematicOwnerId
+     * @param {string} funcParams.schematicOwnerName
+     * @param {Object} funcParams.nodeObj
+     * @param {number} funcParams.lineNumberToFind
      */
-    translateToCppCodeSubNode = (funcParams) => {
-        let translatorObj = this;
+    translateToPythonCodeSubNode = (funcParams) => {
+        let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : this;
 
-        let cCode = "";
-        let cCodeParams = "";
-        let cCodeParamsInput = "";
-        let cCodeParamsOutput = "";
-        let cCodeReturnDatatype = "void";
+        let pythonCode = "";
+        let inputParamsList = [];
+        let outputParamsList = [];
 
         let SUB_NODE_ID = Object.hasOwn(funcParams, "schematicOwnerId") ? funcParams.schematicOwnerId : null;
         let SUB_NODE_NAME = Object.hasOwn(funcParams, "schematicOwnerName") ? funcParams.schematicOwnerName : null;
 
         let nodeObj = Object.hasOwn(funcParams, "nodeObj") ? funcParams.nodeObj : null;
-        if (nodeObj === null) console.error(`Translating subnode, nodeObj must be defined in parameters!`);
+        if (nodeObj === null){
+            console.error(`Translating subnode, nodeObj must be defined in parameters!`);
+            return;
+        }
 
-        /*
-         *      SET GLOBAL FLAG TO NOT CREATE TERMINALS DECLARATIONs
-         */
-        let translateTerminalsDeclaration = false;
+        let lineNumberToFind = Object.hasOwn(funcParams, "lineNumberToFind") ? funcParams.lineNumberToFind : null;
 
-        var divSubnodeCanvasId = 'subnodeCanvas_'+this.translateSubnodeCanvasArray.getSize();
+        let divSubnodeCanvasId = 'subnodeCanvas_' + this.translateSubnodeCanvasArray.getSize();
         $('#subnodeCanvasContainer').append("<div id=\"" + divSubnodeCanvasId + "\" style=\"width: 1500px; height: 600px;\"></div>");
-        var subnodeCanvas = new draw2d.Canvas(divSubnodeCanvasId);
-        this.translateSubnodeCanvasArray.push([divSubnodeCanvasId, subnodeCanvas])
-
-        /*
-        var subnodeCanvas = appCanvas2;
-        */
-
-        appCanvas2.clear();
+        let subnodeCanvas = new draw2d.Canvas(divSubnodeCanvasId);
+        this.translateSubnodeCanvasArray.push([divSubnodeCanvasId, subnodeCanvas]);
 
         GraphLang.Utils.displayContents2(nodeObj.jsonDocument, subnodeCanvas);
-        //GraphLang.Utils.displayContentsFromClass(nodeObj, subnodeCanvas);
 
-        let paramsCounterInput = 0;
-        let paramsCounterOutput = 0;
-        subnodeCanvas.getFigures().each(function(figureIndex, figureObj){
-            /*
-             *  INPUT TERMINAL TRANSCRIPTION AS PARAMS FOR FUNCTION DECLARATION
-             */
-            if (
-                figureObj.userData &&
-                figureObj.userData.isTerminal &&
-                (figureObj.userData.isTerminal == 1 || figureObj.userData.isTerminal.toLowerCase() == true) &&
-                figureObj.translateToCppCodeAsParam != undefined
-            ){
-                if (paramsCounterInput > 0) cCodeParamsInput += ', ';
-                cCodeParamsInput += figureObj.translateToCppCodeAsParam();
-                paramsCounterInput++;
+        let isTerminal = (figureObj) => figureObj.userData && figureObj.userData.isTerminal &&
+            (figureObj.userData.isTerminal === 1 || figureObj.userData.isTerminal === true || String(figureObj.userData.isTerminal).toLowerCase() === "true");
+
+        /*********************************************************************************************************************
+         *  1. INPUT TERMINALS -> FUNCTION PARAMS
+         *********************************************************************************************************************/
+        subnodeCanvas.getFigures().each(function(figureIndex, figureObj) {
+            if (isTerminal(figureObj) && typeof figureObj.getVariableName === "function" && figureObj.getInputPorts().getSize() === 0) {
+                inputParamsList.push(figureObj.getVariableName());
 
                 /*
-                 *  push input terminal into array for case it's not connected and value must be assigned
-                 *  assuming all terminal nodes has unique name
+                 *  default value for case when node input port is not connected, key is terminal label same as port name
                  */
-                if (translatorObj.translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[nodeObj.NAME] == undefined) translatorObj.translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[nodeObj.NAME] = {}
-                translatorObj.translateToCppCodeSubnodeInputTerminalsDefaultValuesArray[nodeObj.NAME][figureObj.getUserData().nodeLabel] = {
-                    datatype: figureObj.getDatatype(),
+                if (translatorObj.translateToPythonCodeSubnodeInputTerminalsDefaultValuesArray[nodeObj.NAME] == undefined) translatorObj.translateToPythonCodeSubnodeInputTerminalsDefaultValuesArray[nodeObj.NAME] = {};
+                let datatypeStr = figureObj.getDatatype ? figureObj.getDatatype() : "";
+                translatorObj.translateToPythonCodeSubnodeInputTerminalsDefaultValuesArray[nodeObj.NAME][figureObj.getUserData().nodeLabel] = {
+                    datatype: datatypeStr,
                     variableName: `${figureObj.getUserData().nodeLabel}`,
-                    variableValue: figureObj.getVariableValueAsStr ? figureObj.getVariableValueAsStr() : ""
+                    variableValue: typeof figureObj.getText === "function" ? GraphLang.Utils.toPythonLiteral(figureObj.getText(), datatypeStr) : "None"
                 };
-                console.log(`added subnode port: translateToCppCodeSubnodeInputTerminalsDefaultValuesArray["${nodeObj.NAME}"]["${figureObj.getUserData().nodeLabel}"]`);
-            }
-
-            /*
-             *  Breakpoint list fulfilment for SUB NODE
-             *      - for normal canvas nodes
-             *      - for loops and similar
-             */
-            if (figureObj.getUserData() && figureObj.getUserData().isSetBreakpoint){
-                let currentLineNumber = cCode.split("\n").length - 1;
-                translatorObj.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: figureObj.getId(), type: "node", parentId: SUB_NODE_ID, parentName: SUB_NODE_NAME});
-            }
-            if (figureObj.getBreakpointList){
-                let lineNumberOffset = cCode.split("\n").length - 1;
-                figureObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
-                    breakpointObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
-                    translatorObj.translateToCppCodeBreakpointList.add(breakpointObj);
-                });
-            }
-            /*
-             *  TODO: Here must be check if wires connected to node have set breakpoint, if yes need to add code line into breakpoint list
-             */
-            figureObj.getOutputPorts().each(function(portIndex, portObj){
-                portObj.getConnections().each(function(wireIndex, wireObj){
-                    /*
-                     *  Nested node getting breakpoints for NODES
-                     */
-                    if (wireObj.getUserData() && wireObj.getUserData().isSetBreakpoint){
-                        let currentLineNumber = cCode.split("\n").length - 1;
-                        translatorObj.translateToCppCodeBreakpointList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "wire", parentId: SUB_NODE_ID, parentName: SUB_NODE_NAME});
-                    }
-
-                    /*
-                     *  Nested node getting watch for WIRES
-                     */
-                    if (wireObj.getUserData() && wireObj.getUserData().isSetWatch){
-                        let currentLineNumber = cCode.split("\n").length - 1;
-                        translatorObj.translateToCppCodeWatchList.add({lineNumber: currentLineNumber, objectId: nodeObj.getId(), type: "wire", parentId: SUB_NODE_ID, parentName: SUB_NODE_NAME});
-                    }
-                });
-            });
-            //END breakpoint list filling
-
-            /*
-             *  OUTPUT TERMINAL, as pointers
-             *
-             *      for now accept just output terminal node
-             */
-            if (figureObj.NAME.toLowerCase().search("terminaloutput") > -1){
-                if (paramsCounterOutput > 0) cCodeParamsOutput += ', ';
-                cCodeParamsOutput += figureObj.translateToCppCodeAsParam();
-                paramsCounterOutput++;
-            }
-
-            /*
-             *  COMPLETE FUNCTION CALL PARAMETERS LIST
-             */
-            if (cCodeParamsInput !== "") {
-                cCodeParams = cCodeParamsInput + ", " +cCodeParamsOutput;
-            }else{
-                cCodeParams = cCodeParamsOutput;
-            }
-
-
-            /*
-             *  RETURN VALUE
-             *      - if return node is found it asks for it datatype, if nothing is connected then it's undefined
-             *      - in stored files nodes haven't 'NAME' property but have 'type' property
-             *
-             *
-             *    Last iterated return is used as it's now, there SO THIS IS WRONG! shoulb be reworked somehow better.
-             */
-            if (figureObj.NAME.toLowerCase().search("return") > -1){
-                cCodeReturnDatatype = figureObj.getDatatype();
             }
         });
-        cCodeParams = cCodeParams.replace(/,\s*$/ ,"");    //remove last ',' if it's there
 
-        cCode += cCodeReturnDatatype + ' ' + nodeObj.translateToCppCodeFunctionName() + "(" + cCodeParams + "){\n\t";
+        /*********************************************************************************************************************
+         *  2. OUTPUT TERMINALS -> RETURNED VALUES
+         *********************************************************************************************************************/
+        subnodeCanvas.getFigures().each(function(figureIndex, figureObj) {
+            if (isTerminal(figureObj) && typeof figureObj.getVariableName === "function" && figureObj.getOutputPorts().getSize() === 0){
+                outputParamsList.push(figureObj.getVariableName());
+            }
+        });
+
+        /*********************************************************************************************************************
+         *  3. BREAKPOINTS in subnode
+         *********************************************************************************************************************/
+        subnodeCanvas.getFigures().each(function(figureIndex, figureObj){
+            if (figureObj.getUserData() && figureObj.getUserData().isSetBreakpoint){
+                translatorObj.translateToPythonCodeBreakpointList.add({lineNumber: 0, objectId: figureObj.getId(), type: "node", parentId: SUB_NODE_ID, parentName: SUB_NODE_NAME});
+            }
+        });
+
+        pythonCode += `def ${nodeObj.translateToPythonCodeFunctionName()}(${inputParamsList.join(", ")}):\n`;
 
         /*
-         *  Here is calling same parent C/C++ code transcription function on 2nd canvas
+         *  Function body, output terminals are created first to exist when they are returned.
          */
-        cCode += translatorObj.translateCanvasToCppCode({canvas: subnodeCanvas, translateTerminalsDeclaration: false, nodeName: nodeObj.NAME}).replaceAll('\n','\n\t');
+        let bodyCode = "";
+        outputParamsList.forEach((outputName) => { bodyCode += `${outputName} = None\n`; });
 
-        cCode += "\n";  //to not have separate last curly bracket by tabulator
-        cCode += '}' + "\n";
+        let currentLineNumber = GraphLang.Utils.getLineCount(pythonCode) + GraphLang.Utils.getLineCount(bodyCode);
+        bodyCode += translatorObj.translateCanvasToPythonCode({
+            canvas: subnodeCanvas,
+            translateTerminalsDeclaration: false,
+            nodeName: nodeObj.NAME,
+            lineNumberToFind: lineNumberToFind !== null ? lineNumberToFind - currentLineNumber : null,
+        });
+        if (bodyCode.length > 0 && !bodyCode.endsWith("\n")) bodyCode += "\n";
+        if (outputParamsList.length > 0) bodyCode += `return [${outputParamsList.join(", ")}]\n`;
 
-        /******************************************************************************
-         * REWRITE IDs to HUMAN READABLE NUMBERS (starts from 1,2,...,N)
-         *******************************************************************************/
-        cCode = GraphLang.Utils.rewriteIDtoNumbers(subnodeCanvas, cCode, translatorObj.translateToCppCodeAdditionalId, translatorObj.translateToCppCodeAdditionalIdNoHyphen);
+        pythonCode += GraphLang.Utils.indentPythonCode(GraphLang.Utils.ensurePythonBlockNotEmpty(bodyCode));
 
-        //don't return any code, these functions are pushed into array and print after template is created
-        //return cCode;
-        translatorObj.translateToCppCodeFunctionsArray.push(cCode);
+        //functions are pushed into array and printed after template is created
+        translatorObj.translateToPythonCodeFunctionsArray.push({
+            node_owner_id: SUB_NODE_ID,
+            node_owner_name: SUB_NODE_NAME,
+            node_id: nodeObj.getId(),
+            node_name: nodeObj.NAME,
+            code: pythonCode
+        });
 
         /*
-            Remove canvas html element and destroy JS canvas in memory
+         *  Remove canvas html element and destroy JS canvas in memory
          */
         translatorObj.translateSubnodeCanvasArray.each(function(canvasIndex, canvasObjArray){
             $("canvas").remove("#"+canvasObjArray[0]);
@@ -901,49 +919,53 @@ class TranslateToPythonCode_2_TranslatorObject {
     }
 
     /**
-     * @method translateToCppCodeClusterTypeDefinitionFromNode
+     * @instance
      * @memberOf TranslateToPythonCode_2_TranslatorObject
+     * @method translateToPythonCodeClusterTypeDefinitionFromNode
      * @param {string} className - class in which cluster is defined
-     * @returns {string} clusterName - cluster which typedefinition should be obtained
-     * @description Load node schematic in auxiliary canvas and run translate process for cluster typedefinition.
+     * @param {string} clusterName - cluster which type definition should be obtained
+     * @description Load node schematic in auxiliary canvas and run translate process for cluster type definition.
      */
-    translateToCppCodeClusterTypeDefinitionFromNode = (className, clusterName) => {
+    translateToPythonCodeClusterTypeDefinitionFromNode = (className, clusterName) => {
         let translatorObj = this;
 
-        /*
-         *  Create canvas
-         */
-        var divClusterTypeDefinitionCanvasId = 'clusterTypeDefinitionCanvas_'+this.translateClusterTypeDefinitionCanvasArray.getSize();
+        let divClusterTypeDefinitionCanvasId = 'clusterTypeDefinitionCanvas_' + this.translateClusterTypeDefinitionCanvasArray.getSize();
         $('#clusterTypeDefinitionCanvasContainer').append("<div id=\"" + divClusterTypeDefinitionCanvasId + "\" style=\"width: 1500px; height: 600px;\"></div>");
-        var clusterTypeDefinitionCanvas = new draw2d.Canvas(divClusterTypeDefinitionCanvasId);
-        this.translateSubnodeCanvasArray.push([divClusterTypeDefinitionCanvasId, clusterTypeDefinitionCanvas])
+        let clusterTypeDefinitionCanvas = new draw2d.Canvas(divClusterTypeDefinitionCanvasId);
+        this.translateSubnodeCanvasArray.push([divClusterTypeDefinitionCanvasId, clusterTypeDefinitionCanvas]);
 
-        /*
-         *  Translate cluster code definition
-         */
-        let classObj = eval(`new ${className}()`);
-        GraphLang.Utils.displayContents2(classObj.jsonDocument, clusterTypeDefinitionCanvas);
+        let classObj = null;
+        try{
+            classObj = eval(`new ${className}()`);
+        }catch(e){
+            console.warn(`Python translator: cannot create class "${className}" to get cluster "${clusterName}" definition`, e);
+        }
 
-        clusterTypeDefinitionCanvas.getFigures().each(function(figureIndex, figureObj){
-            if (
-                figureObj.getDatatype &&
-                figureObj.getDatatype().startsWith("clusterDatatype_") &&
-                figureObj.getNodeLabelText() == clusterName
-            ){
-                console.log(figureObj.translateToCppCodeTypeDefinition());
-                translatorObj.translateToCppCodeTypeDefinitionArray.push(figureObj.translateToCppCodeTypeDefinition());
-                translatorObj.translateToCppCodeAdditionalIdNoHyphen.add(figureObj.getId().replaceAll('-', ''));    //add cluster ID into aditional IDs list, remove '-' due they are not used in clusters datatype name
-                translatorObj.translateToCppCodeAdditionalId.add(figureObj.getId());    //add cluster ID into aditional IDs list
+        if (classObj){
+            GraphLang.Utils.displayContents2(classObj.jsonDocument, clusterTypeDefinitionCanvas);
 
-                translatorObj.translateClusterTypeDefinitionItems[figureObj.getDatatype()] = figureObj.getItemNamesDatatypesIndexes();
+            clusterTypeDefinitionCanvas.getFigures().each(function(figureIndex, figureObj){
+                if (
+                    (
+                        (figureObj.getDatatype && figureObj.getDatatype().startsWith("clusterDatatype_")) ||
+                        (figureObj.userData && figureObj.userData.isCluster === true)
+                    ) &&
+                    typeof figureObj.getNodeLabelText === "function" &&
+                    figureObj.getNodeLabelText() == clusterName
+                ){
+                    if (typeof figureObj.translateToPythonCodeTypeDefinition === "function"){
+                        translatorObj.translateToPythonCodeTypeDefinitionArray.push(figureObj.translateToPythonCodeTypeDefinition({translatorObj: translatorObj}));
+                    }else{
+                        translatorObj.translateToPythonCodeTypeDefinitionArray.push(`# ERROR: cluster "${clusterName}" (${figureObj.NAME}) has no python type definition`);
+                    }
+                    translatorObj.addAdditionalId(figureObj.getId());
+                    if (typeof figureObj.getItemNamesDatatypesIndexes === "function"){
+                        translatorObj.translateClusterTypeDefinitionItems[figureObj.getDatatype()] = figureObj.getItemNamesDatatypesIndexes();
+                    }
+                }
+            });
+        }
 
-                //TODO here must be traversing through elements and if there is some constant which is also from some seaparte file find it and translate
-            }
-        });
-
-        /*
-         *  Destroy auxiliary canvas
-         */
         this.translateSubnodeCanvasArray.each(function(canvasIndex, canvasObjArray){
             $("canvas").remove("#"+canvasObjArray[0]);
             canvasObjArray[1].destroy();
@@ -951,300 +973,155 @@ class TranslateToPythonCode_2_TranslatorObject {
     }
 
     /**
-     * @method getObjectWhichGenerateCodeAtLine
+     * @instance
      * @memberOf TranslateToPythonCode_2_TranslatorObject
-     * @param {integer} lineNumberToFind - code line which is going to be find which object generates its code
-     * @returns {figure} canvas figure responsible for specified code line number
-     * @description Transcript code and when line which is specified is generated returns object from canvas which generates it.
+     * @method getObjectWhichGenerateCodeAtLine
+     * @param {number} lineNumberToFind - code line which is going to be found which object generates its code
+     * @returns {Object} figure object - canvas figure responsible for specified code line number
+     * @description Transcript code and when line which is specified is generated returns object from canvas which has generated it.
      */
     getObjectWhichGenerateCodeAtLine = async (lineNumberToFind)=> {
-        let codeTemplate = await GraphLang.Utils.getProjectCodeTemplate();    //need to get code template because there is different code wrapping for desktop and embedded
-        this.getCppCode(this.translatorCanvasObj, false, codeTemplate);
-
-        let codeStartLineOffset = this.GLOBAL_CODE_LINE_OFFSET;
-        let lineNumberWithoutOffset = lineNumberToFind - codeStartLineOffset;
-
         this.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = null;
 
-        this.translateCanvasToCppCode({
-            canvas: this.translatorCanvasObj,
-            translateTerminalsDeclaration: true,
-            lineNumberToFind: lineNumberWithoutOffset
-        });
+        let codeTemplate = await GraphLang.Utils.getProjectCodeTemplate();
+        this.getPythonCode(this.translatorCanvasObj, false, codeTemplate, lineNumberToFind);
+
+        if (this.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE == null) {
+            let lineNumberWithoutOffset = lineNumberToFind - this.GLOBAL_CODE_LINE_OFFSET;
+            this.translateCanvasToPythonCode({
+                canvas: this.translatorCanvasObj,
+                translateTerminalsDeclaration: true,
+                lineNumberToFind: lineNumberWithoutOffset
+            });
+        }
 
         return this.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE;
     }
 
     /**
-     * @method getCppCodeUsingTemplate_embedded
+     * @instance
      * @memberOf TranslateToPythonCode_2_TranslatorObject
-     * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
-     * @param {bool} showCode - if true there is code showed in alert message after click on button
-     * @returns {string} C/C++ code as string
-     * @description Generate C/C++ code using template written in this function.
+     * @method getPythonCodeUsingTemplate_desktop
+     * @param {draw2d.Canvas} canvas - schematic which will be translated
+     * @param {boolean} showCode - if true code is shown in alert message
+     * @param {function} translateCanvasToCodeFunction - function used to translate canvas
+     * @param {number|null} lineNumberToFind
+     * @returns {string} python code as string
+     * @description Generate python code for desktop, canvas code is placed into main() function.
      */
-    getCppCodeUsingTemplate_embedded = (canvas, showCode = true, translateCanvasToCodeFunction) =>{
+    getPythonCodeUsingTemplate_desktop = (canvas, showCode = true, translateCanvasToCodeFunction, lineNumberToFind = null) =>{
+        let translatorObj = this;
 
-        /******************************************************************************
-         * Init buffers needed for translation process
-         *******************************************************************************/
-        this.initTranslateToCppBuffers();
+        this.initTranslateToPythonBuffers();
 
-        /******************************************************************************
-         * Translate canvas to C/C++ code
-         *******************************************************************************/
-        let cCode = translateCanvasToCodeFunction({
+        let canvasCode = translateCanvasToCodeFunction({
             canvas: canvas,
             translateTerminalsDeclaration: true
         });
-
-        var template_cCode = "";
-        var _disabled_template_cCode = "";
-
-        template_cCode += "\n";
-        template_cCode += this.getCppCodeImport();
-        template_cCode += "\n";
-
-        template_cCode += `
-typedef int errorDatatype;
-typedef int int32;
-typedef int undefined;
-typedef unsigned int uint;
-typedef float numeric;
-    `;
-
-        _disabled_template_cCode += `
-#define HIGH true
-#define LOW false
-
-using namespace std;
-
-/**** MOCKING CLASSES **************************/
-#include<iostream>
-#include<string>
-#include<unistd.h>
-#include<vector>
-
-typedef string String;
-
-class SerialClass{
-    public:
-        void println(string msg);
-        void begin(int pinNumber);
-    private:
-        bool initializeFlag = false;
-        int pinNumber;
-};
-
-void SerialClass::println(string msg){
-    cout << msg << endl;
-}
-
-void SerialClass::begin(int pinNumber){
-    this->initializeFlag = true;
-    this->pinNumber = pinNumber;
-    cout << "Serial initialized at pin " << pinNumber << endl;
-}
-
-void delay(int time_ms){
-    usleep(time_ms*1000);
-}
-
-int arduinoPinValue[100];
-int arduinoPinMode[100];
-enum pinMode{
-    INPUT,
-    OUTPUT,
-    INPUT_PULLUP
-};
-
-bool digitalRead(int pin){
-    return arduinoPinValue[pin];
-}
-
-void digitalWrite(int pin, bool value){
-    arduinoPinValue[pin] = value;
-}
-
-void pinMode(int pin, pinMode mode){
-    arduinoPinMode[pin] = mode;
-}
-
-SerialClass Serial;
-/***********************************************/
-    `;
-
-        template_cCode += "\n";
-        template_cCode += this.getCppCodeTypeDefinition();
-        template_cCode += "\n";
-
-        /******************************************************************************
-         * SubNode code printed as subfunctions
-         *******************************************************************************/
-        template_cCode += "/************* BEGIN Transcripted SubNode function definitions ************/\n\n";
-        this.translateToCppCodeFunctionsArray.unique();  //removes duplicates
-        this.translateToCppCodeFunctionsArray.each(function(functionIndex, functionStr){
-            template_cCode += "\n";
-            template_cCode += functionStr;
-            template_cCode += "\n";
-        });
-        template_cCode += "/************* END Transcripted SubNode function definitions ************/\n\n";
-
-        template_cCode += "void setup() {   /****************** MAIN() ****************************/\n";
-        // template_cCode += "\n";
-
-        //add offset to breakpoints line numbers since here before is some code generated and breakpoints were counted just from canvas code
-        let lineNumberOffset = GraphLang.Utils.getLineCount(template_cCode);
-        this.translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObject){
-            breakpointObject.lineNumber += lineNumberOffset;
-        });
-        this.translateToCppCodeWatchList.each(function(watchIndex, watchObject){
-            watchObject.lineNumber += lineNumberOffset;
-        });
-        this.GLOBAL_CODE_LINE_OFFSET = lineNumberOffset;
-
-        template_cCode += cCode;
-        template_cCode += "\n";
-        template_cCode += "}\n";
-        template_cCode += "void loop() {\n";
-        template_cCode += "\t/* generated code is in setup() */\n";
-        template_cCode += "}\n";
-
-        /*
-        template_cCode += "int main(int argc, char* argv[]){\n";
-        template_cCode += "\n";
-        template_cCode += cCode;
-        template_cCode += "\n";
-        template_cCode += "\t return 0;\n";
-        template_cCode += "}\n";
-        */
-
-        cCode = template_cCode;
-
-        /******************************************************************************
-         * REWRITE IDs to HUMAN READABLE NUMBERS (starts from 1,2,...,N)
-         *******************************************************************************/
-        cCode = GraphLang.Utils.rewriteIDtoNumbers(canvas, cCode, this.translateToCppCodeAdditionalId, this.translateToCppCodeAdditionalIdNoHyphen);
-
-        var copyElement = document.createElement('textarea');
-        copyElement.innerHTML = cCode;
-        copyElement = document.body.appendChild(copyElement);
-        copyElement.select();
-        document.execCommand('copy');
-        copyElement.remove();
-
-        if (showCode) alert(cCode); //DEBUG show code in alert message
-
-        GraphLang.Utils.initAllPortToDefault(canvas);
-        return cCode; //return C/C++ code as string
-    }
-
-    /**
-     * @method
-     * @memberOf TranslateToPythonCode_2_TranslatorObject
-     * @param {draw2d.Canvas} canvas - schematic which will be serialize to JSON
-     * @param {bool} showCode - if true there is code showed in alert message after click on button
-     * @returns {string} C/C++ code as string
-     * @description Generate C/C++ code for desktop.
-     */
-    getCppCodeUsingTemplate_desktop = (canvas, showCode = true, translateCanvasToCodeFunction) =>{
-
-        /******************************************************************************
-         * Init buffers needed for translation process
-         *******************************************************************************/
-        this.initTranslateToCppBuffers();
-
-
-        /******************************************************************************
-         * Translate canvas to C/C++ code
-         *******************************************************************************/
-        let cCode = translateCanvasToCodeFunction({
-            canvas: canvas,
-            translateTerminalsDeclaration: true
-        });
-
 
         /******************************************************************************
          * TEMPLATE START
          *******************************************************************************/
-        var template_cCode = "";
+        let template_pythonCode = "";
 
-        template_cCode += "//THIS CODE IS GENERATED FROM GraphLang -> GraphLang.Utils.getCppCode4()\n";
-        template_cCode += "\n";
+        template_pythonCode += "#!/usr/bin/env python3\n";
+        template_pythonCode += "# THIS CODE IS GENERATED FROM GraphLang -> getPythonCodeUsingTemplate_desktop\n";
+        template_pythonCode += "\n";
 
-        template_cCode += "//import libraries\n";
-        template_cCode += this.getCppCodeImport();
-        template_cCode += "\n";
+        template_pythonCode += "# import libraries\n";
+        template_pythonCode += this.getPythonCodeImport();
+        template_pythonCode += "\n";
 
-        template_cCode += `//type definitions for datatypes in GraphLang -> C++ types        
-typedef int errorDatatype;
-typedef int int32;
-typedef int undefined;
-typedef unsigned int uint;
-typedef float numeric;
-typedef int polymorphic;  //THIS IS NOT EXACTLY RIGHT but usable for now\n\n`;
-
-        template_cCode += "using namespace std;\n";
-        template_cCode += "\n";
-
-        template_cCode += "\n";
-        template_cCode += this.getCppCodeTypeDefinition();
-        template_cCode += "\n";
+        let typeDefinitionCode = this.getPythonCodeTypeDefinition();
+        if (typeDefinitionCode.trim().length > 0){
+            template_pythonCode += "# type definitions\n";
+            template_pythonCode += typeDefinitionCode;
+            template_pythonCode += "\n";
+        }
 
         /******************************************************************************
-         * SubNode code printed as subfunctions
+         * SubNode code printed as functions
          *******************************************************************************/
-        template_cCode += "/************* BEGIN Transcripted SubNode function definitions ************/\n\n";
-        this.translateToCppCodeFunctionsArray.unique();  //removes duplicates
-        this.translateToCppCodeFunctionsArray.each(function(functionIndex, functionStr){
-            template_cCode += "\n";
-            template_cCode += functionStr;
-            template_cCode += "\n";
-        });
-        template_cCode += "/************* END Transcripted SubNode function definitions ************/\n\n";
+        template_pythonCode += "# ************ BEGIN Transcripted SubNode function definitions ************\n";
+        this.GLOBAL_CODE_LINE_OFFSET_BEFORE_SUBNODES = GraphLang.Utils.getLineCount(template_pythonCode) + 1;
 
-        template_cCode += "int main() {\n";
-        template_cCode += "\n";
+        let functionsCodeStr = new draw2d.util.ArrayList();
+        this.translateToPythonCodeFunctionsArray.each((subnodeIndex, subnodeObj) => {
+            functionsCodeStr.add(subnodeObj.code);
+        });
+        functionsCodeStr.unique();
+        functionsCodeStr.each(function(functionIndex, functionCodeStr){
+            template_pythonCode += "\n";
+            template_pythonCode += functionCodeStr;
+            template_pythonCode += "\n";
+
+            if (lineNumberToFind){
+                if (translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE === null && GraphLang.Utils.getLineCount(template_pythonCode) > lineNumberToFind){
+                    translatorObj.translateToPythonCodeFunctionsArray.each((functionInfoIndex, functionInfoObj) => {
+                        if (functionInfoObj.code === functionCodeStr){
+                            translatorObj.GLOBAL_CODE_OBJECT_GENERATE_CODE_AT_LINE = functionInfoObj;
+                        }
+                    });
+                }
+            }
+        });
+        template_pythonCode += "# ************ END Transcripted SubNode function definitions ************\n\n\n";
+
+        template_pythonCode += "def main():\n";
 
         //add offset to breakpoints line numbers since here before is some code generated and breakpoints were counted just from canvas code
-        let lineNumberOffset = GraphLang.Utils.getLineCount(template_cCode);
-        this.translateToCppCodeBreakpointList.each(function(breakpointIndex, breakpointObject){
+        let lineNumberOffset = GraphLang.Utils.getLineCount(template_pythonCode);
+        this.translateToPythonCodeBreakpointList.each(function(breakpointIndex, breakpointObject){
             breakpointObject.lineNumber += lineNumberOffset;
         });
-        this.translateToCppCodeWatchList.each(function(watchIndex, watchObject){
+        this.translateToPythonCodeWatchList.each(function(watchIndex, watchObject){
             watchObject.lineNumber += lineNumberOffset;
         });
         this.GLOBAL_CODE_LINE_OFFSET = lineNumberOffset;
 
-        //add program startpoint main() into breakpoint list, in debug mode it's first stop where it's waiting during stepping
-        this.translateToCppCodeBreakpointList.add({lineNumber: lineNumberOffset, objectId: null, type: "programStart", parent: null});
+        //program start point, first line of main() body
+        this.translateToPythonCodeBreakpointList.add({lineNumber: lineNumberOffset + 1, objectId: null, type: "programStart", parent: null});
 
-        template_cCode += cCode;
-        template_cCode += "\n";
-        template_cCode += "return 0;    //<-- THIS IS HARDCODED IN TEMPLATE!\n";
-        template_cCode += "}\n";
+        if (canvasCode.length > 0 && !canvasCode.endsWith("\n")) canvasCode += "\n";
+        template_pythonCode += GraphLang.Utils.indentPythonCode(GraphLang.Utils.ensurePythonBlockNotEmpty(canvasCode));
+        template_pythonCode += "\n\n";
+        /*
+         *  Remote debugging hook, placed after main() so it does not move breakpoint/watch line numbers.
+         *  When script is started by python_tools/DebuggerPythonInterface.py there is environment variable GRAPHLANG_PYTHON_DEBUG_PORT
+         *  set (and python_tools on PYTHONPATH), then main() runs under debugger controlled from browser (GraphLang.Debugger.Python),
+         *  otherwise main() is just called.
+         */
+        const INDENT = GraphLang.Utils.PYTHON_INDENT;
+        template_pythonCode += "if __name__ == \"__main__\":\n";
+        template_pythonCode += INDENT + "# GraphLang remote debugging, enabled when started by DebuggerPythonInterface.py\n";
+        template_pythonCode += INDENT + "import os as _graphlang_os\n";
+        template_pythonCode += INDENT + "if _graphlang_os.environ.get(\"GRAPHLANG_PYTHON_DEBUG_PORT\"):\n";
+        template_pythonCode += INDENT + INDENT + "import DebuggerPythonInterface\n";
+        template_pythonCode += INDENT + INDENT + "DebuggerPythonInterface.runDebugee(main, __file__)\n";
+        template_pythonCode += INDENT + "else:\n";
+        template_pythonCode += INDENT + INDENT + "main()\n";
 
-        cCode = template_cCode;
+        let pythonCode = template_pythonCode;
 
         /******************************************************************************
          * REWRITE IDs to HUMAN READABLE NUMBERS (starts from 1,2,...,N)
          *******************************************************************************/
-        cCode = GraphLang.Utils.rewriteIDtoNumbers(canvas, cCode, this.translateToCppCodeAdditionalId, this.translateToCppCodeAdditionalIdNoHyphen);
+        pythonCode = GraphLang.Utils.rewriteIDtoNumbers(canvas, pythonCode, this.translateToPythonCodeAdditionalId, this.translateToPythonCodeAdditionalIdNoHyphen);
 
         /*
          *  Copy code into clipboard
          */
-        var copyElement = document.createElement('textarea');
-        copyElement.innerHTML = cCode;
+        let copyElement = document.createElement('textarea');
+        copyElement.value = pythonCode;
         copyElement = document.body.appendChild(copyElement);
         copyElement.select();
         document.execCommand('copy');
         copyElement.remove();
 
-        if (showCode) alert(cCode); //DEBUG show code in alert message
+        if (showCode) alert(pythonCode);
 
         GraphLang.Utils.initAllPortToDefault(canvas);
-        return cCode; //return C/C++ code as string
+        return pythonCode;
     }
 
 }

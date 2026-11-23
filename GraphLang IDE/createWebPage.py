@@ -23,6 +23,7 @@ excludeFromHtmlBlockPatterns = [
 blocksToTabsAssignment = {
     os.path.join(blocksRootDir, "GraphLang", "Math", "Basic"):            "GL_Math_Basic",
     os.path.join(blocksRootDir, "GraphLang", "Math", "Trigonometry"):     "GL_Math_Trigon",
+    os.path.join(blocksRootDir, "GraphLang", "Math", "Complex"):          "GL_Math_Complex",
     os.path.join(blocksRootDir, "GraphLang", "System"):                   "GL_System",
     os.path.join(blocksRootDir, "GraphLangExperimental"):                 "GL_Experimental",
     os.path.join(blocksRootDir, "HwArduinoNano", "Serial"):               "ArduinoNano_Serial",
@@ -96,12 +97,14 @@ htmlTemplate = """
     <script src="./gui/Application.js"></script>
     <script src="./gui/View.js"></script>
     <script src="./gui/Toolbar.js"></script>
+    <script src="./gui/AI_Router_1.js"></script>
     <script src="./gui/HoverConnection.js"></script>
     <script src="./gui/MultilineInplaceEditor.js"></script>
     <script src="./gui/SelectOptionInplaceEditor.js"></script>
 
     <script src="./GraphLangUtils/Utils.js"></script>
     <script src="./GraphLangUtils/Debugger.js"></script>
+    <script src="./GraphLangUtils/DebuggerPython.js"></script>
     <!-- <script src="./GraphLangUtils/TranslateToCppCode_1.js"></script> --><!-- obsolete, replaced by 2nd translator which is object -->
     <script src="./GraphLangUtils/TranslateToCppCode_2_TranslatorObject.js"></script>
     <script src="./GraphLangUtils/TranslateToPythonCode_1.js"></script>

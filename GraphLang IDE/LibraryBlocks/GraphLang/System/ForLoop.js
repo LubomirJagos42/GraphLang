@@ -215,6 +215,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     });
     cCode += "\t" + leftTunnelsWiresAssignementCppCode.replaceAll("\n", "\n\t");
     cCode += "\n\t";
+    let leftTunnelsWatchLineNumber = GraphLang.Utils.getLineCount(cCode) + codeLinesOffset;    //wires from left tunnels have value from here
 
     this.getOutputPort("iterationTerminalOutput").getConnections().each(function(wireIndex, wireObj){
       cCode += "\t" + wireObj.getVariableName() + " = " + forLoopIteratorVariable + ";\n";
@@ -311,10 +312,32 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
           parentName: this.NAME
         });
       }
+      /*
+       *  Breakpoint on wire going out of node, which is not assigned to this loop (ie. wire from node into nested loop tunnel
+       *  or into right tunnel), such wire is never iterated above so its breakpoint was lost. Breakpoint is set on line after node code.
+       *  Wires assigned to loop are already handled above, they are skipped here to not have duplicates.
+       */
+      if (figObj.getOutputPorts && figObj.NAME.search('HoverConnection') == -1){
+        figObj.getOutputPorts().each(function(portIndex, portObj){
+          portObj.getConnections().each(function(wireIndex, wireObj){
+            if (!(wireObj.getUserData() && wireObj.getUserData().isSetBreakpoint)) return;
+            if (loopObj.getAssignedFigures().contains(wireObj)) return;
+            loopObj.translateToCppCodeBreakpointList.add({
+              lineNumber: GraphLang.Utils.getLineCount(cCode) + 1 + codeLinesOffset,
+              objectId: wireObj.getId(),
+              objectVariableName: wireObj.getVariableName(),
+              type: "wire",
+              parentId: breakpointParentId,
+              parentName: null
+            });
+          });
+        });
+      }
+
       if (figObj.getBreakpointList){
-        let lineNumberOffset = cCode.split("\n").length - 1;
+        //NO OFFSET ADDED HERE: nested object got codeLinesOffset + lineCountBefore when translated, so its breakpoint line numbers are already
+        //absolute, adding offset again made wrong line numbers for loop inside loop (ie. "b 143" in 104 lines long code)
         figObj.getBreakpointList().each(function(breakpointIndex, breakpointObj){
-          breakpointObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
           loopObj.translateToCppCodeBreakpointList.add(breakpointObj);
         });
       }
@@ -323,18 +346,39 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
       if (figObj.getUserData() && figObj.getUserData().isSetWatch){
         let currentLineNumber = GraphLang.Utils.getLineCount(cCode) + 2;
         console.log(`--> for loop assign watch variable: ${currentLineNumber}, offset: ${codeLinesOffset}`);
+        let isWire = figObj.NAME.search('HoverConnection') > -1;
         loopObj.translateToCppCodeWatchList.add({
           lineNumber: currentLineNumber + codeLinesOffset,
           objectId: figObj.getId(),
-          type: figObj.NAME.search('HoverConnection') == -1 ? "node" : "wire",
+          objectVariableName: isWire ? figObj.getVariableName() : undefined,
+          type: isWire ? "wire" : "node",
           parentId: breakpointParentId,
-          parentName: this.NAME
+          parentName: loopObj.NAME
+        });
+      }
+      /*
+       *  Watch on wire going out of node, which is not assigned to this loop (ie. wire from node into nested loop tunnel
+       *  or into right tunnel), such wire is never iterated above so its watch was lost (same as breakpoints above).
+       */
+      if (figObj.getOutputPorts && figObj.NAME.search('HoverConnection') == -1){
+        figObj.getOutputPorts().each(function(portIndex, portObj){
+          portObj.getConnections().each(function(wireIndex, wireObj){
+            if (!(wireObj.getUserData() && wireObj.getUserData().isSetWatch)) return;
+            if (loopObj.getAssignedFigures().contains(wireObj)) return;
+            loopObj.translateToCppCodeWatchList.add({
+              lineNumber: GraphLang.Utils.getLineCount(cCode) + 1 + codeLinesOffset,
+              objectId: wireObj.getId(),
+              objectVariableName: wireObj.getVariableName(),
+              type: "wire",
+              parentId: breakpointParentId,
+              parentName: null
+            });
+          });
         });
       }
       if (figObj.getWatchList){
-        let lineNumberOffset = GraphLang.Utils.getLineCount(cCode) - 1;
+        //NO OFFSET ADDED HERE: nested object watch line numbers are already absolute (see breakpoint list above)
         figObj.getWatchList().each(function(watchIndex, watchObj){
-          watchObj.lineNumber += lineNumberOffset;   //objects which has canvas inside doesn't know about outside world therefore need to add some offset to their breakpoint line numbers
           loopObj.translateToCppCodeWatchList.add(watchObj);
         });
       }
@@ -350,6 +394,13 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
         }).replaceAll("\n", "\n\t");
       }
 
+    });
+
+    //watches on wires going out of tunnels, right tunnel output wires are assigned in translateToCppCodePost() which follows this code
+    this.addTunnelWiresToWatchList({
+      leftTunnelsLineNumber: leftTunnelsWatchLineNumber,
+      rightTunnelsLineNumber: GraphLang.Utils.getLineCount(cCode) + codeLinesOffset + 1,
+      parentId: breakpointParentId
     });
 
     return cCode;
@@ -371,6 +422,72 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     cCode += "} //END FOR LOOP\n";
 
     return cCode;
+  },
+
+  /*****************************************************************************************************************************************************
+   *    TRANSLATE TO Python functions
+   *      - returned code is NOT indented at its base level, body of loop is indented here, owner indents whole loop code
+   *      - loop body is generated in translateToPythonCode() and right tunnels assignment (still inside loop body) in translateToPythonCodePost()
+   *****************************************************************************************************************************************************/
+
+  translateToPythonCode: function(funcParams = {}){
+    let codeLinesOffset = Object.hasOwn(funcParams, "codeLinesOffset") ? funcParams.codeLinesOffset : 0;
+    let breakpointParentId = Object.hasOwn(funcParams, "breakpointParentId") ? funcParams.breakpointParentId : null;
+    let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+
+    this.getUserData().wasTranslatedToPythonCode = true;
+    this.initPythonTranslateBuffers();
+
+    let iterationCount = "0";
+    let iterationCountComment = "";
+    let iterationTerminal = this.getInputPort("iterationTerminal");
+    if (iterationTerminal.getConnections().getSize() > 0){
+      iterationCount = iterationTerminal.getConnections().get(0).getVariableName();
+    }else{
+      iterationCountComment = "  # iteration count not connected";
+    }
+
+    let forLoopIteratorVariable = 'forLoopIterator_' + this.getId();
+
+    let pythonCode = "";
+    pythonCode += this.getTunnelsDeclarationPythonCode({translatorObj: translatorObj});
+    pythonCode += this.getWiresInsideLoopDeclarationPythonCode({translatorObj: translatorObj});
+    pythonCode += `for ${forLoopIteratorVariable} in range(${iterationCount}):${iterationCountComment}\n`;
+
+    /*
+     *  Loop body, not indented here, indented when added into pythonCode
+     */
+    let bodyCode = "";
+    bodyCode += this.getLeftTunnelsWiresAssignementPythonCode({translatorObj: translatorObj});
+    let leftTunnelsWatchLineNumber = codeLinesOffset + GraphLang.Utils.getLineCount(pythonCode) + GraphLang.Utils.getLineCount(bodyCode) + 1;
+
+    this.getOutputPort("iterationTerminalOutput").getConnections().each(function(wireIndex, wireObj){
+      bodyCode += wireObj.getVariableName() + " = " + forLoopIteratorVariable + "\n";
+    });
+    bodyCode += "# code inside FOR LOOP\n";
+
+    bodyCode += this.translateAssignedFiguresToPythonCode(funcParams, GraphLang.Utils.getLineCount(pythonCode) + GraphLang.Utils.getLineCount(bodyCode));
+
+    pythonCode += GraphLang.Utils.indentPythonCode(bodyCode);
+
+    //watches on wires going out of tunnels, right tunnel wires get value in translateToPythonCodePost() which is right after this code
+    this.addTunnelWiresToPythonWatchList({
+      leftTunnelsLineNumber: leftTunnelsWatchLineNumber,
+      rightTunnelsLineNumber: codeLinesOffset + GraphLang.Utils.getLineCount(pythonCode) + 1,
+      parentId: breakpointParentId
+    });
+
+    return pythonCode;
+  },
+
+  translateToPythonCodePost: function(funcParams = {}){
+    let pythonCode = "";
+    let rightTunnelsCode = this.getRightTunnelsAssignementOutputPythonCode(funcParams);
+
+    //right tunnels assignment is last part of loop body, "pass" makes body valid when loop has no code inside
+    pythonCode += GraphLang.Utils.indentPythonCode(rightTunnelsCode.length > 0 ? rightTunnelsCode : "pass\n");
+    pythonCode += "# END FOR LOOP\n";
+    return pythonCode;
   },
 
 });

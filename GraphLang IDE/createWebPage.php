@@ -88,6 +88,7 @@ htmlTemplate = """
     <script src="./gui/Application.js"></script>
     <script src="./gui/View.js"></script>
     <script src="./gui/Toolbar.js"></script>
+    <script src="./gui/AI_Router_1.js"></script>
     <script src="./gui/HoverConnection.js"></script>
     <script src="./gui/MultilineInplaceEditor.js"></script>
     <script src="./gui/SelectOptionInplaceEditor.js"></script>
@@ -95,6 +96,7 @@ htmlTemplate = """
 
     <script src="./GraphLangUtils/Utils.js"></script>
     <script src="./GraphLangUtils/Debugger.js"></script>
+    <script src="./GraphLangUtils/DebuggerPython.js"></script>
 <!--    <script src="./GraphLangUtils/TranslateToCppCode_1.js"></script>-->
     <script src="./GraphLangUtils/TranslateToCppCode_2_TranslatorObject.js"></script>
     <script src="./GraphLangUtils/TranslateToPythonCode_1.js"></script>

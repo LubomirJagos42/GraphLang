@@ -294,6 +294,10 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
       let variableValueStr = "";
       if (this.getDatatype().toLowerCase().search("string") > -1) {
           variableValueStr += "\"" + this.getText() + "\"";
+      }else if (this.getDatatype().startsWith("std::complex<") && GraphLang.Utils.parseComplexLiteral){
+          //complex constant text ie. "1.0 + 2.0i" -> std::complex<double>(1.0, 2.0), works for float, double, long double
+          let complexParts = GraphLang.Utils.parseComplexLiteral(this.getText());
+          variableValueStr = complexParts ? `${this.getDatatype()}(${complexParts.re}, ${complexParts.im})` : this.getText();
       }else{
           variableValueStr = this.getText();
       }
@@ -387,40 +391,32 @@ GraphLang.Shapes.Basic.ConstantNode = draw2d.shape.basic.Label.extend({
    *****************************************************************************************************************************************************/ 
 
   translateToPythonCode:function(){
-    pythonCode = "";
+    let pythonCode = "";
 
-    var variableName = this.getVariableName();
+    let variableName = this.getVariableName();
     this.getOutputPort(0).getConnections().each(function(connectionIndex, connectionObj){
       pythonCode += connectionObj.getVariableName() + " = " + variableName + "\n";
     });
 
     return pythonCode;
   },
-  
-  translateToPythonCodeDeclaration:function(){
-    pythonCode = "";
-    var constDatatype = this.getOutputPort(0).userData.datatype;
 
-    if (constDatatype.toLowerCase().search("string") > -1){
-      pythonCode += this.getVariableName() + " = \"" + this.getText() + "\"\n";
-    }else if (constDatatype.toLowerCase().search("bool") > -1){
-      pythonCode += this.getVariableName() + " = " + (this.getText() == 'true' ? 'True' : 'False') + "\n";
-    }else{
-      pythonCode += this.getVariableName() + " = " + this.getText() + "\n";
+  /**
+   *  @name translateToPythonCodeDeclaration
+   *  @desc Python constant declaration, ie. "const_5 = 3", when terminal is translated inside subnode function no declaration is made, value is function param.
+   */
+  translateToPythonCodeDeclaration:function(funcParams){
+    let translateTerminalsDeclaration = funcParams instanceof Object && Object.hasOwn(funcParams, "translateTerminalsDeclaration") ? funcParams.translateTerminalsDeclaration : true;
+
+    if (this.userData.isTerminal && !translateTerminalsDeclaration){
+      return `# ${this.getVariableName()} is set as terminal so no declaration here\n`;
     }
-    return pythonCode;
+    return this.getVariableName() + " = " + GraphLang.Utils.toPythonLiteral(this.getText(), this.getDatatype()) + "\n";
   },
 
   translateToPythonCodeAsParam:function(){
-    pythonCode = "";
-    //create param definition using also default value, if there is string use quotes
-    if (this.getDatatype().toLowerCase().search("string") == -1){ 
-        pythonCode += this.getVariableName() + ' = ' + this.getText();
-    }else{
-        pythonCode += this.getVariableName() + ' = "' + this.getText() + '"';
-    }
-
-    return pythonCode;
+    //no default values, same as for C++
+    return this.getVariableName();
   }
   
     

@@ -170,7 +170,17 @@ setPersistentAttributes: function(memento)
              *        generated code will keep name them starts with enumDatatype_...
              *        Also enum datatype could be different than int and here should be figuring what is it to make static_cast<T>() right.
              */
-            if (wireObj.getSource().userData.datatype.startsWith("enumDatatype_")){
+            let wireDatatype = (typeof wireObj.getDatatype === "function") ? String(wireObj.getDatatype()) : "";
+            if (/^(std::)?vector\s*<(?!\s*(std::)?vector)/.test(wireDatatype)){
+                /*
+                 *  1D vector is printed same as python print(list), ie. "[1, 2, 3]", so output can be copied into python (ie. matplotlib),
+                 *  unary + promotes char types (uint8_t, int8_t) to int to print numbers instead of characters
+                 */
+                let itemPrefix = (wireDatatype.toLowerCase().search("string") > -1) ? "" : "+";
+                cCode += `std::cout << "[";\n`;
+                cCode += `for (size_t consoleIndex = 0; consoleIndex < ${wireName}.size(); consoleIndex++){ if (consoleIndex > 0) std::cout << ", "; std::cout << ${itemPrefix}${wireName}[consoleIndex]; }\n`;
+                cCode += `std::cout << "]" << std::endl;\n`;
+            }else if (wireObj.getSource().userData.datatype.startsWith("enumDatatype_")){
                 /*
                  *  Enumeration is declared as enum type and they are not typed implictly, therefore to be printed to terminal they need to be casted to have some type for compiler.
                  *  If there is no cast then there is looooong error from compiler.
@@ -181,6 +191,19 @@ setPersistentAttributes: function(memento)
             }
         });
         return cCode;
+    },
+
+    /**
+     *  @method translateToPythonCode
+     *  @description Prints value of each wire connected to input to console, same as C++ std::cout.
+     */
+    translateToPythonCode: function(){
+        let pythonCode = "";
+        this.getInputPort(0).getConnections().each(function(wireIndex, wireObj){
+            pythonCode += `print(${wireObj.getVariableName()})\n`;
+        });
+        if (pythonCode == "") pythonCode = "# WARNING: console output has no wire connected, nothing printed\n";
+        return pythonCode;
     },
 
 });

@@ -382,5 +382,17 @@ HwRaspiZero.File.fwrite = GraphLang.UserDefinedNode.extend({
         return cCode;
     },
 
+    translateToPythonCode: function(){
+        let fileConnections = this.getInputPort("fileRef").getConnections();
+        let stringConnections = this.getInputPort("stringToWrite").getConnections();
+        if (fileConnections.getSize() == 0 || stringConnections.getSize() == 0){
+            return "# ERROR: fwrite has not connected file reference or string to write\n";
+        }
+        let filePtr = fileConnections.first().getVariableName();
+        let stringIn = stringConnections.first().getVariableName();
+
+        return `${filePtr}.write(str(${stringIn}))\n`;
+    },
+
 
 });

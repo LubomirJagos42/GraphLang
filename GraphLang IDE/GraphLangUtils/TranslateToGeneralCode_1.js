@@ -144,3 +144,8 @@ class TranslateToGeneralCode_1 {
  *  CREATE CODE GENERATOR OBJECT AND ASSIGN IT TO GENERAL VARIABLES STORAGE
  *******************************************************************************************************************************/
 GraphLang.Utils.TranslateToGeneralCodeObj = new TranslateToGeneralCode_1({language: "cpp", canvasObj: appCanvas});
+
+/*
+ *  Python code generator, separate object to not change C++ translator used by debugger and compilation
+ */
+GraphLang.Utils.TranslateToPythonCodeObj = new TranslateToGeneralCode_1({language: "python", canvasObj: appCanvas});
