@@ -378,7 +378,11 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
    *  @name translateToCppCode
    *  @desc Translate array into its declaration. There should be line declaring appropriate array for this object.
    */
-  translateToCppCodeDeclaration: function(){
+  translateToCppCodeDeclaration: function(funcParams){
+      let translateTerminalsDeclaration = funcParams instanceof Object && Object.hasOwn(funcParams, "translateTerminalsDeclaration") ? funcParams.translateTerminalsDeclaration : true;
+      if (this.userData.isTerminal && !translateTerminalsDeclaration){
+          return `/* ${this.getVariableName()} is set as terminal so no declaration here */\n`;
+      }
       var cCode = "";
       var arrayDatatype = this.getDatatype();    
       var variableName = this.getVariableName();
@@ -423,6 +427,14 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
       return cCode;
   },
 
+  /**
+   *  @name translateToCppCodeAsParam
+   *  @desc Array set as input terminal of subnode is function parameter, ie. "vector<double> array_x_samples"
+   */
+  translateToCppCodeAsParam: function(){
+      return this.getOutputPort(0).getDatatype() + " " + this.getVariableName();
+  },
+
   translateToCppCodeImport: function(){
       return ["#include <vector>", "#include <cstdint>"];     //cstdint for fixed width item datatypes, ie. uint8_t, int16_t
   },
@@ -445,7 +457,15 @@ GraphLang.Shapes.Basic.ArrayNode = draw2d.shape.layout.TableLayout.extend({
    *  @name translateToPythonCodeDeclaration
    *  @desc Translate array into python list, ie. "array_5 = [1, 2, 3]"
    */
-  translateToPythonCodeDeclaration: function(){
+  translateToPythonCodeAsParam: function(){
+      return this.getVariableName();
+  },
+
+  translateToPythonCodeDeclaration: function(funcParams){
+      let translateTerminalsDeclaration = funcParams instanceof Object && Object.hasOwn(funcParams, "translateTerminalsDeclaration") ? funcParams.translateTerminalsDeclaration : true;
+      if (this.userData.isTerminal && !translateTerminalsDeclaration){
+          return `# ${this.getVariableName()} is set as terminal so no declaration here\n`;
+      }
       let arrayDatatype = this.getDatatype();
       let variableName = this.getVariableName();
 

@@ -6805,19 +6805,29 @@ shape_designer.loadSymbolFromGraphLangClass = function(contents, appCanvas, appC
         textFigure.setStroke(element.attrs["stroke-width"]);    //this is outline stroke width not rectangle around label
         textFigure.setColor(element.attrs.stroke);
 
-        //this is set by experiment, text anchor point seems to be in left bottom point, so at positioning font height is subtracted
-        //from position of label which is left top point of label bounding box
-        var textFigurePadding = 0;
-        var textFigureWidth = 0;
-        var textFigureHeight = textFigure.getFontSize() + 2*textFigurePadding;
+        //transfer font properties so label looks same as in schematic (previously default font size/color/weight was used)
+        if (element.attrs["font-size"] !== undefined) textFigure.setFontSize(parseFloat(element.attrs["font-size"]));
+        textFigure.setBold(element.attrs["font-weight"] == "bold" || parseInt(element.attrs["font-weight"]) >= 600);
+        if (element.attrs["font-family"]) textFigure.setFontFamily(String(element.attrs["font-family"]).replace(/["']/g, ""));
+        if (element.attrs.fill && element.attrs.fill != "none") textFigure.setFontColor(element.attrs.fill);
+        if (element.attrs.opacity !== undefined) textFigure.setAlpha(element.attrs.opacity);
 
-        var command = new draw2d.command.CommandAdd(
-            canvas,
-            textFigure,
-            moveToX + element.attrs.x - textFigureWidth/2,
-            moveToY + element.attrs.y - textFigureHeight/2
-        );
+        //Raphael text: x is anchor point (start/middle/end), y is vertical center of text.
+        //ExtLabel renders text with text-anchor start at x = padding.left, y = height/2 (see ExtLabel.repaint()
+        //and export which does attr.x + absoluteX), so here inverse transformation is done.
+        var command = new draw2d.command.CommandAdd(canvas, textFigure, 0, 0);
         canvas.getCommandStack().execute(command);
+
+        var textAnchor = element.attrs["text-anchor"] || "start";
+        var textWidth = textFigure.getWidth() - textFigure.padding.left - textFigure.padding.right;
+        var anchorOffsetX = 0;
+        if (textAnchor == "middle") anchorOffsetX = textWidth/2;
+        else if (textAnchor == "end") anchorOffsetX = textWidth;
+
+        textFigure.setPosition(
+            moveToX + element.attrs.x - anchorOffsetX - textFigure.padding.left,
+            moveToY + element.attrs.y - textFigure.getHeight()/2
+        );
         canvas.setCurrentSelection(textFigure);
 
     }else if (element.type == 'image'){

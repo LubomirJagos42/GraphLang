@@ -308,4 +308,43 @@ GraphLang.Shapes.Basic.FeedbackNode = draw2d.SetFigure.extend({
         return cCode;
     },
 
+    /*****************************************************************************************************************************************************
+     *    TRANSLATE TO Python code functions, same logic as C++: first iteration takes default value (in2), next iterations value from in1
+     *    stored in previous iteration. Declaration is placed by loop before loop starts (see Loop2 python tunnels declaration).
+     *****************************************************************************************************************************************************/
+
+    translateToPythonCodeDeclaration: function(){
+        let pythonCode = "";
+        pythonCode += "feedBackNodeFlag_" + this.getId() + " = False\n";
+        pythonCode += "feedBackNode_" + this.getId() + " = None\n";
+        return pythonCode;
+    },
+
+    translateToPythonCode: function(){
+        let in0 = this.getInputPort(0);
+        let inDefault = this.getInputPort(1);
+        let out0 = this.getOutputPort(0);
+        let id = this.getId();
+        let pythonCode = "";
+
+        pythonCode += `if not feedBackNodeFlag_${id}:\n`;
+        pythonCode += `    feedBackNodeFlag_${id} = True\n`;
+        if (inDefault.getConnections().getSize() > 0){
+            pythonCode += `    feedBackNode_${id} = ${inDefault.getConnections().get(0).getVariableName()}\n`;
+        }else{
+            pythonCode += `    feedBackNode_${id} = None\n`;
+        }
+        pythonCode += "else:\n";
+        if (in0.getConnections().getSize() > 0){
+            pythonCode += `    feedBackNode_${id} = ${in0.getConnections().get(0).getVariableName()}\n`;
+        }else{
+            pythonCode += `    pass  # ERROR: feedback node input in1 not connected\n`;
+        }
+
+        out0.getConnections().each(function(wireIndex, wireObj){
+            pythonCode += `${wireObj.getVariableName()} = feedBackNode_${id}\n`;
+        });
+        return pythonCode;
+    },
+
 });

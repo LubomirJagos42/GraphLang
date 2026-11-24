@@ -24,6 +24,7 @@ blocksToTabsAssignment = {
     os.path.join(blocksRootDir, "GraphLang", "Math", "Basic"):            "GL_Math_Basic",
     os.path.join(blocksRootDir, "GraphLang", "Math", "Trigonometry"):     "GL_Math_Trigon",
     os.path.join(blocksRootDir, "GraphLang", "Math", "Complex"):          "GL_Math_Complex",
+    os.path.join(blocksRootDir, "GraphLang", "Math", "Double"):           "GL_Math_Double",
     os.path.join(blocksRootDir, "GraphLang", "System"):                   "GL_System",
     os.path.join(blocksRootDir, "GraphLangExperimental"):                 "GL_Experimental",
     os.path.join(blocksRootDir, "HwArduinoNano", "Serial"):               "ArduinoNano_Serial",

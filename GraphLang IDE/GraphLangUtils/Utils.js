@@ -786,15 +786,6 @@ GraphLang.Utils.initAllPortToDefault = function(canvas){
       nodeObj.getUserData().wasTranslatedToCppCode = false;
     }
 
-    /*
-     *  SPECIAL FO FEEDBACK
-     */
-    if (nodeObj.NAME.toLowerCase().search("feedback") > -1){
-        nodeObj.getPorts().each(function(portIndex, portObj){
-            port.userData.executionOrder = 1;
-        });
-    }
-
   });
 
   /*
@@ -827,6 +818,14 @@ GraphLang.Utils.initAllPortToDefault = function(canvas){
         //portObj.setBackgroundColor(new draw2d.util.Color(255,255,255));
         portObj.userData.executionOrder = -1;
       }
+    }
+
+    /*
+     *  FEEDBACK NODE value input (in1) is fed by value computed later in same iteration (back edge), it's used in next iteration,
+     *  so it's prepared from start, otherwise feedback node and everything after it waits forever.
+     */
+    if (portObj.getParent().NAME.toLowerCase().search("feedbacknode") > -1 && portObj.getName() === "in1"){
+      portObj.userData.executionOrder = 1;
     }
 
     //remove label nodes from all nodes, this is because these labels are execution order for debugging
@@ -1306,6 +1305,7 @@ GraphLang.Utils.executionOrder = function executionOrder(canvas, showLabels = Gr
         nodeObj.getOutputPorts().each(function(portIndex, portObj){
           if (portObj.getUserData().executionOrder < 0){
             portObj.userData.executionOrder = actualStepNum + 1;  //result is on output in next step that's why +1
+            actualStepNumberWasAssigned = true;   //output became available, nodes connected to it are evaluated in next steps (otherwise long chains of nodes stopped evaluation)
           }
         });
 
@@ -1345,6 +1345,69 @@ GraphLang.Utils.executionOrder = function executionOrder(canvas, showLabels = Gr
       nodeObj.setExecutionOrderByTunnels(canvas);
     }
   });
+
+  GraphLang.Utils.executionOrderFixLoopsDependencies(canvas);
+}
+
+/**
+ *  @method executionOrderFixLoopsDependencies
+ *  @memberOf GraphLang.Utils
+ *  @param {draw2d.Canvas} canvas
+ *  @description Right tunnel output is marked as prepared as soon as value inside loop is prepared, so node using loop result
+ *  (ie. node in outer loop after nested loop) could get lower execution order than loop itself and was translated BEFORE loop.
+ *  This pass makes execution order consistent with wires:
+ *      - node fed from RIGHT tunnel is executed after loop owning that tunnel
+ *      - loop is executed after nodes feeding its LEFT tunnels and its input ports (ie. iteration count)
+ *      - node is executed after nodes feeding its inputs (same container)
+ *  Wires going into feedback node value input (in1) are back edges and are skipped, wires from left tunnels and loop iteration
+ *  terminal go inside loop and are skipped. Execution order is only increased, already consistent schematic is not changed.
+ */
+GraphLang.Utils.executionOrderFixLoopsDependencies = function(canvas){
+  let isTunnel = (figureObj, kind) => figureObj && figureObj.NAME && figureObj.NAME.toLowerCase().search(kind) > -1;
+  let getOrder = (figureObj) => (figureObj.getUserData() && typeof figureObj.getUserData().executionOrder === "number") ? figureObj.getUserData().executionOrder : -1;
+  let isInside = (figureObj, containerObj) => {
+    let parentObj = figureObj.getComposite ? figureObj.getComposite() : null;
+    while (parentObj){
+      if (parentObj === containerObj) return true;
+      parentObj = parentObj.getComposite ? parentObj.getComposite() : null;
+    }
+    return false;
+  };
+
+  let edges = [];
+  canvas.getLines().each(function(lineIndex, lineObj){
+    let sourcePort = lineObj.getSource();
+    let targetPort = lineObj.getTarget();
+    if (!sourcePort || !targetPort) return;
+    let sourceNode = sourcePort.getParent();
+    let targetNode = targetPort.getParent();
+
+    //feedback value input is back edge (value is used in next iteration)
+    if (targetNode.NAME.toLowerCase().search("feedbacknode") > -1 && targetPort.getName() === "in1") return;
+
+    if (isTunnel(sourceNode, "lefttunnel")) return;                     //wire goes inside loop, available from loop start
+    if (isTunnel(sourceNode, "righttunnel")) sourceNode = sourceNode.getParent();   //loop result is available after loop
+    if (isTunnel(targetNode, "righttunnel")) return;                    //wire inside loop going out, handled by loop
+    if (isTunnel(targetNode, "lefttunnel")) targetNode = targetNode.getParent();    //loop waits for its input tunnels
+
+    if (!sourceNode || !targetNode || sourceNode === targetNode) return;
+    if (sourceNode.isLoop && sourceNode.isLoop() === true && isInside(targetNode, sourceNode)) return;   //ie. iteration terminal output used inside loop
+    if (getOrder(sourceNode) < 0 || getOrder(targetNode) < 0) return;  //node without execution order, nothing to fix (error is reported elsewhere)
+
+    edges.push([sourceNode, targetNode]);
+  });
+
+  //relaxation, maximum count of passes is count of edges (longest possible chain)
+  for (let pass = 0; pass <= edges.length; pass++){
+    let changed = false;
+    edges.forEach(function(edge){
+      if (getOrder(edge[1]) <= getOrder(edge[0])){
+        edge[1].getUserData().executionOrder = getOrder(edge[0]) + 1;
+        changed = true;
+      }
+    });
+    if (!changed) break;
+  }
 }
 
 /**

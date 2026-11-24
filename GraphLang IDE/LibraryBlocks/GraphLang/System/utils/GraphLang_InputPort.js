@@ -2,7 +2,7 @@
  *  @class GraphLang.InputPort
  *  @description Custom GraphLang input port.
  */
-GraphLang.InputPort = draw2d.InputPort.extend({
+GraphLang.InputPort = draw2d.InputPortShapeModifier.extend({
   NAME: "GraphLang.InputPort",
   constructor(obj){
     obj && Object.assign(this, obj);
