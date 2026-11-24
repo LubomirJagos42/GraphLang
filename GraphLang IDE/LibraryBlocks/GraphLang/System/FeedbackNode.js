@@ -11,10 +11,10 @@ GraphLang.Shapes.Basic.FeedbackNode = draw2d.SetFigure.extend({
 
    init:function(attr, setter, getter)
    {
-     this._super( $.extend({stroke:0, bgColor:null, width:80,height:61},attr), setter, getter);
+     this._super( $.extend({stroke:0, bgColor:null, width:36,height:26},attr), setter, getter);
      var port;
      // Port
-     port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(-0.22916799999975979, 16.393442622950822));
+     port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(0, 42.307692));
      port.setConnectionDirection(3);
      port.setBackgroundColor("#3F81F3");
      port.setName("out1");
@@ -25,7 +25,7 @@ GraphLang.Shapes.Basic.FeedbackNode = draw2d.SetFigure.extend({
      };
 
      // Port
-     port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(99.90984000000026, 16.393442622950822));
+     port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(100, 42.307692));
      port.setConnectionDirection(1);
      port.setBackgroundColor("#F3D92E");
      port.setName("in1");
@@ -35,7 +35,7 @@ GraphLang.Shapes.Basic.FeedbackNode = draw2d.SetFigure.extend({
          return this.getParent().getInputPort("in2").getDatatype(); //use default value port function to get datatype
      };
 
-     port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(50, 95));
+     port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(50, 100));
      port.setConnectionDirection(2);
      port.setBackgroundColor("#F3D92E");
      port.setName("in2");
@@ -65,8 +65,8 @@ GraphLang.Shapes.Basic.FeedbackNode = draw2d.SetFigure.extend({
    createShapeElement : function()
    {
       var shape = this._super();
-      this.originalWidth = 80;
-      this.originalHeight= 61;
+      this.originalWidth = 36;
+      this.originalHeight= 26;
       return shape;
    },
 
@@ -75,40 +75,44 @@ GraphLang.Shapes.Basic.FeedbackNode = draw2d.SetFigure.extend({
        this.canvas.paper.setStart();
 
         // BoundingBox
-        shape = this.canvas.paper.path("M0,0 L80,0 L80,61 L0,61");
+        shape = this.canvas.paper.path("M0,0 L36,0 L36,26 L0,26");
         shape.attr({"stroke":"none","stroke-width":0,"fill":"none"});
         shape.data("name","BoundingBox");
 
-        // Rectangle
-        shape = this.canvas.paper.path('M0 0L80 0L80 20L0 20Z');
-        shape.attr({"stroke":"#303030","stroke-width":1,"fill":"#FFFFFF","dasharray":null,"opacity":1});
-        shape.data("name","Rectangle");
+        // Line
+        shape = this.canvas.paper.path('M0,11L5,11');
+        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#303030","stroke-width":1,"opacity":1});
+        shape.data("name","Line");
+
+        // Line
+        shape = this.canvas.paper.path('M31,11L36,11');
+        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#303030","stroke-width":1,"opacity":1});
+        shape.data("name","Line");
+
+        // Line
+        shape = this.canvas.paper.path('M18,20L18,26');
+        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#303030","stroke-width":1,"opacity":1});
+        shape.data("name","Line");
 
         // Rectangle
-        shape = this.canvas.paper.path('M80 20L0 20L0 61L80 61Z');
-        shape.attr({"stroke":"#303030","stroke-width":1,"fill":"#FFFFFF","dasharray":null,"opacity":1});
+        shape = this.canvas.paper.path('M5,2L31,2L31,20L5,20Z');
+        shape.attr({"stroke":"#303030","stroke-width":1,"fill":"#FFFFFF","opacity":1});
         shape.data("name","Rectangle");
+
+        // Line
+        shape = this.canvas.paper.path('M10,8L7,11L10,14');
+        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#303030","stroke-width":1,"opacity":1});
+        shape.data("name","Line");
 
         // Label
         shape = this.canvas.paper.text(0,0,'z');
-        shape.attr({"x":33.14338559999999,"y":45.5625,"text-anchor":"start","text":"z","font-family":"Arial","font-size":16,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape.attr({"x":17,"y":13,"text-anchor":"middle","text":"z","font-size":11,"stroke":"none","fill":"#080808","font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
 
         // Label
         shape = this.canvas.paper.text(0,0,'-1');
-        shape.attr({"x":44.03316480000001,"y":40.5,"text-anchor":"start","text":"-1","font-family":"Arial","font-size":8,"stroke":"none","fill":"#080808","stroke-scale":true,"font-weight":"normal","stroke-width":0,"opacity":1});
+        shape.attr({"x":24,"y":8,"text-anchor":"middle","text":"-1","font-size":7,"stroke":"none","fill":"#080808","font-weight":"normal","stroke-width":0,"opacity":1});
         shape.data("name","Label");
-
-        // Line_shadow
-        shape = this.canvas.paper.path('M67.5 35.5L15.5,35.5L27.5,30.5L27.5,40.5L15.5,35.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"none","stroke-width":1,"stroke-dasharray":null,"opacity":1});
-        shape.data("name","Line_shadow");
-
-        // Line
-        shape = this.canvas.paper.path('M67.5 35.5L15.5,35.5L27.5,30.5L27.5,40.5L15.5,35.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#000000","stroke-width":1,"stroke-dasharray":null,"opacity":1});
-        shape.data("name","Line");
-
 
         return this.canvas.paper.setFinish();
    },
@@ -226,7 +230,10 @@ GraphLang.Shapes.Basic.FeedbackNode = draw2d.SetFigure.extend({
      */
     setPersistentAttributes : function(memento)
     {
+        // keep compact size from init also for schematics saved with the old bigger symbol
+        var w = this.getWidth(), h = this.getHeight();
         this._super(memento);
+        this.setDimension(w, h);
 
         // remove all decorations created in the constructor of this element
         //
@@ -249,7 +256,7 @@ GraphLang.Shapes.Basic.FeedbackNode = draw2d.SetFigure.extend({
         },this));
     },
 
-    symbolPicture: " data:image/png;base64,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",
+    symbolPicture: "data:image/png;base64,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",
 
     /**
      *  @name getDeclaration

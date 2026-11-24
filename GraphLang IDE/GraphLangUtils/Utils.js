@@ -3966,6 +3966,44 @@ GraphLang.Utils.getObjectInProjectFromJSON = function(funcParams){
 }
 
 /**
+ * @method GraphLang.Utils.getLoadedNodeClassNamesWithSchematic
+ * @memberOf GraphLang.Utils
+ * @returns {string[]} class names of loaded node classes which have schematic (non empty jsonDocument)
+ * @description Fallback for pages without global_allProjectNodesList (ie. shape designer). Walks global namespaces
+ * and collects classes with NAME and non empty jsonDocument in prototype. Result is cached.
+ */
+GraphLang.Utils.getLoadedNodeClassNamesWithSchematic = function(){
+    if (GraphLang.Utils._loadedNodeClassNamesWithSchematic) return GraphLang.Utils._loadedNodeClassNamesWithSchematic;
+
+    let resultList = [];
+    let visited = new Set();
+    let walk = function(obj, depth){
+        if (obj === null || (typeof obj !== "object" && typeof obj !== "function") || depth > 6 || visited.has(obj)) return;
+        visited.add(obj);
+        if (typeof obj === "function" && obj.prototype && typeof obj.prototype.NAME === "string" &&
+            Array.isArray(obj.prototype.jsonDocument) && obj.prototype.jsonDocument.length > 0 &&
+            resultList.indexOf(obj.prototype.NAME) === -1){
+            resultList.push(obj.prototype.NAME);
+        }
+        for (let key of Object.keys(obj)){
+            if (key.length === 0 || key[0] === "_" || key[0] !== key[0].toUpperCase()) continue;   //namespaces and classes start with capital letter
+            let child;
+            try{ child = obj[key]; }catch(e){ continue; }
+            if (typeof child === "function" || (child && typeof child === "object" && Object.getPrototypeOf(child) === Object.prototype)) walk(child, depth + 1);
+        }
+    };
+    for (let key of Object.keys(window)){
+        if (key.length === 0 || key[0] !== key[0].toUpperCase() || key === "Raphael") continue;
+        let child;
+        try{ child = window[key]; }catch(e){ continue; }
+        walk(child, 0);
+    }
+
+    GraphLang.Utils._loadedNodeClassNamesWithSchematic = resultList;
+    return resultList;
+}
+
+/**
  * @method GraphLang.Utils.getObjectInProjectFromJSONById
  * @memberOf GraphLang.Utils
  * @param {string} searchObjectId - search object id
@@ -3979,11 +4017,12 @@ GraphLang.Utils.getObjectInProjectFromJSONById = function(searchObjectId = ""){
         console.error("Object id not specified!");
     }
 
-    //search object specified by id
-    if (searchObjectId !== ""){
-        objectRef = appCanvas.getFigure(searchObjectId);
+    //search object specified by id, main canvas exists only in IDE (not in shape designer)
+    let mainCanvas = (typeof appCanvas !== "undefined" && appCanvas) ? appCanvas : null;
+    if (searchObjectId !== "" && mainCanvas !== null){
+        let objectRef = mainCanvas.getFigure(searchObjectId);
         if (objectRef === null){
-            objectRef = appCanvas.getLine(searchObjectId);
+            objectRef = mainCanvas.getLine(searchObjectId);
         }
 
         //object found on main canvas, returned in serialized json form, same as when is stored in node schematic variable
@@ -3998,10 +4037,17 @@ GraphLang.Utils.getObjectInProjectFromJSONById = function(searchObjectId = ""){
      */
 
     //searching object through all project nodes schematics
-    for (let nodeName of global_allProjectNodesList) {
+    //IDE has global list of project nodes, otherwise (ie. shape designer) it's collected from loaded classes
+    let nodeNameList = (typeof global_allProjectNodesList !== "undefined" && Array.isArray(global_allProjectNodesList)) ? global_allProjectNodesList : GraphLang.Utils.getLoadedNodeClassNamesWithSchematic();
+    for (let nodeName of nodeNameList) {
 
         //dynamicaly create object using it name
-        let nodeObj = eval(`new ${nodeName}()`);
+        let nodeObj = null;
+        try{
+            nodeObj = eval(`new ${nodeName}()`);
+        }catch(e){
+            continue;
+        }
 
         //iterate over all object schematic objects (nodes, wires, ...all what is in json)
         if (typeof nodeObj === "object" && nodeObj.jsonDocument && Array.isArray(nodeObj.jsonDocument)) {

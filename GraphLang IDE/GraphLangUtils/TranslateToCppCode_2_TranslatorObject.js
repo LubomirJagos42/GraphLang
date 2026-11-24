@@ -1091,8 +1091,7 @@ class TranslateToCppCode_2_TranslatorObject {
                 typeof figureObj.getNodeLabelText === "function" &&
                 figureObj.getNodeLabelText() == clusterName
             ){
-                console.log(figureObj.translateToCppCodeTypeDefinition());
-                translatorObj.translateToCppCodeTypeDefinitionArray.push(figureObj.translateToCppCodeTypeDefinition());
+                translatorObj.translateToCppCodeTypeDefinitionArray.push(figureObj.translateToCppCodeTypeDefinition({translatorObj: translatorObj}));
                 translatorObj.translateToCppCodeAdditionalIdNoHyphen.add(figureObj.getId().replaceAll('-', ''));    //add cluster ID into aditional IDs list, remove '-' due they are not used in clusters datatype name
                 translatorObj.translateToCppCodeAdditionalId.add(figureObj.getId());    //add cluster ID into aditional IDs list
 

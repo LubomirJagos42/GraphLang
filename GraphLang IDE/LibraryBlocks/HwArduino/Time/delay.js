@@ -5,7 +5,7 @@ HwArduino.Time.delay = GraphLang.UserDefinedNode.extend({
         this._super( $.extend({stroke:0, bgColor:null, width:68, height:50, flagAutoCreatePorts: false},attr), setter, getter);
         var port;
         // delay_ms
-        port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(6.237807058823485, 31.77338880000036));
+        port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(-2.6984704000000193, 29.7468569600004));
         port.setConnectionDirection(3);
         port.setBackgroundColor("#37B1DE");
         port.setName("delay_ms");
@@ -17,7 +17,7 @@ HwArduino.Time.delay = GraphLang.UserDefinedNode.extend({
         port.userData.connectionMandatory = true;
 
         // error_in
-        port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(6.237807058823485, 88.81592320000038));
+        port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(-2.6984704000000193, 81.68911769600038));
         port.setConnectionDirection(3);
         port.setBackgroundColor("#37B1DE");
         port.setName("error_in");
@@ -29,7 +29,7 @@ HwArduino.Time.delay = GraphLang.UserDefinedNode.extend({
         port.userData.connectionMandatory = false;
 
         // error_out
-        port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(105.54412235294105, 88.81592320000038));
+        port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(104.30562635294106, 81.68911769600038));
         port.setConnectionDirection(1);
         port.setBackgroundColor("#37B1DE");
         port.setName("error_out");

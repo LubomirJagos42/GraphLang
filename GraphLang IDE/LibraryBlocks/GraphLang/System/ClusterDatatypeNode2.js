@@ -507,7 +507,7 @@ GraphLang.Shapes.Basic.Loop2.ClusterDatatypeNode2 = GraphLang.Shapes.Basic.Loop2
    **************************************************************************************************************************************/
 
   translateToCppCodeTypeDefinition: function(funcParams){
-    let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+    let translatorObj = (funcParams && Object.hasOwn(funcParams, "translatorObj")) ? funcParams.translatorObj : null;
 
     var cCode = "";
     

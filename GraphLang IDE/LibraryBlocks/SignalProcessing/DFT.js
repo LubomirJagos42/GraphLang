@@ -223,7 +223,7 @@ GraphLang.SignalProcessing.DFT = GraphLang.UserDefinedNode.extend({
             "type": "GraphLang.Shapes.Basic.LeftTunnel",
             "id": "6ce1fca1-7a49-c087-df71-0a7ac31377d0",
             "x": -15,
-            "y": 42.5,
+            "y": 90,
             "width": 30,
             "height": 15,
             "alpha": 1,
@@ -288,13 +288,13 @@ GraphLang.SignalProcessing.DFT = GraphLang.UserDefinedNode.extend({
             "dasharray": null,
             "locator": "GraphLang.Utils.LeftRelPortLocator",
             "locatorX": 15,
-            "locatorY": 7.083333333333333
+            "locatorY": 15
           },
           {
             "type": "GraphLang.Shapes.Basic.LeftTunnel",
             "id": "53d96403-918b-381d-1191-dfd89ec4a477",
             "x": -15,
-            "y": 42.5,
+            "y": 90,
             "width": 30,
             "height": 15,
             "alpha": 1,
@@ -359,7 +359,7 @@ GraphLang.SignalProcessing.DFT = GraphLang.UserDefinedNode.extend({
             "dasharray": null,
             "locator": "GraphLang.Utils.LeftRelPortLocator",
             "locatorX": 15,
-            "locatorY": 7.083333333333333
+            "locatorY": 15
           },
           {
             "type": "GraphLang.Shapes.Basic.LeftTunnel",
@@ -729,7 +729,7 @@ GraphLang.SignalProcessing.DFT = GraphLang.UserDefinedNode.extend({
         "type": "GraphLang.Shapes.Basic.ConstantNode",
         "id": "5bd2989c-7a3e-e5e3-1186-129546428bbe",
         "x": 290,
-        "y": 70,
+        "y": 40,
         "width": 16,
         "height": 21,
         "alpha": 1,
@@ -806,7 +806,7 @@ GraphLang.SignalProcessing.DFT = GraphLang.UserDefinedNode.extend({
             "type": "GraphLang.Shapes.Basic.LeftTunnel",
             "id": "0474f593-4424-87e7-b268-baf9c6af709a",
             "x": -15,
-            "y": 32.49999999999999,
+            "y": 72.5,
             "width": 30,
             "height": 15,
             "alpha": 1,
@@ -871,13 +871,13 @@ GraphLang.SignalProcessing.DFT = GraphLang.UserDefinedNode.extend({
             "dasharray": null,
             "locator": "GraphLang.Utils.LeftRelPortLocator",
             "locatorX": 15,
-            "locatorY": 7.55813953488372
+            "locatorY": 16.86046511627907
           },
           {
             "type": "GraphLang.Shapes.Basic.LeftTunnel",
             "id": "ce48ac01-8e7f-6832-2afd-a1c1f81b25b9",
             "x": -15,
-            "y": 62.5,
+            "y": 102.5,
             "width": 30,
             "height": 15,
             "alpha": 1,
@@ -942,7 +942,7 @@ GraphLang.SignalProcessing.DFT = GraphLang.UserDefinedNode.extend({
             "dasharray": null,
             "locator": "GraphLang.Utils.LeftRelPortLocator",
             "locatorX": 15,
-            "locatorY": 14.534883720930234
+            "locatorY": 23.837209302325583
           },
           {
             "type": "GraphLang.Shapes.Basic.RightTunnel",

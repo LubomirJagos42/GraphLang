@@ -17,6 +17,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     port.setMaxFanOut(20);
     port.userData = {};
     port.userData.datatype = "int";
+    this.addIterationTerminalLabel(port, "count", new draw2d.layout.locator.TopLocator());
 
     this.iterationTerminal = port;
 
@@ -27,6 +28,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     port.setMaxFanOut(20);
     port.userData = {};
     port.userData.datatype = "int";
+    this.addIterationTerminalLabel(port, "i", new draw2d.layout.locator.BottomLocator());
 
     this.iterationTerminalOutput = port;
 
@@ -41,6 +43,30 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
         new draw2d.shape.basic.Label({text: "ForLoop"}),
         new draw2d.layout.locator.TopLocator(this)
     );
+  },
+
+  /**
+   * @method addIterationTerminalLabel
+   * @description Adds small blue badge label to iteration terminal port (visual only, not persisted, recreated with port).
+   * @param {draw2d.Port} port port to which label is attached
+   * @param {String} text label text
+   * @param {draw2d.layout.locator.Locator} locator label position relative to port
+   */
+  addIterationTerminalLabel: function(port, text, locator){
+    let label = new draw2d.shape.basic.Label({
+      text: text,
+      fontSize: 8,
+      fontColor: "#FFFFFF",
+      bgColor: "#0000FF",
+      color: "#0000FF",
+      stroke: 0,
+      radius: 2,
+      padding: {left: 2, right: 2, top: 0, bottom: 0}
+    });
+    label.setSelectable(false);
+    label.setDraggable(false);
+    port.add(label, locator);
+    return label;
   },
 
   /*
@@ -123,6 +149,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     port.setMaxFanOut(20);
     port.userData = {};
     port.userData.datatype = "int";
+    this.addIterationTerminalLabel(port, "count", new draw2d.layout.locator.TopLocator());
 
     this.iterationTerminal = port;
 
@@ -133,6 +160,7 @@ GraphLang.Shapes.Basic.Loop2.ForLoop = GraphLang.Shapes.Basic.Loop2.extend({
     port.setMaxFanOut(20);
     port.userData = {};
     port.userData.datatype = "int";
+    this.addIterationTerminalLabel(port, "i", new draw2d.layout.locator.BottomLocator());
   },
 
   /*

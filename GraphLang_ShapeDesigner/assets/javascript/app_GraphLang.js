@@ -892,7 +892,7 @@ shape_designer.Toolbar = Class.extend({
 		this.symbolDisplayNameInput = $('<div class="btn btn-default">Display Name <input type="input" id="symbol-display-name-input" style="width: 120px;" class="" value="" /></div>');
 		this.symbolClassNameInput = $('<div class="btn btn-default">Class Name <input type="input" id="symbol-name-input" style="width: 220px;" class="" value="GraphLangTestShape" /></div>');
 
-		this.symbolCheckButton = $('<button  data-toggle="tooltip" title="Check Symbol" class="btn btn-default" >Check Symbol</button>');
+		this.symbolCheckButton = $('<button  data-toggle="tooltip" title="Check symbol" class="btn btn-default" ><img src="./assets/images/toolbar_symbol_check.svg" width="32" height="32"></button>');
         this.symbolCheckButton.on("click",$.proxy(function(){
             shape_designer.checkSymbolAndSchematic(this.view);
         },this));
