@@ -1,0 +1,35 @@
+{
+    "_comment": "Describes a node library: where it lives, which nodes are hidden, and which palette tab each folder belongs to. Folder paths in 'categories' are relative to 'library_folder'.",
+
+    "library_folder": "LibraryBlocks",
+
+    "node_language": "C/C++",
+
+    "hidden_path_patterns": [
+        "System/utils",
+        "Math/Basic/hidden",
+        "hidden"
+    ],
+
+    "categories": [
+        { "folder": "GraphLang/Math/Basic",        "tab": "GL_Math_Basic" },
+        { "folder": "GraphLang/Math/Trigonometry", "tab": "GL_Math_Trigon" },
+        { "folder": "GraphLang/System",            "tab": "GL_System" },
+        { "folder": "GraphLangExperimental",       "tab": "GL_Experimental" },
+        { "folder": "HwArduinoNano/Serial",        "tab": "ArduinoNano_Serial" },
+        { "folder": "HwRaspiZero/Console",         "tab": "RaspiZero_Console" },
+        { "folder": "HwRaspiZero/File",            "tab": "RaspiZero_File" },
+        { "folder": "HwRaspiZero/IO/Analog",       "tab": "RaspiZero_Analog" },
+        { "folder": "HwRaspiZero/IO/Digital",      "tab": "RaspiZero_Digital" },
+        { "folder": "HwRaspiZero/IO/Constants",    "tab": "RaspiZero_Constants" },
+        { "folder": "HwRaspiZero/string",          "tab": "RaspiZero_string" },
+        { "folder": "HwRaspiZero/Time",            "tab": "RaspiZero_Time" },
+        { "folder": "PythonQtGuiLib",              "tab": "Python GUI" },
+        { "folder": "SignalProcessing",            "tab": "Signal Proc." },
+        { "folder": "UserDefinedNode",             "tab": "User Nodes" },
+        { "folder": "UserDefinedNode/Demo",        "tab": "Demo" },
+        { "folder": "Messaging/ZeroMQ",            "tab": "ZeroMQ" },
+        { "folder": "Console",                     "tab": "Console" },
+        { "folder": "Sound/miniaudio",             "tab": "Sound_miniaudio" }
+    ]
+}

@@ -1,0 +1,20 @@
+{
+  "recurse": true,
+  "plugins": ["plugins/markdown"],
+  "source": {
+    "include": ["0v1/GraphLang IDE"],
+    "exclude": [
+      "0v1/GraphLang IDE/LibraryBlocks",
+      "0v1/GraphLang IDE/ai_LibraryBlocks",
+      "0v1/GraphLang IDE/test",
+      "0v1/GraphLang IDE/_temp"
+    ],
+    "includePattern": ".+\\.(js|jsdoc|jsx)$"
+  },
+  "opts": {
+    "recurse": true,
+    "private": true,
+    "destination": "0v1/Documentation/jsdoc",
+    "template": "0v1/node_modules/docdash"
+  }
+}
