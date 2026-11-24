@@ -171,6 +171,11 @@
             });
 
             /*
+             *    CREATE AUXILIARY SMALL CANVAS ON DEFINED ELEMENT IN RIGHT PANE WHERE HELP WILL BE DISPLAYED
+             */
+            appCanvas3 = new draw2d.Canvas('schematicBlockDocumentationCanvas');
+
+            /*
              *	LOADING FILE INTO BOTTOM CANVAS
              */
             appCanvas2 = app.view2;
@@ -372,7 +377,8 @@
 </div>
 
 <div id="helperPane" style="width: 100px;">
-    <div id="schematicBlockDocumentation"></div>
+    <div id="schematicBlockDocumentationCanvas" style="width=: 100px; height: 100px;"></div>
+    <div id="schematicBlockDocumentation"></div><br />
     <div id="schematicErrors"></div>
     <div id="breakpointList"></div>
     <div id="variablesWatch"></div>

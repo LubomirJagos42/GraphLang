@@ -29,6 +29,80 @@ if(typeof String.prototype.endsWith ==="undefined") {
 jQuery.fn.reverse = [].reverse;
 
 
+/**
+ * Smaller resize/vertex handles for the shape designer.
+ *
+ * GraphLang node symbols are small (around 60x60), so they are edited at high zoom
+ * (several hundred %). The draw2d bundled in dependencies.js sizes handles in canvas units
+ * and clamps every figure to minWidth/minHeight = 5, so at 745% a handle is ~37px on screen,
+ * covers neighbouring line ends and corners and makes them hard to grab.
+ *
+ * Sizes below are in SCREEN pixels: they are divided by the canvas zoom factor when a handle
+ * is shown and again whenever the zoom changes (see View.setZoom), so handles stay equally
+ * small at any zoom level. Only the shape designer is affected.
+ *
+ *   rect   - draw2d.ResizeHandle (rectangle/ellipse/text/image corners, polygon vertices)
+ *   line   - draw2d.shape.basic.LineResizeHandle (line start/end/vertex circles, ghost vertices)
+ */
+var SHAPE_DESIGNER_HANDLE_SIZE = {
+    rect: { size: 7, stroke: 1, radius: 1 },
+    line: { size: 7, stroke: 1 }
+};
+
+/**
+ * Resize one handle to SHAPE_DESIGNER_HANDLE_SIZE for the current zoom of its canvas.
+ * @param {draw2d.ResizeHandle|draw2d.shape.basic.LineResizeHandle} handle
+ */
+function shapeDesignerApplyHandleSize(handle) {
+    var canvas = handle.getCanvas();
+    if (canvas === null || typeof canvas === "undefined") {
+        return;
+    }
+    var cfg  = (handle instanceof draw2d.shape.basic.LineResizeHandle) ? SHAPE_DESIGNER_HANDLE_SIZE.line : SHAPE_DESIGNER_HANDLE_SIZE.rect;
+    var zoom = canvas.getZoom();        // draw2d zoom: <1 means zoomed in (745% => 0.134)
+    var size = cfg.size * zoom;
+
+    handle.minWidth  = Math.min(handle.minWidth,  size);
+    handle.minHeight = Math.min(handle.minHeight, size);
+    handle.setDimension(size, size);
+    handle.setStroke(cfg.stroke * zoom);
+    if (typeof cfg.radius !== "undefined" && typeof handle.setRadius === "function") {
+        handle.setRadius(cfg.radius * zoom);
+    }
+}
+
+/**
+ * Re-apply handle size to all visible handles (after zoom change) and let the selection
+ * policies place them again, since their position depends on the handle size.
+ * @param {draw2d.Canvas} canvas
+ */
+function shapeDesignerRefreshHandles(canvas) {
+    canvas.resizeHandles.each(function (i, handle) {
+        shapeDesignerApplyHandleSize(handle);
+    });
+    canvas.getSelection().each(function (i, figure) {
+        figure.editPolicy.each(function (j, policy) {
+            if (typeof policy.moved === "function") {
+                policy.moved(canvas, figure);
+            }
+        });
+    });
+}
+
+(function () {
+    function patchShow(proto) {
+        var origShow = proto.show;
+        proto.show = function () {
+            var ret = origShow.apply(this, arguments);
+            shapeDesignerApplyHandleSize(this);
+            return ret;
+        };
+    }
+    patchShow(draw2d.ResizeHandle.prototype);
+    patchShow(draw2d.shape.basic.LineResizeHandle.prototype);
+})();
+
+
 // date parser
 (function (Date, undefined) {
     var origParse = Date.parse, numericKeys = [ 1, 4, 5, 6, 7, 10, 11 ];
@@ -468,6 +542,7 @@ shape_designer.View = draw2d.Canvas.extend({
     {
         $("#canvas_zoom_normal").text((parseInt((1.0/newZoom)*100))+"%");
         this._super(newZoom);
+        shapeDesignerRefreshHandles(this);     // keep resize handles the same size on screen
     },
 
 	/**
@@ -822,12 +897,12 @@ shape_designer.Toolbar = Class.extend({
             shape_designer.checkSymbolAndSchematic(this.view);
         },this));
 
-        this.saveSymbolButton  = $('<button  data-toggle="tooltip" title="Save symbol</span>" class=\"btn btn-default\" >Save</button>');
+        this.saveSymbolButton  = $('<button  data-toggle="tooltip" title="Save symbol to file" class=\"btn btn-default\" ><img src="./assets/images/toolbar_symbol_save.svg" width="32" height="32"></button>');
         this.saveSymbolButton.on("click",$.proxy(function(){
             shape_designer.saveSymbol();
         },this));
 
-        this.saveSymbolOnServerButton  = $('<button  data-toggle="tooltip" title="Save symbol on server</span>" class=\"btn btn-default\" >Upload</button>');
+        this.saveSymbolOnServerButton  = $('<button  data-toggle="tooltip" title="Upload symbol to server" class=\"btn btn-default\" ><img src="./assets/images/toolbar_symbol_upload.svg" width="32" height="32"></button>');
         this.saveSymbolOnServerButton.on("click",$.proxy(function(){
             shape_designer.uploadSymbolToServer();
         },this));
@@ -6567,7 +6642,9 @@ shape_designer.GraphLangFigureWriter = draw2d.io.Writer.extend({
                 height: b.h,
                 symbolPicture: symbolPicture,
             });
-            output = shape_designer.generateCurrentClassCode(className, baseClass, output);
+            //keep parent class of loaded node (ie. GraphLang.ZeroMQ.CommonParent), otherwise inherited helper methods would be lost after save
+            let currentClassParent = GLOBAL_CURRENT_LOADED_OBJECT_PARENT ? GLOBAL_CURRENT_LOADED_OBJECT_PARENT : baseClass;
+            output = shape_designer.generateCurrentClassCode(className, currentClassParent, output);
         }
 
         /*******************************************************************************************

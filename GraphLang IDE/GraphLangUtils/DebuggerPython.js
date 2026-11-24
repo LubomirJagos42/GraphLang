@@ -694,15 +694,47 @@ GraphLang.Debugger.Python.onclickSendButton = async function(){
  * @return {string} html with python debugger buttons, inserted into debugger pane by GraphLang.Debugger.Cpp.open()
  */
 GraphLang.Debugger.Python.getButtonsHtml = function(){
+    /*
+     *  PYTHON DEBUGGER BUTTON GRAPHICS
+     *      Inline SVG icons (24x24 viewBox, drawn with currentColor so they follow button text color), same style as in C++ debugger.
+     *      Any of them can be replaced by base64 image, ie. '<img src="data:image/png;base64,iVBORw0..." width="20" height="20"/>'
+     */
+    const SVG_START = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">';
+    const SVG_END = '</svg>';
+    const COLOR_GREEN = '#2e7d32';
+    const COLOR_RED = '#d32f2f';
+
+    //svg images for buttons
+    const BUTTON_IMAGE_COMPILE_PYTHON = SVG_START + '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>' + SVG_END;
+    const BUTTON_IMAGE_DEBUG_PYTHON_CODE = SVG_START + '<rect x="5" y="7" width="8" height="13" rx="4"/><path d="M6.5 7.5 5 4M11.5 7.5 13 4M5 12H2M5 17H2.5M13 12h1"/><path d="M9 11v7"/><path d="M15.5 13v8l6-4z" fill="' + COLOR_GREEN + '" stroke="' + COLOR_GREEN + '" stroke-width="1.5"/>' + SVG_END;
+    const BUTTON_IMAGE_STEP_TO_NEXT_BREAKPOINT = SVG_START + '<path d="M2 12h11"/><path d="m9 8 4 4-4 4"/><circle cx="18.5" cy="12" r="3.5" fill="' + COLOR_RED + '" stroke="' + COLOR_RED + '"/>' + SVG_END;
+    const BUTTON_IMAGE_STEP_OVER = SVG_START + '<path d="M3 14a8 8 0 0 1 15-3.9"/><path d="M19 4v6h-6"/><circle cx="12" cy="19" r="2.2" fill="currentColor"/>' + SVG_END;
+    const BUTTON_IMAGE_STEP_INTO = SVG_START + '<path d="M12 2v11"/><path d="m8 9 4 4 4-4"/><circle cx="12" cy="19" r="2.2" fill="currentColor"/>' + SVG_END;
+    const BUTTON_IMAGE_RENEW_WATCH_VALUES = SVG_START + '<path d="M1.5 10s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6S1.5 10 1.5 10z"/><circle cx="11" cy="10" r="2.5"/><path d="M14 21a5 5 0 0 0 8-3.5" stroke="' + COLOR_GREEN + '"/><path d="M22 21.5v-4h-4" stroke="' + COLOR_GREEN + '"/>' + SVG_END;
+    const BUTTON_IMAGE_KILL_PROGRAM = SVG_START + '<circle cx="12" cy="12" r="10" stroke="' + COLOR_RED + '"/><path d="m15 9-6 6M9 9l6 6" stroke="' + COLOR_RED + '"/>' + SVG_END;
+    const BUTTON_IMAGE_END_DEBUGGING = SVG_START + '<rect x="5" y="5" width="14" height="14" rx="1.5" fill="' + COLOR_RED + '" stroke="' + COLOR_RED + '"/>' + SVG_END;
+    const BUTTON_IMAGE_SEND_MESSAGE = SVG_START + '<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/>' + SVG_END;
+
+    //use text for buttons
+    // const BUTTON_IMAGE_COMPILE_PYTHON = 'compile python';
+    // const BUTTON_IMAGE_DEBUG_PYTHON_CODE = 'debug python code';
+    // const BUTTON_IMAGE_STEP_TO_NEXT_BREAKPOINT = 'py continue';
+    // const BUTTON_IMAGE_STEP_OVER = 'py step over';
+    // const BUTTON_IMAGE_STEP_INTO = 'py step into';
+    // const BUTTON_IMAGE_RENEW_WATCH_VALUES = 'py renew watch';
+    // const BUTTON_IMAGE_KILL_PROGRAM = 'py kill';
+    // const BUTTON_IMAGE_END_DEBUGGING = 'py end debugging';
+    // const BUTTON_IMAGE_SEND_MESSAGE = 'py send';
+
     return `<b>Python:</b><br />
-        <button class="debugger_icon_button" name="compilePython" type="button" title="Compile python (generate main.py on server)" onclick="GraphLang.Debugger.Python.compilePythonCurrentNode()">compile python</button>
-        <button class="debugger_icon_button" name="debugPythonCodeButton" type="button" title="Debug python code (generate main.py, start python debugger layer and run it)" onclick="GraphLang.Debugger.Python.debugPythonCode()">debug python code</button>
-        <button class="debugger_icon_button" name="pythonStepToNextBreakpointButton" type="button" title="Python: continue to next breakpoint" onclick="GraphLang.Debugger.Python.stepToNextBreakpoint()">py continue</button>
-        <button class="debugger_icon_button" name="pythonStepOverButton" type="button" title="Python: step over (next line)" onclick="GraphLang.Debugger.Python.stepOver()">py step over</button>
-        <button class="debugger_icon_button" name="pythonStepIntoButton" type="button" title="Python: step into" onclick="GraphLang.Debugger.Python.stepInto()">py step into</button>
-        <button class="debugger_icon_button" name="pythonRenewWatchValuesButton" type="button" title="Python: renew watch values" onclick="GraphLang.Debugger.Python.renewWatchValues()">py renew watch</button>
-        <button class="debugger_icon_button" name="pythonKillProgramButton" type="button" title="Python: kill program" onclick="GraphLang.Debugger.Python.killProgram()">py kill</button>
-        <button class="debugger_icon_button" name="pythonEndDebuggingButton" type="button" title="Python: end debugging (stop python debugger layer)" onclick="GraphLang.Debugger.Python.endDebugging()">py end debugging</button>
-        <button class="debugger_icon_button" name="pythonSendButton" type="button" title="Send message from input to python debugger" onclick="GraphLang.Debugger.Python.onclickSendButton()">py send</button>
+        <button class="debugger_icon_button" name="compilePython" type="button" title="Compile python (generate main.py on server)" onclick="GraphLang.Debugger.Python.compilePythonCurrentNode()">${BUTTON_IMAGE_COMPILE_PYTHON}</button>
+        <button class="debugger_icon_button" name="debugPythonCodeButton" type="button" title="Debug python code (generate main.py, start python debugger layer and run it)" onclick="GraphLang.Debugger.Python.debugPythonCode()">${BUTTON_IMAGE_DEBUG_PYTHON_CODE}</button>
+        <button class="debugger_icon_button" name="pythonStepToNextBreakpointButton" type="button" title="Python: continue to next breakpoint" onclick="GraphLang.Debugger.Python.stepToNextBreakpoint()">${BUTTON_IMAGE_STEP_TO_NEXT_BREAKPOINT}</button>
+        <button class="debugger_icon_button" name="pythonStepOverButton" type="button" title="Python: step over (next line)" onclick="GraphLang.Debugger.Python.stepOver()">${BUTTON_IMAGE_STEP_OVER}</button>
+        <button class="debugger_icon_button" name="pythonStepIntoButton" type="button" title="Python: step into" onclick="GraphLang.Debugger.Python.stepInto()">${BUTTON_IMAGE_STEP_INTO}</button>
+        <button class="debugger_icon_button" name="pythonRenewWatchValuesButton" type="button" title="Python: renew watch values" onclick="GraphLang.Debugger.Python.renewWatchValues()">${BUTTON_IMAGE_RENEW_WATCH_VALUES}</button>
+        <button class="debugger_icon_button" name="pythonKillProgramButton" type="button" title="Python: kill program" onclick="GraphLang.Debugger.Python.killProgram()">${BUTTON_IMAGE_KILL_PROGRAM}</button>
+        <button class="debugger_icon_button" name="pythonEndDebuggingButton" type="button" title="Python: end debugging (stop python debugger layer)" onclick="GraphLang.Debugger.Python.endDebugging()">${BUTTON_IMAGE_END_DEBUGGING}</button>
+        <button class="debugger_icon_button" name="pythonSendButton" type="button" title="Send message from input to python debugger" onclick="GraphLang.Debugger.Python.onclickSendButton()">${BUTTON_IMAGE_SEND_MESSAGE}</button>
         <br/>`;
 }

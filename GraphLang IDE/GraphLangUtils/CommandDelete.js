@@ -44,7 +44,7 @@ GraphLang.Utils.CommandDelete = draw2d.command.CommandDelete.extend({
         });
       }
 
-    }else if (typeof this.figure.userData.isLoop === "function" && this.figure.userData.isLoop() === true){
+    }else if (this.figure.userData && typeof this.figure.userData.isLoop === "function" && this.figure.userData.isLoop() === true){
       /*
        *  LOOP (ForLoop / WhileLayer): either preserve contents (direct user delete)
        *  or actually delete them (cascading teardown from a parent structure)

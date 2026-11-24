@@ -1,233 +1,168 @@
-// Generated Code for the GraphLang
-// special thanks to Draw2D touch HTML5 lib
-//                                                        
-// http://www.draw2d.org                                  
-//                                                        
-PythonQtGuiLib.UiLoad = GraphLang.UserDefinedNode.extend({
+/**
+ *  @author LuboJ
+ *  @description Load Qt Designer .ui file and create widget (window) from it, creates QApplication when it does not exist yet.
+ *  Python (PySide6): app = QApplication.instance() or QApplication(sys.argv); window = QUiLoader().load(QFile(fileName))
+ *  Relative fileName is searched in current working directory and then in directory of generated script.
+ *  Node has only python translation (no C/C++). Shape is simple and editable in shape designer
+ *  (init/createShapeElement/createSet are in shape designer format), helpers are in PythonQtGuiLib.CommonParent.
+ */
+PythonQtGuiLib.UiLoad = PythonQtGuiLib.CommonParent.extend({
 
-   NAME: "PythonQtGuiLib.UiLoad",
+    NAME: "PythonQtGuiLib.UiLoad",
 
-   init:function(attr, setter, getter)
-   {
-     this._super( $.extend({stroke:0, bgColor:null, width:112, height:46.28480000000002, flagAutoCreatePorts: false},attr), setter, getter);
-     var port;
-     // in1
-     port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(-0.7756331428571985, 50));
-     port.setConnectionDirection(3);
-     port.setBackgroundColor("#37B1DE");
-     port.setName("in1");
-     port.setMaxFanOut(20);
-     port.userData = {datatype: "QtUiObject"};
-     // out1
-     port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(102.13461142857149, 30.000000000000025));
-     port.setConnectionDirection(1);
-     port.setBackgroundColor("#37B1DE");
-     port.setName("out1");
-     port.setMaxFanOut(20);
-     port.userData = {datatype: "String"};
-     // out1
-     port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(102.13461142857149, 69.99999999999997));
-     port.setConnectionDirection(1);
-     port.setBackgroundColor("#70DB70");
-     port.setName("out1");
-     port.setMaxFanOut(20);
-     port.userData = {datatype: "QtUiApplication"};
-     this.persistPorts=false;
-   },
+    init:function(attr, setter, getter){
+        this._super( $.extend({stroke:0, bgColor:null, width:100, height:60, flagAutoCreatePorts: false},attr), setter, getter);
+        var port;
+        // fileName
+        port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(0, 53.333333));
+        port.setConnectionDirection(3);
+        port.setBackgroundColor("#F307F3");
+        port.setName("fileName");
+        port.setMaxFanOut(20);
 
-   createShapeElement : function()
-   {
-      var shape = this._super();
-      this.originalWidth = 112;
-      this.originalHeight= 46.28480000000002;
-      return shape;
-   },
+        if (!port.userData) port.userData = {}
+        port.userData.datatype = "string";
+        port.userData.allowMultipleConnections = undefined;
+        port.userData.connectionMandatory = undefined;
 
-   createSet: function()
-   {
-       this.canvas.paper.setStart();
+        // app
+        port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(100, 33.333333));
+        port.setConnectionDirection(1);
+        port.setBackgroundColor("#70DB70");
+        port.setName("app");
+        port.setMaxFanOut(20);
+
+        if (!port.userData) port.userData = {}
+        port.userData.datatype = "QtUiApplication";
+        port.userData.allowMultipleConnections = undefined;
+        port.userData.connectionMandatory = undefined;
+
+        // window
+        port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(100, 73.333333));
+        port.setConnectionDirection(1);
+        port.setBackgroundColor("#2F8FD8");
+        port.setName("window");
+        port.setMaxFanOut(20);
+
+        if (!port.userData) port.userData = {}
+        port.userData.datatype = "QtUiObject";
+        port.userData.allowMultipleConnections = undefined;
+        port.userData.connectionMandatory = undefined;
+
+        this.persistPorts=false;
+    },
+
+    createShapeElement : function(){
+        var shape = this._super();
+        this.originalWidth = 100;
+        this.originalHeight= 60;
+        return shape;
+    },
+
+    createSet: function(){
+        this.canvas.paper.setStart();
 
         // BoundingBox
-        shape = this.canvas.paper.path("M0,0 L112,0 L112,46.28480000000002 L0,46.28480000000002");
+        shape = this.canvas.paper.path("M0,0 L100,0 L100,60 L0,60");
         shape.attr({"stroke":"none","stroke-width":0,"fill":"none"});
         shape.data("name","BoundingBox");
-        
+
+        // Line
+        shape = this.canvas.paper.path('M0,32L20,32');
+        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#303030","stroke-width":1,"opacity":1});
+        shape.data("name","Line");
+
+        // Line
+        shape = this.canvas.paper.path('M80,20L100,20');
+        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#303030","stroke-width":1,"opacity":1});
+        shape.data("name","Line");
+
+        // Line
+        shape = this.canvas.paper.path('M80,44L100,44');
+        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#303030","stroke-width":1,"opacity":1});
+        shape.data("name","Line");
+
         // Rectangle
-        shape = this.canvas.paper.path('M15.515554559999941 0L97.02595455999995 0L97.02595455999995 46.28480000000002L15.515554559999941 46.28480000000002Z');
-        shape.attr({"stroke":"#303030","stroke-width":1,"fill":"#FFFFFF","dasharray":null,"opacity":1});
+        shape = this.canvas.paper.path('M20,0L80,0L80,60L20,60Z');
+        shape.attr({"stroke":"#303030","stroke-width":1,"fill":"#FFFFFF","opacity":1});
         shape.data("name","Rectangle");
-        
+
         // Rectangle
-        shape = this.canvas.paper.path('M68.14915455999994 36.6592L44.392354559999944 36.6592L44.392354559999944 9.62560000000002L68.14915455999994 9.62560000000002Z');
-        shape.attr({"stroke":"#303030","stroke-width":1,"fill":"#1900FF","dasharray":null,"opacity":1});
+        shape = this.canvas.paper.path('M27,17L37,17L41,21L41,41L27,41Z');
+        shape.attr({"stroke":"#303030","stroke-width":1,"fill":"#FFFFFF","opacity":1});
         shape.data("name","Rectangle");
-        
-        // Circle
-        shape = this.canvas.paper.ellipse();
-        shape.attr({"rx":10.649599999999992,"ry":10.649599999999992,"cx":42.95875456000002,"cy":15.155200000000008,"stroke":"none","stroke-width":0,"fill":"#95C06A","dasharray":null,"opacity":1});
-        shape.data("name","Circle");
-        
-        // Line_shadow
-        shape = this.canvas.paper.path('M97.5 23.5L112.5,22.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"none","stroke-width":1,"stroke-dasharray":null,"opacity":1});
-        shape.data("name","Line_shadow");
-        
+
         // Line
-        shape = this.canvas.paper.path('M97.5 23.5L112.5,22.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#000000","stroke-width":1,"stroke-dasharray":null,"opacity":1});
+        shape = this.canvas.paper.path('M37,17L37,21L41,21');
+        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#303030","stroke-width":1,"opacity":1});
         shape.data("name","Line");
-        
-        // Line_shadow
-        shape = this.canvas.paper.path('M15.5 23.5L0.5,22.5L0.5,22.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"none","stroke-width":1,"stroke-dasharray":null,"opacity":1});
-        shape.data("name","Line_shadow");
-        
+
+        // Label
+        shape = this.canvas.paper.text(0,0,'ui');
+        shape.attr({"x":34,"y":33,"text-anchor":"middle","text":"ui","font-size":8,"stroke":"none","fill":"#080808","font-weight":"bold","stroke-width":0,"opacity":1});
+        shape.data("name","Label");
+
         // Line
-        shape = this.canvas.paper.path('M15.5 23.5L0.5,22.5L0.5,22.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#000000","stroke-width":1,"stroke-dasharray":null,"opacity":1});
+        shape = this.canvas.paper.path('M43,29L50,29');
+        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#303030","stroke-width":2,"opacity":1});
         shape.data("name","Line");
-        
-        // Line_shadow
-        shape = this.canvas.paper.path('M58.5 33.5L78.5,33.5L70.5,6.5L58.5,32.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"none","stroke-width":1,"stroke-dasharray":null,"opacity":1});
-        shape.data("name","Line_shadow");
-        
+
         // Line
-        shape = this.canvas.paper.path('M58.5 33.5L78.5,33.5L70.5,6.5L58.5,32.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#000000","stroke-width":1,"stroke-dasharray":null,"opacity":1});
+        shape = this.canvas.paper.path('M47,26L50,29L47,32');
+        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#303030","stroke-width":2,"opacity":1});
         shape.data("name","Line");
-        
+
+        // Rectangle
+        shape = this.canvas.paper.path('M52,18L73,18L73,40L52,40Z');
+        shape.attr({"stroke":"#303030","stroke-width":1,"fill":"#FFFFFF","opacity":1});
+        shape.data("name","Rectangle");
+
+        // Rectangle
+        shape = this.canvas.paper.path('M52,18L73,18L73,23L52,23Z');
+        shape.attr({"stroke":"#303030","stroke-width":1,"fill":"#2F8FD8","opacity":1});
+        shape.data("name","Rectangle");
+
+        // Label
+        shape = this.canvas.paper.text(0,0,'Qt');
+        shape.attr({"x":50,"y":9,"text-anchor":"middle","text":"Qt","font-size":10,"stroke":"none","fill":"#080808","font-weight":"normal","stroke-width":0,"opacity":1});
+        shape.data("name","Label");
+
+        // Label
+        shape = this.canvas.paper.text(0,0,'load');
+        shape.attr({"x":50,"y":51,"text-anchor":"middle","text":"load","font-size":12,"stroke":"none","fill":"#080808","font-weight":"bold","stroke-width":0,"opacity":1});
+        shape.data("name","Label");
 
         return this.canvas.paper.setFinish();
-   },
-
-   applyAlpha: function()
-   {
-   },
-
-   layerGet: function(name, attributes)
-   {
-      if(this.svgNodes===null) return null;
-
-      var result=null;
-      this.svgNodes.some(function(shape){
-         if(shape.data("name")===name){
-            result=shape;
-         }
-         return result!==null;
-      });
-
-      return result;
-   },
-
-   layerAttr: function(name, attributes)
-   {
-     if(this.svgNodes===null) return;
-
-     this.svgNodes.forEach(function(shape){
-             if(shape.data("name")===name){
-                  shape.attr(attributes);
-             }
-     });
-   },
-
-   layerShow: function(name, flag, duration)
-   {
-      if(this.svgNodes===null) return;
-
-      if(duration){
-        this.svgNodes.forEach(function(node){
-            if(node.data("name")===name){
-                if(flag){
-                    node.attr({ opacity : 0 }).show().animate({ opacity : 1 }, duration);
-                }
-                else{
-                    node.animate({ opacity : 0 }, duration, function () { this.hide() });
-                }
-            }
-        });
-      }
-      else{
-          this.svgNodes.forEach(function(node){
-              if(node.data("name")===name){
-                   if(flag){node.show();}
-                   else{node.hide();}
-               }
-           });
-      }
-   },
-
-    getParameterSettings: function()
-    {
-        return [];
     },
 
-    /**
-     * @method
-     */
-    addPort: function(port, locator)
-    {
-        this._super(port, locator);
-        return port;
-    },
+    symbolPicture: "data:image/png;base64,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",
 
-    /**
-     * @method
-     * Return an objects with all important attributes for XML or JSON serialization
-     *
-     * @returns {Object}
-     */
-    getPersistentAttributes : function()
-    {
-        var memento = this._super();
-
-        // add all decorations to the memento
-        //
-        memento.labels = [];
-        this.children.each(function(i,e){
-            var labelJSON = e.figure.getPersistentAttributes();
-            labelJSON.locator=e.locator.NAME;
-            memento.labels.push(labelJSON);
-        });
-
-        return memento;
-    },
-
-    /**
-     * @method
-     * Read all attributes from the serialized properties and transfer them into the shape.
-     *
-     * @param {Object} memento
-     * @returns
-     */
-    setPersistentAttributes : function(memento)
-    {
-        this._super(memento);
-
-        // remove all decorations created in the constructor of this element
-        //
-        this.resetChildren();
-
-        // and add all children of the JSON document.
-        //
-        $.each(memento.labels, $.proxy(function(i,json){
-            // create the figure stored in the JSON
-            var figure =  eval("new "+json.type+"()");
-
-            // apply all attributes
-            figure.attr(json);
-
-            // instantiate the locator
-            var locator =  eval("new "+json.locator+"()");
-
-            // add the new figure as child to this figure
-            this.add(figure, locator);
-        },this));
-    },
-    
-    symbolPicture: "data:image/png;base64,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",
-    
     jsonDocument: [],
-    
-    
+
+    translateToPythonCode: function(){
+        let fileNameWireName = this.qtInputWireName("fileName");
+        if (fileNameWireName === null) return "# ERROR: PythonQtGuiLib.UiLoad input fileName (path to .ui file) must be connected\n";
+
+        let appVar = this.qtVariableName("qtApp");
+        let pathVar = this.qtVariableName("qtUiPath");
+        let fileVar = this.qtVariableName("qtUiFile");
+        let windowVar = this.qtVariableName("qtUiWindow");
+
+        let pythonCode = "";
+        pythonCode += `${appVar} = QApplication.instance() or QApplication(sys.argv)\n`;
+        pythonCode += `${pathVar} = str(${fileNameWireName})\n`;
+        pythonCode += `if not os.path.isfile(${pathVar}):\n`;
+        pythonCode += `    ${pathVar} = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), ${pathVar})\n`;
+        pythonCode += `${fileVar} = QFile(${pathVar})\n`;
+        pythonCode += `if not ${fileVar}.open(QIODevice.ReadOnly):\n`;
+        pythonCode += `    raise RuntimeError("PythonQtGuiLib.UiLoad cannot open .ui file: " + ${pathVar})\n`;
+        pythonCode += `${windowVar} = QUiLoader().load(${fileVar})\n`;
+        pythonCode += `${fileVar}.close()\n`;
+        pythonCode += `if ${windowVar} is None:\n`;
+        pythonCode += `    raise RuntimeError("PythonQtGuiLib.UiLoad cannot load .ui file: " + ${pathVar})\n`;
+        pythonCode += this.qtAssignOutput("app", appVar);
+        pythonCode += this.qtAssignOutput("window", windowVar);
+        return pythonCode;
+    },
+
 });

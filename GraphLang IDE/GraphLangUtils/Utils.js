@@ -4094,9 +4094,25 @@ GraphLang.Utils.displayNodeDocString = function(nodeObj = null){
         return;
     }
 
-    if (nodeObj.symbolPicture){
-        document.querySelector('#schematicBlockDocumentation').insertAdjacentHTML('afterbegin', `<img src="${nodeObj.symbolPicture}" /><br />`);
-    }
+    if (typeof appCanvas3 !== 'undefined' && appCanvas3){
+		//add canvas and create whole draw2d node in helper pane
+		GraphLang.Utils.initDocumentationCanvas(appCanvas3);
+		appCanvas3.clear();
+		let docNode = eval(`new ${nodeObj.NAME}()`);
+		appCanvas3.add(docNode, 10, 10);
+
+		//documentation node is only for display, it's not moved and its ports must not create wires
+		docNode.setDraggable(false);
+		docNode.getPorts().each(function(index, port){
+			port.setDraggable(false);
+		});
+
+		//remember which node from main canvas is documented, to read live info about its ports
+		appCanvas3.graphLangDocumentedNode = nodeObj;
+	} else if (nodeObj.symbolPicture){
+		//display only symbol picture
+		document.querySelector('#schematicBlockDocumentation').insertAdjacentHTML('afterbegin', `<img src="${nodeObj.symbolPicture}" /><br />`);
+	}
 
     if (nodeObj.docString){
         document.querySelector('#schematicBlockDocumentation').insertAdjacentHTML('beforeend', nodeObj.docString);
@@ -4108,12 +4124,84 @@ GraphLang.Utils.displayNodeDocString = function(nodeObj = null){
 /**
  * @method
  * @memberOf GraphLang.Utils
+ * @param canvas {draw2d.Canvas} auxiliary documentation canvas (appCanvas3) in right helper pane
+ * @descritpion Configure documentation canvas only once: remove wire creation policies (drag and click on port)
+ * and register click handler which displays info about clicked port using GraphLang.Utils.displayPortDocString()
+ */
+GraphLang.Utils.initDocumentationCanvas = function(canvas){
+    if (!canvas || canvas.graphLangDocumentationInitialized) return;
+    canvas.graphLangDocumentationInitialized = true;
+
+    //draw2d installs by default ComposedConnectionCreatePolicy (Drag + Click connection create), remove all of them
+    canvas.editPolicy.grep(function(policy){
+        let isConnectionCreatePolicy = policy instanceof draw2d.policy.connection.ConnectionCreatePolicy;
+        if (isConnectionCreatePolicy) policy.onUninstall(canvas);
+        return !isConnectionCreatePolicy;
+    });
+
+    canvas.on('click', function(emitter, event){
+        if (event.figure instanceof draw2d.Port){
+            GraphLang.Utils.displayPortDocString(event.figure, canvas.graphLangDocumentedNode);
+        }
+    });
+}
+
+/**
+ * @method
+ * @memberOf GraphLang.Utils
+ * @param port {draw2d.Port} port clicked on documentation canvas
+ * @param documentedNode {draw2d.Figure} node from main canvas which documentation is displayed, used to read live port info (connections, resolved datatype)
+ * @descritpion Display info about port (name, direction, datatype, ...) at the end of <div id="schematicBlockDocumentation">.
+ * Port can carry own documentation in port.userData.docString, it's displayed below basic info.
+ */
+GraphLang.Utils.displayPortDocString = function(port = null, documentedNode = null){
+    if (port === null) return;
+    let docElement = document.querySelector('#schematicBlockDocumentation');
+    if (!docElement) return;
+
+    let escapeHtml = function(value){
+        return String(value).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    };
+
+    let userData = port.userData ? port.userData : {};
+    let direction = port instanceof draw2d.InputPort ? 'input' : port instanceof draw2d.OutputPort ? 'output' : 'hybrid';
+    let rows = [
+        ['name', port.getName()],
+        ['direction', direction],
+        ['datatype', userData.datatype ? userData.datatype : 'undefined'],
+        ['mandatory', userData.connectionMandatory ? 'yes' : 'no']
+    ];
+
+    //live info from port of node in main canvas, polymorphic datatype is there resolved by connected wires
+    let livePort = documentedNode && documentedNode.getPort ? documentedNode.getPort(port.getName()) : null;
+    if (livePort){
+        let liveDatatype = livePort.userData && livePort.userData.datatype;
+        if (liveDatatype && liveDatatype !== userData.datatype) rows.push(['current datatype', liveDatatype]);
+        rows.push(['connections', livePort.getConnections().getSize()]);
+    }
+
+    let html = `<b>Port ${escapeHtml(port.getName())}</b><table>`;
+    rows.forEach(([key, value]) => { html += `<tr><td>${escapeHtml(key)}:</td><td>${escapeHtml(value)}</td></tr>`; });
+    html += `</table>`;
+    if (userData.docString) html += `<div>${userData.docString}</div>`;
+
+    let portDocElement = docElement.querySelector('#schematicBlockPortDocumentation');
+    if (!portDocElement){
+        docElement.insertAdjacentHTML('beforeend', `<div id="schematicBlockPortDocumentation"><hr /></div>`);
+        portDocElement = docElement.querySelector('#schematicBlockPortDocumentation');
+    }
+    portDocElement.innerHTML = `<hr />${html}`;
+}
+
+/**
+ * @method
+ * @memberOf GraphLang.Utils
  * @param nodeObj
  * @descritpion This will clear node docString content from right helperPane in <div id="schematicBlockDocumentation">
  */
 GraphLang.Utils.clearNodeDocString = function(nodeObj = null){
     if (nodeObj === null){
-        console.warning(`display node docString function, provided node object is null, check traceback`);
+        console.warn(`display node docString function, provided node object is null, check traceback`);
         return;
     }
     document.querySelector('#schematicBlockDocumentation').innerHTML = '';

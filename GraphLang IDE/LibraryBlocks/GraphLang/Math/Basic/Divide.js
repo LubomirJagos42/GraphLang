@@ -9,10 +9,10 @@ GraphLang.Math.Basic.Divide = GraphLang.Math.Basic.CommonParent.extend({
 
    init:function(attr, setter, getter)
    {
-     this._super( $.extend({stroke:0, bgColor:null, width:84, height:60, flagAutoCreatePorts: false},attr), setter, getter);
+     this._super( $.extend({stroke:0, bgColor:null, width:80, height:60, flagAutoCreatePorts: false},attr), setter, getter);
      var port;
      // in1
-     port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(-0.2271805561904438, 19.688128256000446));
+     port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(0, 23.333333));
      port.setConnectionDirection(3);
      port.setBackgroundColor("#37B1DE");
      port.setName("in1");
@@ -20,7 +20,7 @@ GraphLang.Math.Basic.Divide = GraphLang.Math.Basic.CommonParent.extend({
      if (!port.userData) port.userData = {}
      port.userData.datatype = "int";
      // in2
-     port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(-0.2271805561904438, 83.754723754667));
+     port = this.createPort("input", new draw2d.layout.locator.XYRelPortLocator(0, 76.666667));
      port.setConnectionDirection(3);
      port.setBackgroundColor("#37B1DE");
      port.setName("in2");
@@ -28,7 +28,7 @@ GraphLang.Math.Basic.Divide = GraphLang.Math.Basic.CommonParent.extend({
      if (!port.userData) port.userData = {}
      port.userData.datatype = "int";
      // out1
-     port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(102.28959835428573, 49.75289932800043));
+     port = this.createPort("output", new draw2d.layout.locator.XYRelPortLocator(100, 50));
      port.setConnectionDirection(1);
      port.setBackgroundColor("#37B1DE");
      port.setName("out1");
@@ -41,83 +41,55 @@ GraphLang.Math.Basic.Divide = GraphLang.Math.Basic.CommonParent.extend({
    createShapeElement : function()
    {
       var shape = this._super();
-      this.originalWidth = 84;
+      this.originalWidth = 80;
       this.originalHeight= 60;
       return shape;
    },
 
-   createSet: function()
-   {
-       this.canvas.paper.setStart();
-
+   createSet: function(){
+        this.canvas.paper.setStart();
         // BoundingBox
-        shape = this.canvas.paper.path("M0,0 L84,0 L84,60 L0,60");
+        shape = this.canvas.paper.path("M0,0 L80,0 L80,60 L0,60");
         shape.attr({"stroke":"none","stroke-width":0,"fill":"none"});
         shape.data("name","BoundingBox");
-        
+
+        // Line
+        shape = this.canvas.paper.path('M0,14L20,14');
+        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#303030","stroke-width":1,"opacity":1});
+        shape.data("name","Line");
+
+        // Line
+        shape = this.canvas.paper.path('M0,46L20,46');
+        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#303030","stroke-width":1,"opacity":1});
+        shape.data("name","Line");
+
+        // Line
+        shape = this.canvas.paper.path('M60,30L80,30');
+        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#303030","stroke-width":1,"opacity":1});
+        shape.data("name","Line");
+
+        // Rectangle
+        shape = this.canvas.paper.path('M20,2L60,30L20,58Z');
+        shape.attr({"stroke":"#303030","stroke-width":1.5,"fill":"#FFFFFF","opacity":1});
+        shape.data("name","Rectangle");
+
+        // Line
+        shape = this.canvas.paper.path('M27,30L39,30');
+        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#303030","stroke-width":2.5,"opacity":1});
+        shape.data("name","Line");
+
         // Circle
         shape = this.canvas.paper.ellipse();
-        shape.attr({"rx":2.5,"ry":2.5,"cx":37.93323046146463,"cy":20.351739596800144,"stroke":"none","stroke-width":0,"fill":"#000000","dasharray":null,"opacity":1});
+        shape.attr({"rx":2,"ry":2,"cx":33,"cy":24,"stroke":"#303030","stroke-width":1,"fill":"#303030","opacity":1});
         shape.data("name","Circle");
-        
+
         // Circle
         shape = this.canvas.paper.ellipse();
-        shape.attr({"rx":2.5,"ry":2.5,"cx":37.93323046146463,"cy":37.351739596800144,"stroke":"none","stroke-width":0,"fill":"#000000","dasharray":null,"opacity":1});
+        shape.attr({"rx":2,"ry":2,"cx":33,"cy":36,"stroke":"#303030","stroke-width":1,"fill":"#303030","opacity":1});
         shape.data("name","Circle");
-        
-        // Line_shadow
-        shape = this.canvas.paper.path('M23.5 1.5L23.5,60.5L63.5,29.5L23.5,0.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"none","stroke-width":1,"stroke-dasharray":null,"opacity":1});
-        shape.data("name","Line_shadow");
-        
-        // Line
-        shape = this.canvas.paper.path('M23.5 1.5L23.5,60.5L63.5,29.5L23.5,0.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#000000","stroke-width":1,"stroke-dasharray":null,"opacity":1});
-        shape.data("name","Line");
-        
-        // Line_shadow
-        shape = this.canvas.paper.path('M23.5 11.5L0.5,11.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"none","stroke-width":1,"stroke-dasharray":null,"opacity":1});
-        shape.data("name","Line_shadow");
-        
-        // Line
-        shape = this.canvas.paper.path('M23.5 11.5L0.5,11.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#000000","stroke-width":1,"stroke-dasharray":null,"opacity":1});
-        shape.data("name","Line");
-        
-        // Line_shadow
-        shape = this.canvas.paper.path('M24.5 49.5L0.5,49.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"none","stroke-width":1,"stroke-dasharray":null,"opacity":1});
-        shape.data("name","Line_shadow");
-        
-        // Line
-        shape = this.canvas.paper.path('M24.5 49.5L0.5,49.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#000000","stroke-width":1,"stroke-dasharray":null,"opacity":1});
-        shape.data("name","Line");
-        
-        // Line_shadow
-        shape = this.canvas.paper.path('M64.5 29.5L84.5,29.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"none","stroke-width":1,"stroke-dasharray":null,"opacity":1});
-        shape.data("name","Line_shadow");
-        
-        // Line
-        shape = this.canvas.paper.path('M64.5 29.5L84.5,29.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#000000","stroke-width":1,"stroke-dasharray":null,"opacity":1});
-        shape.data("name","Line");
-        
-        // Line_shadow
-        shape = this.canvas.paper.path('M32.5 29.5L45.5,29.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"none","stroke-width":1,"stroke-dasharray":null,"opacity":1});
-        shape.data("name","Line_shadow");
-        
-        // Line
-        shape = this.canvas.paper.path('M32.5 29.5L45.5,29.5');
-        shape.attr({"stroke-linecap":"round","stroke-linejoin":"round","stroke":"#000000","stroke-width":1,"stroke-dasharray":null,"opacity":1});
-        shape.data("name","Line");
-        
 
         return this.canvas.paper.setFinish();
-   },
+    },
 
    applyAlpha: function()
    {
@@ -220,7 +192,9 @@ GraphLang.Math.Basic.Divide = GraphLang.Math.Basic.CommonParent.extend({
      */
     setPersistentAttributes : function(memento)
     {
+        var symbolWidth = this.getWidth(), symbolHeight = this.getHeight();  //size from init(), older schematics stored different sizes which would stretch current shape
         this._super(memento);
+        this.setDimension(symbolWidth, symbolHeight);
 
         // remove all decorations created in the constructor of this element
         //
@@ -243,7 +217,7 @@ GraphLang.Math.Basic.Divide = GraphLang.Math.Basic.CommonParent.extend({
         },this));
     },
     
-    symbolPicture: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGgAAABQCAYAAAD1NTBhAAAAAXNSR0IArs4c6QAAC1hJREFUeF7tXHt0FNUZ/83uZHdJNiYxJCS7eWweFhGhlRgqYC3Io6DYI0qAU0utiMWCEB+tra0WKBZqAQ8vobW2aIUiID0eaRHCGxGwGPQIlPCQALs7axog5LHJZmd3pueDWZqwu8kmMwmzyXzn7F87997vfr/57nzPy0AjVUuAUTV3GnPQAFL5S6ABpAGkcgmonD1NgzSAVC4BlbOnaZAGkMoloHL2NA3SAGpVAt8A8AiALwFsafXpbvaAGjSoP4BfAkgBUAJgOQBPN8Mh7HbVANBDAJ6SQPoVgFgAvwXwhQYSVBHqCQD0fQAWAE8DGA3gdQDvdXeQ1KRBBBCRCcAwANMBnACwGEBFdwUqEoCaPiN2gKCaalDT6fOlY683gFcA7OmAtVU/ZViAbDabye/39xMZ5lGGNd4hiGK9yHv26xnmI7vd/pWCOwsHEC2RDOAHAIoArAXwJoCOeEkU3I6yUxFA9Gu2aYvFkskwzPNscvqM2MKRDGvJZUWvB41ln/kavtxXJnq9C51O598UYqUlgGgJHYABAH4BoBbA7wGcUmht1U/DFBQUxJaWltYHOM3MzLQILDvDlD/g+cQJxSY2NeP6JkQ/j8ZTR/jqTSuP+Vzlix0OB73Vcqk1gALzZwF4AcB3pSNvs9yFo2F8EEBZubkjYmx3rrtl3PSehizyIZuT6OPR8MVeoeqd+Tsg+KY4HA6nzI1GChAtEw/gQQBPANgLYBmAOpnrq3p4M4CsVmuyLj7pxz0GDHs5aeJzieE497nK/TVb3j7WcGT3PIfDsUnmDtsCUGCpPgBeApAEYC6Az2TyoNrhzQCyWCxZRkteceygMU+bR0wihzEk+S9X4ErJWlRseRe11dVKbI6Oq4CZHel8aZKDSxq1AsCaSAdG03PNAMrIyLCyvbKfiS0cNSN+zGQ6TkKS75IL7r3/OFdd8vcFLpeLLCs51B4NCqxnBHAvgJkAygEsAiD3yJWzF8XHNgMoJSXFbDSbJ5n637c0ecrssBrEnz/hubxu8QH+wslXnU7nbplcyQEosHSeZOVRXO/XAHbK5Ek1w0NYcbmFemvOsvgRE+6OLRzJ3sipv+YS3B9v9tSVrN1gP/fV4wrsRAmAiI1bAUwAMAnARgAru4LPFATQVQdVb3iYTbEsM98/MTF24KgYMNf8WX9VBWp3vIe6PZsOiYIwneO4z1UEELFCjJIWUdDVC2C+FC5SgM2bM0XISEJ+fr6xoYEfAkZ8mYkzF8akZjaKfKPOd5Fzg/eW+L2Ni1wuF8XJlCClNKgpL5kAigHcL0XGP1CC0ZsxR4uxONImADae5+mMpxzNSafT6VCYUTkAkZHQA8CVEDzFSVHxqQAOAVga5jmFt6PsdJEES5VdMXi29gBE/g/F58gX8gGYByBc6ImCrfQcmeWzAXza0RtScv5oBYiOLvJ70iVhULqcYnVbwwgnVYo+kK9FbgGBGRVB12gEiKw1OrZeawLG11LYZ0ELb28MgMHSt4kDsBDAeSXf9o6YKxoBIjkUSrUL35aEchDANABHIxBSjpRnuls6+qgOQrUUrQCRQPtK0W3aA4V6StsgZYozPgrgMQAfAngDAN+G8Z32aDQDpISQ7pQiDySH30WogUqsG/Ec3R0gEpQVwDMARkrfNYpCdCQx6enpWXq9foKo1/eDjhXFxoZ/8zy/rbKy8syNC2sAXZMIxR1HSN8xio4sAXBRaZTS0tJSWJNpij4uodjYu8BovO1bt4p+QfSc/tzrObr/jL+hfonL5Xqr6boaQM1RoAwlFVFmSz7TfqVAstlsibzf/6Qhq/fCxKJixpBDn1CJBAGN5Uf56k2rTnrPHV/hdDr/FPhLAygYAapw/aFUjvw2gL8q4TNZsvMGm3JufzN+9OS+pj4Dg1cVRTSWHeYv/WXObnjcL9jt9mP0kAZQaBWhKD6Z8j+Tjjryuc62V5ssFkssYzAU9fjmfauSp8yh0FRI8lU6Ubd7Y3nNro2UZ/tzNAE0FkB7ikT+CYBCSe2lu6TIOIWL+rV3Ep1OB3NyCtJGTUTShGfDTiPUVsF9ePvlmi2r33KcPkmREU2DWhA6fSQohidIsb7T7QWIaj3YhNTHewwYOiehaGbYTPXVXNuhrZXube+uunDmFMUNNYBCCJ0sulEAfgKAssUUBafckhxirVbrOFPfe9YnPzWPYQyUJAgmnitHbcmaMven2+ZwHLdeAyhYRhTxJmCoEOUPAORWLF1fISMjo5++l22+edi4EebvjAtCSGiog/vgR2LNpuXbBUF4jOO4q2a+ZiT8HyQysV+UOix+0wGlXPqMvN4j2Z5pq8z3PZIWN/gBE3RUNAsItVfgPrDZV7N1TangqX+F47jtAbaiHSB6E8kqqpJx/pDFNgjAcwDoO0NRbsWdVIk/OuoKGZ1uNuISBhstuV4IAviK817B4y4VGj0LOI470HQv0QpQWxJ2LWFHqQsqMqFik3cArJYBdMRDpcaEfJ/P15thGD+AMo7jykJNEK0AhUrY0fG0LWIpXYsW/BwApSzIpN3VhrGd9mg0AkRvPbVMUpdDgChhR72tVMUTCZFPQyY01Vm8KscJjWQxOc9EI0C03/Ym7MwAHgAwRdI2MqHJz1EtRStAJNC2JuyofoHaKr8naVpUlGJFM0BteespVEPfGerYIw89ajrIuzpABgBDAMwCcFwqrg9VQ9cWsDv12a4MEGkL1RyMB0BJMKVaNjWAFJAAVe6QCU3RaDra9ikw502ZojUN0ttsthSv15vHsiyZpGcvXLggx2sPtcn2VJa2JKxA8Tx1lpHZrfrat5Y2Ew4gfXp6+l06nW4uYzAN1yel1sHnZX1XLteCwXqDDsvLy8uV2rhSAFEYnypHqSWGSqmoFCvqKaj9pKCgIKay2j1al5SyIvbesanmQQ+aGOO1Xi7fRQ61JWsF94Et+wSfd7pCHQ5KAESVOdRlR4UfcwBQoq5LUBBA6enZAwyZ2Yvih40fEjd4LFlBzch/pRLufR/U1+5av85RfpZKcOWSXIBulwo9yAmlhuJIqkvl8txp45sB1KtXrziDKW6isf+QN5Knzg2dVaLs1bn/eC6veW2/13Fmnsvl+lgmt5TOphwMHU9tKWin1hO6M2EGgCPS5Ut00UWXoqAmYn1qxvS4gaNnxo/5Ufgm4oscqv61Gl9vXYf6+ut3YMgVTFvqB6jyhr41DwNYJV0TI3d9VY4PasM3ZN32bNzA0dPMwyeGb8OvqkDdJ5ud7p0bXrefPUPXhsmhth5xuVJije5KoFbHT+QsrvaxNwLUMyah5xM9Coa9lFBUTDmXkMS7yoW6rWuOuw+XzHM6nXJLZSMFiCxO8muosPC/AKjVpEu13IcSdnCXd07OKENu/w0JRbMSYtLJ37uBBD88Rw/6Lq2eu9PvqZ/mcrnkmtuRAHQLgHEAJgN4H8Af1f7mK8VfEEBWqzWDMcXOMvYZOCNx/MxYNoma0yQSRTIQ+Or3l57gz59cYrfblchAtgZQoCGYLvmjOxDCddEpJRNVzcMMHTqU3bNnD/V5Xqfs7OwcnyC8yKZYp8YNeYiNseZBbPTAc+Kwt750R5lYX7eyaf2wzB21BNAd0pFG5j6Z0Ep1lstkufOGhw310K0jMTEx9zCsYTxjMPZjBL9baGzYyzDMhw6HQ0lfIxRAZOIPB/BTANQ9R4ZIQ+eJRT0rtRaL6wxObwSIztQnpZJdynheLeDrrqQ2gOieUir+IFOavjdR1TLfES+RWgCiq5jpG0Pg2KVONyoE6fakFoDozgNqAl4H4GrbhUbXJKAGgOjuAjIGKON5veRVA0g9AGlYtCABNWiQBpAGUPS+A5oGqRw7DSANIJVLQOXsaRqkAaRyCaicPU2DVA7Q/wBJHYF+qOA8CQAAAABJRU5ErkJggg==",
+    symbolPicture: "data:image/png;base64,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",
     
     jsonDocument: [],
     
@@ -265,5 +239,32 @@ GraphLang.Math.Basic.Divide = GraphLang.Math.Basic.CommonParent.extend({
        return cCode;
      },
 
+    /**
+     * @description Python translation of this node, assigns result to every connected output wire.
+     */
+    translateToPythonCode: function(funcParams){
+        var inputWireName = function(node, portName, defaultValue){
+            var port = node.getInputPort(portName);
+            return (port && port.getConnections().getSize() > 0) ? port.getConnections().first().getVariableName() : defaultValue;
+        };
+        var in1 = inputWireName(this, "in1", null);
+        var in2 = inputWireName(this, "in2", null);
+        if (in1 === null || in2 === null) return "# ERROR: Divide node has unconnected input\n";
+        var expr = (function(node){
+            //C++ int / int truncates toward zero, python int() keeps same behaviour; float division otherwise
+            var intTypes = ["int", "uint", "long", "short", "char", "int8_t", "int16_t", "int32_t", "int64_t", "uint8_t", "uint16_t", "uint32_t", "uint64_t", "unsigned int", "unsigned long", "size_t"];
+            var isInt = function(portName){
+                var dt = node.getInputPort(portName).getConnections().first().getDatatype();
+                return intTypes.indexOf(dt) > -1;
+            };
+            return (isInt("in1") && isInt("in2")) ? "int(" + in1 + " / " + in2 + ")" : in1 + " / " + in2;
+        })(this);
+        var pythonCode = "";
+        this.getOutputPort("out1").getConnections().each(function(connIndex, connObj){
+            pythonCode += connObj.getVariableName() + " = " + expr + "\n";
+        });
+        if (pythonCode == "") pythonCode = "# Divide output not connected, no code generated\n";
+        return pythonCode;
+    },
 
 });

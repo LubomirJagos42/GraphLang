@@ -422,39 +422,66 @@ GraphLang.Shapes.Basic.Loop2.WhileLayer = GraphLang.Shapes.Basic.Loop2.extend({
    *    TRANSLATE TO Python functions
    *****************************************************************************************************************************************************/ 
   
-  translateToPythonCode: function(){
-    var pythonCode = "";
+  /**
+   *  @description Python has no do-while, loop is generated as:
+   *      while True:
+   *          <left tunnels assignment, loop body>          <- translateToPythonCode()
+   *          <right tunnels assignment>                    <- translateToPythonCodePost()
+   *          if <stop wire>:
+   *              break
+   *  Returned code is NOT indented at its base level (same as ForLoop), body is indented here.
+   */
+  translateToPythonCode: function(funcParams = {}){
+    let codeLinesOffset = Object.hasOwn(funcParams, "codeLinesOffset") ? funcParams.codeLinesOffset : 0;
+    let breakpointParentId = Object.hasOwn(funcParams, "breakpointParentId") ? funcParams.breakpointParentId : null;
+    let translatorObj = Object.hasOwn(funcParams, "translatorObj") ? funcParams.translatorObj : null;
+
     this.getUserData().wasTranslatedToPythonCode = true;
+    this.initPythonTranslateBuffers();
 
-    pythonCode += this.getTunnelsDeclarationPythonCode();
+    let pythonCode = "";
+
+    //stop wire is assigned inside loop and read after loop body, declare it before loop (same as C++)
+    let wireStop = this.getInputPort("stopTerminal").getConnections().first();
+    if (wireStop) pythonCode += wireStop.getVariableName() + " = False\n";
+
+    pythonCode += this.getTunnelsDeclarationPythonCode({translatorObj: translatorObj});
+    pythonCode += this.getWiresInsideLoopDeclarationPythonCode({translatorObj: translatorObj});
     pythonCode += "while True:\n";
-    pythonCode += "\t" + this.getLeftTunnelsWiresAssignementCppCode().replaceAll("\n", "\n\t") + "\n";
 
-    this.getAssignedFigures().each(function(figIndex, figObj){
-      if (figObj.translateToPythonCodeDeclaration) pythonCode += "\t" + figObj.translateToPythonCodeDeclaration().replaceAll("\n", "\n\t") + "\n";
-      if (figObj.translateToPythonCode) pythonCode += "\t" + figObj.translateToPythonCode().replaceAll("\n", "\n\t") + "\n";
-      if (figObj.translateToPythonCodePost) cCode += "\t" + figObj.translateToPythonCodePost().replaceAll("\n", "\n\t") + "\n";
+    let bodyCode = "";
+    bodyCode += this.getLeftTunnelsWiresAssignementPythonCode({translatorObj: translatorObj});
+    let leftTunnelsWatchLineNumber = codeLinesOffset + GraphLang.Utils.getLineCount(pythonCode) + GraphLang.Utils.getLineCount(bodyCode) + 1;
+    bodyCode += "# code inside WHILE LOOP\n";
+    bodyCode += this.translateAssignedFiguresToPythonCode(funcParams, GraphLang.Utils.getLineCount(pythonCode) + GraphLang.Utils.getLineCount(bodyCode));
 
+    pythonCode += GraphLang.Utils.indentPythonCode(bodyCode);
+
+    //watches on wires going out of tunnels, right tunnel wires get value in translateToPythonCodePost() which is right after this code
+    this.addTunnelWiresToPythonWatchList({
+      leftTunnelsLineNumber: leftTunnelsWatchLineNumber,
+      rightTunnelsLineNumber: codeLinesOffset + GraphLang.Utils.getLineCount(pythonCode) + 1,
+      parentId: breakpointParentId
     });
-    pythonCode += this.translateToPythonCodePost();
 
     return pythonCode;
   },
 
-  translateToPythonCodePost: function(){
-    var pythonCode = "";
-    var endCondition = "";
-    var stopTerminal = this.getInputPort("stopTerminal");
+  translateToPythonCodePost: function(funcParams = {}){
+    let pythonCode = "";
+    let bodyCode = this.getRightTunnelsAssignementOutputPythonCode(funcParams);
 
+    let stopTerminal = this.getInputPort("stopTerminal");
     if (stopTerminal.getConnections().getSize() > 0){
-      endCondition = stopTerminal.getConnections().get(0).getVariableName();
+      bodyCode += "if " + stopTerminal.getConnections().get(0).getVariableName() + ":\n";
+      bodyCode += GraphLang.Utils.indentPythonCode("break\n");
+    }else{
+      bodyCode += "# WARNING: stop terminal not connected, infinite loop\n";
+      bodyCode += "pass\n";
     }
 
-    //pay attention to indentation
-    pythonCode += "\tif " + endCondition + ":\n";
-    pythonCode +="\t\tbreak"
-    pythonCode += this.getRightTunnelsAssignementOutputPythonCode();
-
+    pythonCode += GraphLang.Utils.indentPythonCode(bodyCode);
+    pythonCode += "# END WHILE LOOP\n";
     return pythonCode;
   }
   

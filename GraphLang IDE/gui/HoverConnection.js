@@ -132,6 +132,13 @@ HoverConnection = draw2d.Connection.extend({
                         case "setManhattenRouter":
                             emitter.setRouter(new draw2d.layout.connection.InteractiveManhattanConnectionRouter());
                             break;
+                        case "rerouteAllManhattanRouter":
+                            emitter.setRouter(new draw2d.layout.connection.InteractiveManhattanConnectionRouter());
+                            let canvasObj = emitter.getCanvas();
+                            canvasObj.getLines().each(function (i, c) {
+                                if (c instanceof draw2d.Connection && !(c.getRouter() instanceof draw2d.layout.connection.InteractiveManhattanConnectionRouter)) c.setRouter(new draw2d.layout.connection.InteractiveManhattanConnectionRouter());
+                            });
+                            break;
                         case "setAIRouter":
                             emitter.setRouter(new AI_Router_1());
                             break;
@@ -187,6 +194,7 @@ HoverConnection = draw2d.Connection.extend({
                         "separator3": "--------------",
                         "autorouteWire": {name: "Auto route"},
                         "setManhattenRouter": {name: "Set Manhattan router"},
+                        "rerouteAllManhattanRouter": {name: "Reroute all wires (Manhattan)"},
                         "setAIRouter": {name: "Set AI router (AI_Router_1)", disabled: function(){ return typeof AI_Router_1 !== "function"; }},
                         "rerouteAllAIRouter": {name: "Reroute all wires (AI_Router_1)", disabled: function(){ return typeof AI_Router_1 !== "function"; }},
                         "separator4": "--------------",
